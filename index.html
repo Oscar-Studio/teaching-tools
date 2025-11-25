@@ -83,6 +83,8 @@
             display: flex;
             justify-content: center;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         .category-btn {
@@ -98,6 +100,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            white-space: nowrap;
         }
         
         .category-btn:hover {
@@ -114,6 +117,45 @@
             align-items: center;
             justify-content: center;
             font-size: 0.8rem;
+        }
+        
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .selected-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .selected-tag .remove-tag {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        
+        .selected-tag .remove-tag:hover {
+            background: rgba(255,255,255,0.2);
         }
         
         .tools-grid {
@@ -372,6 +414,15 @@
             .modal {
                 width: 95%;
             }
+            
+            .category-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .selected-tags {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -390,6 +441,9 @@
                     <span>请选择标签</span>
                     <span class="selected-count" id="selectedCount">0</span>
                 </button>
+                <div class="selected-tags" id="selectedTags">
+                    <!-- 已选标签将动态生成在这里 -->
+                </div>
             </div>
         </header>
         
@@ -445,6 +499,7 @@
             const resetSelection = document.getElementById('resetSelection');
             const applySelection = document.getElementById('applySelection');
             const selectedCount = document.getElementById('selectedCount');
+            const selectedTagsContainer = document.getElementById('selectedTags');
             
             // 存储工具数据
             let tools = [];
@@ -495,6 +550,9 @@
                 
                 // 更新选择计数
                 updateSelectedCount();
+                
+                // 更新已选标签显示
+                updateSelectedTagsDisplay();
             }
             
             // 生成学科标签
@@ -674,19 +732,14 @@
                     generateSubjectTags();
                     generateFunctionTags();
                     updateSelectedCount();
+                    updateSelectedTagsDisplay();
                 });
                 
                 // 应用筛选
                 applySelection.addEventListener('click', function() {
                     filterTools();
                     categoryModal.classList.remove('active');
-                    
-                    // 更新按钮文本
-                    if (selectedSubjects.length === 0 && selectedFunctions.length === 0) {
-                        categorySelector.querySelector('span').textContent = '请选择标签';
-                    } else {
-                        categorySelector.querySelector('span').textContent = '已选择标签';
-                    }
+                    updateSelectedTagsDisplay();
                 });
             }
             
@@ -704,6 +757,57 @@
             function updateSelectedCount() {
                 const totalSelected = selectedSubjects.length + selectedFunctions.length;
                 selectedCount.textContent = totalSelected;
+            }
+            
+            // 更新已选标签显示
+            function updateSelectedTagsDisplay() {
+                selectedTagsContainer.innerHTML = '';
+                
+                // 添加学科标签
+                selectedSubjects.forEach(subject => {
+                    const tagElement = document.createElement('div');
+                    tagElement.className = 'selected-tag';
+                    tagElement.innerHTML = `
+                        <span>${subject}</span>
+                        <button class="remove-tag" data-type="subject" data-value="${subject}">×</button>
+                    `;
+                    selectedTagsContainer.appendChild(tagElement);
+                });
+                
+                // 添加功能标签
+                selectedFunctions.forEach(func => {
+                    const tagElement = document.createElement('div');
+                    tagElement.className = 'selected-tag';
+                    tagElement.innerHTML = `
+                        <span>${func}</span>
+                        <button class="remove-tag" data-type="function" data-value="${func}">×</button>
+                    `;
+                    selectedTagsContainer.appendChild(tagElement);
+                });
+                
+                // 为删除按钮添加事件
+                document.querySelectorAll('.remove-tag').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const type = this.dataset.type;
+                        const value = this.dataset.value;
+                        
+                        if (type === 'subject') {
+                            const index = selectedSubjects.indexOf(value);
+                            if (index !== -1) {
+                                selectedSubjects.splice(index, 1);
+                            }
+                        } else if (type === 'function') {
+                            const index = selectedFunctions.indexOf(value);
+                            if (index !== -1) {
+                                selectedFunctions.splice(index, 1);
+                            }
+                        }
+                        
+                        updateSelectedCount();
+                        updateSelectedTagsDisplay();
+                        filterTools();
+                    });
+                });
             }
         });
     </script>
