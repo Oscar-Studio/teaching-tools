@@ -42,7 +42,7 @@
       "name": "句子成分分析",
       "description": "分析输入句子的成分",
       "tags": ["分析"],
-      "subject": ["物语文"],
+      "subject": ["语文"],
       "icon": "📊",
       "featured": false
     }
