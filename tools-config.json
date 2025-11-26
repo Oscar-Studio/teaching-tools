@@ -38,6 +38,13 @@
       "subject": ["物理"],
       "icon": "📊",
       "featured": true
+    },{
+      "name": "句子成分分析",
+      "description": "分析输入句子的成分",
+      "tags": ["分析"],
+      "subject": ["物语文"],
+      "icon": "📊",
+      "featured": false
     }
   ]
 }
