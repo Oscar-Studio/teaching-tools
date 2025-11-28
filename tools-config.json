@@ -46,10 +46,17 @@
       "icon": "📊",
       "featured": false
     },{
-      "name": "中文句子成分分析",
+      "name": "语文句子成分分析",
       "description": "使用DeepSeek API 分析输入的中文句子的成分",
       "tags": ["语法"],
       "subject": ["语文"],
+      "icon": "📊",
+      "featured": true
+    },{
+      "name": "数据统计PRO",
+      "description": "更高级的数据统计功能",
+      "tags": ["统计", "图像"],
+      "subject": ["数学"],
       "icon": "📊",
       "featured": true
     }
