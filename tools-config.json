@@ -59,7 +59,7 @@
       "subject": ["数学"],
       "icon": "📊",
       "featured": true
-    }{
+    },{
       "name": "化学方程式配平",
       "description": "使用AI配平输入的化学方程式",
       "tags": ["配平", "AI"],
