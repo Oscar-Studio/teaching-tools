@@ -1,76 +1,92 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据分位数计算与箱线图</title>
     <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-color: var(--light-color);
             min-height: 100vh;
             padding: 20px;
-            color: #333;
+            color: var(--dark-color);
         }
-        
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background-color: white;
+            background-color: var(--card-bg);
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--card-shadow);
             padding: 30px;
+            border: var(--card-border);
         }
-        
+
         h1 {
             text-align: center;
             margin-bottom: 20px;
-            color: #2c3e50;
+            color: var(--secondary-color);
             font-weight: 600;
         }
-        
+
         .description {
             text-align: center;
             margin-bottom: 30px;
-            color: #7f8c8d;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
-        
+
         .input-section {
             margin-bottom: 30px;
         }
-        
+
         textarea {
             width: 100%;
             height: 150px;
             padding: 15px;
-            border: 1px solid #ddd;
+            border: 1px solid #30363d;
             border-radius: 5px;
             font-size: 16px;
             resize: vertical;
             transition: border-color 0.3s;
+            background: #161b22;
+            color: var(--dark-color);
         }
-        
+
         textarea:focus {
             outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.2);
         }
-        
+
         .button-container {
             display: flex;
             justify-content: center;
             margin-top: 20px;
         }
-        
+
         button {
-            background-color: #3498db;
+            background-color: var(--primary-color);
             color: white;
             border: none;
             padding: 12px 25px;
@@ -79,86 +95,91 @@
             font-size: 16px;
             transition: background-color 0.3s;
         }
-        
+
         button:hover {
-            background-color: #2980b9;
+            background-color: #1a4a9a;
         }
-        
+
         .results-section {
             margin-top: 30px;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            box-shadow: none;
+            border: 1px solid #30363d;
         }
-        
-        th, td {
+
+        th,
+        td {
             padding: 12px 15px;
             text-align: center;
-            border: 1px solid #ddd;
+            border: 1px solid #30363d;
         }
-        
+
         th {
-            background-color: #f8f9fa;
+            background-color: #161b22;
             font-weight: 600;
+            color: var(--secondary-color);
         }
-        
+
         tr:nth-child(even) {
-            background-color: #f8f9fa;
+            background-color: #161b22;
         }
-        
+
         .chart-container {
             margin-top: 40px;
             text-align: center;
         }
-        
+
         canvas {
             max-width: 100%;
-            background-color: white;
+            background-color: #0d1117;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            box-shadow: none;
+            border: 1px solid #30363d;
         }
-        
+
         .error {
-            color: #e74c3c;
+            color: #ff7b72;
             text-align: center;
             margin-top: 10px;
             font-weight: 500;
         }
-        
+
         .example {
             margin-top: 10px;
             font-size: 14px;
-            color: #7f8c8d;
+            color: var(--text-secondary);
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>数据分位数计算与箱线图</h1>
-        
+
         <p class="description">
             在下方输入框中输入多组数据，每组数据占一行。组内数据可以用逗号、空格或制表符分隔。
             点击"计算分位数"按钮，将显示每组数据的9个分位数，并绘制箱线图。
         </p>
-        
+
         <div class="input-section">
             <textarea id="dataInput" placeholder="例如：
 10, 20, 30, 40, 50, 60, 70, 80, 90, 100
 5 15 25 35 45 55 65 75 85 95
 1.5, 2.3, 4.7, 8.2, 12.6, 18.9, 25.3"></textarea>
             <p class="example">示例数据已填充，您可以直接点击"计算分位数"按钮查看效果</p>
-            
+
             <div class="button-container">
                 <button id="calculateBtn">计算分位数</button>
             </div>
         </div>
-        
+
         <div id="errorMessage" class="error"></div>
-        
+
         <div class="results-section">
             <div id="tableContainer"></div>
             <div class="chart-container">
@@ -168,75 +189,75 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const dataInput = document.getElementById('dataInput');
             const calculateBtn = document.getElementById('calculateBtn');
             const tableContainer = document.getElementById('tableContainer');
             const errorMessage = document.getElementById('errorMessage');
             const boxPlotCanvas = document.getElementById('boxPlot');
             const ctx = boxPlotCanvas.getContext('2d');
-            
+
             // 示例数据
             dataInput.value = "10, 20, 30, 40, 50, 60, 70, 80, 90, 100\n5 15 25 35 45 55 65 75 85 95\n1.5, 2.3, 4.7, 8.2, 12.6, 18.9, 25.3";
-            
+
             // 计算分位数函数
             function calculateQuantiles(data, percentiles) {
                 // 对数据进行排序
                 const sortedData = [...data].sort((a, b) => a - b);
                 const n = sortedData.length;
                 const results = {};
-                
+
                 percentiles.forEach(p => {
                     // 计算分位数位置
                     const pos = (n - 1) * p;
                     const base = Math.floor(pos);
                     const rest = pos - base;
-                    
+
                     if (base + 1 < n) {
                         results[p] = sortedData[base] + rest * (sortedData[base + 1] - sortedData[base]);
                     } else {
                         results[p] = sortedData[base];
                     }
                 });
-                
+
                 return results;
             }
-            
+
             // 解析输入数据
             function parseInputData(input) {
                 const groups = input.trim().split('\n');
                 const datasets = [];
-                
+
                 for (let i = 0; i < groups.length; i++) {
                     const group = groups[i].trim();
                     if (!group) continue;
-                    
+
                     // 使用正则表达式分割数据（支持逗号、空格、制表符）
                     const numbers = group.split(/[,\s\t]+/).map(num => {
                         const parsed = parseFloat(num);
                         if (isNaN(parsed)) {
-                            throw new Error(`第${i+1}组数据包含无效数字: "${num}"`);
+                            throw new Error(`第${i + 1}组数据包含无效数字: "${num}"`);
                         }
                         return parsed;
                     }).filter(num => !isNaN(num));
-                    
+
                     if (numbers.length === 0) {
-                        throw new Error(`第${i+1}组数据不包含有效数字`);
+                        throw new Error(`第${i + 1}组数据不包含有效数字`);
                     }
-                    
+
                     datasets.push({
-                        name: `数据集 ${i+1}`,
+                        name: `数据集 ${i + 1}`,
                         data: numbers
                     });
                 }
-                
+
                 if (datasets.length === 0) {
                     throw new Error('没有找到有效数据');
                 }
-                
+
                 return datasets;
             }
-            
+
             // 绘制箱线图
             function drawBoxPlot(datasets, quantilesData) {
                 const padding = 60;
@@ -245,94 +266,94 @@
                 const datasetCount = datasets.length;
                 const boxWidth = Math.min(60, chartWidth / (datasetCount + 1));
                 const spacing = chartWidth / (datasetCount + 1);
-                
+
                 // 清除画布
                 ctx.clearRect(0, 0, boxPlotCanvas.width, boxPlotCanvas.height);
-                
+
                 if (datasetCount === 0) return;
-                
+
                 // 计算Y轴范围
                 let minVal = Infinity;
                 let maxVal = -Infinity;
-                
+
                 datasets.forEach(dataset => {
                     minVal = Math.min(minVal, ...dataset.data);
                     maxVal = Math.max(maxVal, ...dataset.data);
                 });
-                
+
                 // 扩展范围以提供一些边距
                 const range = maxVal - minVal;
                 minVal -= range * 0.05;
                 maxVal += range * 0.05;
-                
+
                 // 绘制坐标轴
-                ctx.strokeStyle = '#333';
+                ctx.strokeStyle = '#8b949e';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(padding, padding);
                 ctx.lineTo(padding, boxPlotCanvas.height - padding);
                 ctx.lineTo(boxPlotCanvas.width - padding, boxPlotCanvas.height - padding);
                 ctx.stroke();
-                
+
                 // 绘制Y轴刻度
-                ctx.fillStyle = '#333';
+                ctx.fillStyle = '#8b949e';
                 ctx.font = '12px Arial';
                 ctx.textAlign = 'right';
                 ctx.textBaseline = 'middle';
-                
+
                 const yTicks = 5;
                 for (let i = 0; i <= yTicks; i++) {
                     const value = minVal + (maxVal - minVal) * (i / yTicks);
                     const y = boxPlotCanvas.height - padding - (value - minVal) / (maxVal - minVal) * chartHeight;
-                    
+
                     ctx.beginPath();
                     ctx.moveTo(padding - 5, y);
                     ctx.lineTo(padding, y);
                     ctx.stroke();
-                    
+
                     ctx.fillText(value.toFixed(2), padding - 10, y);
                 }
-                
+
                 // 绘制X轴标签
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'top';
-                
+
                 // 绘制每个数据集的箱线图
                 datasets.forEach((dataset, index) => {
                     const x = padding + spacing * (index + 1);
                     const quantiles = quantilesData[index];
-                    
+
                     // 计算Y坐标
                     const q3 = (quantiles[0.75] - minVal) / (maxVal - minVal) * chartHeight;
                     const q1 = (quantiles[0.25] - minVal) / (maxVal - minVal) * chartHeight;
                     const median = (quantiles[0.5] - minVal) / (maxVal - minVal) * chartHeight;
                     const lowerWhisker = (quantiles[0.03] - minVal) / (maxVal - minVal) * chartHeight;
                     const upperWhisker = (quantiles[0.97] - minVal) / (maxVal - minVal) * chartHeight;
-                    
+
                     const yQ3 = boxPlotCanvas.height - padding - q3;
                     const yQ1 = boxPlotCanvas.height - padding - q1;
                     const yMedian = boxPlotCanvas.height - padding - median;
                     const yLowerWhisker = boxPlotCanvas.height - padding - lowerWhisker;
                     const yUpperWhisker = boxPlotCanvas.height - padding - upperWhisker;
-                    
+
                     // 绘制箱线
-                    ctx.strokeStyle = '#3498db';
-                    ctx.fillStyle = 'rgba(52, 152, 219, 0.2)';
+                    ctx.strokeStyle = '#00E5FF';
+                    ctx.fillStyle = 'rgba(42, 92, 170, 0.3)';
                     ctx.lineWidth = 2;
-                    
+
                     // 绘制箱体
-                    ctx.fillRect(x - boxWidth/2, yQ3, boxWidth, yQ1 - yQ3);
-                    ctx.strokeRect(x - boxWidth/2, yQ3, boxWidth, yQ1 - yQ3);
-                    
+                    ctx.fillRect(x - boxWidth / 2, yQ3, boxWidth, yQ1 - yQ3);
+                    ctx.strokeRect(x - boxWidth / 2, yQ3, boxWidth, yQ1 - yQ3);
+
                     // 绘制中位数线
-                    ctx.strokeStyle = '#e74c3c';
+                    ctx.strokeStyle = '#ff7b72';
                     ctx.beginPath();
-                    ctx.moveTo(x - boxWidth/2, yMedian);
-                    ctx.lineTo(x + boxWidth/2, yMedian);
+                    ctx.moveTo(x - boxWidth / 2, yMedian);
+                    ctx.lineTo(x + boxWidth / 2, yMedian);
                     ctx.stroke();
-                    
+
                     // 绘制须线
-                    ctx.strokeStyle = '#3498db';
+                    ctx.strokeStyle = '#00E5FF';
                     ctx.beginPath();
                     // 下须线
                     ctx.moveTo(x, yQ1);
@@ -341,39 +362,39 @@
                     ctx.moveTo(x, yQ3);
                     ctx.lineTo(x, yUpperWhisker);
                     // 须线端点
-                    ctx.moveTo(x - boxWidth/4, yLowerWhisker);
-                    ctx.lineTo(x + boxWidth/4, yLowerWhisker);
-                    ctx.moveTo(x - boxWidth/4, yUpperWhisker);
-                    ctx.lineTo(x + boxWidth/4, yUpperWhisker);
+                    ctx.moveTo(x - boxWidth / 4, yLowerWhisker);
+                    ctx.lineTo(x + boxWidth / 4, yLowerWhisker);
+                    ctx.moveTo(x - boxWidth / 4, yUpperWhisker);
+                    ctx.lineTo(x + boxWidth / 4, yUpperWhisker);
                     ctx.stroke();
-                    
+
                     // 绘制数据集标签
-                    ctx.fillStyle = '#333';
+                    ctx.fillStyle = '#8b949e';
                     ctx.fillText(dataset.name, x, boxPlotCanvas.height - padding + 10);
                 });
-                
+
                 // 添加标题
-                ctx.fillStyle = '#2c3e50';
+                ctx.fillStyle = '#00E5FF';
                 ctx.font = 'bold 16px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText('数据分位数箱线图', boxPlotCanvas.width / 2, padding - 20);
             }
-            
+
             // 生成结果表格
             function generateTable(datasets, quantilesData) {
                 const percentiles = [0.03, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.97];
                 const percentileLabels = ['3%', '5%', '10%', '25%', '50%', '75%', '90%', '95%', '97%'];
-                
+
                 let tableHTML = '<table>';
-                
+
                 // 表头
                 tableHTML += '<thead><tr><th>数据集</th>';
                 percentileLabels.forEach(label => {
                     tableHTML += `<th>${label}分位数</th>`;
                 });
                 tableHTML += '</tr></thead>';
-                
+
                 // 表格内容
                 tableHTML += '<tbody>';
                 datasets.forEach((dataset, index) => {
@@ -384,40 +405,41 @@
                     tableHTML += '</tr>';
                 });
                 tableHTML += '</tbody></table>';
-                
+
                 return tableHTML;
             }
-            
+
             // 计算按钮点击事件
-            calculateBtn.addEventListener('click', function() {
+            calculateBtn.addEventListener('click', function () {
                 try {
                     errorMessage.textContent = '';
-                    
+
                     // 解析输入数据
                     const datasets = parseInputData(dataInput.value);
-                    
+
                     // 计算分位数
                     const percentiles = [0.03, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.97];
-                    const quantilesData = datasets.map(dataset => 
+                    const quantilesData = datasets.map(dataset =>
                         calculateQuantiles(dataset.data, percentiles)
                     );
-                    
+
                     // 生成结果表格
                     tableContainer.innerHTML = generateTable(datasets, quantilesData);
-                    
+
                     // 绘制箱线图
                     drawBoxPlot(datasets, quantilesData);
-                    
+
                 } catch (error) {
                     errorMessage.textContent = '错误: ' + error.message;
                     tableContainer.innerHTML = '';
                     ctx.clearRect(0, 0, boxPlotCanvas.width, boxPlotCanvas.height);
                 }
             });
-            
+
             // 初始计算
             calculateBtn.click();
         });
     </script>
 </body>
+
 </html>
