@@ -1,45 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>英文句子成分分析器</title>
     <script src="https://unpkg.com/compromise"></script>
     <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--light-color);
+            color: var(--dark-color);
         }
+
         .container {
-            background-color: white;
+            background-color: var(--card-bg);
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--card-shadow);
+            border: var(--card-border);
         }
+
         h1 {
-            color: #333;
+            color: var(--secondary-color);
             text-align: center;
             margin-bottom: 30px;
         }
+
         textarea {
             width: 100%;
             height: 120px;
             padding: 15px;
-            border: 2px solid #ddd;
+            border: 1px solid #30363d;
             border-radius: 8px;
             font-size: 16px;
             resize: vertical;
             box-sizing: border-box;
+            background: #161b22;
+            color: var(--dark-color);
         }
+
         textarea:focus {
-            border-color: #4CAF50;
+            border-color: var(--secondary-color);
             outline: none;
         }
+
         button {
-            background-color: #4CAF50;
+            background-color: var(--primary-color);
             color: white;
             border: none;
             padding: 12px 24px;
@@ -50,128 +72,156 @@
             width: 100%;
             transition: background-color 0.3s;
         }
+
         button:hover {
-            background-color: #45a049;
+            background-color: #1a4a9a;
         }
+
         .result-section {
             margin-top: 30px;
             padding: 20px;
-            background-color: #f9f9f9;
+            background-color: #161b22;
             border-radius: 8px;
-            border-left: 4px solid #4CAF50;
+            border-left: 4px solid var(--primary-color);
+            border: 1px solid #30363d;
+            border-left-width: 4px;
         }
+
         .result-item {
             margin: 15px 0;
             padding: 10px;
-            background-color: white;
+            background-color: #0d1117;
             border-radius: 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: none;
+            border: 1px solid #30363d;
         }
+
         .result-title {
             font-weight: bold;
-            color: #333;
+            color: var(--secondary-color);
             margin-bottom: 5px;
         }
+
         .result-content {
-            color: #666;
+            color: var(--text-secondary);
         }
+
         .error {
-            color: #d32f2f;
-            background-color: #ffebee;
+            color: #ff7b72;
+            background-color: rgba(255, 123, 114, 0.1);
             padding: 10px;
             border-radius: 5px;
-            border: 1px solid #ffcdd2;
+            border: 1px solid #ff7b72;
         }
+
         .loading {
-            color: #1976d2;
+            color: var(--secondary-color);
             text-align: center;
             padding: 20px;
         }
+
         .word-tag {
             display: inline-block;
-            background: #e3f2fd;
+            background: #1f2428;
             padding: 2px 8px;
             margin: 2px;
             border-radius: 4px;
             font-size: 12px;
-            color: #1565c0;
+            color: var(--secondary-color);
+            border: 1px solid #30363d;
         }
+
         .tag-item {
             margin: 5px 0;
         }
-        
+
         /* 新增样式：不同句子成分的颜色标记 */
         .highlighted-text {
             font-size: 18px;
             line-height: 1.6;
             padding: 15px;
-            background-color: #f8f9fa;
+            background-color: #161b22;
             border-radius: 8px;
             margin: 20px 0;
+            border: 1px solid #30363d;
         }
-        
+
         .noun {
-            background-color: #ffcdd2; /* 红色 */
+            background-color: rgba(255, 205, 210, 0.1);
+            color: #ffcdd2;
             padding: 2px 4px;
             border-radius: 3px;
             font-weight: bold;
+            border: 1px solid rgba(255, 205, 210, 0.3);
         }
-        
+
         .verb {
-            background-color: #c8e6c9; /* 绿色 */
+            background-color: rgba(200, 230, 201, 0.1);
+            color: #c8e6c9;
             padding: 2px 4px;
             border-radius: 3px;
             font-weight: bold;
+            border: 1px solid rgba(200, 230, 201, 0.3);
         }
-        
+
         .adjective {
-            background-color: #bbdefb; /* 蓝色 */
+            background-color: rgba(187, 222, 251, 0.1);
+            color: #bbdefb;
             padding: 2px 4px;
             border-radius: 3px;
             font-weight: bold;
+            border: 1px solid rgba(187, 222, 251, 0.3);
         }
-        
+
         .adverb {
-            background-color: #e1bee7; /* 紫色 */
+            background-color: rgba(225, 190, 231, 0.1);
+            color: #e1bee7;
             padding: 2px 4px;
             border-radius: 3px;
             font-weight: bold;
+            border: 1px solid rgba(225, 190, 231, 0.3);
         }
-        
+
         .preposition {
-            background-color: #fff9c4; /* 黄色 */
+            background-color: rgba(255, 249, 196, 0.1);
+            color: #fff9c4;
             padding: 2px 4px;
             border-radius: 3px;
             font-weight: bold;
+            border: 1px solid rgba(255, 249, 196, 0.3);
         }
-        
+
         .pronoun {
-            background-color: #ffccbc; /* 橙色 */
+            background-color: rgba(255, 204, 188, 0.1);
+            color: #ffccbc;
             padding: 2px 4px;
             border-radius: 3px;
             font-weight: bold;
+            border: 1px solid rgba(255, 204, 188, 0.3);
         }
-        
+
         .conjunction {
-            background-color: #d7ccc8; /* 棕色 */
+            background-color: rgba(215, 204, 200, 0.1);
+            color: #d7ccc8;
             padding: 2px 4px;
             border-radius: 3px;
             font-weight: bold;
+            border: 1px solid rgba(215, 204, 200, 0.3);
         }
-        
+
         .legend {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin: 15px 0;
         }
-        
+
         .legend-item {
             display: flex;
             align-items: center;
             margin-right: 15px;
         }
-        
+
         .legend-color {
             width: 20px;
             height: 20px;
@@ -180,91 +230,31 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>英文句子成分分析器</h1>
-        <textarea id="textInput" placeholder="请输入英文句子进行分析...">GitHub Pages is a fantastic static site hosting service that quickly deploys your websites.</textarea>
+        <textarea id="textInput"
+            placeholder="请输入英文句子进行分析...">GitHub Pages is a fantastic static site hosting service that quickly deploys your websites.</textarea>
         <button onclick="analyzeText()">分析句子成分</button>
-        
+
         <div id="result" class="result-section">
             <p>分析结果将显示在这里...</p>
         </div>
     </div>
 
     <script>
-    // 检查库是否加载成功
-    function isNlpLoaded() {
-        return typeof window.nlp !== 'undefined';
-    }
-    
-    // 高亮显示句子中的不同成分
-    function highlightSentence(text, doc) {
-        // 创建高亮文本的副本
-        let highlightedText = text;
-        
-        // 获取各种句子成分
-        const nouns = doc.nouns().out('array');
-        const verbs = doc.verbs().out('array');
-        const adjectives = doc.adjectives().out('array');
-        const adverbs = doc.adverbs().out('array');
-        const prepositions = doc.prepositions().out('array');
-        const pronouns = doc.match('#Pronoun').out('array');
-        const conjunctions = doc.conjunctions().out('array');
-        
-        // 为了避免重复标记，先处理较长的短语，再处理单词
-        const components = [
-            { type: 'noun', words: nouns, class: 'noun' },
-            { type: 'verb', words: verbs, class: 'verb' },
-            { type: 'adjective', words: adjectives, class: 'adjective' },
-            { type: 'adverb', words: adverbs, class: 'adverb' },
-            { type: 'preposition', words: prepositions, class: 'preposition' },
-            { type: 'pronoun', words: pronouns, class: 'pronoun' },
-            { type: 'conjunction', words: conjunctions, class: 'conjunction' }
-        ];
-        
-        // 按单词长度降序排列，先处理长短语
-        components.forEach(comp => {
-            comp.words.sort((a, b) => b.length - a.length);
-        });
-        
-        // 标记文本中的各种成分
-        components.forEach(comp => {
-            comp.words.forEach(word => {
-                if (word.trim()) {
-                    // 创建正则表达式，确保只匹配完整的单词
-                    const regex = new RegExp(`\\b${word}\\b`, 'gi');
-                    highlightedText = highlightedText.replace(regex, 
-                        `<span class="${comp.class}">${word}</span>`);
-                }
-            });
-        });
-        
-        return highlightedText;
-    }
-    
-    function analyzeText() {
-        const text = document.getElementById('textInput').value.trim();
-        const resultDiv = document.getElementById('result');
-        
-        // 清空之前的结果
-        resultDiv.innerHTML = '';
-        
-        if (!text) {
-            resultDiv.innerHTML = '<div class="error">请输入英文句子</div>';
-            return;
+        // 检查库是否加载成功
+        function isNlpLoaded() {
+            return typeof window.nlp !== 'undefined';
         }
-        
-        // 检查NLP库是否加载
-        if (!isNlpLoaded()) {
-            resultDiv.innerHTML = '<div class="error">NLP库加载失败，请检查网络连接或刷新页面重试</div>';
-            return;
-        }
-        
-        try {
-            // 使用Compromise进行自然语言处理
-            const doc = window.nlp(text);
-            
-            // 提取各种句子成分
+
+        // 高亮显示句子中的不同成分
+        function highlightSentence(text, doc) {
+            // 创建高亮文本的副本
+            let highlightedText = text;
+
+            // 获取各种句子成分
             const nouns = doc.nouns().out('array');
             const verbs = doc.verbs().out('array');
             const adjectives = doc.adjectives().out('array');
@@ -272,16 +262,78 @@
             const prepositions = doc.prepositions().out('array');
             const pronouns = doc.match('#Pronoun').out('array');
             const conjunctions = doc.conjunctions().out('array');
-            
-            // 获取完整的句子结构分析
-            const sentences = doc.sentences();
-            const sentenceCount = sentences.length;
-            
-            // 构建结果显示
-            let resultHTML = '<h3>句子成分分析结果：</h3>';
-            
-            // 添加图例
-            resultHTML += `
+
+            // 为了避免重复标记，先处理较长的短语，再处理单词
+            const components = [
+                { type: 'noun', words: nouns, class: 'noun' },
+                { type: 'verb', words: verbs, class: 'verb' },
+                { type: 'adjective', words: adjectives, class: 'adjective' },
+                { type: 'adverb', words: adverbs, class: 'adverb' },
+                { type: 'preposition', words: prepositions, class: 'preposition' },
+                { type: 'pronoun', words: pronouns, class: 'pronoun' },
+                { type: 'conjunction', words: conjunctions, class: 'conjunction' }
+            ];
+
+            // 按单词长度降序排列，先处理长短语
+            components.forEach(comp => {
+                comp.words.sort((a, b) => b.length - a.length);
+            });
+
+            // 标记文本中的各种成分
+            components.forEach(comp => {
+                comp.words.forEach(word => {
+                    if (word.trim()) {
+                        // 创建正则表达式，确保只匹配完整的单词
+                        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+                        highlightedText = highlightedText.replace(regex,
+                            `<span class="${comp.class}">${word}</span>`);
+                    }
+                });
+            });
+
+            return highlightedText;
+        }
+
+        function analyzeText() {
+            const text = document.getElementById('textInput').value.trim();
+            const resultDiv = document.getElementById('result');
+
+            // 清空之前的结果
+            resultDiv.innerHTML = '';
+
+            if (!text) {
+                resultDiv.innerHTML = '<div class="error">请输入英文句子</div>';
+                return;
+            }
+
+            // 检查NLP库是否加载
+            if (!isNlpLoaded()) {
+                resultDiv.innerHTML = '<div class="error">NLP库加载失败，请检查网络连接或刷新页面重试</div>';
+                return;
+            }
+
+            try {
+                // 使用Compromise进行自然语言处理
+                const doc = window.nlp(text);
+
+                // 提取各种句子成分
+                const nouns = doc.nouns().out('array');
+                const verbs = doc.verbs().out('array');
+                const adjectives = doc.adjectives().out('array');
+                const adverbs = doc.adverbs().out('array');
+                const prepositions = doc.prepositions().out('array');
+                const pronouns = doc.match('#Pronoun').out('array');
+                const conjunctions = doc.conjunctions().out('array');
+
+                // 获取完整的句子结构分析
+                const sentences = doc.sentences();
+                const sentenceCount = sentences.length;
+
+                // 构建结果显示
+                let resultHTML = '<h3>句子成分分析结果：</h3>';
+
+                // 添加图例
+                resultHTML += `
             <div class="result-item">
                 <div class="result-title">颜色标记图例：</div>
                 <div class="legend">
@@ -294,124 +346,125 @@
                     <div class="legend-item"><span class="legend-color" style="background-color: #d7ccc8;"></span>连词</div>
                 </div>
             </div>`;
-            
-            // 高亮显示的句子
-            const highlightedSentence = highlightSentence(text, doc);
-            resultHTML += `
+
+                // 高亮显示的句子
+                const highlightedSentence = highlightSentence(text, doc);
+                resultHTML += `
             <div class="result-item">
                 <div class="result-title">句子成分标记：</div>
                 <div class="highlighted-text">${highlightedSentence}</div>
             </div>`;
-            
-            // 句子统计
-            resultHTML += `<div class="result-item">
+
+                // 句子统计
+                resultHTML += `<div class="result-item">
                 <div class="result-title">句子统计：</div>
                 <div class="result-content">共 ${sentenceCount} 个句子</div>
             </div>`;
-            
-            // 名词
-            resultHTML += `<div class="result-item">
+
+                // 名词
+                resultHTML += `<div class="result-item">
                 <div class="result-title">名词 (${nouns.length})：</div>
                 <div class="result-content">${nouns.length > 0 ? nouns.join(', ') : '未检测到名词'}</div>
             </div>`;
-            
-            // 动词
-            resultHTML += `<div class="result-item">
+
+                // 动词
+                resultHTML += `<div class="result-item">
                 <div class="result-title">动词 (${verbs.length})：</div>
                 <div class="result-content">${verbs.length > 0 ? verbs.join(', ') : '未检测到动词'}</div>
             </div>`;
-            
-            // 形容词
-            resultHTML += `<div class="result-item">
+
+                // 形容词
+                resultHTML += `<div class="result-item">
                 <div class="result-title">形容词 (${adjectives.length})：</div>
                 <div class="result-content">${adjectives.length > 0 ? adjectives.join(', ') : '未检测到形容词'}</div>
             </div>`;
-            
-            // 副词
-            resultHTML += `<div class="result-item">
+
+                // 副词
+                resultHTML += `<div class="result-item">
                 <div class="result-title">副词 (${adverbs.length})：</div>
                 <div class="result-content">${adverbs.length > 0 ? adverbs.join(', ') : '未检测到副词'}</div>
             </div>`;
-            
-            // 介词
-            resultHTML += `<div class="result-item">
+
+                // 介词
+                resultHTML += `<div class="result-item">
                 <div class="result-title">介词 (${prepositions.length})：</div>
                 <div class="result-content">${prepositions.length > 0 ? prepositions.join(', ') : '未检测到介词'}</div>
             </div>`;
-            
-            // 代词
-            resultHTML += `<div class="result-item">
+
+                // 代词
+                resultHTML += `<div class="result-item">
                 <div class="result-title">代词 (${pronouns.length})：</div>
                 <div class="result-content">${pronouns.length > 0 ? pronouns.join(', ') : '未检测到代词'}</div>
             </div>`;
-            
-            // 连词
-            resultHTML += `<div class="result-item">
+
+                // 连词
+                resultHTML += `<div class="result-item">
                 <div class="result-title">连词 (${conjunctions.length})：</div>
                 <div class="result-content">${conjunctions.length > 0 ? conjunctions.join(', ') : '未检测到连词'}</div>
             </div>`;
-            
-            // 词性标记 - 修复版本
-            resultHTML += `<div class="result-item">
+
+                // 词性标记 - 修复版本
+                resultHTML += `<div class="result-item">
                 <div class="result-title">详细词性分析：</div>
                 <div class="result-content">`;
-            
-            // 修复标签显示问题 - 使用正确的API获取词性标签
-            const terms = doc.json();
-            if (terms && terms.length > 0 && terms[0].terms) {
-                terms[0].terms.forEach(term => {
-                    const termText = term.text || term.normal || '未知词汇';
-                    const tags = term.tags || [];
-                    
-                    // 安全地处理标签显示
-                    let tagDisplay = '未知词性';
-                    if (tags && tags.length > 0) {
-                        // 将标签数组转换为可读字符串
-                        tagDisplay = tags.join(', ');
-                    }
-                    
-                    resultHTML += `<div class="tag-item"><span class="word-tag">${termText}</span>: ${tagDisplay}</div>`;
-                });
-            } else {
-                resultHTML += '<div>无法获取详细词性分析</div>';
-            }
-            
-            resultHTML += `</div></div>`;
-            
-            resultDiv.innerHTML = resultHTML;
-            
-        } catch (error) {
-            console.error('NLP分析错误:', error);
-            resultDiv.innerHTML = `<div class="error">分析过程中出现错误：${error.message}</div>`;
-        }
-    }
-    
-    // 页面加载时检查库状态
-    window.onload = function() {
-        const resultDiv = document.getElementById('result');
-        
-        if (!isNlpLoaded()) {
-            resultDiv.innerHTML = '<div class="loading">正在加载NLP库，请稍候...</div>';
-            // 如果库未加载，尝试重新加载
-            setTimeout(() => {
-                if (isNlpLoaded()) {
-                    analyzeText();
+
+                // 修复标签显示问题 - 使用正确的API获取词性标签
+                const terms = doc.json();
+                if (terms && terms.length > 0 && terms[0].terms) {
+                    terms[0].terms.forEach(term => {
+                        const termText = term.text || term.normal || '未知词汇';
+                        const tags = term.tags || [];
+
+                        // 安全地处理标签显示
+                        let tagDisplay = '未知词性';
+                        if (tags && tags.length > 0) {
+                            // 将标签数组转换为可读字符串
+                            tagDisplay = tags.join(', ');
+                        }
+
+                        resultHTML += `<div class="tag-item"><span class="word-tag">${termText}</span>: ${tagDisplay}</div>`;
+                    });
                 } else {
-                    resultDiv.innerHTML = '<div class="error">NLP库加载失败，请刷新页面重试</div>';
+                    resultHTML += '<div>无法获取详细词性分析</div>';
                 }
-            }, 2000);
-        } else {
-            // 库已加载，直接分析
-            analyzeText();
+
+                resultHTML += `</div></div>`;
+
+                resultDiv.innerHTML = resultHTML;
+
+            } catch (error) {
+                console.error('NLP分析错误:', error);
+                resultDiv.innerHTML = `<div class="error">分析过程中出现错误：${error.message}</div>`;
+            }
         }
-    };
-    
-    // 添加键盘快捷键支持
-    document.getElementById('textInput').addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === 'Enter') {
-            analyzeText();
-        }
-    });
+
+        // 页面加载时检查库状态
+        window.onload = function () {
+            const resultDiv = document.getElementById('result');
+
+            if (!isNlpLoaded()) {
+                resultDiv.innerHTML = '<div class="loading">正在加载NLP库，请稍候...</div>';
+                // 如果库未加载，尝试重新加载
+                setTimeout(() => {
+                    if (isNlpLoaded()) {
+                        analyzeText();
+                    } else {
+                        resultDiv.innerHTML = '<div class="error">NLP库加载失败，请刷新页面重试</div>';
+                    }
+                }, 2000);
+            } else {
+                // 库已加载，直接分析
+                analyzeText();
+            }
+        };
+
+        // 添加键盘快捷键支持
+        document.getElementById('textInput').addEventListener('keydown', function (e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                analyzeText();
+            }
+        });
     </script>
 </body>
+
 </html>
