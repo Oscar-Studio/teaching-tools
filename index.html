@@ -1,224 +1,233 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTML教学工具集</title>
     <style>
         :root {
-            --primary-color: #4e54c8;
-            --secondary-color: #8f94fb;
-            --accent-color: #6c63ff;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
             --success-color: #28a745;
-            --card-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
             --transition: all 0.3s ease;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', sans-serif;
         }
-        
+
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-color: var(--light-color);
             color: var(--dark-color);
             line-height: 1.6;
             min-height: 100vh;
         }
-        
+
         .container {
             width: 90%;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
-        
+
         header {
             text-align: center;
-            padding: 40px 0 20px;
+            padding: 40px 0;
         }
-        
+
         header h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
             color: var(--primary-color);
             background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        
+
         header p {
-            font-size: 1.2rem;
-            color: #666;
-            max-width: 700px;
-            margin: 0 auto 20px;
-        }
-        
-        .search-container {
+            color: #8b949e;
+            font-size: 1.1rem;
             max-width: 600px;
             margin: 0 auto 30px;
-            position: relative;
         }
-        
+
+        .search-container {
+            margin-bottom: 30px;
+            position: relative;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         .search-container input {
             width: 100%;
-            padding: 15px 20px;
-            border: none;
-            border-radius: 50px;
-            box-shadow: var(--card-shadow);
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 1px solid #30363d;
+            background: #161b22;
+            color: var(--dark-color);
             font-size: 1rem;
             outline: none;
             transition: var(--transition);
         }
-        
+
         .search-container input:focus {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
         }
-        
+
         .category-selector {
             display: flex;
             justify-content: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
             gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
         }
-        
+
         .category-btn {
-            padding: 12px 25px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+            background: #161b22;
+            color: #8b949e;
             cursor: pointer;
             transition: var(--transition);
-            font-weight: 500;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 8px;
-            white-space: nowrap;
         }
-        
-        .category-btn:hover {
-            background: #5a6268;
-        }
-        
-        .category-btn .selected-count {
+
+        .category-btn:hover,
+        .category-btn.active {
             background: var(--primary-color);
             color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border-color: var(--primary-color);
+        }
+
+        .selected-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 10px;
             font-size: 0.8rem;
         }
-        
+
         .selected-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
+            margin-top: 15px;
             justify-content: center;
-            align-items: center;
+            min-height: 30px;
         }
-        
+
         .selected-tag {
+            background: rgba(42, 92, 170, 0.2);
+            border: 1px solid var(--primary-color);
+            color: var(--secondary-color);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 8px;
-            background: var(--primary-color);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        
-        .selected-tag .remove-tag {
+
+        .remove-tag {
             background: none;
             border: none;
-            color: white;
+            color: var(--secondary-color);
             cursor: pointer;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            transition: var(--transition);
+            font-size: 1.2rem;
+            line-height: 1;
         }
-        
-        .selected-tag .remove-tag:hover {
-            background: rgba(255,255,255,0.2);
+
+        .remove-tag:hover {
+            color: white;
         }
-        
+
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 25px;
-            margin-bottom: 40px;
         }
-        
+
         .tool-card {
-            background: white;
-            border-radius: 15px;
+            background: var(--card-bg);
+            border-radius: 10px;
             overflow: hidden;
             box-shadow: var(--card-shadow);
             transition: var(--transition);
+            border: var(--card-border);
+            display: flex;
+            flex-direction: column;
             position: relative;
         }
-        
+
         .tool-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+            border-color: var(--secondary-color);
         }
-        
+
         .tool-icon {
-            height: 150px;
+            height: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
             font-size: 3rem;
+            border-bottom: 1px solid #30363d;
         }
-        
+
         .tool-content {
             padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
-        
+
         .tool-content h3 {
             margin-bottom: 10px;
             color: var(--dark-color);
+            font-size: 1.2rem;
         }
-        
+
         .tool-content p {
-            color: #666;
+            color: #8b949e;
+            font-size: 0.9rem;
             margin-bottom: 15px;
-            font-size: 0.95rem;
+            flex-grow: 1;
+            line-height: 1.5;
         }
-        
+
         .tool-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
             margin-bottom: 15px;
         }
-        
+
         .tool-tag {
-            background: #e9ecef;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            color: #495057;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            background: #161b22;
+            color: #8b949e;
+            border-radius: 4px;
+            border: 1px solid #30363d;
         }
-        
+
         .btn {
             display: inline-block;
             padding: 10px 20px;
@@ -232,29 +241,39 @@
             transition: var(--transition);
             text-align: center;
         }
-        
+
         .btn:hover {
             background: var(--secondary-color);
             transform: translateY(-2px);
         }
-        
+
         .btn-block {
             display: block;
             width: 100%;
         }
-        
+
+        .btn-secondary {
+            background: #30363d;
+            color: #c9d1d9;
+        }
+
+        .btn-secondary:hover {
+            background: #8b949e;
+            color: white;
+        }
+
         footer {
             text-align: center;
             padding: 20px 0;
-            color: #666;
-            border-top: 1px solid rgba(0,0,0,0.1);
+            color: #8b949e;
+            border-top: 1px solid #30363d;
             margin-top: 30px;
         }
-        
+
         .featured {
             border: 2px solid var(--accent-color);
         }
-        
+
         .featured-badge {
             position: absolute;
             top: 10px;
@@ -266,37 +285,37 @@
             font-size: 0.8rem;
             font-weight: bold;
         }
-        
+
         .no-results {
             grid-column: 1 / -1;
             text-align: center;
             padding: 40px;
-            color: #666;
+            color: #8b949e;
             font-size: 1.2rem;
         }
-        
+
         .loading {
             text-align: center;
             padding: 40px;
             color: var(--primary-color);
             font-size: 1.2rem;
         }
-        
+
         .error {
             text-align: center;
             padding: 40px;
             color: #dc3545;
             font-size: 1.2rem;
         }
-        
-        /* 模态框样式 */
+
+        /* Modal Styles */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -304,138 +323,141 @@
             opacity: 0;
             visibility: hidden;
             transition: var(--transition);
+            backdrop-filter: blur(5px);
         }
-        
+
         .modal-overlay.active {
             opacity: 1;
             visibility: visible;
         }
-        
+
         .modal {
-            background: white;
-            border-radius: 15px;
+            background: var(--card-bg);
             width: 90%;
             max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            transform: translateY(-20px);
-            transition: var(--transition);
+            border-radius: 10px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
         }
-        
-        .modal-overlay.active .modal {
-            transform: translateY(0);
-        }
-        
+
         .modal-header {
             padding: 20px;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #30363d;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .modal-header h2 {
             color: var(--dark-color);
+            font-size: 1.5rem;
         }
-        
+
         .close-btn {
             background: none;
             border: none;
-            font-size: 1.5rem;
+            color: #8b949e;
+            font-size: 2rem;
             cursor: pointer;
-            color: #6c757d;
+            transition: var(--transition);
+            line-height: 1;
         }
-        
+
+        .close-btn:hover {
+            color: white;
+        }
+
         .modal-body {
             padding: 20px;
+            overflow-y: auto;
         }
-        
+
         .category-section {
             margin-bottom: 25px;
         }
-        
+
         .category-section h3 {
+            color: var(--secondary-color);
             margin-bottom: 15px;
-            color: var(--primary-color);
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 8px;
+            font-size: 1.1rem;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 10px;
         }
-        
+
         .category-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
         }
-        
+
         .category-tag {
-            padding: 8px 15px;
-            background: #e9ecef;
-            border-radius: 30px;
+            padding: 8px 16px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            color: #8b949e;
             cursor: pointer;
             transition: var(--transition);
-            user-select: none;
+            font-size: 0.9rem;
         }
-        
+
         .category-tag:hover {
-            background: #dee2e6;
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
         }
-        
+
         .category-tag.selected {
             background: var(--primary-color);
             color: white;
+            border-color: var(--primary-color);
         }
-        
+
         .modal-footer {
             padding: 20px;
-            border-top: 1px solid #e9ecef;
+            border-top: 1px solid #30363d;
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
+            gap: 15px;
         }
-        
-        .btn-secondary {
-            background: #6c757d;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
+
         @media (max-width: 768px) {
             .tools-grid {
                 grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             }
-            
+
             header h1 {
                 font-size: 2rem;
             }
-            
+
             .modal {
                 width: 95%;
             }
-            
+
             .category-selector {
                 flex-direction: column;
                 align-items: center;
             }
-            
+
             .selected-tags {
                 justify-content: center;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
             <h1>HTML教学工具集</h1>
             <p>探索各种HTML演示工具，点击卡片进入相应的演示页面，学习并实践HTML技术</p>
-            
+
             <div class="search-container">
                 <input type="text" id="searchInput" placeholder="搜索工具...">
             </div>
-            
+
             <div class="category-selector">
                 <button class="category-btn" id="categorySelector">
                     <span>请选择标签</span>
@@ -446,13 +468,13 @@
                 </div>
             </div>
         </header>
-        
+
         <main>
             <div class="tools-grid" id="toolsGrid">
                 <!-- 工具卡片将通过JavaScript动态生成 -->
             </div>
         </main>
-        
+
         <footer>
             <p>HTML教学工具集 &copy; 2025 - Designed by Oscar</p>
         </footer>
@@ -488,7 +510,7 @@
 
     <script>
         // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const toolsGrid = document.getElementById('toolsGrid');
             const searchInput = document.getElementById('searchInput');
             const categorySelector = document.getElementById('categorySelector');
@@ -500,26 +522,26 @@
             const applySelection = document.getElementById('applySelection');
             const selectedCount = document.getElementById('selectedCount');
             const selectedTagsContainer = document.getElementById('selectedTags');
-            
+
             // 存储工具数据
             let tools = [];
             // 存储当前选中的标签
             let selectedSubjects = [];
             let selectedFunctions = [];
-            
+
             // 预定义的学科列表
             const predefinedSubjects = [
-                '语文', '数学', '英语', '物理', '化学', 
+                '语文', '数学', '英语', '物理', '化学',
                 '生物', '地理', '历史', '道法'
             ];
-            
+
             // 加载工具配置
             loadToolsConfig();
-            
+
             // 从配置文件加载工具数据
             function loadToolsConfig() {
                 toolsGrid.innerHTML = '<p class="loading">正在加载工具配置...</p>';
-                
+
                 fetch('tools-config.json')
                     .then(response => {
                         if (!response.ok) {
@@ -536,29 +558,29 @@
                         toolsGrid.innerHTML = '<p class="error">加载工具配置失败，请检查配置文件是否存在</p>';
                     });
             }
-            
+
             // 初始化页面
             function initPage() {
                 // 渲染工具卡片
                 renderTools(tools);
-                
+
                 // 设置搜索功能
                 setupSearch();
-                
+
                 // 设置分类模态框
                 setupCategoryModal();
-                
+
                 // 更新选择计数
                 updateSelectedCount();
-                
+
                 // 更新已选标签显示
                 updateSelectedTagsDisplay();
             }
-            
+
             // 生成学科标签
             function generateSubjectTags() {
                 let subjectTagsHTML = '';
-                
+
                 predefinedSubjects.forEach(subject => {
                     const isSelected = selectedSubjects.includes(subject);
                     subjectTagsHTML += `
@@ -567,10 +589,10 @@
                         </div>
                     `;
                 });
-                
+
                 subjectTags.innerHTML = subjectTagsHTML;
             }
-            
+
             // 生成功能标签
             function generateFunctionTags() {
                 // 获取所有功能标签
@@ -580,12 +602,12 @@
                         tool.tags.forEach(tag => allFunctions.add(tag));
                     }
                 });
-                
+
                 // 按字母顺序排序
                 const sortedFunctions = Array.from(allFunctions).sort();
-                
+
                 let functionTagsHTML = '';
-                
+
                 sortedFunctions.forEach(func => {
                     const isSelected = selectedFunctions.includes(func);
                     functionTagsHTML += `
@@ -594,39 +616,39 @@
                         </div>
                     `;
                 });
-                
+
                 functionTags.innerHTML = functionTagsHTML;
             }
-            
+
             // 渲染工具卡片
             function renderTools(toolsToRender) {
                 toolsGrid.innerHTML = '';
-                
+
                 if (toolsToRender.length === 0) {
                     toolsGrid.innerHTML = '<p class="no-results">没有找到匹配的工具</p>';
                     return;
                 }
-                
+
                 toolsToRender.forEach(tool => {
                     const toolCard = document.createElement('div');
                     toolCard.className = 'tool-card';
                     if (tool.featured) {
                         toolCard.classList.add('featured');
                     }
-                    
+
                     // 生成工具链接，使用工具名称作为文件名
                     const demoUrl = `${tool.name}.html`;
-                    
+
                     // 生成学科标签HTML
-                    const subjectTagsHTML = tool.subject && tool.subject.length > 0 
+                    const subjectTagsHTML = tool.subject && tool.subject.length > 0
                         ? tool.subject.map(subject => `<span class="tool-tag">${subject}</span>`).join('')
                         : '';
-                    
+
                     // 生成功能标签HTML
-                    const functionTagsHTML = tool.tags && tool.tags.length > 0 
+                    const functionTagsHTML = tool.tags && tool.tags.length > 0
                         ? tool.tags.map(tag => `<span class="tool-tag">${tag}</span>`).join('')
                         : '';
-                    
+
                     toolCard.innerHTML = `
                         ${tool.featured ? '<span class="featured-badge">推荐</span>' : ''}
                         <div class="tool-icon">
@@ -640,73 +662,73 @@
                             <a href="${demoUrl}" class="btn btn-block">进入演示</a>
                         </div>
                     `;
-                    
+
                     toolsGrid.appendChild(toolCard);
                 });
             }
-            
+
             // 过滤工具
             function filterTools() {
                 let filteredTools = tools;
-                
+
                 // 根据搜索词过滤
                 const searchTerm = searchInput.value.toLowerCase();
                 if (searchTerm) {
-                    filteredTools = filteredTools.filter(tool => 
-                        tool.name.toLowerCase().includes(searchTerm) || 
+                    filteredTools = filteredTools.filter(tool =>
+                        tool.name.toLowerCase().includes(searchTerm) ||
                         tool.description.toLowerCase().includes(searchTerm) ||
                         (tool.subject && tool.subject.some(subject => subject.toLowerCase().includes(searchTerm))) ||
                         (tool.tags && tool.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
                     );
                 }
-                
+
                 // 根据学科标签过滤
                 if (selectedSubjects.length > 0) {
-                    filteredTools = filteredTools.filter(tool => 
+                    filteredTools = filteredTools.filter(tool =>
                         tool.subject && tool.subject.some(subject => selectedSubjects.includes(subject))
                     );
                 }
-                
+
                 // 根据功能标签过滤
                 if (selectedFunctions.length > 0) {
-                    filteredTools = filteredTools.filter(tool => 
+                    filteredTools = filteredTools.filter(tool =>
                         tool.tags && tool.tags.some(tag => selectedFunctions.includes(tag))
                     );
                 }
-                
+
                 renderTools(filteredTools);
             }
-            
+
             // 设置搜索功能
             function setupSearch() {
-                searchInput.addEventListener('input', function() {
+                searchInput.addEventListener('input', function () {
                     filterTools();
                 });
             }
-            
+
             // 设置分类模态框
             function setupCategoryModal() {
                 // 打开模态框
-                categorySelector.addEventListener('click', function() {
+                categorySelector.addEventListener('click', function () {
                     generateSubjectTags();
                     generateFunctionTags();
                     categoryModal.classList.add('active');
                 });
-                
+
                 // 关闭模态框
-                closeModal.addEventListener('click', function() {
+                closeModal.addEventListener('click', function () {
                     categoryModal.classList.remove('active');
                 });
-                
+
                 // 点击模态框外部关闭
-                categoryModal.addEventListener('click', function(e) {
+                categoryModal.addEventListener('click', function (e) {
                     if (e.target === categoryModal) {
                         categoryModal.classList.remove('active');
                     }
                 });
-                
+
                 // 选择学科标签
-                subjectTags.addEventListener('click', function(e) {
+                subjectTags.addEventListener('click', function (e) {
                     if (e.target.classList.contains('category-tag')) {
                         const subject = e.target.dataset.subject;
                         toggleSelection(selectedSubjects, subject);
@@ -714,9 +736,9 @@
                         updateSelectedCount();
                     }
                 });
-                
+
                 // 选择功能标签
-                functionTags.addEventListener('click', function(e) {
+                functionTags.addEventListener('click', function (e) {
                     if (e.target.classList.contains('category-tag')) {
                         const func = e.target.dataset.function;
                         toggleSelection(selectedFunctions, func);
@@ -724,9 +746,9 @@
                         updateSelectedCount();
                     }
                 });
-                
+
                 // 重置选择
-                resetSelection.addEventListener('click', function() {
+                resetSelection.addEventListener('click', function () {
                     selectedSubjects = [];
                     selectedFunctions = [];
                     generateSubjectTags();
@@ -734,15 +756,15 @@
                     updateSelectedCount();
                     updateSelectedTagsDisplay();
                 });
-                
+
                 // 应用筛选
-                applySelection.addEventListener('click', function() {
+                applySelection.addEventListener('click', function () {
                     filterTools();
                     categoryModal.classList.remove('active');
                     updateSelectedTagsDisplay();
                 });
             }
-            
+
             // 切换选择状态
             function toggleSelection(selectionArray, item) {
                 const index = selectionArray.indexOf(item);
@@ -752,17 +774,17 @@
                     selectionArray.splice(index, 1);
                 }
             }
-            
+
             // 更新选择计数
             function updateSelectedCount() {
                 const totalSelected = selectedSubjects.length + selectedFunctions.length;
                 selectedCount.textContent = totalSelected;
             }
-            
+
             // 更新已选标签显示
             function updateSelectedTagsDisplay() {
                 selectedTagsContainer.innerHTML = '';
-                
+
                 // 添加学科标签
                 selectedSubjects.forEach(subject => {
                     const tagElement = document.createElement('div');
@@ -773,7 +795,7 @@
                     `;
                     selectedTagsContainer.appendChild(tagElement);
                 });
-                
+
                 // 添加功能标签
                 selectedFunctions.forEach(func => {
                     const tagElement = document.createElement('div');
@@ -784,13 +806,13 @@
                     `;
                     selectedTagsContainer.appendChild(tagElement);
                 });
-                
+
                 // 为删除按钮添加事件
                 document.querySelectorAll('.remove-tag').forEach(button => {
-                    button.addEventListener('click', function() {
+                    button.addEventListener('click', function () {
                         const type = this.dataset.type;
                         const value = this.dataset.value;
-                        
+
                         if (type === 'subject') {
                             const index = selectedSubjects.indexOf(value);
                             if (index !== -1) {
@@ -802,7 +824,7 @@
                                 selectedFunctions.splice(index, 1);
                             }
                         }
-                        
+
                         updateSelectedCount();
                         updateSelectedTagsDisplay();
                         filterTools();
@@ -812,4 +834,5 @@
         });
     </script>
 </body>
+
 </html>
