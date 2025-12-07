@@ -97,6 +97,32 @@
             background-color: transparent;
         }
 
+        .keyboard-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 40px;
+            /* Positioned to the left of sound-btn */
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s;
+            height: auto;
+            width: auto;
+        }
+
+        .keyboard-btn:hover {
+            color: #fff;
+        }
+
+        .keyboard-btn.disabled {
+            color: #ff6b6b;
+            /* Red when disabled */
+            text-decoration: line-through;
+        }
+
         /* Input/Keypad Area */
         .keypad {
             padding: 15px;
@@ -189,6 +215,7 @@
     <div class="calculator">
         <div class="display-container">
             <textarea id="display" placeholder="0" spellcheck="false"></textarea>
+            <button class="keyboard-btn" onclick="toggleKeyboard()" title="禁用/启用键盘输入">⌨️</button>
             <button class="sound-btn" onclick="speak()" title="朗读">🔊</button>
         </div>
         <div class="keypad">
@@ -460,6 +487,25 @@
             }
             // Allow arrows and standard input
         });
+
+        // Toggle Keyboard Input
+        function toggleKeyboard() {
+            const btn = document.querySelector('.keyboard-btn');
+            if (display.hasAttribute('readonly')) {
+                // Enable keyboard
+                display.removeAttribute('readonly');
+                btn.classList.remove('disabled');
+                btn.title = "禁用键盘输入";
+                display.focus();
+            } else {
+                // Disable keyboard
+                display.setAttribute('readonly', 'true');
+                btn.classList.add('disabled');
+                btn.title = "启用键盘输入";
+                // Keep focus so cursor is visible, but keyboard won't pop up on mobile
+                display.focus();
+            }
+        }
     </script>
 
 </body>
