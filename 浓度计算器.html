@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浓度计算器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+            --success-color: #238636;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 40px;
+            border: var(--card-border);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--secondary-color);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .description {
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .calculator-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Row Styles */
+        .calc-row {
+            display: grid;
+            grid-template-columns: 140px 1fr 1fr;
+            gap: 20px;
+            align-items: center;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #161b22;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .calc-row:hover {
+            border-color: #30363d;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .calc-row.result-row {
+            background-color: rgba(42, 92, 170, 0.1);
+            border: 1px solid rgba(42, 92, 170, 0.3);
+            margin-top: 10px;
+        }
+
+        /* Label Styles */
+        .row-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .row-label i {
+            color: var(--secondary-color);
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Input Group Styles */
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            padding-right: 45px;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: var(--dark-color);
+            font-size: 16px;
+            transition: all 0.3s;
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(42, 92, 170, 0.3);
+        }
+
+        .unit {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        /* Lock Button */
+        .lock-btn {
+            background: none;
+            border: none;
+            color: #30363d;
+            cursor: pointer;
+            padding: 8px;
+            margin-left: 8px;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .lock-btn:hover {
+            color: var(--text-secondary);
+        }
+
+        .lock-btn.locked {
+            color: var(--secondary-color);
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 20px;
+            margin: -10px 0;
+            z-index: 1;
+        }
+
+        .grid-header {
+            display: grid;
+            grid-template-columns: 140px 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 10px;
+            padding: 0 20px;
+        }
+
+        .col-header {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .calc-row,
+            .grid-header {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .grid-header {
+                display: none;
+            }
+
+            .row-label {
+                margin-bottom: -5px;
+            }
+
+            .lock-btn {
+                position: absolute;
+                right: -35px;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+
+            .input-group {
+                margin-right: 35px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><i class="fas fa-flask"></i> 浓度计算器</h1>
+        <p class="description">
+            调整任意溶液的质量或浓度，其他数值将自动平衡。点击锁形图标 <i class="fas fa-lock-open" style="font-size: 12px;"></i> 可锁定数值不随自动计算改变。
+            <br>适用于：稀释、浓缩、混合等场景。
+        </p>
+
+        <div class="grid-header">
+            <div></div>
+            <div class="col-header"><i class="fas fa-weight-hanging"></i> 溶液质量</div>
+            <div class="col-header"><i class="fas fa-percentage"></i> 溶质浓度</div>
+        </div>
+
+        <div class="calculator-grid">
+            <!-- Row 1: Original Solution -->
+            <div class="calc-row" data-type="A">
+                <div class="row-label">
+                    <i class="fas fa-arrow-right"></i> 原溶液 (A)
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" id="massA" step="any" value="100" placeholder="0">
+                        <span class="unit">g</span>
+                    </div>
+                    <button class="lock-btn" id="lockMassA" title="锁定质量"><i class="fas fa-lock-open"></i></button>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" id="concA" step="any" value="20" placeholder="0">
+                        <span class="unit">%</span>
+                    </div>
+                    <button class="lock-btn" id="lockConcA" title="锁定浓度"><i class="fas fa-lock-open"></i></button>
+                </div>
+            </div>
+
+            <!-- Plus Sign -->
+            <div class="divider">
+                <i class="fas fa-plus"></i>
+            </div>
+
+            <!-- Row 2: Added Solution -->
+            <div class="calc-row" data-type="B">
+                <div class="row-label">
+                    <i class="fas fa-tint"></i> 加入溶液 (B)
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" id="massB" step="any" value="100" placeholder="0">
+                        <span class="unit">g</span>
+                    </div>
+                    <button class="lock-btn" id="lockMassB" title="锁定质量"><i class="fas fa-lock-open"></i></button>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" id="concB" step="any" value="0" placeholder="0">
+                        <span class="unit">%</span>
+                    </div>
+                    <button class="lock-btn" id="lockConcB" title="锁定浓度"><i class="fas fa-lock-open"></i></button>
+                </div>
+            </div>
+
+            <!-- Equals Sign -->
+            <div class="divider">
+                <i class="fas fa-equals"></i>
+            </div>
+
+            <!-- Row 3: Result Solution -->
+            <div class="calc-row result-row" data-type="C">
+                <div class="row-label">
+                    <i class="fas fa-vial"></i> 混合后 (C)
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" id="massC" step="any" value="200" placeholder="0">
+                        <span class="unit">g</span>
+                    </div>
+                    <button class="lock-btn" id="lockMassC" title="锁定质量"><i class="fas fa-lock-open"></i></button>
+                </div>
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="number" id="concC" step="any" value="10" placeholder="0">
+                        <span class="unit">%</span>
+                    </div>
+                    <button class="lock-btn" id="lockConcC" title="锁定浓度"><i class="fas fa-lock-open"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = {
+                massA: document.getElementById('massA'),
+                concA: document.getElementById('concA'),
+                massB: document.getElementById('massB'),
+                concB: document.getElementById('concB'),
+                massC: document.getElementById('massC'),
+                concC: document.getElementById('concC'),
+            };
+
+            const locators = {
+                massA: document.getElementById('lockMassA'),
+                concA: document.getElementById('lockConcA'),
+                massB: document.getElementById('lockMassB'),
+                concB: document.getElementById('lockConcB'),
+                massC: document.getElementById('lockMassC'),
+                concC: document.getElementById('lockConcC'),
+            };
+
+            let locks = {
+                massA: false, concA: false,
+                massB: false, concB: false,
+                massC: false, concC: false
+            };
+
+            // Initialize Locks UI
+            Object.keys(locators).forEach(key => {
+                locators[key].addEventListener('click', () => {
+                    locks[key] = !locks[key];
+                    updateLockUI(key);
+                });
+            });
+
+            function updateLockUI(key) {
+                const btn = locators[key];
+                const icon = btn.querySelector('i');
+                const field = inputs[key];
+
+                if (locks[key]) {
+                    btn.classList.add('locked');
+                    icon.classList.remove('fa-lock-open');
+                    icon.classList.add('fa-lock');
+                    // We don't disable the input, as per "direct input doesn't affect" requirement interpretation
+                    // User can still edit, but auto-calc won't touch it.
+                    field.style.borderColor = 'var(--secondary-color)';
+                } else {
+                    btn.classList.remove('locked');
+                    icon.classList.remove('fa-lock');
+                    icon.classList.add('fa-lock-open');
+                    field.style.borderColor = '#30363d';
+                }
+            }
+
+            // Input handlers
+            Object.keys(inputs).forEach(key => {
+                inputs[key].addEventListener('input', () => solve(key));
+            });
+
+            // Get numeric value or default to 0
+            const val = (key) => parseFloat(inputs[key].value) || 0;
+            // Set value formatted
+            const set = (key, v) => {
+                if (!locks[key]) { // Only set if not locked
+                    // Round to reasonable decimals to avoid floating point errors
+                    inputs[key].value = Math.abs(v) < 0.000001 ? 0 : parseFloat(v.toFixed(6)); // Strip trailing zeros
+                }
+            };
+
+            // Main Solver Logic
+            function solve(trigger) {
+                // Get all current values
+                let mA = val('massA');
+                let cA = val('concA') / 100;
+                let mB = val('massB');
+                let cB = val('concB') / 100;
+                let mC = val('massC');
+                let cC = val('concC') / 100;
+
+                // Determine calculation path based on trigger
+                // Basic equations:
+                // 1. mA + mB = mC
+                // 2. mA*cA + mB*cB = mC*cC
+
+                // Scenario 1: Edited A or B (Inputs) -> Update C (or balance other Input if C is locked)
+                if (['massA', 'concA', 'massB', 'concB'].includes(trigger)) {
+
+                    // Case: C Mass Locked?
+                    if (locks.massC) {
+                        // mC is fixed. 
+                        // If we changed mA, mB must adjust: mB = mC - mA
+                        if (trigger === 'massA') {
+                            mB = mC - mA;
+                            set('massB', mB);
+                        } else if (trigger === 'massB') {
+                            mA = mC - mB;
+                            set('massA', mA);
+                        }
+                        // After adjusting masses, calc new cC
+                        let solute = mA * cA + mB * cB;
+                        let newCc = mC === 0 ? 0 : solute / mC;
+
+                        // Check if cC is locked. If so, we might have a conflict or need to adjust concentrations
+                        if (!locks.concC) {
+                            set('concC', newCc * 100);
+                        } else {
+                            // If cC is locked, we tried to change A/B but result is fixed.
+                            // This implies we need to change the OTHER component's concentration or mass again?
+                            // For simplicity, let's say "Target Concentration Locked" means we solve for the other component's Mass to satisfy Concentration.
+                            // But we just set Mass based on Mass Total Lock. 
+                            // This is over-constrained. We prioritize the Mass Balance updates above.
+                            // Better approach: If cC and mC are locked, we are in "Recipe Mode". 
+                            // Changing mA should calc mB required? We did that.
+                            // Does cC match? Likely not. 
+                            // If we allow cC to drift even if locked (with visual warning)? 
+                            // Or force adjust cB?
+                            // Let's force adjust cB if allowed.
+                            if (!locks.concB && mB !== 0) {
+                                // mA*cA + mB*cB = mC*cC
+                                // mB*cB = mC*cC - mA*cA
+                                // cB = (mC*cC - mA*cA) / mB
+                                let newCb = (mC * cC - mA * cA) / mB;
+                                set('concB', newCb * 100);
+                            }
+                        }
+
+                    } else {
+                        // C Mass NOT locked. Standard forward calculation.
+                        // Calculate mC
+                        mC = mA + mB;
+                        set('massC', mC);
+
+                        // Calculate cC
+                        let solute = mA * cA + mB * cB;
+                        let newCc = mC === 0 ? 0 : solute / mC;
+                        set('concC', newCc * 100);
+                    }
+                }
+
+                // Scenario 2: Edited C (Result) -> Update A and B
+                else if (['massC', 'concC'].includes(trigger)) {
+                    // Changing Result Mass
+                    if (trigger === 'massC') {
+                        // Logic: Distribute change to Unlocked components
+                        let oldTotal = mA + mB; // This is the sum of current A and B inputs
+
+                        // Check locks
+                        if (locks.massA && locks.massB) {
+                            // Both locked: Cannot adjust components to match new Total.
+                            // Revert Total change? Or just do nothing and let it be inconsistent?
+                            // Safest is to revert or visual error. For this simple tool, we'll revert.
+                            // But usually users expect one to break.
+                            // Let's assume if both locked, we do nothing to them.
+                            // The equation mA+mB=mC will be broken visually.
+                            return;
+                        } else if (locks.massA) {
+                            // A locked, B takes all change
+                            // mB = mC - mA
+                            set('massB', mC - mA);
+                        } else if (locks.massB) {
+                            // B locked, A takes all change
+                            set('massA', mC - mB);
+                        } else {
+                            // Neither locked: Scale Proportional
+                            if (mC === 0) return;
+
+                            if (oldTotal === 0) {
+                                // If start from 0, split 50/50
+                                set('massA', mC / 2);
+                                set('massB', mC / 2);
+                            } else {
+                                let ratio = mC / oldTotal;
+                                set('massA', mA * ratio);
+                                set('massB', mB * ratio);
+                            }
+                        }
+                    }
+
+                    // Changing Result Concentration
+                    else if (trigger === 'concC') {
+                        // Logic: Adjust mixing ratio if possible.
+                        // If masses are locked (fixed ratio), adjust component concentration.
+
+                        // Are masses free to move? (Need to keep mTotal constant, so mA and mB move inverse)
+                        // If EITHER is locked, then BOTH are effectively locked for Mass Balancing (since mC is constant input)
+                        let massesLocked = locks.massA || locks.massB;
+
+                        if (!massesLocked) {
+                            // Standard: Adjust Ratio
+                            // mA(cA - cB) = mC(cC - cB)
+                            // Checks for valid solution space
+                            if (Math.abs(cA - cB) > 0.000001) {
+                                let newMa = mC * (cC - cB) / (cA - cB);
+                                let newMb = mC - newMa;
+                                set('massA', newMa);
+                                set('massB', newMb);
+                                return; // Done
+                            }
+                            // If cA == cB, cannot solution by mixing. Fall through to adjust Conc.
+                        }
+
+                        // If we are here, we couldn't adjust Mass Ratio (either locked or cA=cB).
+                        // Try adjusting Concentrations.
+                        // Equation: m A c A + m B c B = m C c C
+                        // Target Solute = mC * cC
+
+                        // Try adjusting B Conc first (unless locked)
+                        if (!locks.concB && mB !== 0) {
+                            // cB = (mC*cC - mA*cA) / mB
+                            let newCb = (mC * cC - mA * cA) / mB;
+                            set('concB', newCb * 100);
+                        }
+                        // Else try adjusting A Conc
+                        else if (!locks.concA && mA !== 0) {
+                            // cA = (mC*cC - mB*cB) / mA
+                            let newCa = (mC * cC - mB * cB) / mA;
+                            set('concA', newCa * 100);
+                        }
+                    }
+                }
+            }
+
+            // Initial trigger to ensure consistency (optional, but good for preset values)
+            // solve('massA'); // Maybe don't auto-solve on load, let the presets sit.
+        });
+    </script>
+</body>
+
+</html>
