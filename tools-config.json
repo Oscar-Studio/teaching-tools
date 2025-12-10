@@ -140,6 +140,18 @@
       ],
       "icon": "📐",
       "featured": true
+    },
+    {
+      "name": "DeepSeek_Launcher",
+      "description": "DeepSeek API Launcher",
+      "tags": [
+        "AI"
+      ],
+      "subject": [
+        "通用"
+      ],
+      "icon": "",
+      "featured": false
     }
   ]
 }
