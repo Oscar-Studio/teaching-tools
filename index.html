@@ -452,7 +452,7 @@
     <div class="container">
         <header>
             <h1>HTML教学工具集</h1>
-            <p>探索各种HTML演示工具，点击卡片进入相应的演示页面，学习并实践HTML技术</p>
+            <p>便于教学的一些HTML小工具</p>
 
             <div class="search-container">
                 <input type="text" id="searchInput" placeholder="搜索工具...">
@@ -551,6 +551,8 @@
                     })
                     .then(data => {
                         tools = data.tools || [];
+                        // Sort tools: featured first
+                        tools.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
                         initPage();
                     })
                     .catch(error => {
