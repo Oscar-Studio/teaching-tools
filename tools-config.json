@@ -127,6 +127,19 @@
       ],
       "icon": "🧪",
       "featured": true
+    },
+    {
+      "name": "Polygon Bloom",
+      "description": "观察多边形边数随时间指数级增长的过程。每秒钟边数乘以倍数。",
+      "tags": [
+        "动画",
+        "图像"
+      ],
+      "subject": [
+        "数学"
+      ],
+      "icon": "📐",
+      "featured": true
     }
   ]
 }
