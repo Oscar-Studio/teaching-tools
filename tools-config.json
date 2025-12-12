@@ -116,6 +116,18 @@
       "featured": true
     },
     {
+      "name": "科学计算器",
+      "description": "简洁好用的科学计算器",
+      "tags": [
+        "计算"
+      ],
+      "subject": [
+        "数学"
+      ],
+      "icon": "🧮",
+      "featured": true
+    },
+    {
       "name": "浓度计算器",
       "description": "计算溶液的浓度或需要的质量",
       "tags": [
