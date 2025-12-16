@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作业管理系统</title>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+            --active-item: rgba(0, 229, 255, 0.2);
+            --selected-item: #238636;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        h1 {
+            color: var(--secondary-color);
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .settings-btn:hover {
+            color: var(--secondary-color);
+        }
+
+        .settings-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Boxes Layout */
+        .boxes-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .boxes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .box-card {
+            background-color: var(--card-bg);
+            border: var(--card-border);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 20px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .box-card:hover {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+        }
+
+        .box-card.active {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+            background-color: #161b22;
+        }
+
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .box-title {
+            font-weight: 600;
+            color: var(--secondary-color);
+            font-size: 18px;
+        }
+
+        .box-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .box-content {
+            flex-grow: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-content: flex-start;
+        }
+
+        /* Student Chips */
+        .student-chip {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .student-chip:hover {
+            background-color: #da3633;
+            border-color: #da3633;
+            color: white;
+        }
+
+        .student-chip.selected-in-box {
+            /* Style for removal hover effect? Or just click to remove */
+        }
+
+        /* Selection Area */
+        .selection-area {
+            background-color: var(--card-bg);
+            border: var(--card-border);
+            border-radius: 10px;
+            padding: 0 20px;
+            margin-top: 0;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease, margin-top 0.4s ease;
+        }
+
+        .selection-area.open {
+            max-height: 600px;
+            /* Arbitrary large height */
+            padding: 20px;
+            opacity: 1;
+            margin-top: 20px;
+            overflow-y: auto;
+        }
+
+        .selection-header {
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .student-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .pool-chip {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        /* Highlight student ONLY if they are in the CURRENT active box */
+        .pool-chip.selected {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pool-chip:hover:not(.selected) {
+            background-color: rgba(42, 92, 170, 0.5);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .control-input {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        .box-list {
+            margin-bottom: 15px;
+        }
+
+        .box-list-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #1a4a9a;
+        }
+
+        .btn-danger {
+            background-color: #da3633;
+        }
+
+        .btn-danger:hover {
+            background-color: #b62324;
+        }
+
+        .btn-secondary {
+            background-color: #30363d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #484f58;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #30363d;
+        }
+
+        .add-box-btn {
+            width: 100%;
+            margin-top: 10px;
+            border: 1px dashed #30363d;
+            background: transparent;
+            color: var(--text-secondary);
+        }
+
+        .add-box-btn:hover {
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
+            background: rgba(0, 229, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>作业管理系统</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="settings-btn" id="soundBtn" title="播报">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z">
+                        </path>
+                    </svg>
+                </button>
+                <button class="settings-btn" id="openSettings" title="设置">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="boxes-grid" id="boxesGrid">
+            <!-- Boxes will be generated here -->
+        </div>
+
+        <div class="selection-area" id="selectionArea">
+            <div class="selection-header" id="selectionStatus">请选择该分组的学生：</div>
+            <div class="student-pool" id="studentPool">
+                <!-- Student chips will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">系统设置</span>
+                <button class="settings-btn" id="closeSettings" style="margin:0;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">学生总数</label>
+                <input type="number" id="settingStudentCount" class="control-input" value="40" min="1">
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">分组管理 (名称)</label>
+                <div id="settingsBoxList" class="box-list">
+                    <!-- Box edit inputs -->
+                </div>
+                <button class="btn add-box-btn" id="addBoxBtn">+ 增加分组</button>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">导入学生名单 (.txt)</label>
+                <input type="file" id="importFile" accept=".txt" class="control-input">
+                <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                    说明：每行一个名字，按行号对应学生ID。
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelSettings">取消</button>
+                <button class="btn" id="saveSettings">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        const state = {
+            totalStudents: 45,
+            studentNames: [], // Array of strings. If empty/short, fallback to numbers.
+            boxes: [
+                { id: 1, name: '未交作业', students: [] },
+                { id: 2, name: '作业优秀', students: [] },
+                { id: 3, name: '需订正', students: [] },
+                { id: 4, name: '小组展示', students: [] }
+            ],
+            activeBoxId: null
+        };
+
+        // DOM Elements
+        const boxesGrid = document.getElementById('boxesGrid');
+        const selectionArea = document.getElementById('selectionArea');
+        const studentPool = document.getElementById('studentPool');
+        const selectionStatus = document.getElementById('selectionStatus');
+        const settingsModal = document.getElementById('settingsModal');
+        const openSettingsBtn = document.getElementById('openSettings');
+        const soundBtn = document.getElementById('soundBtn');
+        const closeSettingsBtn = document.getElementById('closeSettings');
+        const cancelSettingsBtn = document.getElementById('cancelSettings');
+        const saveSettingsBtn = document.getElementById('saveSettings');
+        const addBoxBtn = document.getElementById('addBoxBtn');
+        const settingsBoxList = document.getElementById('settingsBoxList');
+        const settingStudentCount = document.getElementById('settingStudentCount');
+        const importFile = document.getElementById('importFile');
+        let isSpeaking = false;
+
+        // Initialization
+        function init() {
+            loadState(); // In a real app, load from local storage
+            renderBoxes();
+
+            // Event Listeners
+            openSettingsBtn.addEventListener('click', openSettings);
+            soundBtn.addEventListener('click', toggleSpeech);
+            closeSettingsBtn.addEventListener('click', closeSettings);
+            cancelSettingsBtn.addEventListener('click', closeSettings);
+            saveSettingsBtn.addEventListener('click', saveAndCloseSettings);
+            addBoxBtn.addEventListener('click', addBoxSetting);
+
+            // If no names, init with empty array (fallback logic handles numbers)
+            if (state.studentNames.length === 0) {
+                // optionally pre-fill? No, render logic handles it.
+            }
+        }
+
+        // --- Core Logic ---
+
+        function getStudentName(index) {
+            // index is 0-based, student ID logic implies 1-based usually for classroom?
+            // Let's stick to 1-based ID for logic, but array index 0.
+            if (state.studentNames[index]) {
+                return state.studentNames[index];
+            }
+            return (index + 1).toString();
+        }
+
+        function toggleBox(boxId) {
+            if (state.activeBoxId === boxId) {
+                // Collapse
+                state.activeBoxId = null;
+                selectionArea.classList.remove('open');
+                renderBoxes(); // Update active class
+            } else {
+                // Expand
+                state.activeBoxId = boxId;
+                selectionArea.classList.add('open');
+                renderBoxes(); // Update active class
+                renderStudentPool();
+
+                const boxName = state.boxes.find(b => b.id === boxId).name;
+                selectionStatus.textContent = `点击下方学生加入/移除「${boxName}」：`;
+            }
+        }
+
+        function addStudentToBox(boxId, studentIndex) {
+            const box = state.boxes.find(b => b.id === boxId);
+            if (!box.students.includes(studentIndex)) {
+
+                // NEW: Do NOT remove from other boxes.
+                // Students can be in multiple boxes.
+
+                box.students.push(studentIndex);
+                box.students.sort((a, b) => a - b); // Keep sorted
+                saveState(); // Persist
+                renderBoxes();
+                renderStudentPool(); // Update used status
+            } else {
+                // If already in, remove (Toggle)
+                removeStudentFromBox(boxId, studentIndex);
+            }
+        }
+
+        function removeStudentFromBox(boxId, studentIndex) {
+            const box = state.boxes.find(b => b.id === boxId);
+            const idx = box.students.indexOf(studentIndex);
+            if (idx !== -1) {
+                box.students.splice(idx, 1);
+                saveState(); // Persist
+                renderBoxes();
+                renderStudentPool(); // Update used status
+            }
+        }
+
+        // --- Rendering ---
+
+        function renderBoxes() {
+            boxesGrid.innerHTML = '';
+            state.boxes.forEach(box => {
+                const isBoxActive = box.id === state.activeBoxId;
+                const card = document.createElement('div');
+                card.className = `box-card ${isBoxActive ? 'active' : ''}`;
+                card.onclick = (e) => {
+                    // Prevent triggering if clicking a chip inside (removal is handled there)
+                    if (e.target.classList.contains('student-chip')) return;
+                    toggleBox(box.id);
+                };
+
+                const header = document.createElement('div');
+                header.className = 'box-header';
+                header.innerHTML = `
+                    <span class="box-title">${box.name}</span>
+                    <span class="box-count">${box.students.length}人</span>
+                `;
+
+                const content = document.createElement('div');
+                content.className = 'box-content';
+
+                box.students.forEach(studentIdx => {
+                    const chip = document.createElement('div');
+                    chip.className = 'student-chip';
+                    chip.textContent = getStudentName(studentIdx);
+                    chip.title = '点击移除';
+                    chip.onclick = (e) => {
+                        e.stopPropagation(); // Don't toggle box
+                        removeStudentFromBox(box.id, studentIdx);
+                    };
+                    content.appendChild(chip);
+                });
+
+                card.appendChild(header);
+                card.appendChild(content);
+                boxesGrid.appendChild(card);
+            });
+        }
+
+        function renderStudentPool() {
+            studentPool.innerHTML = '';
+            // Check only CURRENT box for selection status
+            const currentBox = state.boxes.find(b => b.id === state.activeBoxId);
+
+            for (let i = 0; i < state.totalStudents; i++) {
+                const chip = document.createElement('div');
+
+                const isInCurrentBox = currentBox && currentBox.students.includes(i);
+
+                let classes = 'pool-chip';
+                if (isInCurrentBox) {
+                    classes += ' selected';
+                }
+
+                chip.className = classes;
+
+                // NEW: Display ID prefix if names are imported
+                // If just numbers, getStudentName returns "1", "2". prefix not needed or would look like "1. 1".
+                // Simple logic: If state.studentNames has content, show "ID. Name".
+                const nameText = getStudentName(i);
+                if (state.studentNames.length > 0 && state.studentNames[i]) {
+                    chip.textContent = `${i + 1}. ${nameText}`;
+                } else {
+                    chip.textContent = nameText;
+                }
+
+                chip.onclick = () => {
+                    if (state.activeBoxId) {
+                        addStudentToBox(state.activeBoxId, i);
+                    }
+                };
+
+                studentPool.appendChild(chip);
+            }
+        }
+
+        // --- Settings Logic ---
+
+        function openSettings() {
+            // Populate fields
+            settingStudentCount.value = state.totalStudents;
+            renderSettingsBoxList();
+            settingsModal.classList.add('open');
+        }
+
+        function closeSettings() {
+            settingsModal.classList.remove('open');
+            importFile.value = ''; // Reset file input
+        }
+
+        function renderSettingsBoxList() {
+            settingsBoxList.innerHTML = '';
+            // Temporary setting state helper
+            const boxesToRender = window.tempBoxes || JSON.parse(JSON.stringify(state.boxes));
+            window.tempBoxes = boxesToRender;
+
+            boxesToRender.forEach((box, idx) => {
+                const row = document.createElement('div');
+                row.className = 'box-list-item';
+
+                const input = document.createElement('input');
+                input.className = 'control-input';
+                input.value = box.name;
+                input.onchange = (e) => { box.name = e.target.value; };
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn btn-danger';
+                delBtn.textContent = '删除';
+                delBtn.onclick = () => {
+                    boxesToRender.splice(idx, 1);
+                    renderSettingsBoxList();
+                };
+
+                row.appendChild(input);
+                row.appendChild(delBtn);
+                settingsBoxList.appendChild(row);
+            });
+        }
+
+        function addBoxSetting() {
+            if (!window.tempBoxes) window.tempBoxes = JSON.parse(JSON.stringify(state.boxes));
+            const newId = Date.now(); // simple ID
+            window.tempBoxes.push({ id: newId, name: '新分组', students: [] });
+            renderSettingsBoxList();
+        }
+
+        async function saveAndCloseSettings() {
+            // 1. Update Student Count
+            const newCount = parseInt(settingStudentCount.value);
+            if (newCount > 0) state.totalStudents = newCount;
+
+            // 2. Update Boxes
+            if (window.tempBoxes) {
+                // Preserve students if box ID exists?
+                // The tempBoxes is a deep copy of structure, but students array within might need preservation logic if we want to keep them?
+                // Actually my settings render logic did a simplistic clone.
+                // Let's match IDs to preserve assignment if possible.
+                const newBoxes = window.tempBoxes.map(tb => {
+                    const existing = state.boxes.find(b => b.id === tb.id);
+                    return {
+                        id: tb.id,
+                        name: tb.name,
+                        students: existing ? existing.students : [] // Preserve assignments
+                    };
+                });
+                state.boxes = newBoxes;
+                window.tempBoxes = null;
+            }
+
+            // 3. Import Names
+            if (importFile.files[0]) {
+                try {
+                    const text = await importFile.files[0].text();
+                    const names = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+                    state.studentNames = names;
+                    // Note: if count < names.length, logic just uses count. 
+                    // If count > names.length, getStudentName will fallback to numbers for index >= names.length.
+                } catch (e) {
+                    alert('读取文件失败');
+                }
+            }
+
+            // Clean assignments if student index is now out of bounds? 
+            // Good to have but maybe optional for MVP. 
+            state.boxes.forEach(b => {
+                b.students = b.students.filter(idx => idx < state.totalStudents);
+            });
+
+            renderBoxes();
+            if (state.activeBoxId) renderStudentPool(); // Refresh pool if open
+            saveState();
+            closeSettings();
+        }
+
+        // --- Persistence (Local Storage) ---
+        function saveState() {
+            localStorage.setItem('homeworkSystemState', JSON.stringify({
+                boxes: state.boxes,
+                totalStudents: state.totalStudents,
+                studentNames: state.studentNames
+            }));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('homeworkSystemState');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state.boxes = parsed.boxes || state.boxes;
+                    state.totalStudents = parsed.totalStudents || state.totalStudents;
+                    state.studentNames = parsed.studentNames || [];
+                } catch (e) {
+                    console.error('State load failed');
+                }
+            }
+        }
+
+
+        // --- Audio Logic ---
+        function toggleSpeech() {
+            if (isSpeaking) {
+                window.speechSynthesis.cancel();
+                isSpeaking = false;
+                soundBtn.style.color = '';
+                return;
+            }
+
+            const queue = [];
+            state.boxes.forEach(box => {
+                if (box.students.length > 0) {
+                    box.students.forEach(studentIdx => {
+                        const name = getStudentName(studentIdx);
+                        const text = `${name}${box.name}`;
+                        queue.push(text);
+                    });
+                }
+            });
+
+            if (queue.length === 0) {
+                alert('当前没有可播报的内容');
+                return;
+            }
+
+            isSpeaking = true;
+            soundBtn.style.color = 'var(--secondary-color)';
+
+            let currentIndex = 0;
+
+            function speakNext() {
+                if (currentIndex >= queue.length || !isSpeaking) {
+                    isSpeaking = false;
+                    soundBtn.style.color = '';
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(queue[currentIndex]);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 1.0;
+
+                utterance.onend = () => {
+                    currentIndex++;
+                    speakNext();
+                };
+
+                utterance.onerror = () => {
+                    isSpeaking = false;
+                    soundBtn.style.color = '';
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+
+            speakNext();
+        }
+
+        // Run
+        init();
+
+    </script>
+</body>
+
+</html>
