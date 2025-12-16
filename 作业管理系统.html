@@ -770,6 +770,7 @@
                         const name = getStudentName(studentIdx);
                         const text = `${name}${box.name}`;
                         queue.push(text);
+                        // queue.push(text);
                     });
                 }
             });
@@ -785,15 +786,21 @@
             let currentIndex = 0;
 
             function speakNext() {
-                if (currentIndex >= queue.length || !isSpeaking) {
-                    isSpeaking = false;
+                if (!isSpeaking) {
                     soundBtn.style.color = '';
                     return;
                 }
 
+                // 如果播完一轮，从头开始循环
+                if (currentIndex >= queue.length) {
+                    currentIndex = 0; // 循环回到开头
+                }
+
                 const utterance = new SpeechSynthesisUtterance(queue[currentIndex]);
                 utterance.lang = 'zh-CN';
-                utterance.rate = 1.0;
+                utterance.rate = 0.8;
+                utterance.pitch = 1.2;
+                utterance.volume = 1.0;
 
                 utterance.onend = () => {
                     currentIndex++;
