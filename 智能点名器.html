@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能点名器</title>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+            --success-color: #2ea043;
+            --danger-color: #da3633;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark-color);
+            overflow: hidden;
+            /* Prevent scrolling during animation */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            padding: 30px;
+            border: var(--card-border);
+            position: relative;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+            font-weight: 600;
+            font-size: 2rem;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background-color: #1a4a9a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(42, 92, 170, 0.1);
+            color: #1a4a9a;
+            border-color: #1a4a9a;
+        }
+
+        .btn-large {
+            padding: 15px 40px;
+            font-size: 20px;
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto;
+        }
+
+        input[type="number"],
+        input[type="file"] {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            color: var(--dark-color);
+            padding: 10px;
+            border-radius: 6px;
+            margin-right: 10px;
+        }
+
+        /* Settings View */
+        #settingsView {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .student-list-container {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #161b22;
+            max-height: 400px;
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .student-item:hover {
+            background-color: #21262d;
+            border-color: var(--secondary-color);
+        }
+
+        .student-item input[type="checkbox"] {
+            cursor: pointer;
+            accent-color: var(--secondary-color);
+            width: 16px;
+            height: 16px;
+        }
+
+        .mode-selection {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+
+        /* Rolling View */
+        #rollingView {
+            display: none;
+            /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            position: relative;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .rolling-display {
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            text-align: center;
+            margin: 50px 0;
+            height: 1.2em;
+            line-height: 1.2em;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            perspective: 1000px;
+        }
+
+        /* Slot machine animation effect */
+        .roller-container {
+            position: relative;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+
+        .roller-item {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backface-visibility: hidden;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .status-message {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            height: 30px;
+        }
+
+        /* Animations */
+        @keyframes blurText {
+            0% {
+                filter: blur(0);
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                filter: blur(5px);
+                opacity: 0.7;
+                transform: scale(0.9);
+            }
+
+            100% {
+                filter: blur(0);
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .rolling-active .roller-item {
+            animation: blurText 0.1s infinite;
+        }
+
+        .result-highlight {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: var(--accent-color);
+            text-shadow: 0 0 20px rgba(106, 0, 255, 0.5);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Settings View -->
+        <div id="settingsView">
+            <h1>智能点名器</h1>
+
+            <div class="control-group">
+                <label>学生人数：</label>
+                <input type="number" id="studentCountInput" min="1" value="40" style="width: 80px;">
+                <button class="btn btn-outline" id="generateBtn">生成列表</button>
+                <div style="flex-grow: 1;"></div>
+                <input type="file" id="fileInput" accept=".txt">
+                <button class="btn btn-outline" id="importBtn"
+                    onclick="document.getElementById('fileInput').click()">导入名单</button>
+            </div>
+
+            <div class="student-list-container">
+                <div class="list-header">
+                    <span>参与名单 (<span id="selectedCount">0</span>/<span id="totalCount">0</span>)</span>
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="selectAllCheckbox" checked> 全选
+                    </label>
+                </div>
+                <div class="student-grid" id="studentGrid">
+                    <!-- Student items will be injected here -->
+                </div>
+            </div>
+
+            <div class="mode-selection">
+                <button class="btn btn-large" id="randomModeBtn">🎲 随机点名</button>
+                <button class="btn btn-large" id="noRepeatModeBtn">🚫 不重复点名</button>
+            </div>
+        </div>
+
+        <!-- Rolling View -->
+        <div id="rollingView">
+            <button class="btn btn-outline back-btn" id="backBtn">⬅ 返回</button>
+
+            <div class="status-message" id="statusMessage">准备就绪</div>
+
+            <div class="rolling-display">
+                <div class="roller-container" id="roller">
+                    <div class="roller-item" id="displayedName">???</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-large" id="actionBtn">开始</button>
+                <button class="btn btn-large hidden" id="resetBtn" style="background-color: var(--success-color);">🔄
+                    再来一轮</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let students = []; // All defined students: { id: 1, name: "Name", selected: true }
+        let currentMode = 'random'; // 'random' or 'no-repeat'
+        let availableStudents = []; // For no-repeat mode
+        let isRolling = false;
+        let rollInterval = null;
+
+        // Elements
+        const settingsView = document.getElementById('settingsView');
+        const rollingView = document.getElementById('rollingView');
+        const studentGrid = document.getElementById('studentGrid');
+        const studentCountInput = document.getElementById('studentCountInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const fileInput = document.getElementById('fileInput');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const totalCountSpan = document.getElementById('totalCount');
+        const randomModeBtn = document.getElementById('randomModeBtn');
+        const noRepeatModeBtn = document.getElementById('noRepeatModeBtn');
+        const backBtn = document.getElementById('backBtn');
+        const actionBtn = document.getElementById('actionBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const roller = document.getElementById('roller');
+        const displayedName = document.getElementById('displayedName');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Initialization
+        function init() {
+            generateStudents(parseInt(studentCountInput.value) || 40);
+            updateUI();
+        }
+
+        function generateStudents(count) {
+            students = [];
+            for (let i = 1; i <= count; i++) {
+                students.push({
+                    id: i,
+                    name: `${i} 号`,
+                    selected: true
+                });
+            }
+            renderStudentList();
+            updateCounts();
+        }
+
+        function renderStudentList() {
+            studentGrid.innerHTML = '';
+            students.forEach((s, index) => {
+                const item = document.createElement('div');
+                item.className = 'student-item';
+                item.innerHTML = `
+                    <input type="checkbox" ${s.selected ? 'checked' : ''} data-index="${index}">
+                    <span>${s.name}</span>
+                `;
+
+                // Click handler for the whole item
+                item.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = item.querySelector('input');
+                        checkbox.checked = !checkbox.checked;
+                        updateStudentSelection(index, checkbox.checked);
+                    }
+                });
+
+                // Click handler for checkbox
+                item.querySelector('input').addEventListener('change', (e) => {
+                    updateStudentSelection(index, e.target.checked);
+                });
+
+                studentGrid.appendChild(item);
+            });
+        }
+
+        function updateStudentSelection(index, isSelected) {
+            students[index].selected = isSelected;
+            updateCounts();
+
+            // Update "Select All" checkbox state
+            const allSelected = students.every(s => s.selected);
+            selectAllCheckbox.checked = allSelected;
+            /* If not all selected, indeterminate state could be nicer but simple checked/unchecked is fine */
+        }
+
+        function updateCounts() {
+            const selected = students.filter(s => s.selected).length;
+            selectedCountSpan.textContent = selected;
+            totalCountSpan.textContent = students.length;
+        }
+
+        // Import
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target.result;
+                const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+
+                if (lines.length > 0) {
+                    students = lines.map((name, i) => ({
+                        id: i + 1,
+                        name: name,
+                        selected: true
+                    }));
+                    studentCountInput.value = students.length;
+                    renderStudentList();
+                    updateCounts();
+                    alert(`成功导入 ${students.length} 名学生`);
+                } else {
+                    alert('文件内容为空或格式不正确');
+                }
+                fileInput.value = ''; // Reset
+            };
+            reader.readAsText(file);
+        });
+
+        generateBtn.addEventListener('click', () => {
+            const count = parseInt(studentCountInput.value);
+            if (count > 0) {
+                generateStudents(count);
+            } else {
+                alert('请输入有效的学生人数');
+            }
+        });
+
+        selectAllCheckbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            students.forEach(s => s.selected = isChecked);
+            renderStudentList();
+            updateCounts();
+        });
+
+        // Mode Selection
+        randomModeBtn.addEventListener('click', () => enterRollingMode('random'));
+        noRepeatModeBtn.addEventListener('click', () => enterRollingMode('no-repeat'));
+
+        function enterRollingMode(mode) {
+            const activeStudents = students.filter(s => s.selected);
+            if (activeStudents.length === 0) {
+                alert('请先选择参与点名的学生');
+                return;
+            }
+
+            currentMode = mode;
+            settingsView.classList.add('hidden');
+            rollingView.style.display = 'flex';
+
+            // Reset state
+            isRolling = false;
+            displayedName.textContent = '???';
+            displayedName.classList.remove('result-highlight');
+            roller.classList.remove('rolling-active');
+            actionBtn.textContent = '开始';
+            actionBtn.classList.remove('hidden');
+            resetBtn.classList.add('hidden');
+            actionBtn.disabled = false;
+
+            if (mode === 'random') {
+                statusMessage.textContent = '随机点名模式';
+            } else {
+                statusMessage.textContent = '不重复点名模式';
+                // Initialize available pool
+                availableStudents = [...activeStudents];
+                updateNoRepeatStatus();
+            }
+        }
+
+        backBtn.addEventListener('click', () => {
+            if (isRolling) stopRolling(true); // Immediate stop if backing out
+            rollingView.style.display = 'none';
+            settingsView.classList.remove('hidden');
+            settingsView.style.display = 'flex';
+        });
+
+        // Rolling Logic
+        actionBtn.addEventListener('click', () => {
+            if (isRolling) {
+                // User wants to stop manually? Or maybe just let it auto-stop? 
+                // Currently implementing "Start" -> Auto stop. 
+                // But could be "Start" -> "Stop". Let's do "Start" -> Auto Stop for better UX flow as requested "After indefinite time stop".
+                // Actually, let's make the button differentiate state.
+                return;
+            }
+            startRolling();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            // Only for no-repeat mode when exhausted
+            const activeStudents = students.filter(s => s.selected);
+            availableStudents = [...activeStudents];
+            updateNoRepeatStatus();
+            resetBtn.classList.add('hidden');
+            actionBtn.classList.remove('hidden');
+            displayedName.textContent = '???';
+            displayedName.classList.remove('result-highlight');
+        });
+
+        function updateNoRepeatStatus() {
+            const activeCount = students.filter(s => s.selected).length;
+            statusMessage.textContent = `剩余未点: ${availableStudents.length} / ${activeCount}`;
+        }
+
+        function startRolling() {
+            if (currentMode === 'no-repeat' && availableStudents.length === 0) {
+                return; // Should be handled by UI state, but safety check
+            }
+
+            isRolling = true;
+            actionBtn.disabled = true; // Disable button while rolling
+            actionBtn.textContent = '点名中...';
+            displayedName.classList.remove('result-highlight');
+            roller.classList.add('rolling-active');
+
+            const activeStudents = students.filter(s => s.selected);
+
+            // Visual Rolling Effect
+            rollInterval = setInterval(() => {
+                const randomName = activeStudents[Math.floor(Math.random() * activeStudents.length)].name;
+                displayedName.textContent = randomName;
+            }, 50);
+
+            // Stop logic
+            // Variable duration between 1.5s and 3s
+            const duration = 1500 + Math.random() * 1500;
+
+            setTimeout(() => {
+                stopRolling();
+            }, duration);
+        }
+
+        function stopRolling(immediate = false) {
+            clearInterval(rollInterval);
+            roller.classList.remove('rolling-active');
+            isRolling = false;
+
+            if (immediate) return;
+
+            let winner;
+            if (currentMode === 'random') {
+                const activeStudents = students.filter(s => s.selected);
+                winner = activeStudents[Math.floor(Math.random() * activeStudents.length)];
+            } else {
+                // No-repeat
+                // Pick random from available
+                const randomIndex = Math.floor(Math.random() * availableStudents.length);
+                winner = availableStudents[randomIndex];
+                // Remove from available
+                availableStudents.splice(randomIndex, 1);
+                updateNoRepeatStatus();
+            }
+
+            displayedName.textContent = winner.name;
+            displayedName.classList.add('result-highlight');
+
+            // Speak the name
+            speak(winner.name);
+
+            // Reset button state
+            if (currentMode === 'no-repeat' && availableStudents.length === 0) {
+                actionBtn.classList.add('hidden');
+                resetBtn.classList.remove('hidden');
+                statusMessage.textContent = '每个人都被抽过了';
+            } else {
+                actionBtn.textContent = '开始';
+                actionBtn.disabled = false;
+            }
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text + `被抽中了`);
+                utterance.lang = 'zh-CN';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Initialize app
+        init();
+
+    </script>
+</body>
+
+</html>
