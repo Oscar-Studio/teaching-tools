@@ -1,7 +1,7 @@
 // ================= 用户登录管理 =================
 
 // API基础URL - 根据你的服务器IP修改
-const API_BASE_URL = 'http://119.23.64.153/api';
+const API_BASE_URL = 'https://119.23.64.153/api';
 
 // 用户状态管理
 let currentUser = null;
