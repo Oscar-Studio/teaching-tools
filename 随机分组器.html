@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机分组器 - 教学工具</title>
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+            --success-color: #28a745;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            border: var(--card-border);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 20px;
+        }
+
+        .input-section h2 {
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid var(--card-border);
+            background: var(--light-color);
+            color: var(--dark-color);
+            font-size: 1rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: var(--secondary-color);
+        }
+
+        .textarea-hint {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .settings {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .setting-item {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .setting-item label {
+            display: block;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .setting-item input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--card-border);
+            background: var(--light-color);
+            color: var(--dark-color);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .setting-item input:focus {
+            border-color: var(--secondary-color);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #2ea043;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .groups-result {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .group-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            border: var(--card-border);
+            box-shadow: var(--card-shadow);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .group-header {
+            color: var(--secondary-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .group-members {
+            list-style: none;
+        }
+
+        .group-members li {
+            padding: 5px 0;
+            color: var(--dark-color);
+        }
+
+        .group-members li::before {
+            content: "• ";
+            color: var(--accent-color);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 229, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+            .settings {
+                flex-direction: column;
+            }
+            
+            .groups-result {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎲 随机分组器</h1>
+        <p class="subtitle">将名单随机分成若干组</p>
+
+        <div class="input-section">
+            <h2>📋 输入名单</h2>
+            <textarea id="nameList" placeholder="每行一个名字，&#10;例如：&#10;张三&#10;李四&#10;王五&#10;赵六"></textarea>
+            <p class="textarea-hint">每行一个名字，支持中英文</p>
+
+            <div class="settings">
+                <div class="setting-item">
+                    <label>分组数量</label>
+                    <input type="number" id="groupCount" value="4" min="2" max="20">
+                </div>
+                <div class="setting-item">
+                    <label>每组人数（可选）</label>
+                    <input type="number" id="groupSize" placeholder="不填则自动分配" min="1">
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn btn-primary" onclick="generateGroups()">开始分组</button>
+                <button class="btn btn-danger" onclick="clearAll()">清空</button>
+            </div>
+        </div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-label">总人数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="groupCountResult">0</div>
+                <div class="stat-label">组数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="avgCount">0</div>
+                <div class="stat-label">平均每组</div>
+            </div>
+        </div>
+
+        <div class="groups-result" id="groupsResult"></div>
+    </div>
+
+    <footer>
+        <p>随机分组器 &copy; 2026 - Designed by Oscar</p>
+    </footer>
+
+    <script>
+        // 预设颜色
+        const groupColors = [
+            '#2A5CAA', '#00E5FF', '#6A00FF', '#28a745', 
+            '#f59e0b', '#e74c3c', '#8b5cf6', '#06b6d4',
+            '#ec4899', '#10b981', '#f97316', '#6366f1'
+        ];
+
+        function generateGroups() {
+            const nameListText = document.getElementById('nameList').value.trim();
+            
+            if (!nameListText) {
+                alert('请输入名单！');
+                return;
+            }
+
+            // 解析名字
+            const names = nameListText.split('\n')
+                .map(name => name.trim())
+                .filter(name => name.length > 0);
+
+            if (names.length === 0) {
+                alert('请输入有效的名字！');
+                return;
+            }
+
+            const groupCount = parseInt(document.getElementById('groupCount').value) || 4;
+            const groupSize = parseInt(document.getElementById('groupSize').value);
+
+            // 洗牌算法
+            const shuffled = [...names];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            let groups = [];
+            
+            if (groupSize > 0) {
+                // 按固定每组人数分组
+                const numGroups = Math.ceil(names.length / groupSize);
+                for (let i = 0; i < numGroups; i++) {
+                    groups.push(shuffled.slice(i * groupSize, (i + 1) * groupSize));
+                }
+            } else {
+                // 平均分组
+                for (let i = 0; i < groupCount; i++) {
+                    groups.push([]);
+                }
+                
+                // 尽量平均分配
+                let currentGroup = 0;
+                for (const name of shuffled) {
+                    groups[currentGroup].push(name);
+                    currentGroup = (currentGroup + 1) % groupCount;
+                }
+            }
+
+            // 过滤空组
+            groups = groups.filter(g => g.length > 0);
+
+            // 渲染结果
+            renderGroups(groups);
+            
+            // 更新统计
+            updateStats(names.length, groups.length);
+        }
+
+        function renderGroups(groups) {
+            const container = document.getElementById('groupsResult');
+            container.innerHTML = '';
+
+            groups.forEach((group, index) => {
+                const card = document.createElement('div');
+                card.className = 'group-card';
+                card.style.animationDelay = `${index * 0.1}s`;
+                
+                const color = groupColors[index % groupColors.length];
+                
+                card.innerHTML = `
+                    <div class="group-header" style="color: ${color}; border-color: ${color}">
+                        第 ${index + 1} 组 (${group.length}人)
+                    </div>
+                    <ul class="group-members">
+                        ${group.map(name => `<li>${name}</li>`).join('')}
+                    </ul>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        function updateStats(total, groupCount) {
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('groupCountResult').textContent = groupCount;
+            document.getElementById('avgCount').textContent = (total / groupCount).toFixed(1);
+            
+            document.getElementById('stats').style.display = 'flex';
+        }
+
+        function clearAll() {
+            document.getElementById('nameList').value = '';
+            document.getElementById('groupCount').value = '4';
+            document.getElementById('groupSize').value = '';
+            document.getElementById('groupsResult').innerHTML = '';
+            document.getElementById('stats').style.display = 'none';
+        }
+
+        // 回车快捷键
+        document.getElementById('nameList').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                generateGroups();
+            }
+        });
+    </script>
+</body>
+
+</html>

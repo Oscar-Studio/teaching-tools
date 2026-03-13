@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定时器 - 教学工具</title>
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+            --success-color: #28a745;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            border: var(--card-border);
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .timer-display {
+            font-size: 6rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: var(--secondary-color);
+            margin: 20px 0;
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+        }
+
+        .timer-display.running {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .laps {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .lap {
+            padding: 8px 15px;
+            margin: 5px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .lap-time {
+            color: var(--secondary-color);
+            font-family: monospace;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-start {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-start:hover {
+            background-color: #2ea043;
+        }
+
+        .btn-stop {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-lap {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-lap:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-reset {
+            background-color: var(--text-secondary);
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background-color: #6b7280;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        footer {
+            margin-top: 30px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>⏱️ 计时器</h1>
+        <p class="subtitle">秒表功能，记录单圈时间</p>
+
+        <div class="timer-display" id="timerDisplay">00:00:00</div>
+
+        <div class="buttons">
+            <button class="btn btn-start" id="startBtn" onclick="startTimer()">开始</button>
+            <button class="btn btn-stop" id="stopBtn" onclick="stopTimer()" disabled>停止</button>
+            <button class="btn btn-lap" id="lapBtn" onclick="recordLap()" disabled>计次</button>
+            <button class="btn btn-reset" onclick="resetTimer()">重置</button>
+        </div>
+
+        <div class="laps" id="laps"></div>
+    </div>
+
+    <footer>
+        <p>计时器 &copy; 2026 - Designed by Oscar</p>
+    </footer>
+
+    <script>
+        let startTime = null;
+        let elapsedTime = 0;
+        let timerInterval = null;
+        let isRunning = false;
+        let lapCount = 0;
+
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const lapBtn = document.getElementById('lapBtn');
+        const lapsContainer = document.getElementById('laps');
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function updateDisplay() {
+            const currentTime = isRunning ? (Date.now() - startTime + elapsedTime) : elapsedTime;
+            timerDisplay.textContent = formatTime(currentTime);
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startTime = Date.now();
+            
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            lapBtn.disabled = false;
+            timerDisplay.classList.add('running');
+            
+            timerInterval = setInterval(updateDisplay, 10);
+        }
+
+        function stopTimer() {
+            if (!isRunning) return;
+            
+            isRunning = false;
+            elapsedTime += Date.now() - startTime;
+            
+            clearInterval(timerInterval);
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            timerDisplay.classList.remove('running');
+            
+            updateDisplay();
+        }
+
+        function recordLap() {
+            if (!isRunning && elapsedTime === 0) return;
+            
+            lapCount++;
+            const currentTime = isRunning ? (Date.now() - startTime + elapsedTime) : elapsedTime;
+            
+            const lap = document.createElement('div');
+            lap.className = 'lap';
+            lap.innerHTML = `
+                <span>第 ${lapCount} 次</span>
+                <span class="lap-time">${formatTime(currentTime)}</span>
+            `;
+            
+            lapsContainer.insertBefore(lap, lapsContainer.firstChild);
+        }
+
+        function resetTimer() {
+            stopTimer();
+            
+            elapsedTime = 0;
+            lapCount = 0;
+            startTime = null;
+            
+            timerDisplay.textContent = '00:00:00';
+            lapsContainer.innerHTML = '';
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            lapBtn.disabled = true;
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (isRunning) {
+                    stopTimer();
+                } else {
+                    startTimer();
+                }
+            } else if (e.code === 'KeyL') {
+                recordLap();
+            } else if (e.code === 'KeyR') {
+                resetTimer();
+            }
+        });
+    </script>
+</body>
+
+</html>

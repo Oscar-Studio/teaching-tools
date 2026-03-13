@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽签器 - 教学工具</title>
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+            --success-color: #28a745;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            border: var(--card-border);
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 0 auto 30px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.1s ease-out;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+        }
+
+        .wheel-segment span {
+            position: absolute;
+            left: 60%;
+            top: 40%;
+            transform: rotate(45deg);
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid var(--danger-color);
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .spin-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(42, 92, 170, 0.4);
+        }
+
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(42, 92, 170, 0.6);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(0, 229, 255, 0.1);
+            border-radius: 15px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .result-text {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .settings {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .settings h3 {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid var(--card-border);
+            background: var(--light-color);
+            color: var(--dark-color);
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--secondary-color);
+        }
+
+        .btn-small {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-small:hover {
+            background-color: var(--secondary-color);
+        }
+
+        footer {
+            margin-top: 30px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .colors {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .color-option {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.2);
+        }
+
+        .color-option.selected {
+            border-color: white;
+        }
+    </style>
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎯 抽签器</h1>
+        <p class="subtitle">从名单中随机抽取</p>
+
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <div class="wheel" id="wheel"></div>
+        </div>
+
+        <button class="spin-btn" id="spinBtn" onclick="spin()">开始抽签</button>
+
+        <div class="result" id="result">
+            <div>恭喜抽中：</div>
+            <div class="result-text" id="resultText"></div>
+        </div>
+
+        <div class="settings">
+            <h3>📝 抽签名单（每行一个）</h3>
+            <textarea id="namesInput" placeholder="张三&#10;李四&#10;王五&#10;赵六&#10;孙七&#10;周八&#10;吴九&#10;郑十">张三
+李四
+王五
+赵六
+孙七
+周八
+吴九
+郑十</textarea>
+            <button class="btn-small" onclick="updateWheel()">更新转盘</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>抽签器 &copy; 2026 - Designed by Oscar</p>
+    </footer>
+
+    <script>
+        let names = ['张三', '李四', '王五', '赵六', '孙七', '周八', '吴九', '郑十'];
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        const colors = [
+            '#2A5CAA', '#00E5FF', '#6A00FF', '#28a745',
+            '#f59e0b', '#e74c3c', '#8b5cf6', '#06b6d4',
+            '#ec4899', '#10b981', '#f97316', '#6366f1'
+        ];
+
+        function getNames() {
+            const text = document.getElementById('namesInput').value.trim();
+            if (!text) return ['张三', '李四', '王五', '赵六'];
+            return text.split('\n').filter(n => n.trim()).slice(0, 12);
+        }
+
+        function updateWheel() {
+            names = getNames();
+            const wheel = document.getElementById('wheel');
+            wheel.innerHTML = '';
+            
+            const segmentAngle = 360 / names.length;
+            
+            names.forEach((name, index) => {
+                const segment = document.createElement('div');
+                segment.className = 'wheel-segment';
+                segment.style.backgroundColor = colors[index % colors.length];
+                segment.style.transform = `rotate(${index * segmentAngle - 90}deg) skewY(${90 - segmentAngle}deg)`;
+                
+                const span = document.createElement('span');
+                span.textContent = name;
+                segment.appendChild(span);
+                
+                wheel.appendChild(segment);
+            });
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('result').classList.remove('show');
+            
+            const wheel = document.getElementById('wheel');
+            
+            // 随机旋转 - 至少5圈 + 随机角度
+            const extraSpins = 5;
+            const randomAngle = Math.random() * 360;
+            const totalRotation = currentRotation + (extraSpins * 360) + randomAngle;
+            
+            currentRotation = totalRotation;
+            wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+            
+            // 4秒后显示结果
+            setTimeout(() => {
+                isSpinning = false;
+                document.getElementById('spinBtn').disabled = false;
+                
+                // 计算结果
+                const segmentAngle = 360 / names.length;
+                const normalizedAngle = totalRotation % 360;
+                const resultIndex = Math.floor(((360 - normalizedAngle + segmentAngle / 2) % 360) / segmentAngle);
+                
+                const resultText = document.getElementById('resultText');
+                resultText.textContent = names[resultIndex];
+                document.getElementById('result').classList.add('show');
+                
+                // 播放提示音
+                playBeep();
+            }, 4000);
+        }
+
+        function playBeep() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                // 忽略音频错误
+            }
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !isSpinning) {
+                e.preventDefault();
+                spin();
+            }
+        });
+
+        // 初始化
+        updateWheel();
+    </script>
+</body>
+
+</html>

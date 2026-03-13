@@ -188,6 +188,97 @@
       ],
       "icon": "",
       "featured": true
+    },
+    {
+      "name": "课堂倒计时器",
+      "description": "适用于课堂答题、小组讨论等场景的倒计时工具",
+      "tags": [
+        "计时",
+        "课堂"
+      ],
+      "subject": [
+        "通用"
+      ],
+      "icon": "⏱️",
+      "featured": false
+    },
+    {
+      "name": "随机分组器",
+      "description": "将名单随机分成若干组，适用于课堂小组分配",
+      "tags": [
+        "分组",
+        "课堂"
+      ],
+      "subject": [
+        "通用"
+      ],
+      "icon": "🎲",
+      "featured": false
+    },
+    {
+      "name": "骰子模拟器",
+      "description": "模拟掷骰子，可用于随机抽取或课堂互动",
+      "tags": [
+        "随机",
+        "课堂"
+      ],
+      "subject": [
+        "通用"
+      ],
+      "icon": "🎲",
+      "featured": false
+    },
+    {
+      "name": "抽签器",
+      "description": "转盘抽签工具，可用于随机抽取学生回答问题",
+      "tags": [
+        "随机",
+        "课堂"
+      ],
+      "subject": [
+        "通用"
+      ],
+      "icon": "🎯",
+      "featured": false
+    },
+    {
+      "name": "计时器",
+      "description": "秒表功能，记录单圈时间",
+      "tags": [
+        "计时",
+        "秒表"
+      ],
+      "subject": [
+        "通用"
+      ],
+      "icon": "⏱️",
+      "featured": false
+    },
+    {
+      "name": "记分板",
+      "description": "课堂竞赛、答题比赛专用记分工具",
+      "tags": [
+        "竞赛",
+        "记分"
+      ],
+      "subject": [
+        "通用"
+      ],
+      "icon": "🏆",
+      "featured": false
+    },
+    {
+      "name": "番茄钟",
+      "description": "专注计时器，适合学习和工作",
+      "tags": [
+        "计时",
+        "专注"
+      ],
+      "subject": [
+        "通用"
+      ],
+      "icon": "🍅",
+      "featured": false
     }
   ]
 }

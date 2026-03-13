@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课堂倒计时器 - 教学工具</title>
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+            --success-color: #28a745;
+            --warning-color: #f59e0b;
+            --danger-color: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            padding: 40px;
+            border: var(--card-border);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .timer-display {
+            font-size: 8rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            font-family: 'Courier New', monospace;
+            margin: 30px 0;
+            text-shadow: 0 0 30px rgba(0, 229, 255, 0.5);
+            transition: color 0.3s ease;
+        }
+
+        .timer-display.warning {
+            color: var(--warning-color);
+            text-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+        }
+
+        .timer-display.danger {
+            color: var(--danger-color);
+            text-shadow: 0 0 30px rgba(231, 76, 60, 0.5);
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .timer-display.finished {
+            color: var(--success-color);
+            text-shadow: 0 0 30px rgba(40, 167, 69, 0.5);
+        }
+
+        .preset-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .preset-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .preset-btn.selected {
+            background-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(106, 0, 255, 0.5);
+        }
+
+        .time-input-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .time-input {
+            width: 80px;
+            padding: 10px;
+            font-size: 1.2rem;
+            text-align: center;
+            border-radius: 8px;
+            border: 2px solid var(--card-border);
+            background: var(--light-color);
+            color: var(--dark-color);
+            outline: none;
+        }
+
+        .time-input:focus {
+            border-color: var(--secondary-color);
+        }
+
+        .time-label {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .btn-start {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-start:hover {
+            background-color: #2ea043;
+            transform: translateY(-2px);
+        }
+
+        .btn-pause {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-pause:hover {
+            background-color: #d97706;
+        }
+
+        .btn-reset {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background-color: #c0392b;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .sound-toggle {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sound-toggle label {
+            color: var(--text-secondary);
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: var(--card-border);
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+            transition: width 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, var(--warning-color), var(--danger-color));
+        }
+
+        .progress-fill.danger {
+            background: var(--danger-color);
+        }
+
+        .quick-times {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quick-time {
+            padding: 15px 10px;
+            background-color: var(--card-border);
+            border: none;
+            border-radius: 8px;
+            color: var(--dark-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-time:hover {
+            background-color: var(--primary-color);
+        }
+
+        .quick-time.selected {
+            background-color: var(--accent-color);
+        }
+
+        footer {
+            margin-top: 40px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 500px) {
+            .timer-display {
+                font-size: 5rem;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                min-width: 100px;
+            }
+        }
+    </style>
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>⏱️ 课堂倒计时器</h1>
+        <p class="subtitle">适用于课堂答题、小组讨论等场景</p>
+
+        <div class="quick-times">
+            <button class="quick-time" onclick="setTime(30)">30秒</button>
+            <button class="quick-time" onclick="setTime(60)">1分钟</button>
+            <button class="quick-time" onclick="setTime(180)">3分钟</button>
+            <button class="quick-time" onclick="setTime(300)">5分钟</button>
+        </div>
+
+        <div class="time-input-area">
+            <input type="number" class="time-input" id="minutesInput" value="1" min="0" max="60">
+            <span class="time-label">分钟</span>
+            <input type="number" class="time-input" id="secondsInput" value="0" min="0" max="59">
+            <span class="time-label">秒</span>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="timer-display" id="timerDisplay">01:00</div>
+
+        <div class="control-buttons">
+            <button class="btn btn-start" id="startBtn" onclick="startTimer()">开始</button>
+            <button class="btn btn-pause" id="pauseBtn" onclick="pauseTimer()" disabled>暂停</button>
+            <button class="btn btn-reset" id="resetBtn" onclick="resetTimer()">重置</button>
+        </div>
+
+        <div class="sound-toggle">
+            <input type="checkbox" class="checkbox" id="soundToggle" checked>
+            <label for="soundToggle">结束声音提示</label>
+        </div>
+    </div>
+
+    <footer>
+        <p>课堂倒计时器 &copy; 2026 - Designed by Oscar</p>
+    </footer>
+
+    <script>
+        let totalSeconds = 60;
+        let remainingSeconds = 60;
+        let timerInterval = null;
+        let isRunning = false;
+
+        const timerDisplay = document.getElementById('timerDisplay');
+        const progressFill = document.getElementById('progressFill');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const minutesInput = document.getElementById('minutesInput');
+        const secondsInput = document.getElementById('secondsInput');
+        const soundToggle = document.getElementById('soundToggle');
+
+        // 更新时间显示
+        function updateDisplay() {
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // 更新进度条
+            const percentage = (remainingSeconds / totalSeconds) * 100;
+            progressFill.style.width = `${percentage}%`;
+            
+            // 更新颜色
+            timerDisplay.classList.remove('warning', 'danger', 'finished');
+            progressFill.classList.remove('warning', 'danger');
+            
+            if (remainingSeconds <= 10 && remainingSeconds > 0) {
+                timerDisplay.classList.add('danger');
+                progressFill.classList.add('danger');
+            } else if (remainingSeconds <= 30) {
+                timerDisplay.classList.add('warning');
+                progressFill.classList.add('warning');
+            }
+        }
+
+        // 设置时间
+        function setTime(seconds) {
+            totalSeconds = seconds;
+            remainingSeconds = seconds;
+            updateDisplay();
+            
+            // 更新输入框
+            minutesInput.value = Math.floor(seconds / 60);
+            secondsInput.value = seconds % 60;
+        }
+
+        // 开始计时
+        function startTimer() {
+            if (isRunning) return;
+            
+            // 如果时间到了，重置
+            if (remainingSeconds === 0) {
+                remainingSeconds = totalSeconds;
+            }
+            
+            isRunning = true;
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            
+            timerInterval = setInterval(() => {
+                remainingSeconds--;
+                updateDisplay();
+                
+                if (remainingSeconds <= 0) {
+                    timerFinished();
+                }
+            }, 1000);
+        }
+
+        // 暂停计时
+        function pauseTimer() {
+            if (!isRunning) return;
+            
+            isRunning = false;
+            clearInterval(timerInterval);
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+        }
+
+        // 重置计时器
+        function resetTimer() {
+            pauseTimer();
+            
+            const minutes = parseInt(minutesInput.value) || 0;
+            const seconds = parseInt(secondsInput.value) || 0;
+            totalSeconds = minutes * 60 + seconds;
+            
+            if (totalSeconds === 0) {
+                totalSeconds = 60;
+            }
+            
+            remainingSeconds = totalSeconds;
+            timerDisplay.classList.remove('finished');
+            updateDisplay();
+        }
+
+        // 计时结束
+        function timerFinished() {
+            pauseTimer();
+            remainingSeconds = 0;
+            updateDisplay();
+            timerDisplay.classList.add('finished');
+            
+            // 播放声音
+            if (soundToggle.checked) {
+                playBeep();
+            }
+            
+            // 显示通知
+            if (Notification.permission === 'granted') {
+                new Notification('时间到！', {
+                    body: '倒计时结束',
+                    icon: '⏱️'
+                });
+            }
+        }
+
+        // 播放提示音
+        function playBeep() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // 播放三声 beep
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                }, i * 400);
+            }
+        }
+
+        // 输入框变化时更新总时间
+        minutesInput.addEventListener('change', () => {
+            if (!isRunning) {
+                resetTimer();
+            }
+        });
+
+        secondsInput.addEventListener('change', () => {
+            if (!isRunning) {
+                resetTimer();
+            }
+        });
+
+        // 请求通知权限
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (isRunning) {
+                    pauseTimer();
+                } else {
+                    startTimer();
+                }
+            } else if (e.code === 'KeyR') {
+                resetTimer();
+            }
+        });
+
+        // 初始化
+        updateDisplay();
+    </script>
+</body>
+
+</html>
