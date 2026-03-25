@@ -319,7 +319,7 @@
     <!-- Authentication Overlay -->
     <div id="auth-overlay">
         <div class="auth-box">
-            <h2>DeepSeek 安全访问</h2>
+            <h2>AI 安全访问</h2>
             <p style="color: #8b949e; margin-bottom: 15px;">请输入访问密码</p>
             <input type="password" id="password-input" placeholder="输入密码...">
             <button onclick="attemptLogin()">进入系统</button>
@@ -331,10 +331,11 @@
     <div id="app-container">
         <header>
             <div class="header-left">
-                <h1>DeepSeek Launcher</h1>
+                <h1>AI Launcher</h1>
                 <select id="model-select">
                     <option value="deepseek-chat">DeepSeek Chat (快速回答)</option>
                     <option value="deepseek-reasoner">DeepSeek Reasoner (深度思考)</option>
+                    <option value="MiniMax-M2.7">MiniMax-M2.7 (思考模型)</option>
                 </select>
                 <button id="new-chat-btn" class="secondary-btn">开启新对话</button>
             </div>
@@ -363,6 +364,9 @@
         // 可以使用在线工具比如 https://www.base64encode.org/ 进行编码
         const ENCODED_PASSWORD = "T3NjYXI5NDUxOA==";
         const ENCODED_API_KEY = "c2stYzgyOWZmN2VjYjliNDFjMTlkMjZhYzVlNmViNzBhYzU=";
+        const ENCODED_MINIMAX_API_KEY = "c2stY3AtTnhoWVc5SlpLa2ZRUVU3OFhQNEdTZUpXdTRzSjQ3VExIeHR0VXV2cHNoTlNaZzJVUzMweU1ZZFQyX2VELWJCdUpqRklrVndGQ0xHanVTNVdxY25BdkIwXzY3cm4tWHY3Y2d4WUE1RXFxN3M0blExallOMW1DZw==";
+        // MiniMax API 配置
+        const MINIMAX_API_ENDPOINT = "https://api.minimaxi.com/v1/chat/completions";
         // =================================================
 
         let controller = null; // For aborting fetch
@@ -460,19 +464,39 @@
 
             let fullAiResponse = "";
             let fullReasoning = "";
+            let isMiniMax = model.startsWith('MiniMax');
+            let reasoningSplit = isMiniMax;
+
+            // MiniMax API 配置
+            let apiEndpoint = 'https://api.deepseek.com/chat/completions';
+            let requestBody = {
+                model: model,
+                messages: history,
+                stream: true
+            };
+
+            if (isMiniMax) {
+                apiEndpoint = MINIMAX_API_ENDPOINT;
+                const miniMaxApiKey = atob(ENCODED_MINIMAX_API_KEY);
+                // 覆盖 apiKey 为 MiniMax 的 key
+                requestBody = {
+                    model: model,
+                    messages: history,
+                    stream: true,
+                    extra_body: {
+                        reasoning_split: true
+                    }
+                };
+            }
 
             try {
-                const response = await fetch('https://api.deepseek.com/chat/completions', {
+                const response = await fetch(apiEndpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
+                        'Authorization': `Bearer ${isMiniMax ? atob(ENCODED_MINIMAX_API_KEY) : apiKey}`
                     },
-                    body: JSON.stringify({
-                        model: model,
-                        messages: history,
-                        stream: true
-                    }),
+                    body: JSON.stringify(requestBody),
                     signal: controller.signal
                 });
 
@@ -500,8 +524,20 @@
                             try {
                                 const data = JSON.parse(dataStr);
 
-                                // Handle Reasoning Content
-                                if (data.choices && data.choices[0].delta.reasoning_content) {
+                                // MiniMax 思考内容处理
+                                if (isMiniMax && data.choices && data.choices[0].delta.reasoning_details) {
+                                    const rDetails = data.choices[0].delta.reasoning_details;
+                                    for (const r of rDetails) {
+                                        if (r.text) {
+                                            fullReasoning += r.text;
+                                        }
+                                    }
+                                    reasoningDiv.textContent = fullReasoning;
+                                    reasoningDiv.style.display = 'block';
+                                    scrollToBottom();
+                                }
+                                // DeepSeek 思考内容处理
+                                else if (data.choices && data.choices[0].delta.reasoning_content) {
                                     const rContent = data.choices[0].delta.reasoning_content;
                                     fullReasoning += rContent;
                                     reasoningDiv.textContent = fullReasoning;
@@ -511,8 +547,15 @@
 
                                 // Handle Final Content
                                 if (data.choices && data.choices[0].delta.content) {
-                                    const content = data.choices[0].delta.content;
-                                    fullAiResponse += content;
+                                    let content = data.choices[0].delta.content;
+                                    // MiniMax 的 content 可能包含 <think> 标签，需要检查并分离
+                                    if (isMiniMax && content && content.includes('<think>')) {
+                                        // MiniMax 的响应格式，思考内容在 reasoning_details 中已处理
+                                        // 这里 content 应该已经是纯回答内容
+                                        fullAiResponse += content;
+                                    } else {
+                                        fullAiResponse += content;
+                                    }
                                     contentDiv.textContent = fullAiResponse;
                                     scrollToBottom();
                                 }
