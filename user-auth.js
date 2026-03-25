@@ -3,9 +3,33 @@
 // API基础URL - 根据你的服务器IP修改
 const API_BASE_URL = 'https://119.23.64.153/api';
 
+// 跨域Cookie域名配置
+const COOKIE_DOMAIN = '.oscarstudio.cn';
+
 // 用户状态管理
 let currentUser = null;
 let currentToken = null;
+
+// ================= Cookie 辅助函数 =================
+
+// 读取 Cookie
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+// 写入 Cookie（跨域）
+function setCookie(name, value, days = 7) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; domain=${COOKIE_DOMAIN}; samesite=Lax`;
+}
+
+// 清除 Cookie
+function deleteCookie(name) {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${COOKIE_DOMAIN}`;
+}
 
 // DOM元素（确保这些ID在你的HTML中都存在）
 const userSection = document.getElementById('userSection');
@@ -33,23 +57,42 @@ const registerForm = document.getElementById('registerForm');
 const editProfileForm = document.getElementById('editProfileForm');
 const changePasswordForm = document.getElementById('changePasswordForm');
 
-// 检查登录状态
+// 检查登录状态（Cookie 优先，localStorage 兜底）
 function checkLoginStatus() {
-    const token = localStorage.getItem('userToken');
-    const userData = localStorage.getItem('userData');
+    // 1. 优先从 Cookie 获取（可跨子域名）
+    let token = getCookie('userToken');
+    let userData = null;
 
-    console.log('检查登录状态:', { token, userData });
+    if (token) {
+        // Cookie 有 token，尝试从 localStorage 获取用户数据
+        //（因为 Cookie 存不下完整 JSON，用户数据存在 localStorage）
+        const storedUserData = localStorage.getItem('userData');
+        if (storedUserData) {
+            try {
+                userData = JSON.parse(storedUserData);
+            } catch (e) {
+                console.error('解析用户数据失败:', e);
+            }
+        }
+        console.log('从 Cookie 获取登录状态:', { token: token.substring(0, 20) + '...', userData });
+    } else {
+        // 2. Cookie 没有，fallback 到 localStorage（仅对本域名有效）
+        token = localStorage.getItem('userToken');
+        const storedUserData = localStorage.getItem('userData');
+        if (storedUserData) {
+            try {
+                userData = JSON.parse(storedUserData);
+            } catch (e) {
+                console.error('解析用户数据失败:', e);
+            }
+        }
+        console.log('从 localStorage 获取登录状态:', { token: token ? token.substring(0, 20) + '...' : null, userData });
+    }
 
     if (token && userData) {
-        try {
-            currentToken = token;
-            currentUser = JSON.parse(userData);
-            updateUserUI();
-        } catch (e) {
-            console.error('解析用户数据失败:', e);
-            localStorage.removeItem('userToken');
-            localStorage.removeItem('userData');
-        }
+        currentToken = token;
+        currentUser = userData;
+        updateUserUI();
     }
 }
 
@@ -280,6 +323,10 @@ async function handleLogin(e) {
             currentToken = result.token;
             currentUser = result.user;
 
+            // 1. 写入 Cookie（跨子域名共享）
+            setCookie('userToken', currentToken);
+
+            // 2. 写入 localStorage（本站使用 + Cookie 不可用时的备用）
             localStorage.setItem('userToken', currentToken);
             localStorage.setItem('userData', JSON.stringify(currentUser));
 
@@ -410,6 +457,10 @@ async function handleEditProfile(e) {
             currentUser.phone = result.user.phone;
             currentToken = result.token; // 更新token（因为用户名可能变了）
 
+            // 更新 Cookie（跨子域名）
+            setCookie('userToken', currentToken);
+
+            // 更新 localStorage
             localStorage.setItem('userToken', currentToken);
             localStorage.setItem('userData', JSON.stringify(currentUser));
 
@@ -498,8 +549,14 @@ function logout() {
     console.log('退出登录');
     currentUser = null;
     currentToken = null;
+
+    // 清除 Cookie（跨子域名）
+    deleteCookie('userToken');
+
+    // 清除 localStorage
     localStorage.removeItem('userToken');
     localStorage.removeItem('userData');
+
     updateUserUI();
     if (userDropdown) userDropdown.classList.remove('active');
     showMessage('已退出登录', 'success');
