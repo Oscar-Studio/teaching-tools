@@ -367,8 +367,8 @@
         const ENCODED_PASSWORD = "T3NjYXI5NDUxOA==";
         const ENCODED_API_KEY = "c2stYzgyOWZmN2VjYjliNDFjMTlkMjZhYzVlNmViNzBhYzU=";
         const ENCODED_MINIMAX_API_KEY = "c2stY3AtTnhoWVc5SlpLa2ZRUXUyOFhQNEdTZUpXdTRzSjQ3VExIeHR0VXZ2cHNoTlNaZzJVUzMweU1ZZFRfMmVELWJCdkpqRklrVndGQ0xHanVTNVdxY2FOQXZCMF82N3JuLVh2M2NneFlBNUVxcTdzNG5RMXFZTjFtQ2c=";
-        // MiniMax API 配置
-        const MINIMAX_API_ENDPOINT = "https://api.minimaxi.com/v1/chat/completions";
+        // MiniMax API 配置 (Anthropic 兼容)
+        const MINIMAX_API_ENDPOINT = "https://api.minimaxi.com/anthropic";
         // =================================================
 
         let controller = null; // For aborting fetch
@@ -479,15 +479,11 @@
 
             if (isMiniMax) {
                 apiEndpoint = MINIMAX_API_ENDPOINT;
-                const miniMaxApiKey = atob(ENCODED_MINIMAX_API_KEY);
-                // 覆盖 apiKey 为 MiniMax 的 key
                 requestBody = {
-                    model: model,
+                    model: "MiniMax-M2.7",
+                    max_tokens: 2048,
                     messages: history,
-                    stream: true,
-                    extra_body: {
-                        reasoning_split: true
-                    }
+                    stream: true
                 };
             }
 
@@ -526,17 +522,18 @@
                             try {
                                 const data = JSON.parse(dataStr);
 
-                                // MiniMax 思考内容处理
-                                if (isMiniMax && data.choices && data.choices[0].delta.reasoning_details) {
-                                    const rDetails = data.choices[0].delta.reasoning_details;
-                                    for (const r of rDetails) {
-                                        if (r.text) {
-                                            fullReasoning += r.text;
-                                        }
+                                // MiniMax (Anthropic 兼容) 思考内容处理
+                                if (isMiniMax && data.type === "content_block_delta") {
+                                    if (data.delta.type === "thinking" && data.delta.thinking) {
+                                        fullReasoning += data.delta.thinking;
+                                        reasoningDiv.textContent = fullReasoning;
+                                        reasoningDiv.style.display = 'block';
+                                        scrollToBottom();
+                                    } else if (data.delta.type === "text_delta" && data.delta.text) {
+                                        fullAiResponse += data.delta.text;
+                                        contentDiv.textContent = fullAiResponse;
+                                        scrollToBottom();
                                     }
-                                    reasoningDiv.textContent = fullReasoning;
-                                    reasoningDiv.style.display = 'block';
-                                    scrollToBottom();
                                 }
                                 // DeepSeek 思考内容处理
                                 else if (data.choices && data.choices[0].delta.reasoning_content) {
@@ -547,8 +544,8 @@
                                     scrollToBottom();
                                 }
 
-                                // Handle Final Content
-                                if (data.choices && data.choices[0].delta.content) {
+                                // Handle Final Content (DeepSeek 格式，MiniMax 不走这里)
+                                if (!isMiniMax && data.choices && data.choices[0].delta.content) {
                                     let content = data.choices[0].delta.content;
                                     // MiniMax 的 content 可能包含 <think> 标签，需要检查并分离
                                     if (isMiniMax && content && content.includes('<think>')) {
@@ -628,8 +625,13 @@
 
         function updateStats(usage) {
             if (!usage) return;
+            // DeepSeek 格式
             if (usage.prompt_tokens !== undefined) tokenInputDisp.textContent = usage.prompt_tokens;
             if (usage.completion_tokens !== undefined) tokenOutputDisp.textContent = usage.completion_tokens;
+            if (usage.total_tokens !== undefined) tokenTotalDisp.textContent = usage.total_tokens;
+            // Anthropic/MiniMax 格式
+            if (usage.input_tokens !== undefined) tokenInputDisp.textContent = usage.input_tokens;
+            if (usage.output_tokens !== undefined) tokenOutputDisp.textContent = usage.output_tokens;
             if (usage.total_tokens !== undefined) tokenTotalDisp.textContent = usage.total_tokens;
         }
 
