@@ -154,8 +154,8 @@
       "featured": true
     },
     {
-      "name": "DeepSeek_Launcher",
-      "description": "DeepSeek API Launcher",
+      "name": "AI_Launcher",
+      "description": "简洁好用的AI助手",
       "tags": [
         "AI"
       ],
