@@ -482,7 +482,10 @@
                 requestBody = {
                     model: "MiniMax-M2.7",
                     messages: history,
-                    stream: true
+                    stream: true,
+                    extra_body: {
+                        reasoning_split: true
+                    }
                 };
             }
 
@@ -522,28 +525,19 @@
                                 const data = JSON.parse(dataStr);
 
                                 // MiniMax (OpenAI 兼容) 思考内容处理
-                                // MiniMax 的 content 中用 <think>...</think> 包裹思考内容
+                                // 设置 reasoning_split=true 后，思考内容在 reasoning_details 字段
                                 if (isMiniMax && data.choices && data.choices[0].delta) {
                                     const delta = data.choices[0].delta;
-                                    const content = delta.content || '';
-                                    if (content) {
-                                        console.log('MiniMax content:', content);
-                                        // 提取思考内容
-                                        const thinkMatch = content.match(/<think>([\s\S]*?)<\/think>/);
-                                        if (thinkMatch) {
-                                            fullReasoning += thinkMatch[1];
-                                            reasoningDiv.textContent = fullReasoning;
-                                            reasoningDiv.style.display = 'block';
-                                            // 提取回答内容（思考之后的部分）
-                                            const afterThink = content.split('</think>')[1] || '';
-                                            if (afterThink) {
-                                                fullAiResponse += afterThink;
-                                                contentDiv.textContent = fullAiResponse;
-                                            }
-                                        } else {
-                                            fullAiResponse += content;
-                                            contentDiv.textContent = fullAiResponse;
-                                        }
+                                    // reasoning_details 是一个数组，每个元素有 text 字段
+                                    if (delta.reasoning_details && delta.reasoning_details[0]) {
+                                        fullReasoning += delta.reasoning_details[0].text;
+                                        reasoningDiv.textContent = fullReasoning;
+                                        reasoningDiv.style.display = 'block';
+                                        scrollToBottom();
+                                    }
+                                    if (delta.content) {
+                                        fullAiResponse += delta.content;
+                                        contentDiv.textContent = fullAiResponse;
                                         scrollToBottom();
                                     }
                                 }
