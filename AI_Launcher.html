@@ -520,11 +520,12 @@
 
                             try {
                                 const data = JSON.parse(dataStr);
-                                console.log('MiniMax raw data:', JSON.stringify(data));
+                                console.log('MiniMax delta keys:', Object.keys(data.choices?.[0]?.delta || {}));
 
                                 // MiniMax (OpenAI 兼容) 思考内容处理
                                 if (isMiniMax && data.choices && data.choices[0].delta) {
                                     const delta = data.choices[0].delta;
+                                    // 优先使用 reasoning_content 字段
                                     if (delta.reasoning_content) {
                                         fullReasoning += delta.reasoning_content;
                                         reasoningDiv.textContent = fullReasoning;
