@@ -367,8 +367,8 @@
         const ENCODED_PASSWORD = "T3NjYXI5NDUxOA==";
         const ENCODED_API_KEY = "c2stYzgyOWZmN2VjYjliNDFjMTlkMjZhYzVlNmViNzBhYzU=";
         const ENCODED_MINIMAX_API_KEY = "c2stY3AtTnhoWVc5SlpLa2ZRUXUyOFhQNEdTZUpXdTRzSjQ3VExIeHR0VXZ2cHNoTlNaZzJVUzMweU1ZZFRfMmVELWJCdkpqRklrVndGQ0xHanVTNVdxY2FOQXZCMF82N3JuLVh2M2NneFlBNUVxcTdzNG5RMXFZTjFtQ2c=";
-        // MiniMax API 配置 (Anthropic 兼容)
-        const MINIMAX_API_ENDPOINT = "https://api.minimaxi.com/anthropic";
+        // MiniMax API 配置 (OpenAI 兼容)
+        const MINIMAX_API_ENDPOINT = "https://api.minimaxi.com/v1/chat/completions";
         // =================================================
 
         let controller = null; // For aborting fetch
@@ -481,7 +481,6 @@
                 apiEndpoint = MINIMAX_API_ENDPOINT;
                 requestBody = {
                     model: "MiniMax-M2.7",
-                    max_tokens: 2048,
                     messages: history,
                     stream: true
                 };
@@ -522,15 +521,16 @@
                             try {
                                 const data = JSON.parse(dataStr);
 
-                                // MiniMax (Anthropic 兼容) 思考内容处理
-                                if (isMiniMax && data.type === "content_block_delta") {
-                                    if (data.delta.type === "thinking" && data.delta.thinking) {
-                                        fullReasoning += data.delta.thinking;
+                                // MiniMax (OpenAI 兼容) 思考内容处理
+                                if (isMiniMax && data.choices && data.choices[0].delta) {
+                                    const delta = data.choices[0].delta;
+                                    if (delta.reasoning_content) {
+                                        fullReasoning += delta.reasoning_content;
                                         reasoningDiv.textContent = fullReasoning;
                                         reasoningDiv.style.display = 'block';
                                         scrollToBottom();
-                                    } else if (data.delta.type === "text_delta" && data.delta.text) {
-                                        fullAiResponse += data.delta.text;
+                                    } else if (delta.content) {
+                                        fullAiResponse += delta.content;
                                         contentDiv.textContent = fullAiResponse;
                                         scrollToBottom();
                                     }
