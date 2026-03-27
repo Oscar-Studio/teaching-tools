@@ -483,9 +483,7 @@
                     model: "MiniMax-M2.7",
                     messages: history,
                     stream: true,
-                    extra_body: {
-                        reasoning_split: true
-                    }
+                    reasoning_split: true
                 };
             }
 
@@ -528,14 +526,18 @@
                                 // 设置 reasoning_split=true 后，思考内容在 reasoning_details 字段
                                 if (isMiniMax && data.choices && data.choices[0].delta) {
                                     const delta = data.choices[0].delta;
-                                    console.log('MiniMax delta:', JSON.stringify(delta));
-                                    // reasoning_details 是一个数组，每个元素有 text 字段
+                                    // 优先从 reasoning_details 提取思考内容
                                     if (delta.reasoning_details && delta.reasoning_details[0]) {
-                                        fullReasoning += delta.reasoning_details[0].text;
+                                        for (const detail of delta.reasoning_details) {
+                                            if (detail.text) {
+                                                fullReasoning += detail.text;
+                                            }
+                                        }
                                         reasoningDiv.textContent = fullReasoning;
                                         reasoningDiv.style.display = 'block';
                                         scrollToBottom();
                                     }
+                                    // 回答内容从 content 字段提取
                                     if (delta.content) {
                                         fullAiResponse += delta.content;
                                         contentDiv.textContent = fullAiResponse;
