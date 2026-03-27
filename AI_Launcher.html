@@ -520,6 +520,7 @@
 
                             try {
                                 const data = JSON.parse(dataStr);
+                                console.log('MiniMax raw data:', JSON.stringify(data));
 
                                 // MiniMax (OpenAI 兼容) 思考内容处理
                                 if (isMiniMax && data.choices && data.choices[0].delta) {
