@@ -527,6 +527,7 @@
                                     const delta = data.choices[0].delta;
                                     const content = delta.content || '';
                                     if (content) {
+                                        console.log('MiniMax content:', content);
                                         // 提取思考内容
                                         const thinkMatch = content.match(/<think>([\s\S]*?)<\/think>/);
                                         if (thinkMatch) {
