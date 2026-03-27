@@ -528,6 +528,7 @@
                                 // 设置 reasoning_split=true 后，思考内容在 reasoning_details 字段
                                 if (isMiniMax && data.choices && data.choices[0].delta) {
                                     const delta = data.choices[0].delta;
+                                    console.log('MiniMax delta:', JSON.stringify(delta));
                                     // reasoning_details 是一个数组，每个元素有 text 字段
                                     if (delta.reasoning_details && delta.reasoning_details[0]) {
                                         fullReasoning += delta.reasoning_details[0].text;
