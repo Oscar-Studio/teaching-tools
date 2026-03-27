@@ -467,9 +467,8 @@
             let fullAiResponse = "";
             let fullReasoning = "";
             let isMiniMax = model.startsWith('MiniMax');
-            let reasoningSplit = isMiniMax;
 
-            // MiniMax API 配置
+            // API 配置
             let apiEndpoint = 'https://api.deepseek.com/chat/completions';
             let requestBody = {
                 model: model,
@@ -522,8 +521,8 @@
                             try {
                                 const data = JSON.parse(dataStr);
 
-                                // MiniMax (OpenAI 兼容) 思考内容处理
-                                // 设置 reasoning_split=true 后，思考内容在 reasoning_details 字段
+                                // MiniMax 思考内容处理
+                                // reasoning_split=true 时，思考内容在 reasoning_details 字段
                                 if (isMiniMax && data.choices && data.choices[0].delta) {
                                     const delta = data.choices[0].delta;
                                     // 优先从 reasoning_details 提取思考内容
@@ -553,17 +552,9 @@
                                     scrollToBottom();
                                 }
 
-                                // Handle Final Content (DeepSeek 格式，MiniMax 不走这里)
+                                // DeepSeek 回答内容处理
                                 if (!isMiniMax && data.choices && data.choices[0].delta.content) {
-                                    let content = data.choices[0].delta.content;
-                                    // MiniMax 的 content 可能包含 <think> 标签，需要检查并分离
-                                    if (isMiniMax && content && content.includes('<think>')) {
-                                        // MiniMax 的响应格式，思考内容在 reasoning_details 中已处理
-                                        // 这里 content 应该已经是纯回答内容
-                                        fullAiResponse += content;
-                                    } else {
-                                        fullAiResponse += content;
-                                    }
+                                    fullAiResponse += data.choices[0].delta.content;
                                     contentDiv.textContent = fullAiResponse;
                                     scrollToBottom();
                                 }
