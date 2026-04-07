@@ -154,18 +154,6 @@
       "featured": true
     },
     {
-      "name": "AI_Launcher",
-      "description": "简洁好用的AI助手",
-      "tags": [
-        "AI"
-      ],
-      "subject": [
-        "通用"
-      ],
-      "icon": "",
-      "featured": false
-    },
-    {
       "name": "作业管理系统",
       "description": "全新的作业管理系统",
       "tags": [
