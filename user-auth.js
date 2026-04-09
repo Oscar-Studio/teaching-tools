@@ -1,7 +1,7 @@
 // ================= 用户登录管理 =================
 
 // API基础URL - Node.js API 服务
-const API_BASE_URL = 'https://api.oscarstudio.cn';
+const API_BASE_URL = 'https://api.oscarstudio.cn/api';
 
 // 跨域Cookie域名配置
 const COOKIE_DOMAIN = '.oscarstudio.cn';
