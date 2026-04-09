@@ -301,7 +301,7 @@ async function handleLogin(e) {
         formData.append('account', account);
         formData.append('password', password);
 
-        const response = await fetch(`${API_BASE_URL}/login.php`, {
+        const response = await fetch(`${API_BASE_URL}/login`, {
             method: 'POST',
             body: formData
         });
@@ -375,7 +375,7 @@ async function handleRegister(e) {
     console.log('尝试注册:', username);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/register.php`, {
+        const response = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -434,7 +434,7 @@ async function handleEditProfile(e) {
     console.log('尝试更新个人信息:', username);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/update.php`, {
+        const response = await fetch(`${API_BASE_URL}/update`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -509,7 +509,7 @@ async function handleChangePassword(e) {
     console.log('尝试修改密码');
 
     try {
-        const response = await fetch(`${API_BASE_URL}/change_password.php`, {
+        const response = await fetch(`${API_BASE_URL}/change_password`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
