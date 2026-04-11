@@ -3,971 +3,721 @@
 
 <head>
     <meta charset="UTF-8">
-    <script defer src="https://cloud.umami.is/script.js"
-        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML教学工具集</title>
-    <link rel="stylesheet" href="user-auth.css">
+    <title>教学工具 - Oscar Studio</title>
     <style>
         :root {
             --primary-color: #2A5CAA;
             --secondary-color: #00E5FF;
             --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --success-color: #28a745;
+            --bg-color: #010409;
             --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --transition: all 0.3s ease;
+            --card-border: #30363d;
+            --text-color: #ffffff;
+            --text-muted: #8b949e;
+            --elastic-bezier: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --smooth-bezier: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
         }
 
         body {
-            background-color: var(--light-color);
-            color: var(--dark-color);
-            line-height: 1.6;
+            background: var(--bg-color);
+            color: var(--text-color);
             min-height: 100vh;
+            overflow-x: hidden;
+            padding-top: 60px;
         }
 
-        .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 40px 0;
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            color: var(--primary-color);
-            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        header p {
-            color: #8b949e;
-            font-size: 1.1rem;
-            max-width: 600px;
-            margin: 0 auto 30px;
-        }
-
-        .search-container {
-            margin-bottom: 30px;
-            position: relative;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .search-container input {
-            width: 100%;
-            padding: 12px 20px;
-            border-radius: 25px;
-            border: 1px solid #30363d;
-            background: #161b22;
-            color: var(--dark-color);
-            font-size: 1rem;
-            outline: none;
-            transition: var(--transition);
-        }
-
-        .search-container input:focus {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
-        }
-
-        .category-selector {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-        }
-
-        .category-btn {
-            padding: 8px 20px;
-            border-radius: 20px;
-            border: 1px solid #30363d;
-            background: #161b22;
-            color: #8b949e;
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .category-btn:hover,
-        .category-btn.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .selected-count {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 0.8rem;
-        }
-
-        .selected-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-            justify-content: center;
-            min-height: 30px;
-        }
-
-        .selected-tag {
-            background: rgba(42, 92, 170, 0.2);
-            border: 1px solid var(--primary-color);
-            color: var(--secondary-color);
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .remove-tag {
-            background: none;
-            border: none;
-            color: var(--secondary-color);
-            cursor: pointer;
-            font-size: 1.2rem;
-            line-height: 1;
-        }
-
-        .remove-tag:hover {
-            color: white;
-        }
-
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-        }
-
-        .tool-card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: var(--card-shadow);
-            transition: var(--transition);
-            border: var(--card-border);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .tool-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
-            border-color: var(--secondary-color);
-        }
-
-        .tool-icon {
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
-            font-size: 3rem;
-            border-bottom: 1px solid #30363d;
-        }
-
-        .tool-content {
-            padding: 20px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tool-content h3 {
-            margin-bottom: 10px;
-            color: var(--dark-color);
-            font-size: 1.2rem;
-        }
-
-        .tool-content p {
-            color: #8b949e;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-            flex-grow: 1;
-            line-height: 1.5;
-        }
-
-        .tool-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 15px;
-        }
-
-        .tool-tag {
-            font-size: 0.75rem;
-            padding: 3px 8px;
-            background: #161b22;
-            color: #8b949e;
-            border-radius: 4px;
-            border: 1px solid #30363d;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition);
-            text-align: center;
-        }
-
-        .btn:hover {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-        }
-
-        .btn-block {
-            display: block;
-            width: 100%;
-        }
-
-        .btn-secondary {
-            background: #30363d;
-            color: #c9d1d9;
-        }
-
-        .btn-secondary:hover {
-            background: #8b949e;
-            color: white;
-        }
-
-        footer {
-            text-align: center;
-            padding: 20px 0;
-            color: #8b949e;
-            border-top: 1px solid #30363d;
-            margin-top: 30px;
-        }
-
-        .featured {
-            border: 2px solid var(--accent-color);
-        }
-
-        .featured-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: var(--accent-color);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .no-results {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 40px;
-            color: #8b949e;
-            font-size: 1.2rem;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--primary-color);
-            font-size: 1.2rem;
-        }
-
-        .error {
-            text-align: center;
-            padding: 40px;
-            color: #dc3545;
-            font-size: 1.2rem;
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
+        /* Top Bar */
+        .top-bar {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            right: 0;
+            height: 60px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: var(--transition);
-            backdrop-filter: blur(5px);
+            justify-content: space-between;
+            padding: 0 40px;
+            background: rgba(1, 4, 9, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid var(--card-border);
         }
 
-        .modal-overlay.active {
+        .breadcrumb {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .breadcrumb span {
+            color: var(--secondary-color);
+        }
+
+        .search-box input {
+            width: 280px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.15);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding-top: 100px;
+            padding-bottom: 80px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(42, 92, 170, 0.15) 0%, rgba(1, 4, 9, 1) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-icon {
+            font-size: 5rem;
+            margin-bottom: 25px;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            line-height: 1.9;
+            padding: 0 20px;
+        }
+
+        /* Card Container */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+            padding: 40px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Category Header */
+        .category-section {
+            grid-column: 1 / -1;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--card-border);
+        }
+
+        .category-section:first-child {
+            margin-top: 0;
+        }
+
+        .category-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+        }
+
+        /* Card */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 8px;
+            padding: 15px 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .card-name {
+            flex: 1;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .card-tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            background: rgba(42, 92, 170, 0.2);
+            border: 1px solid rgba(42, 92, 170, 0.4);
+            color: var(--secondary-color);
+            border-radius: 10px;
+        }
+
+        .card:hover {
+            border-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.15);
+        }
+
+        .card.hiding {
+            animation: slideDown 900ms var(--smooth-bezier) forwards;
+        }
+
+        .card.returning {
+            animation: slideDownFromTop 700ms var(--elastic-bezier) forwards;
+        }
+
+        @keyframes slideDown {
+            to {
+                transform: translateY(120vh);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slideDownFromTop {
+            0% {
+                transform: translateY(-100vh);
+                opacity: 0;
+            }
+            60% {
+                transform: translateY(10px);
+                opacity: 1;
+            }
+            80% {
+                transform: translateY(-5px);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Floating Morphing Card */
+        .morph-card {
+            position: fixed;
+            z-index: 300;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            cursor: default;
+            pointer-events: auto;
+            overflow: hidden;
+        }
+
+        /* Compact state (initial) */
+        .morph-card.compact {
+            width: 240px;
+            min-height: 90px;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .morph-card .morph-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .morph-card .morph-icon {
+            font-size: 1.8rem;
+        }
+
+        .morph-card .morph-name {
+            flex: 1;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .morph-card .morph-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .morph-card .morph-tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            background: rgba(42, 92, 170, 0.2);
+            border: 1px solid rgba(42, 92, 170, 0.4);
+            color: var(--secondary-color);
+            border-radius: 10px;
+        }
+
+        /* Expanded state */
+        .morph-card.expanded {
+            width: 450px;
+            min-height: auto;
+            padding: 40px;
+            text-align: center;
+            border-color: var(--secondary-color);
+            box-shadow: 0 20px 60px rgba(0, 229, 255, 0.2);
+        }
+
+        .morph-card.expanded .morph-header,
+        .morph-card.expanded .morph-tags {
+            display: none;
+        }
+
+        .morph-card.expanded .morph-content {
+            display: block;
+        }
+
+        .morph-card .morph-content {
+            display: none;
+        }
+
+        .morph-card.expanded .morph-content .morph-big-icon {
+            font-size: 4.5rem;
+            margin-bottom: 20px;
+        }
+
+        .morph-card.expanded .morph-content h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        .morph-card.expanded .morph-content p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .morph-card.expanded .morph-content .btn-explore {
+            display: inline-block;
+            padding: 12px 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .morph-card.expanded .morph-content .btn-explore:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(106, 0, 255, 0.3);
+        }
+
+        .morph-card .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .morph-card.expanded .close-btn {
+            display: flex;
+        }
+
+        .morph-card .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+        }
+
+        /* Backdrop */
+        .backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 250;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .backdrop.active {
             opacity: 1;
             visibility: visible;
         }
 
-        .modal {
-            background: var(--card-bg);
-            width: 90%;
-            max-width: 600px;
-            border-radius: 10px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-            border: 1px solid #30363d;
-            display: flex;
-            flex-direction: column;
-            max-height: 85vh;
+        /* No results */
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            font-size: 1.2rem;
         }
 
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid #30363d;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            color: var(--dark-color);
-            font-size: 1.5rem;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: #8b949e;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: var(--transition);
-            line-height: 1;
-        }
-
-        .close-btn:hover {
-            color: white;
-        }
-
-        .modal-body {
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .category-section {
-            margin-bottom: 25px;
-        }
-
-        .category-section h3 {
-            color: var(--secondary-color);
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            border-left: 3px solid var(--primary-color);
-            padding-left: 10px;
-        }
-
-        .category-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .category-tag {
-            padding: 8px 16px;
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 20px;
-            color: #8b949e;
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
-
-        .category-tag:hover {
-            border-color: var(--secondary-color);
-            color: var(--secondary-color);
-        }
-
-        .category-tag.selected {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .modal-footer {
-            padding: 20px;
-            border-top: 1px solid #30363d;
-            display: flex;
-            justify-content: flex-end;
-            gap: 15px;
-        }
-
+        /* Responsive */
         @media (max-width: 768px) {
-            .tools-grid {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            .top-bar {
+                padding: 0 20px;
             }
 
-            header h1 {
-                font-size: 2rem;
+            .search-box input {
+                width: 160px;
             }
 
-            .modal {
-                width: 95%;
+            .hero {
+                padding-top: 80px;
+                padding-bottom: 60px;
+                min-height: auto;
             }
 
-            .category-selector {
-                flex-direction: column;
-                align-items: center;
+            .hero-icon {
+                font-size: 3.5rem;
             }
 
-            .selected-tags {
-                justify-content: center;
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .card-container {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+                padding: 20px;
+            }
+
+            .card {
+                min-height: 80px;
+                padding: 12px 15px;
+                font-size: 0.95rem;
+            }
+
+            .card-icon {
+                font-size: 1.5rem;
+            }
+
+            .category-section {
+                margin: 20px 0 10px 0;
+            }
+
+            .category-title {
+                font-size: 1rem;
+            }
+
+            .morph-card.expanded {
+                width: 90vw;
+                padding: 30px 20px;
+            }
+
+            .morph-card.expanded .morph-content h2 {
+                font-size: 1.4rem;
+            }
+
+            .morph-card.expanded .morph-content p {
+                font-size: 0.9rem;
             }
         }
     </style>
-
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
 </head>
 
-
 <body>
-    <!-- 用户登录区域 - 放在页面顶部合适位置 -->
-    <div class="user-section" id="userSection">
-        <!-- 未登录时显示 -->
-        <button class="user-btn" id="loginBtn">登录</button>
-        <button class="user-btn" id="registerBtn">注册</button>
-
-        <!-- 登录后显示 -->
-        <div id="loggedInUser" style="display: none;">
-            <div class="user-avatar" id="userAvatar"></div>
-            <div class="user-dropdown" id="userDropdown">
-                <div class="user-info">
-                    <div class="username" id="dropdownUsername"></div>
-                    <div class="phone" id="dropdownPhone"></div>
-                </div>
-                <ul class="dropdown-menu">
-                    <li><a href="#" id="editProfileBtn">修改个人信息</a></li>
-                    <li><a href="#" id="changePasswordBtn">修改密码</a></li>
-                    <li><a href="#" id="logoutBtn">退出登录</a></li>
-                </ul>
-            </div>
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <div class="breadcrumb">Oscar Studio > <span>teaching-tools</span></div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索工具...">
         </div>
-    </div>
-    <div class="container">
-        <header>
-            <h1>HTML教学工具集</h1>
-            <p>便于教学的一些HTML小工具</p>
+    </header>
 
-            <div class="search-container">
-                <input type="text" id="searchInput" placeholder="搜索工具...">
-            </div>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-icon">📚</div>
+        <h1>教学工具</h1>
+        <p>丰富的 HTML 演示工具，专为教师和学生设计。包含函数图像绘制、几何图形演示、化学方程式配平、计时器、抽签器等多种实用工具，让抽象的知识变得直观可见，使课堂教学更加生动有趣，提升学习效率。</p>
+    </section>
 
-            <div class="category-selector">
-                <button class="category-btn" id="categorySelector">
-                    <span>请选择标签</span>
-                    <span class="selected-count" id="selectedCount">0</span>
-                </button>
-                <div class="selected-tags" id="selectedTags">
-                    <!-- 已选标签将动态生成在这里 -->
-                </div>
-            </div>
-        </header>
+    <!-- Card Container -->
+    <main class="card-container" id="cardContainer"></main>
 
-        <main>
-            <div class="tools-grid" id="toolsGrid">
-                <!-- 工具卡片将通过JavaScript动态生成 -->
-            </div>
-        </main>
-
-        <footer>
-            <p>HTML教学工具集 &copy; 2026 - Designed by Oscar</p>
-            <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
-        </footer>
-    </div>
-
-    <!-- 分类模态框 -->
-    <div class="modal-overlay" id="categoryModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>选择筛选标签</h2>
-                <button class="close-btn" id="closeModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="category-section">
-                    <h3>学科</h3>
-                    <div class="category-tags" id="subjectTags">
-                        <!-- 学科标签将通过JavaScript动态生成 -->
-                    </div>
-                </div>
-                <div class="category-section">
-                    <h3>功能</h3>
-                    <div class="category-tags" id="functionTags">
-                        <!-- 功能标签将通过JavaScript动态生成 -->
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="resetSelection">重置选择</button>
-                <button class="btn" id="applySelection">应用筛选</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 用户登录注册模态框 -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal" id="modal">
-            <div class="modal-header">
-                <h3 id="modalTitle">登录</h3>
-                <button class="close-modal" id="closeModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="apiMessage"></div>
-
-                <!-- 登录表单 -->
-                <form id="loginForm" style="display: none;">
-                    <div class="form-group">
-                        <label for="loginAccount">用户名/手机号</label>
-                        <input type="text" id="loginAccount" placeholder="请输入用户名或手机号">
-                        <div class="error" id="loginAccountError"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">密码</label>
-                        <input type="password" id="loginPassword" placeholder="请输入密码">
-                        <div class="error" id="loginPasswordError"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn" style="width: 100%;">登录</button>
-                    </div>
-                </form>
-
-                <!-- 注册表单 -->
-                <form id="registerForm" style="display: none;">
-                    <div class="form-group">
-                        <label for="regUsername">用户名</label>
-                        <input type="text" id="regUsername" placeholder="请输入用户名（3-50字符）">
-                        <div class="error" id="regUsernameError"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="regPhone">手机号</label>
-                        <input type="text" id="regPhone" placeholder="请输入11位手机号">
-                        <div class="error" id="regPhoneError"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="regPassword">密码</label>
-                        <input type="password" id="regPassword" placeholder="请输入密码（至少6位）">
-                        <div class="error" id="regPasswordError"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="regConfirmPassword">确认密码</label>
-                        <input type="password" id="regConfirmPassword" placeholder="请再次输入密码">
-                        <div class="error" id="regConfirmPasswordError"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn" style="width: 100%;">注册</button>
-                    </div>
-                </form>
-
-                <!-- 修改个人信息表单 -->
-                <form id="editProfileForm" style="display: none;">
-                    <div class="form-group">
-                        <label for="editUsername">用户名</label>
-                        <input type="text" id="editUsername" placeholder="请输入新用户名">
-                        <div class="error" id="editUsernameError"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="editPhone">手机号</label>
-                        <input type="text" id="editPhone" placeholder="请输入新手机号">
-                        <div class="error" id="editPhoneError"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="editPassword">当前密码（用于验证）</label>
-                        <input type="password" id="editPassword" placeholder="请输入当前密码">
-                        <div class="error" id="editPasswordError"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn" style="width: 100%;">保存修改</button>
-                    </div>
-                </form>
-
-                <!-- 修改密码表单 -->
-                <form id="changePasswordForm" style="display: none;">
-                    <div class="form-group">
-                        <label for="currentPassword">当前密码</label>
-                        <input type="password" id="currentPassword" placeholder="请输入当前密码">
-                        <div class="error" id="currentPasswordError"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="newPassword">新密码</label>
-                        <input type="password" id="newPassword" placeholder="请输入新密码（至少6位）">
-                        <div class="error" id="newPasswordError"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmNewPassword">确认新密码</label>
-                        <input type="password" id="confirmNewPassword" placeholder="请再次输入新密码">
-                        <div class="error" id="confirmNewPasswordError"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn" style="width: 100%;">修改密码</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- Backdrop -->
+    <div class="backdrop" id="backdrop"></div>
 
     <script>
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function () {
-            const toolsGrid = document.getElementById('toolsGrid');
-            const searchInput = document.getElementById('searchInput');
-            const categorySelector = document.getElementById('categorySelector');
-            const categoryModal = document.getElementById('categoryModal');
-            const closeModal = document.getElementById('closeModal');
-            const subjectTags = document.getElementById('subjectTags');
-            const functionTags = document.getElementById('functionTags');
-            const resetSelection = document.getElementById('resetSelection');
-            const applySelection = document.getElementById('applySelection');
-            const selectedCount = document.getElementById('selectedCount');
-            const selectedTagsContainer = document.getElementById('selectedTags');
+        const cardContainer = document.getElementById('cardContainer');
+        const backdrop = document.getElementById('backdrop');
 
-            // 存储工具数据
-            let tools = [];
-            // 存储当前选中的标签
-            let selectedSubjects = [];
-            let selectedFunctions = [];
+        let tools = [];
+        let morphCard = null;
+        let selectedTool = null;
+        let selectedCard = null;
 
-            // 预定义的学科列表
-            const predefinedSubjects = [
-                '语文', '数学', '英语', '物理', '化学',
-                '生物', '地理', '历史', '道法', '通用'
-            ];
+        // Load tools
+        fetch('tools-config.json')
+            .then(response => response.json())
+            .then(data => {
+                tools = data.tools || [];
+                tools.sort((a, b) => {
+                    if (a.featured !== b.featured) return b.featured ? 1 : -1;
+                    return a.name.localeCompare(b.name);
+                });
+                renderCards(tools);
+            })
+            .catch(error => {
+                cardContainer.innerHTML = '<p class="no-results">加载工具失败</p>';
+            });
 
-            // 加载工具配置
-            loadToolsConfig();
+        const subjectNames = {
+            '数学': '数学', '物理': '物理', '化学': '化学', '生物': '生物',
+            '语文': '语文', '英语': '英语', '地理': '地理', '历史': '历史',
+            '道法': '道法', '通用': '通用工具'
+        };
 
-            // 从配置文件加载工具数据
-            function loadToolsConfig() {
-                toolsGrid.innerHTML = '<p class="loading">正在加载工具配置...</p>';
+        function renderCards(toolsToRender) {
+            cardContainer.innerHTML = '';
+            if (toolsToRender.length === 0) {
+                cardContainer.innerHTML = '<p class="no-results">没有找到匹配的工具</p>';
+                return;
+            }
 
-                fetch('tools-config.json')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('配置文件加载失败');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        tools = data.tools || [];
-                        // Sort tools: featured first
-                        tools.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-                        initPage();
-                    })
-                    .catch(error => {
-                        console.error('加载工具配置时出错:', error);
-                        toolsGrid.innerHTML = '<p class="error">加载工具配置失败，请检查配置文件是否存在</p>';
+            const grouped = {};
+            toolsToRender.forEach(tool => {
+                const subject = (tool.subject && tool.subject[0]) || '通用';
+                if (!grouped[subject]) grouped[subject] = [];
+                grouped[subject].push(tool);
+            });
+
+            Object.keys(grouped).sort((a, b) => grouped[b].length - grouped[a].length).forEach(subject => {
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                section.innerHTML = `<div class="category-title">${subjectNames[subject] || subject}</div>`;
+                cardContainer.appendChild(section);
+
+                grouped[subject].forEach(tool => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.dataset.tool = tool.name;
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <span class="card-icon">${tool.icon || '📄'}</span>
+                            <span class="card-name">${tool.name}</span>
+                        </div>
+                        <div class="card-tags">
+                            ${tool.tags ? tool.tags.slice(0, 3).map(t => `<span class="card-tag">${t}</span>`).join('') : ''}
+                        </div>
+                    `;
+                    card.addEventListener('click', () => selectCard(card, tool));
+                    cardContainer.appendChild(card);
+                });
+            });
+        }
+
+        function selectCard(cardElement, tool) {
+            if (morphCard) return;
+            selectedTool = tool;
+            selectedCard = cardElement;
+
+            const rect = cardElement.getBoundingClientRect();
+
+            // Create morph card at card's position
+            morphCard = document.createElement('div');
+            morphCard.className = 'morph-card compact';
+            morphCard.innerHTML = `
+                <div class="morph-header">
+                    <span class="morph-icon">${tool.icon || '📄'}</span>
+                    <span class="morph-name">${tool.name}</span>
+                </div>
+                <div class="morph-tags">
+                    ${tool.tags ? tool.tags.slice(0, 3).map(t => `<span class="morph-tag">${t}</span>`).join('') : ''}
+                </div>
+                <div class="morph-content">
+                    <div class="morph-big-icon">${tool.icon || '📄'}</div>
+                    <h2>${tool.name}</h2>
+                    <p>${tool.description}</p>
+                    <a href="${tool.name}/index.html" class="btn-explore">Explore</a>
+                </div>
+                <button class="close-btn">&times;</button>
+            `;
+
+            morphCard.style.left = rect.left + 'px';
+            morphCard.style.top = rect.top + 'px';
+            morphCard.style.width = rect.width + 'px';
+            morphCard.style.minHeight = rect.height + 'px';
+            document.body.appendChild(morphCard);
+
+            // Hide original card
+            cardElement.style.visibility = 'hidden';
+
+            // Show backdrop
+            backdrop.classList.add('active');
+
+            // Calculate target position
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const targetWidth = Math.min(450, viewportWidth * 0.9);
+            const targetHeight = 340;
+            const targetLeft = (viewportWidth - targetWidth) / 2;
+            const targetTop = (viewportHeight - targetHeight) / 2;
+
+            // Animate to center
+            requestAnimationFrame(() => {
+                morphCard.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                morphCard.style.left = targetLeft + 'px';
+                morphCard.style.top = targetTop + 'px';
+                morphCard.style.width = targetWidth + 'px';
+                morphCard.style.minHeight = targetHeight + 'px';
+            });
+
+            // Other cards hide
+            const allCards = Array.from(cardContainer.querySelectorAll('.card'));
+            allCards.forEach(card => {
+                if (card === cardElement) return;
+                const cardRect = card.getBoundingClientRect();
+                const delay = Math.max(0, ((viewportHeight - cardRect.top) / viewportHeight) * 120);
+                card.style.animationDelay = `${delay}ms`;
+                card.classList.add('hiding');
+            });
+
+            // Expand to show content
+            setTimeout(() => {
+                morphCard.classList.add('expanded');
+            }, 200);
+
+            // Close handlers
+            morphCard.querySelector('.close-btn').addEventListener('click', closeMorphCard);
+            backdrop.addEventListener('click', closeMorphCard);
+        }
+
+        function closeMorphCard() {
+            if (!morphCard || !selectedCard) return;
+
+            const originalRect = selectedCard.getBoundingClientRect();
+
+            // Get all hiding cards
+            const hidingCards = Array.from(cardContainer.querySelectorAll('.card.hiding'));
+
+            // Shrink morphCard back to original position
+            morphCard.classList.remove('expanded');
+            morphCard.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            morphCard.style.left = originalRect.left + 'px';
+            morphCard.style.top = originalRect.top + 'px';
+            morphCard.style.width = originalRect.width + 'px';
+            morphCard.style.minHeight = originalRect.height + 'px';
+
+            // Start returning all cards (from bottom to top)
+            requestAnimationFrame(() => {
+                hidingCards.reverse().forEach((card, i) => {
+                    card.classList.remove('hiding');
+                    card.style.transform = 'translateY(-100vh)';
+                    card.style.opacity = '0';
+                    card.getBoundingClientRect();
+                    setTimeout(() => {
+                        card.classList.add('returning');
+                    }, i * 40);
+                });
+            });
+
+            setTimeout(() => {
+                if (morphCard) {
+                    morphCard.remove();
+                    morphCard = null;
+                }
+                backdrop.classList.remove('active');
+
+                if (selectedCard) {
+                    selectedCard.style.visibility = 'visible';
+                }
+
+                // Clean up after animation
+                setTimeout(() => {
+                    hidingCards.forEach(card => {
+                        card.classList.remove('returning');
+                        card.style.transform = '';
+                        card.style.opacity = '';
                     });
-            }
+                }, 800);
 
-            // 初始化页面
-            function initPage() {
-                // 渲染工具卡片
-                renderTools(tools);
+                selectedCard = null;
+                selectedTool = null;
+            }, 400);
+        }
 
-                // 设置搜索功能
-                setupSearch();
+        // Keyboard escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && morphCard) closeMorphCard();
+        });
 
-                // 设置分类模态框
-                setupCategoryModal();
-
-                // 更新选择计数
-                updateSelectedCount();
-
-                // 更新已选标签显示
-                updateSelectedTagsDisplay();
-            }
-
-            // 生成学科标签
-            function generateSubjectTags() {
-                let subjectTagsHTML = '';
-
-                predefinedSubjects.forEach(subject => {
-                    const isSelected = selectedSubjects.includes(subject);
-                    subjectTagsHTML += `
-                        <div class="category-tag ${isSelected ? 'selected' : ''}" data-subject="${subject}">
-                            ${subject}
-                        </div>
-                    `;
-                });
-
-                subjectTags.innerHTML = subjectTagsHTML;
-            }
-
-            // 生成功能标签
-            function generateFunctionTags() {
-                // 获取所有功能标签
-                const allFunctions = new Set();
-                tools.forEach(tool => {
-                    if (tool.tags && Array.isArray(tool.tags)) {
-                        tool.tags.forEach(tag => allFunctions.add(tag));
-                    }
-                });
-
-                // 按字母顺序排序
-                const sortedFunctions = Array.from(allFunctions).sort();
-
-                let functionTagsHTML = '';
-
-                sortedFunctions.forEach(func => {
-                    const isSelected = selectedFunctions.includes(func);
-                    functionTagsHTML += `
-                        <div class="category-tag ${isSelected ? 'selected' : ''}" data-function="${func}">
-                            ${func}
-                        </div>
-                    `;
-                });
-
-                functionTags.innerHTML = functionTagsHTML;
-            }
-
-            // 渲染工具卡片
-            function renderTools(toolsToRender) {
-                toolsGrid.innerHTML = '';
-
-                if (toolsToRender.length === 0) {
-                    toolsGrid.innerHTML = '<p class="no-results">没有找到匹配的工具</p>';
-                    return;
-                }
-
-                toolsToRender.forEach(tool => {
-                    const toolCard = document.createElement('div');
-                    toolCard.className = 'tool-card';
-                    if (tool.featured) {
-                        toolCard.classList.add('featured');
-                    }
-
-                    // 生成工具链接，使用工具名称作为文件名
-                    const demoUrl = `${tool.name}/index.html`;
-
-                    // 生成学科标签HTML
-                    const subjectTagsHTML = tool.subject && tool.subject.length > 0
-                        ? tool.subject.map(subject => `<span class="tool-tag">${subject}</span>`).join('')
-                        : '';
-
-                    // 生成功能标签HTML
-                    const functionTagsHTML = tool.tags && tool.tags.length > 0
-                        ? tool.tags.map(tag => `<span class="tool-tag">${tag}</span>`).join('')
-                        : '';
-
-                    toolCard.innerHTML = `
-                        ${tool.featured ? '<span class="featured-badge">推荐</span>' : ''}
-                        <div class="tool-icon">
-                            ${tool.icon || '📄'}
-                        </div>
-                        <div class="tool-content">
-                            <h3>${tool.name}</h3>
-                            <p>${tool.description}</p>
-                            ${subjectTagsHTML ? `<div class="tool-tags">${subjectTagsHTML}</div>` : ''}
-                            ${functionTagsHTML ? `<div class="tool-tags">${functionTagsHTML}</div>` : ''}
-                            <a href="${demoUrl}" class="btn btn-block">进入演示</a>
-                        </div>
-                    `;
-
-                    toolsGrid.appendChild(toolCard);
-                });
-            }
-
-            // 过滤工具
-            function filterTools() {
-                let filteredTools = tools;
-
-                // 根据搜索词过滤
-                const searchTerm = searchInput.value.toLowerCase();
-                if (searchTerm) {
-                    filteredTools = filteredTools.filter(tool =>
-                        tool.name.toLowerCase().includes(searchTerm) ||
-                        tool.description.toLowerCase().includes(searchTerm) ||
-                        (tool.subject && tool.subject.some(subject => subject.toLowerCase().includes(searchTerm))) ||
-                        (tool.tags && tool.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
-                    );
-                }
-
-                // 根据学科标签过滤
-                if (selectedSubjects.length > 0) {
-                    filteredTools = filteredTools.filter(tool =>
-                        tool.subject && tool.subject.some(subject => selectedSubjects.includes(subject))
-                    );
-                }
-
-                // 根据功能标签过滤
-                if (selectedFunctions.length > 0) {
-                    filteredTools = filteredTools.filter(tool =>
-                        tool.tags && tool.tags.some(tag => selectedFunctions.includes(tag))
-                    );
-                }
-
-                renderTools(filteredTools);
-            }
-
-            // 设置搜索功能
-            function setupSearch() {
-                searchInput.addEventListener('input', function () {
-                    filterTools();
-                });
-            }
-
-            // 设置分类模态框
-            function setupCategoryModal() {
-                // 打开模态框
-                categorySelector.addEventListener('click', function () {
-                    generateSubjectTags();
-                    generateFunctionTags();
-                    categoryModal.classList.add('active');
-                });
-
-                // 关闭模态框
-                closeModal.addEventListener('click', function () {
-                    categoryModal.classList.remove('active');
-                });
-
-                // 点击模态框外部关闭
-                categoryModal.addEventListener('click', function (e) {
-                    if (e.target === categoryModal) {
-                        categoryModal.classList.remove('active');
-                    }
-                });
-
-                // 选择学科标签
-                subjectTags.addEventListener('click', function (e) {
-                    if (e.target.classList.contains('category-tag')) {
-                        const subject = e.target.dataset.subject;
-                        toggleSelection(selectedSubjects, subject);
-                        e.target.classList.toggle('selected');
-                        updateSelectedCount();
-                    }
-                });
-
-                // 选择功能标签
-                functionTags.addEventListener('click', function (e) {
-                    if (e.target.classList.contains('category-tag')) {
-                        const func = e.target.dataset.function;
-                        toggleSelection(selectedFunctions, func);
-                        e.target.classList.toggle('selected');
-                        updateSelectedCount();
-                    }
-                });
-
-                // 重置选择
-                resetSelection.addEventListener('click', function () {
-                    selectedSubjects = [];
-                    selectedFunctions = [];
-                    generateSubjectTags();
-                    generateFunctionTags();
-                    updateSelectedCount();
-                    updateSelectedTagsDisplay();
-                });
-
-                // 应用筛选
-                applySelection.addEventListener('click', function () {
-                    filterTools();
-                    categoryModal.classList.remove('active');
-                    updateSelectedTagsDisplay();
-                });
-            }
-
-            // 切换选择状态
-            function toggleSelection(selectionArray, item) {
-                const index = selectionArray.indexOf(item);
-                if (index === -1) {
-                    selectionArray.push(item);
-                } else {
-                    selectionArray.splice(index, 1);
-                }
-            }
-
-            // 更新选择计数
-            function updateSelectedCount() {
-                const totalSelected = selectedSubjects.length + selectedFunctions.length;
-                selectedCount.textContent = totalSelected;
-            }
-
-            // 更新已选标签显示
-            function updateSelectedTagsDisplay() {
-                selectedTagsContainer.innerHTML = '';
-
-                // 添加学科标签
-                selectedSubjects.forEach(subject => {
-                    const tagElement = document.createElement('div');
-                    tagElement.className = 'selected-tag';
-                    tagElement.innerHTML = `
-                        <span>${subject}</span>
-                        <button class="remove-tag" data-type="subject" data-value="${subject}">×</button>
-                    `;
-                    selectedTagsContainer.appendChild(tagElement);
-                });
-
-                // 添加功能标签
-                selectedFunctions.forEach(func => {
-                    const tagElement = document.createElement('div');
-                    tagElement.className = 'selected-tag';
-                    tagElement.innerHTML = `
-                        <span>${func}</span>
-                        <button class="remove-tag" data-type="function" data-value="${func}">×</button>
-                    `;
-                    selectedTagsContainer.appendChild(tagElement);
-                });
-
-                // 为删除按钮添加事件
-                document.querySelectorAll('.remove-tag').forEach(button => {
-                    button.addEventListener('click', function () {
-                        const type = this.dataset.type;
-                        const value = this.dataset.value;
-
-                        if (type === 'subject') {
-                            const index = selectedSubjects.indexOf(value);
-                            if (index !== -1) {
-                                selectedSubjects.splice(index, 1);
-                            }
-                        } else if (type === 'function') {
-                            const index = selectedFunctions.indexOf(value);
-                            if (index !== -1) {
-                                selectedFunctions.splice(index, 1);
-                            }
-                        }
-
-                        updateSelectedCount();
-                        updateSelectedTagsDisplay();
-                        filterTools();
-                    });
-                });
+        // Search
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            if (term) {
+                renderCards(tools.filter(t => t.name.toLowerCase().includes(term)));
+            } else {
+                renderCards(tools);
             }
         });
     </script>
-    <script src="user-auth.js"></script>
-
 </body>
-
 </html>
