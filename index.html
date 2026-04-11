@@ -60,6 +60,12 @@
             color: var(--secondary-color);
         }
 
+        .search-box {
+            position: absolute;
+            left: calc(100% - 320px);
+            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         .search-box input {
             width: 280px;
             padding: 10px 20px;
@@ -69,12 +75,22 @@
             color: var(--text-color);
             font-size: 0.9rem;
             outline: none;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .search-box input:focus {
+            width: 400px;
             border-color: var(--secondary-color);
             box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.15);
+        }
+
+        .search-box.searching {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .search-box.searching input {
+            width: 500px;
         }
 
         .search-box input::placeholder {
@@ -121,10 +137,10 @@
         /* Card Container */
         .card-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             padding: 40px;
-            max-width: 1100px;
+            max-width: 80vw;
             margin: 0 auto;
         }
 
@@ -398,7 +414,7 @@
             z-index: 250;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
         .backdrop.active {
@@ -421,8 +437,16 @@
                 padding: 0 20px;
             }
 
+            .search-box {
+                left: calc(100% - 180px);
+            }
+
             .search-box input {
-                width: 160px;
+                width: 140px;
+            }
+
+            .search-box input:focus {
+                width: 200px;
             }
 
             .hero {
@@ -444,9 +468,10 @@
             }
 
             .card-container {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                grid-template-columns: repeat(2, 1fr);
                 gap: 15px;
                 padding: 20px;
+                max-width: 95vw;
             }
 
             .card {
@@ -623,7 +648,7 @@
 
             // Animate to center
             requestAnimationFrame(() => {
-                morphCard.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                morphCard.style.transition = 'all 750ms cubic-bezier(0.34, 1.4, 0.64, 1)';
                 morphCard.style.left = targetLeft + 'px';
                 morphCard.style.top = targetTop + 'px';
                 morphCard.style.width = targetWidth + 'px';
@@ -658,9 +683,12 @@
             // Get all hiding cards
             const hidingCards = Array.from(cardContainer.querySelectorAll('.card.hiding'));
 
+            // Start fading backdrop immediately
+            backdrop.style.opacity = '0';
+
             // Shrink morphCard back to original position
             morphCard.classList.remove('expanded');
-            morphCard.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            morphCard.style.transition = 'all 750ms cubic-bezier(0.34, 1.4, 0.64, 1)';
             morphCard.style.left = originalRect.left + 'px';
             morphCard.style.top = originalRect.top + 'px';
             morphCard.style.width = originalRect.width + 'px';
@@ -685,6 +713,7 @@
                     morphCard = null;
                 }
                 backdrop.classList.remove('active');
+                backdrop.style.opacity = '';
 
                 if (selectedCard) {
                     selectedCard.style.visibility = 'visible';
@@ -701,7 +730,7 @@
 
                 selectedCard = null;
                 selectedTool = null;
-            }, 400);
+            }, 800);
         }
 
         // Keyboard escape
@@ -710,10 +739,23 @@
         });
 
         // Search
+        searchInput.addEventListener('focus', () => {
+            document.querySelector('.search-box').classList.add('searching');
+        });
+
+        searchInput.addEventListener('blur', () => {
+            document.querySelector('.search-box').classList.remove('searching');
+        });
+
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase().trim();
             if (term) {
-                renderCards(tools.filter(t => t.name.toLowerCase().includes(term)));
+                renderCards(tools.filter(t =>
+                    t.name.toLowerCase().includes(term) ||
+                    (t.tags && t.tags.some(tag => tag.toLowerCase().includes(term))) ||
+                    (t.subject && t.subject.some(s => s.toLowerCase().includes(term))) ||
+                    t.description.toLowerCase().includes(term)
+                ));
             } else {
                 renderCards(tools);
             }
