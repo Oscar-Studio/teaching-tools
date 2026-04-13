@@ -105,6 +105,7 @@
             if (morphCard) return;
             selectedTool = tool;
             selectedCard = cardElement;
+            const isLowQuality = document.body.classList.contains('low-quality');
 
             const rect = cardElement.getBoundingClientRect();
 
@@ -149,28 +150,43 @@
             const targetTop = (viewportHeight - targetHeight) / 2;
 
             // Animate to center
-            requestAnimationFrame(() => {
-                morphCard.style.transition = 'all 750ms cubic-bezier(0.34, 1.4, 0.64, 1)';
+            if (!isLowQuality) {
+                requestAnimationFrame(() => {
+                    morphCard.style.transition = 'all 750ms cubic-bezier(0.34, 1.4, 0.64, 1)';
+                    morphCard.style.left = targetLeft + 'px';
+                    morphCard.style.top = targetTop + 'px';
+                    morphCard.style.width = targetWidth + 'px';
+                    morphCard.style.minHeight = targetHeight + 'px';
+                });
+            } else {
                 morphCard.style.left = targetLeft + 'px';
                 morphCard.style.top = targetTop + 'px';
                 morphCard.style.width = targetWidth + 'px';
                 morphCard.style.minHeight = targetHeight + 'px';
-            });
+            }
 
             // Other cards hide
             const allCards = Array.from(cardContainer.querySelectorAll('.card'));
             allCards.forEach(card => {
                 if (card === cardElement) return;
-                const cardRect = card.getBoundingClientRect();
-                const delay = Math.max(0, ((viewportHeight - cardRect.top) / viewportHeight) * 120);
-                card.style.animationDelay = `${delay}ms`;
-                card.classList.add('hiding');
+                if (isLowQuality) {
+                    card.style.display = 'none';
+                } else {
+                    const cardRect = card.getBoundingClientRect();
+                    const delay = Math.max(0, ((viewportHeight - cardRect.top) / viewportHeight) * 120);
+                    card.style.animationDelay = `${delay}ms`;
+                    card.classList.add('hiding');
+                }
             });
 
             // Expand to show content
-            setTimeout(() => {
+            if (!isLowQuality) {
+                setTimeout(() => {
+                    morphCard.classList.add('expanded');
+                }, 200);
+            } else {
                 morphCard.classList.add('expanded');
-            }, 200);
+            }
 
             // Close handlers
             morphCard.querySelector('.close-btn').addEventListener('click', closeMorphCard);
@@ -179,6 +195,7 @@
 
         function closeMorphCard() {
             if (!morphCard || !selectedCard) return;
+            const isLowQuality = document.body.classList.contains('low-quality');
 
             const originalRect = selectedCard.getBoundingClientRect();
 
@@ -190,24 +207,33 @@
 
             // Shrink morphCard back to original position
             morphCard.classList.remove('expanded');
-            morphCard.style.transition = 'all 750ms cubic-bezier(0.34, 1.4, 0.64, 1)';
+            if (!isLowQuality) {
+                morphCard.style.transition = 'all 750ms cubic-bezier(0.34, 1.4, 0.64, 1)';
+            }
             morphCard.style.left = originalRect.left + 'px';
             morphCard.style.top = originalRect.top + 'px';
             morphCard.style.width = originalRect.width + 'px';
             morphCard.style.minHeight = originalRect.height + 'px';
 
-            // Start returning all cards (from bottom to top)
-            requestAnimationFrame(() => {
-                hidingCards.reverse().forEach((card, i) => {
-                    card.classList.remove('hiding');
-                    card.style.transform = 'translateY(-100vh)';
-                    card.style.opacity = '0';
-                    card.getBoundingClientRect();
-                    setTimeout(() => {
-                        card.classList.add('returning');
-                    }, i * 40);
+            if (isLowQuality) {
+                // Immediately show all cards
+                cardContainer.querySelectorAll('.card').forEach(card => {
+                    card.style.display = '';
                 });
-            });
+            } else {
+                // Start returning all cards (from bottom to top)
+                requestAnimationFrame(() => {
+                    hidingCards.reverse().forEach((card, i) => {
+                        card.classList.remove('hiding');
+                        card.style.transform = 'translateY(-100vh)';
+                        card.style.opacity = '0';
+                        card.getBoundingClientRect();
+                        setTimeout(() => {
+                            card.classList.add('returning');
+                        }, i * 40);
+                    });
+                });
+            }
 
             setTimeout(() => {
                 if (morphCard) {
@@ -221,18 +247,20 @@
                     selectedCard.style.visibility = 'visible';
                 }
 
-                // Clean up after animation
-                setTimeout(() => {
-                    hidingCards.forEach(card => {
-                        card.classList.remove('returning');
-                        card.style.transform = '';
-                        card.style.opacity = '';
-                    });
-                }, 800);
+                if (!isLowQuality) {
+                    // Clean up after animation
+                    setTimeout(() => {
+                        hidingCards.forEach(card => {
+                            card.classList.remove('returning');
+                            card.style.transform = '';
+                            card.style.opacity = '';
+                        });
+                    }, 800);
+                }
 
                 selectedCard = null;
                 selectedTool = null;
-            }, 800);
+            }, isLowQuality ? 0 : 800);
         }
 
         // Keyboard escape
