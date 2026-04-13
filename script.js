@@ -1,5 +1,40 @@
         const cardContainer = document.getElementById('cardContainer');
         const backdrop = document.getElementById('backdrop');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsDropdown = document.getElementById('settingsDropdown');
+        const qualityRadios = document.querySelectorAll('input[name="quality"]');
+
+        // Settings - Quality
+        const currentQuality = localStorage.getItem('quality') || 'normal';
+        if (currentQuality === 'low') {
+            document.body.classList.add('low-quality');
+            document.querySelector('input[value="low"]').checked = true;
+        }
+
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsDropdown.classList.toggle('open');
+            settingsBtn.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!settingsDropdown.contains(e.target) && e.target !== settingsBtn) {
+                settingsDropdown.classList.remove('open');
+                settingsBtn.classList.remove('active');
+            }
+        });
+
+        qualityRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                const quality = document.querySelector('input[name="quality"]:checked').value;
+                localStorage.setItem('quality', quality);
+                if (quality === 'low') {
+                    document.body.classList.add('low-quality');
+                } else {
+                    document.body.classList.remove('low-quality');
+                }
+            });
+        });
 
         let tools = [];
         let morphCard = null;
