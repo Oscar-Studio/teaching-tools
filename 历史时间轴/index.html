@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国近现代史时间轴</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #21262d;
+            --border-color: #30363d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --politics: #f85149;
+            --diplomacy: #58a6ff;
+            --economy: #3fb950;
+            --tech: #a371f7;
+            --social: #d29922;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 25px 20px 15px;
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            background: linear-gradient(135deg, var(--diplomacy), var(--tech));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        .chart-wrapper {
+            padding: 0 30px 40px;
+            min-width: 1400px;
+        }
+
+        .timeline-header {
+            display: flex;
+            margin-left: 120px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 0;
+        }
+
+        .year-tick {
+            flex: 0 0 60px;
+            text-align: center;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .timeline-grid {
+            display: flex;
+            align-items: stretch;
+        }
+
+        .row-labels {
+            display: flex;
+            flex-direction: column;
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .row-label {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .row-label.politics { color: var(--politics); }
+        .row-label.diplomacy { color: var(--diplomacy); }
+        .row-label.economy { color: var(--economy); }
+        .row-label.tech { color: var(--tech); }
+        .row-label.social { color: var(--social); }
+
+        .chart-area {
+            flex: 1;
+            position: relative;
+        }
+
+        .chart-row {
+            height: 60px;
+            position: relative;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .grid-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--border-color);
+            opacity: 0.5;
+        }
+
+        .event-bar {
+            position: absolute;
+            height: 36px;
+            top: 12px;
+            border-radius: 6px;
+            padding: 0 10px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: white;
+            font-weight: 500;
+        }
+
+        .event-bar:hover {
+            transform: scaleY(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            z-index: 100;
+        }
+
+        .event-bar.politics { background: var(--politics); }
+        .event-bar.diplomacy { background: var(--diplomacy); }
+        .event-bar.economy { background: var(--economy); }
+        .event-bar.tech { background: var(--tech); }
+        .event-bar.social { background: var(--social); }
+
+        .tooltip {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            max-width: 350px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+
+        .tooltip.active {
+            display: block;
+        }
+
+        .tooltip h3 {
+            font-size: 1em;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tooltip-item {
+            margin-bottom: 8px;
+        }
+
+        .tooltip-label {
+            color: var(--text-secondary);
+            font-size: 0.75em;
+            margin-bottom: 2px;
+        }
+
+        .tooltip-value {
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+            font-size: 0.9em;
+        }
+
+        .legend-item:hover {
+            background: var(--bg-card);
+        }
+
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        .legend-dot.politics { background: var(--politics); }
+        .legend-dot.diplomacy { background: var(--diplomacy); }
+        .legend-dot.economy { background: var(--economy); }
+        .legend-dot.tech { background: var(--tech); }
+        .legend-dot.social { background: var(--social); }
+
+        .time-ruler {
+            position: relative;
+            height: 30px;
+            margin-left: 120px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .time-ruler::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: -6px;
+            height: 10px;
+            background: repeating-linear-gradient(
+                to right,
+                transparent,
+                transparent 59px,
+                var(--border-color) 59px,
+                var(--border-color) 60px
+            );
+        }
+
+        .time-arrow {
+            position: absolute;
+            right: -15px;
+            top: -10px;
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📜 中国近现代史时间轴（1949-2003）</h1>
+        <p>横向甘特图 · 点击事件查看详情</p>
+    </header>
+
+    <div class="legend">
+        <div class="legend-item" data-cat="politics"><span class="legend-dot politics"></span>政治</div>
+        <div class="legend-item" data-cat="diplomacy"><span class="legend-dot diplomacy"></span>外交</div>
+        <div class="legend-item" data-cat="economy"><span class="legend-dot economy"></span>经济</div>
+        <div class="legend-item" data-cat="tech"><span class="legend-dot tech"></span>科技</div>
+        <div class="legend-item" data-cat="social"><span class="legend-dot social"></span>社会</div>
+    </div>
+
+    <div class="chart-wrapper">
+        <div class="timeline-header" id="yearHeader"></div>
+        <div class="timeline-grid">
+            <div class="row-labels">
+                <div class="row-label diplomacy">外交</div>
+                <div class="row-label politics">政治</div>
+                <div class="row-label economy">经济</div>
+                <div class="row-label tech">科技</div>
+                <div class="row-label social">社会</div>
+            </div>
+            <div class="chart-area" id="chartArea">
+                <div class="chart-row" data-cat="diplomacy"></div>
+                <div class="chart-row" data-cat="politics"></div>
+                <div class="chart-row" data-cat="economy"></div>
+                <div class="chart-row" data-cat="tech"></div>
+                <div class="chart-row" data-cat="social"></div>
+            </div>
+        </div>
+        <div class="time-ruler">
+            <span class="time-arrow"></span>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        const START_YEAR = 1949;
+        const END_YEAR = 2003;
+        const YEAR_WIDTH = 60; // pixels per year
+
+        const eventsData = [
+            // 1949
+            { year: 1949, duration: 1, category: 'politics', title: '新中国成立', brief: '1949.10.1', details: [
+                { label: '时间', value: '1949年10月1日' },
+                { label: '内容', value: '毛泽东在天安门城楼庄严宣告中华人民共和国中央人民政府成立' },
+                { label: '国内意义', value: '标志着中国人民从此站起来了，开辟了中国历史新纪元' },
+                { label: '世界意义', value: '冲破了帝国主义的东方战线，极大地改变了世界政治格局' }
+            ]},
+            { year: 1949, duration: 1, category: 'diplomacy', title: '新中国外交方针', brief: '三大方针', details: [
+                { label: '三大外交方针', value: '另起炉灶、打扫干净屋子再请客、一边倒' },
+                { label: '外交政策', value: '独立自主的和平外交政策' }
+            ]},
+            // 1950
+            { year: 1950, duration: 1, category: 'social', title: '土地改革', brief: '1950-1952', details: [
+                { label: '文件', value: '《中华人民共和国土地改革法》' },
+                { label: '内容', value: '废除地主阶级封建剥削的土地所有制，实行农民土地所有制' },
+                { label: '意义', value: '彻底废除了封建土地制度，解放了农村生产力' }
+            ]},
+            { year: 1950, duration: 3, category: 'diplomacy', title: '抗美援朝', brief: '1950-1953', details: [
+                { label: '背景', value: '美国出兵干涉朝鲜内战，越过三八线，直逼中朝边境' },
+                { label: '英雄人物', value: '彭德怀（志愿军司令员兼政治委员）' },
+                { label: '胜利意义', value: '大大提高了中国的国际威望' }
+            ]},
+            // 1951
+            { year: 1951, duration: 1, category: 'diplomacy', title: '西藏和平解放', brief: '十七条协议', details: [
+                { label: '内容', value: '十七条协议签订' },
+                { label: '意义', value: '祖国大陆实现统一' }
+            ]},
+            // 1953
+            { year: 1953, duration: 1, category: 'diplomacy', title: '和平共处五项原则', brief: '1953', details: [
+                { label: '内容', value: '互相尊重主权和领土完整、互不侵犯、互不干涉内政、平等互利、和平共处' },
+                { label: '提出者', value: '周恩来' },
+                { label: '意义', value: '成为国际关系基本准则' }
+            ]},
+            { year: 1953, duration: 4, category: 'economy', title: '过渡时期总路线', brief: '一化三改', details: [
+                { label: '内容', value: '"一化三改"——逐步实现社会主义工业化；逐步实现对农业、手工业、资本主义工商业的社会主义改造' }
+            ]},
+            // 1954
+            { year: 1954, duration: 1, category: 'politics', title: '1954年宪法', brief: '人大制度', details: [
+                { label: '内容', value: '制定《中华人民共和国宪法》' },
+                { label: '地位', value: '我国第一部社会主义类型的宪法' },
+                { label: '意义', value: '确立人民代表大会制度' }
+            ]},
+            // 1955
+            { year: 1955, duration: 1, category: 'diplomacy', title: '万隆会议', brief: '求同存异', details: [
+                { label: '内容', value: '周恩来提出"求同存异"方针' },
+                { label: '意义', value: '促进了中国与亚非各国的团结与合作' }
+            ]},
+            // 1956
+            { year: 1956, duration: 1, category: 'politics', title: '中共八大', brief: '八大', details: [
+                { label: '核心内容', value: '党和人民的主要任务是集中力量发展社会生产力' },
+                { label: '历史地位', value: '为社会主义建设指明了方向' }
+            ]},
+            { year: 1956, duration: 1, category: 'economy', title: '三大改造完成', brief: '1956', details: [
+                { label: '内容', value: '对农业、手工业、资本主义工商业的社会主义改造基本完成' },
+                { label: '赎买创举', value: '对资本主义工商业采取和平赎买政策' },
+                { label: '意义', value: '标志着社会主义基本制度在我国建立起来' }
+            ]},
+            { year: 1956, duration: 10, category: 'tech', title: '建设成就', brief: '两弹一星/大庆', details: [
+                { label: '成就', value: '大庆油田、两弹元勋、杂交水稻等' },
+                { label: '模范人物', value: '邓稼先、王进喜、焦裕禄、袁隆平等' }
+            ]},
+            // 1957
+            { year: 1957, duration: 1, category: 'economy', title: '一五计划完成', brief: '1953-1957', details: [
+                { label: '基本任务', value: '集中力量发展重工业' },
+                { label: '核心成就', value: '长春一汽、沈阳机床厂、武汉长江大桥等' }
+            ]},
+            // 1958
+            { year: 1958, duration: 3, category: 'social', title: '大跃进/人民公社', brief: '1958-1960', details: [
+                { label: '教训', value: '急于求成，忽视了客观经济规律' }
+            ]},
+            // 1961
+            { year: 1961, duration: 5, category: 'economy', title: '八字方针', brief: '调整巩固', details: [
+                { label: '内容', value: '调整、巩固、充实、提高' },
+                { label: '作用', value: '对纠正"大跃进"的错误起了重要作用' }
+            ]},
+            // 1964
+            { year: 1964, duration: 1, category: 'tech', title: '原子弹爆炸', brief: '1964', details: [
+                { label: '意义', value: '打破了核垄断，提高了中国的国际地位' },
+                { label: '英雄人物', value: '邓稼先（"两弹元勋"）' }
+            ]},
+            { year: 1966, duration: 10, category: 'social', title: '文化大革命', brief: '1966-1976', details: [
+                { label: '危害', value: '给党、国家和人民带来严重灾难' },
+                { label: '教训', value: '必须健全民主与法制' }
+            ]},
+            // 1967
+            { year: 1967, duration: 1, category: 'tech', title: '氢弹爆炸', brief: '1967', details: [
+                { label: '意义', value: '进一步打破了超级大国的核垄断' }
+            ]},
+            // 1970
+            { year: 1970, duration: 1, category: 'tech', title: '人造卫星', brief: '东方红一号', details: [
+                { label: '意义', value: '中国成为世界上第五个能独立发射人造卫星的国家' },
+                { label: '英雄人物', value: '钱学森' }
+            ]},
+            // 1971
+            { year: 1971, duration: 1, category: 'diplomacy', title: '恢复联合国席位', brief: '1971', details: [
+                { label: '意义', value: '是中国外交的重大胜利' }
+            ]},
+            // 1972
+            { year: 1972, duration: 1, category: 'diplomacy', title: '中美关系正常化', brief: '尼克松访华', details: [
+                { label: '内容', value: '《中美联合公报》发表，两国关系开始走向正常化' },
+                { label: '英雄人物', value: '周恩来' }
+            ]},
+            { year: 1972, duration: 1, category: 'diplomacy', title: '中日邦交正常化', brief: '1972', details: [
+                { label: '意义', value: '结束了两国间的不正常状态' }
+            ]},
+            { year: 1972, duration: 1, category: 'tech', title: '青蒿素提取', brief: '屠呦呦', details: [
+                { label: '英雄人物', value: '屠呦呦' },
+                { label: '意义', value: '为全球疟疾防治作出重大贡献（2015年获诺贝尔奖）' }
+            ]},
+            // 1973
+            { year: 1973, duration: 1, category: 'tech', title: '杂交水稻成功', brief: '袁隆平', details: [
+                { label: '英雄人物', value: '袁隆平（"杂交水稻之父"）' },
+                { label: '意义', value: '为保障我国粮食安全作出巨大贡献' }
+            ]},
+            // 1976
+            { year: 1976, duration: 1, category: 'politics', title: '毛泽东逝世', brief: '1976.9.9', details: [
+                { label: '英雄人物', value: '毛泽东' }
+            ]},
+            { year: 1976, duration: 1, category: 'social', title: '文革结束', brief: '1976', details: [
+                { label: '内容', value: '江青反革命集团被粉碎，"文化大革命"结束' },
+                { label: '意义', value: '结束了十年内乱' }
+            ]},
+            // 1978
+            { year: 1978, duration: 1, category: 'politics', title: '真理标准大讨论', brief: '思想解放', details: [
+                { label: '文章', value: '《实践是检验真理的唯一标准》' },
+                { label: '意义', value: '是一场深刻的思想解放运动' }
+            ]},
+            { year: 1978, duration: 1, category: 'politics', title: '十一届三中全会', brief: '改革开放', details: [
+                { label: '内容', value: '确立解放思想、实事求是的思想路线；以经济建设为中心；确定改革开放的总方针' },
+                { label: '意义', value: '开启了改革开放和社会主义现代化建设新时期' }
+            ]},
+            { year: 1978, duration: 6, category: 'economy', title: '家庭联产承包责任制', brief: '小岗村', details: [
+                { label: '地点', value: '安徽凤阳小岗村' },
+                { label: '内容', value: '把集体所有的土地长期包给农户使用' },
+                { label: '作用', value: '拉开了农村改革的序幕' }
+            ]},
+            // 1980
+            { year: 1980, duration: 8, category: 'economy', title: '经济特区', brief: '深圳/珠海/汕头/厦门', details: [
+                { label: '设立', value: '深圳、珠海、汕头、厦门（1988年增设海南）' },
+                { label: '作用', value: '揭开了改革开放的序幕' }
+            ]},
+            // 1982
+            { year: 1982, duration: 1, category: 'politics', title: '中共十二大', brief: '中国特色社会主义', details: [
+                { label: '内容', value: '邓小平提出"建设有中国特色的社会主义"' },
+                { label: '意义', value: '开创了社会主义现代化建设新局面' }
+            ]},
+            // 1984
+            { year: 1984, duration: 3, category: 'economy', title: '城市经济体制改革', brief: '政企分开', details: [
+                { label: '中心环节', value: '增强企业活力' },
+                { label: '核心内容', value: '政企分开，所有权与经营权分离' }
+            ]},
+            { year: 1984, duration: 1, category: 'economy', title: '沿海港口城市开放', brief: '14个城市', details: [
+                { label: '城市', value: '大连、天津、广州、福州、上海、青岛等14个沿海港口城市' },
+                { label: '意义', value: '进一步扩大对外开放' }
+            ]},
+            // 1985
+            { year: 1985, duration: 2, category: 'economy', title: '沿海经济开放区', brief: '长三角/珠三角/闽南三角', details: [
+                { label: '区域', value: '长江三角洲、珠江三角洲、闽南厦漳泉三角洲' },
+                { label: '意义', value: '形成对外开放格局' }
+            ]},
+            // 1987
+            { year: 1987, duration: 1, category: 'politics', title: '中共十三大', brief: '初级阶段理论', details: [
+                { label: '内容', value: '"一个中心、两个基本点"的基本路线' },
+                { label: '意义', value: '为建设有中国特色的社会主义提供了可靠保证' }
+            ]},
+            { year: 1987, duration: 13, category: 'economy', title: '"三步走"发展战略', brief: '温饱→小康→现代化', details: [
+                { label: '内容', value: '第一步解决温饱；第二步达到小康；第三步到21世纪中叶达到中等发达国家水平' }
+            ]},
+            // 1990
+            { year: 1990, duration: 7, category: 'economy', title: '浦东开发开放', brief: '1990', details: [
+                { label: '意义', value: '成为中国改革开放的重要标志' }
+            ]},
+            // 1992
+            { year: 1992, duration: 1, category: 'politics', title: '邓小平南方谈话', brief: '发展是硬道理', details: [
+                { label: '核心内容', value: '基本路线一百年不动摇；发展才是硬道理；科学技术是第一生产力' },
+                { label: '意义', value: '进一步解放了思想，深化了改革开放' }
+            ]},
+            { year: 1992, duration: 1, category: 'economy', title: '中共十四大', brief: '社会主义市场经济', details: [
+                { label: '内容', value: '提出建立社会主义市场经济体制' },
+                { label: '意义', value: '是对社会主义经济理论的重大突破' }
+            ]},
+            // 1997
+            { year: 1997, duration: 1, category: 'politics', title: '中共十五大', brief: '邓小平理论', details: [
+                { label: '内容', value: '邓小平理论确立为党的指导思想并写入党章' }
+            ]},
+            { year: 1997, duration: 1, category: 'diplomacy', title: '香港回归', brief: '1997.7.1', details: [
+                { label: '意义', value: '标志着中国人民洗雪了百年国耻，"一国两制"构想取得成功' },
+                { label: '英雄人物', value: '邓小平' }
+            ]},
+            // 1999
+            { year: 1999, duration: 1, category: 'diplomacy', title: '澳门回归', brief: '1999.12.20', details: [
+                { label: '意义', value: '"一国两制"再次成功实践' }
+            ]},
+            // 2001
+            { year: 2001, duration: 1, category: 'economy', title: '加入WTO', brief: '2001', details: [
+                { label: '意义', value: '标志着中国对外开放进入新阶段' }
+            ]},
+            // 2002
+            { year: 2002, duration: 1, category: 'politics', title: '中共十六大', brief: '三个代表', details: [
+                { label: '内容', value: '"三个代表"重要思想被确立为党的指导思想并写入党章' }
+            ]},
+            // 2003
+            { year: 2003, duration: 1, category: 'tech', title: '神舟五号', brief: '杨利伟', details: [
+                { label: '意义', value: '中国成为世界上第三个独立掌握载人航天技术的国家' },
+                { label: '英雄人物', value: '杨利伟（中国第一位航天员）' }
+            ]}
+        ];
+
+        // Build year header
+        const yearHeader = document.getElementById('yearHeader');
+        for (let y = START_YEAR; y <= END_YEAR; y++) {
+            const tick = document.createElement('div');
+            tick.className = 'year-tick';
+            tick.textContent = y;
+            yearHeader.appendChild(tick);
+        }
+
+        // Build grid lines
+        const chartArea = document.getElementById('chartArea');
+        const rows = chartArea.querySelectorAll('.chart-row');
+        const totalYears = END_YEAR - START_YEAR + 1;
+
+        for (let i = 0; i < totalYears; i++) {
+            const line = document.createElement('div');
+            line.className = 'grid-line';
+            line.style.left = (i * YEAR_WIDTH) + 'px';
+            rows.forEach(row => row.appendChild(line.cloneNode(true)));
+        }
+
+        // Place event bars
+        const tooltip = document.getElementById('tooltip');
+
+        eventsData.forEach(event => {
+            const rowIndex = ['diplomacy', 'politics', 'economy', 'tech', 'social'].indexOf(event.category);
+            const row = rows[rowIndex];
+
+            const bar = document.createElement('div');
+            bar.className = `event-bar ${event.category}`;
+            bar.textContent = event.title;
+
+            const left = (event.year - START_YEAR) * YEAR_WIDTH;
+            const width = Math.max(event.duration * YEAR_WIDTH - 4, 40);
+
+            bar.style.left = left + 'px';
+            bar.style.width = width + 'px';
+
+            bar.addEventListener('mouseenter', (e) => {
+                let html = `<h3>${event.title}</h3>`;
+                event.details.forEach(d => {
+                    html += `<div class="tooltip-item"><div class="tooltip-label">${d.label}</div><div class="tooltip-value">${d.value}</div></div>`;
+                });
+                tooltip.innerHTML = html;
+                tooltip.classList.add('active');
+            });
+
+            bar.addEventListener('mousemove', (e) => {
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+            });
+
+            bar.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('active');
+            });
+
+            row.appendChild(bar);
+        });
+
+        // Legend click to filter (optional enhancement)
+        document.querySelectorAll('.legend-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const cat = item.dataset.cat;
+                rows.forEach(row => {
+                    if (row.dataset.cat === cat) {
+                        row.style.opacity = row.style.opacity === '0.3' ? '1' : '0.3';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
