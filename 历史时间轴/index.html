@@ -110,6 +110,11 @@
             height: 60px;
             position: relative;
             border-bottom: 1px solid var(--border-color);
+            transition: opacity 0.3s;
+        }
+
+        .chart-row.hidden {
+            display: none;
         }
 
         .grid-line {
@@ -301,7 +306,7 @@
     <script>
         const START_YEAR = 1949;
         const END_YEAR = 2003;
-        const YEAR_WIDTH = 60; // pixels per year
+        const YEAR_WIDTH = 100; // pixels per year
 
         const eventsData = [
             // 1949
@@ -571,15 +576,25 @@
             row.appendChild(bar);
         });
 
-        // Legend click to filter (optional enhancement)
+        // Legend click to filter
+        let hiddenRows = new Set();
+        const rowMap = {};
+        rows.forEach(row => {
+            rowMap[row.dataset.cat] = row;
+        });
+
         document.querySelectorAll('.legend-item').forEach(item => {
             item.addEventListener('click', () => {
                 const cat = item.dataset.cat;
-                rows.forEach(row => {
-                    if (row.dataset.cat === cat) {
-                        row.style.opacity = row.style.opacity === '0.3' ? '1' : '0.3';
-                    }
-                });
+                if (hiddenRows.has(cat)) {
+                    hiddenRows.delete(cat);
+                    rowMap[cat].classList.remove('hidden');
+                    item.style.opacity = '1';
+                } else {
+                    hiddenRows.add(cat);
+                    rowMap[cat].classList.add('hidden');
+                    item.style.opacity = '0.3';
+                }
             });
         });
     </script>
