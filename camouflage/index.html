@@ -31,7 +31,6 @@
             max-width: 600px;
             line-height: 1.5;
         }
-        /* Settings */
         .settings {
             display: flex;
             gap: 20px;
@@ -44,164 +43,64 @@
             padding: 20px;
             align-items: flex-end;
         }
-        .setting-item {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .setting-item label {
-            font-size: 0.85rem;
-            color: #8b949e;
-        }
+        .setting-item { display: flex; flex-direction: column; gap: 6px; }
+        .setting-item label { font-size: 0.85rem; color: #8b949e; }
         .setting-item input[type="number"] {
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #30363d;
-            background: #0d1117;
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
-            width: 100px;
+            padding: 8px 12px; border-radius: 8px; border: 1px solid #30363d;
+            background: #0d1117; color: #fff; font-size: 1rem; outline: none; width: 100px;
         }
-        .setting-item input[type="number"]:focus {
-            border-color: #00E5FF;
-        }
-        .bg-color-select {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .bg-color-select label {
-            font-size: 0.85rem;
-            color: #8b949e;
-        }
-        .bg-options {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
+        .setting-item input[type="number"]:focus { border-color: #00E5FF; }
+        .bg-color-select { display: flex; flex-direction: column; gap: 6px; }
+        .bg-color-select label { font-size: 0.85rem; color: #8b949e; }
+        .bg-options { display: flex; gap: 6px; flex-wrap: wrap; max-width: 280px; }
         .bg-option {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            border: 2px solid transparent;
-            cursor: pointer;
+            width: 28px; height: 28px; border-radius: 6px;
+            border: 2px solid transparent; cursor: pointer;
             transition: border-color 0.2s, transform 0.2s;
         }
         .bg-option:hover { transform: scale(1.15); }
         .bg-option.selected { border-color: #fff; }
         .btn-start {
-            padding: 10px 30px;
-            background: linear-gradient(135deg, #2A5CAA, #6A00FF);
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 10px 30px; background: linear-gradient(135deg, #2A5CAA, #6A00FF);
+            color: #fff; border: none; border-radius: 20px; font-size: 1rem;
+            font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
         }
-        .btn-start:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(106,0,255,0.3);
-        }
-        /* Game Area */
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(106,0,255,0.3); }
         #gameArea {
-            position: relative;
-            width: min(90vw, 700px);
-            height: min(70vh, 500px);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid #30363d;
-            margin-bottom: 15px;
-            cursor: crosshair;
+            position: relative; width: min(90vw, 700px); height: min(70vh, 500px);
+            border-radius: 12px; overflow: hidden; border: 2px solid #30363d;
+            margin-bottom: 15px; cursor: crosshair;
         }
-        /* Paper pieces */
         .paper {
-            position: absolute;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: transform 0.1s;
-            user-select: none;
+            position: absolute; border-radius: 4px; cursor: pointer;
+            transition: transform 0.1s; user-select: none;
         }
         .paper:hover { transform: scale(1.1); }
-        /* Timer bar */
         #timerBar {
-            width: min(90vw, 700px);
-            height: 6px;
-            background: #21262d;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 10px;
+            width: min(90vw, 700px); height: 6px;
+            background: #21262d; border-radius: 3px; overflow: hidden; margin-bottom: 10px;
         }
         #timerFill {
-            height: 100%;
-            background: linear-gradient(90deg, #00E5FF, #6A00FF);
-            width: 100%;
-            transition: width 0.05s linear;
+            height: 100%; background: linear-gradient(90deg, #00E5FF, #6A00FF);
+            width: 100%; transition: width 0.05s linear;
         }
-        /* Round info */
-        #roundInfo {
-            color: #8b949e;
-            font-size: 0.95rem;
-            margin-bottom: 10px;
-            text-align: center;
-            min-height: 24px;
-        }
-        /* Chart */
+        #roundInfo { color: #8b949e; font-size: 0.95rem; margin-bottom: 10px; text-align: center; min-height: 24px; }
         #chartContainer {
-            width: min(90vw, 700px);
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 20px;
-            display: none;
+            width: min(90vw, 700px); background: #161b22;
+            border: 1px solid #30363d; border-radius: 12px; padding: 20px; display: none;
         }
-        #chartContainer h2 {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: #00E5FF;
-        }
-        #chartCanvas {
-            width: 100%;
-            height: 300px;
-            display: block;
-        }
-        /* Stats summary */
-        .stats-summary {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 15px;
-        }
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.85rem;
-            color: #8b949e;
-        }
-        .stat-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-        }
-        /* Replicate flash */
+        #chartContainer h2 { font-size: 1.2rem; margin-bottom: 15px; color: #00E5FF; }
+        #chartCanvas { width: 100%; height: 300px; display: block; }
+        .stats-summary { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-top: 15px; }
+        .stat-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #8b949e; }
+        .stat-dot { width: 12px; height: 12px; border-radius: 3px; }
         @keyframes replicateFlash {
             0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.6; }
+            50% { transform: scale(1.5); opacity: 0.5; }
             100% { transform: scale(1); opacity: 1; }
         }
-        .paper.replicating {
-            animation: replicateFlash 0.5s ease;
-        }
-        .back-link {
-            margin-top: 15px;
-            color: #00E5FF;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
+        .paper.replicating { animation: replicateFlash 0.6s ease; }
+        .back-link { margin-top: 15px; color: #00E5FF; text-decoration: none; font-size: 0.9rem; }
         .back-link:hover { text-decoration: underline; }
     </style>
 </head>
@@ -227,7 +126,7 @@
             <input type="number" id="numRounds" value="8" min="3" max="20">
         </div>
         <div class="bg-color-select">
-            <label>背景颜色</label>
+            <label>背景颜色（点击选择）</label>
             <div class="bg-options" id="bgOptions"></div>
         </div>
         <button class="btn-start" id="btnStart">开始实验</button>
@@ -246,58 +145,83 @@
     <a class="back-link" href="../index.html">← 返回工具集</a>
 
 <script>
-// Color utilities
-function generateColors(n) {
-    const palette = [
-        '#FF6B6B','#4ECDC4','#FFE66D','#95E1D3','#F38181',
-        '#AA96DA','#FCBAD3','#A8D8EA','#FF9F43','#6C5CE7',
-        '#00CEC9','#FD79A8','#A29BFE','#FAB1A0','#74B9FF'
-    ];
-    const shuffled = [...palette].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, n);
+// ─── Color Utilities ──────────────────────────────────────────────────────────
+const PALETTE = [
+    '#FF6B6B','#4ECDC4','#FFE66D','#95E1D3','#F38181',
+    '#AA96DA','#FCBAD3','#A8D8EA','#FF9F43','#6C5CE7',
+    '#00CEC9','#FD79A8','#A29BFE','#FAB1A0','#74B9FF'
+];
+
+function shuffle(arr) {
+    return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function parseHex(hex) {
+    return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+}
+
+function toHex(r, g, b) {
+    return '#' + [r,g,b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2,'0')).join('');
 }
 
 function colorDist(c1, c2) {
-    const r1=parseInt(c1.slice(1,3),16),g1=parseInt(c1.slice(3,5),16),b1=parseInt(c1.slice(5,7),16);
-    const r2=parseInt(c2.slice(1,3),16),g2=parseInt(c2.slice(3,5),16),b2=parseInt(c2.slice(5,7),16);
-    return Math.sqrt((r1-r2)**2+(g1-g2)**2+(b1-b2)**2);
+    const [r1,g1,b1] = parseHex(c1);
+    const [r2,g2,b2] = parseHex(c2);
+    return Math.sqrt((r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2);
 }
 
-function nearColors(baseHex, colors, threshold) {
-    return colors.filter(c => colorDist(c, baseHex) >= threshold);
+// Shift a color in a given direction (offset RGB by up to range each channel)
+function shiftColor(hex, range) {
+    const [r,g,b] = parseHex(hex);
+    const dr = (Math.random() - 0.5) * range * 2;
+    const dg = (Math.random() - 0.5) * range * 2;
+    const db = (Math.random() - 0.5) * range * 2;
+    return toHex(r + dr, g + dg, b + db);
 }
 
+// Lighter variant of a color
+function lighter(hex, amt) {
+    const [r,g,b] = parseHex(hex);
+    return toHex(r + amt, g + amt, b + amt);
+}
+
+// Darker variant of a color
+function darker(hex, amt) {
+    const [r,g,b] = parseHex(hex);
+    return toHex(r - amt, g - amt, b - amt);
+}
+
+// Generate candidate card colors
+function generateCardColors(n) {
+    return shuffle(PALETTE).slice(0, n);
+}
+
+// Generate background options derived from card colors:
+// For each card color, create: lighter variant, darker variant, and a random-shifted variant
+// These are all "similar to" the card colors but may differ from each other
 function generateBgOptions(cardColors) {
-    // Background options: each card color + colors similar to them (dist 40-100)
-    const options = new Set(['#888888']); // neutral gray option
-    cardColors.forEach(c => options.add(c));
+    const opts = new Set();
     cardColors.forEach(c => {
-        // Add a lighter and darker variant
-        const r = parseInt(c.slice(1,3),16);
-        const g = parseInt(c.slice(3,5),16);
-        const b = parseInt(c.slice(5,7),16);
-        // lighter
-        const lr = Math.min(255, Math.round(r + 60));
-        const lg = Math.min(255, Math.round(g + 60));
-        const lb = Math.min(255, Math.round(b + 60));
-        options.add('#'+[lr,lg,lb].map(x=>x.toString(16).padStart(2,'0')).join(''));
-        // darker
-        const dr = Math.max(0, Math.round(r - 60));
-        const dg = Math.max(0, Math.round(g - 60));
-        const db = Math.max(0, Math.round(b - 60));
-        options.add('#'+[dr,dg,db].map(x=>x.toString(16).padStart(2,'0')).join(''));
+        opts.add(lighter(c, 50));
+        opts.add(darker(c, 50));
+        opts.add(shiftColor(c, 50));
+        // Also add moderately similar
+        opts.add(lighter(c, 30));
+        opts.add(darker(c, 30));
+        opts.add(shiftColor(c, 30));
     });
-    return [...options].slice(0, 12);
+    return shuffle([...opts]).slice(0, 15);
 }
 
-// State
+// ─── State ───────────────────────────────────────────────────────────────────
 let state = {};
 let timerInterval = null;
-let timeLeft = 3;
 let pieces = [];
 let paperId = 0;
 let roundActive = false;
-let selectedBgColor = '#888888';
+
+// Candidate card colors for current settings (reset when settings change)
+let candidateCardColors = [];
 
 const gameArea = document.getElementById('gameArea');
 const timerFill = document.getElementById('timerFill');
@@ -305,39 +229,35 @@ const roundInfo = document.getElementById('roundInfo');
 const chartContainer = document.getElementById('chartContainer');
 const statsSummary = document.getElementById('statsSummary');
 const settingsPanel = document.getElementById('settingsPanel');
-const bgOptions = document.getElementById('bgOptions');
+const bgOptionsEl = document.getElementById('bgOptions');
 
-// Build background options when color count changes
+let selectedBgColor = null;
+
+// ─── Build background options from preview card colors ────────────────────────
 function buildBgOptions() {
-    const numColors = parseInt(document.getElementById('numColors').value) || 5;
-    const previewColors = generateColors(numColors);
-    const opts = generateBgOptions(previewColors);
-    bgOptions.innerHTML = '';
+    const numColors = Math.max(2, parseInt(document.getElementById('numColors').value) || 5);
+    candidateCardColors = generateCardColors(numColors);
+    const opts = generateBgOptions(candidateCardColors);
+    selectedBgColor = opts[0];
+    bgOptionsEl.innerHTML = '';
     opts.forEach(color => {
         const btn = document.createElement('div');
         btn.className = 'bg-option' + (color === selectedBgColor ? ' selected' : '');
         btn.style.background = color;
-        btn.dataset.color = color;
         btn.title = color;
         btn.addEventListener('click', () => {
-            bgOptions.querySelectorAll('.bg-option').forEach(o => o.classList.remove('selected'));
+            bgOptionsEl.querySelectorAll('.bg-option').forEach(o => o.classList.remove('selected'));
             btn.classList.add('selected');
             selectedBgColor = color;
         });
-        bgOptions.appendChild(btn);
+        bgOptionsEl.appendChild(btn);
     });
 }
 
-// Init background options on load
 buildBgOptions();
 document.getElementById('numColors').addEventListener('input', buildBgOptions);
 
-function recordHistory(label) {
-    state.colors.forEach(c => {
-        state.history[c].push({ label, count: pieces.filter(p => p.alive && p.color === c).length });
-    });
-}
-
+// ─── Init Game ───────────────────────────────────────────────────────────────
 function initGame() {
     const bgColor = selectedBgColor;
     const numColors = parseInt(document.getElementById('numColors').value);
@@ -347,37 +267,39 @@ function initGame() {
     const baseCount = Math.floor(totalPieces / numColors);
     const remainder = totalPieces % numColors;
 
-    const colors = generateColors(numColors);
-    // Ensure no color is too close to background
-    const finalColors = colors.map(c => {
-        if (colorDist(c, bgColor) < 35) {
-            // shift it away
-            let r=parseInt(c.slice(1,3),16),g=parseInt(c.slice(3,5),16),b=parseInt(c.slice(5,7),16);
-            r = Math.min(255, r + 80); g = Math.min(255, g + 80); b = Math.min(255, b + 80);
-            return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+    // Card colors: derived from preview but ensure min distance from background
+    let cardColors = shuffle([...candidateCardColors]);
+    cardColors = cardColors.map(c => {
+        if (colorDist(c, bgColor) < 40) {
+            // Shift away from background
+            let [r,g,b] = parseHex(c);
+            const [br,bg,bb] = parseHex(bgColor);
+            const factor = 0.6;
+            r = Math.round(r + (r < 128 ? 80 : -80) * factor);
+            g = Math.round(g + (g < 128 ? 80 : -80) * factor);
+            b = Math.round(b + (b < 128 ? 80 : -80) * factor);
+            return toHex(r, g, b);
         }
         return c;
     });
 
+    // History: array of snapshots, each snapshot = {label, counts: {color: count}}
     state = {
-        bgColor,
-        colors: finalColors,
-        numRounds,
+        bgColor, cardColors, numRounds,
         currentRound: 0,
         originalTotal: totalPieces,
-        history: {},
-        replicated: false  // tracks if we already replicated this experiment
+        history: [],        // [{label, counts: {color: count}}, ...]
+        replicated: false,  // whether replicate has happened this game
     };
-    finalColors.forEach(c => { state.history[c] = []; });
 
-    // Distribute pieces evenly
-    let distribution = finalColors.map(() => baseCount);
+    // Distribute pieces
+    let distribution = cardColors.map(() => baseCount);
     for (let i = 0; i < remainder; i++) {
         distribution[Math.floor(Math.random() * numColors)]++;
     }
 
     pieces = [];
-    finalColors.forEach((color, ci) => {
+    cardColors.forEach((color, ci) => {
         for (let i = 0; i < distribution[ci]; i++) {
             pieces.push({ id: paperId++, color, x: 0, y: 0, w: 0, h: 0, alive: true });
         }
@@ -389,11 +311,20 @@ function initGame() {
     gameArea.style.background = bgColor;
 
     // Record initial state
-    recordHistory('初始');
+    recordSnapshot('初始');
 
     startRound();
 }
 
+function recordSnapshot(label) {
+    const counts = {};
+    state.cardColors.forEach(c => {
+        counts[c] = pieces.filter(p => p.alive && p.color === c).length;
+    });
+    state.history.push({ label, counts });
+}
+
+// ─── Place & Render ──────────────────────────────────────────────────────────
 function placePieces() {
     const W = gameArea.clientWidth;
     const H = gameArea.clientHeight;
@@ -427,32 +358,25 @@ function renderPieces() {
     });
 }
 
+// ─── Round Flow ──────────────────────────────────────────────────────────────
 function startRound() {
     const alive = pieces.filter(p => p.alive);
 
-    // Check if experiment should end (no pieces left)
-    if (alive.length === 0) {
-        endGame();
-        return;
-    }
-
-    // Check if we've done all rounds
-    if (state.currentRound >= state.numRounds) {
-        endGame();
-        return;
-    }
+    if (alive.length === 0) { endGame(); return; }
+    if (state.currentRound >= state.numRounds) { endGame(); return; }
 
     state.currentRound++;
     roundActive = true;
 
-    const aliveCount = pieces.filter(p => p.alive).length;
-    roundInfo.textContent = `第 ${state.currentRound} / ${state.numRounds} 轮 | 剩余 ${aliveCount} 张纸片`;
+    roundInfo.textContent = `第 ${state.currentRound} / ${state.numRounds} 轮 | 剩余 ${alive.length} 张`;
 
     placePieces();
     renderPieces();
+    startTimer();
+}
 
-    // Start 3-second timer
-    timeLeft = 3;
+function startTimer() {
+    let timeLeft = 3;
     timerFill.style.width = '100%';
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -462,14 +386,13 @@ function startRound() {
             clearInterval(timerInterval);
             if (roundActive) {
                 roundActive = false;
-                // Time's up: random piece "escapes" (not clicked)
+                // Time's up: remove a random piece
                 const alive = pieces.filter(p => p.alive);
                 if (alive.length > 0) {
-                    const victim = alive[Math.floor(Math.random() * alive.length)];
-                    victim.alive = false;
+                    alive[Math.floor(Math.random() * alive.length)].alive = false;
                     renderPieces();
                 }
-                setTimeout(() => afterRound(), 400);
+                setTimeout(() => afterRound(false), 300);
             }
         }
     }, 50);
@@ -479,33 +402,31 @@ function onPaperClick(id) {
     if (!roundActive) return;
     roundActive = false;
     clearInterval(timerInterval);
-
     const p = pieces.find(x => x.id === id);
-    if (p && p.alive) {
-        p.alive = false;
-        renderPieces();
-    }
-    setTimeout(() => afterRound(), 300);
+    if (p && p.alive) { p.alive = false; renderPieces(); }
+    setTimeout(() => afterRound(true), 250);
 }
 
-function afterRound() {
+function afterRound(clicked) {
     const alive = pieces.filter(p => p.alive);
     const threshold = Math.floor(state.originalTotal * 0.25);
 
+    // Record state BEFORE possible replicate
+    recordSnapshot(`R${state.currentRound}`);
+
     if (alive.length <= threshold && alive.length > 0 && !state.replicated) {
-        // === REPLICATION ===
+        // ── REPLICATE ──────────────────────────────────────────────────────
         state.replicated = true;
-        roundInfo.textContent = `🎉 幸存者复制！`;
         document.querySelectorAll('.paper').forEach(el => el.classList.add('replicating'));
+        roundInfo.textContent = `🎉 幸存者复制3份！`;
 
         setTimeout(() => {
-            // Each survivor produces 3 copies (so 4 total per survivor)
             const W = gameArea.clientWidth;
             const H = gameArea.clientHeight;
             const size = Math.max(22, Math.min(34, W * H / 2500));
             const newPieces = [];
 
-            state.colors.forEach(color => {
+            state.cardColors.forEach(color => {
                 const survivors = alive.filter(p => p.color === color);
                 survivors.forEach(s => {
                     for (let i = 0; i < 3; i++) {
@@ -522,21 +443,25 @@ function afterRound() {
                 });
             });
 
-            pieces = [...pieces.filter(p => p.alive), ...newPieces];
+            pieces = [...alive, ...newPieces];
             placePieces();
             renderPieces();
 
-            // Record post-replicate counts
-            recordHistory(`R${state.currentRound}后`);
+            // Record state AFTER replicate
+            recordSnapshot(`复制后`);
 
-            const newCount = pieces.filter(p => p.alive).length;
-            roundInfo.textContent = `🎉 幸存者复制3份！ | 现在 ${newCount} 张`;
+            const count = pieces.filter(p => p.alive).length;
+            roundInfo.textContent = `🎉 幸存者复制3份！| 现在 ${count} 张`;
             setTimeout(() => startRound(), 1800);
         }, 500);
     } else {
-        // Record after round
-        recordHistory(`R${state.currentRound}`);
-        setTimeout(() => startRound(), 400);
+        // Normal next round (or end if done)
+        const nextRound = state.currentRound + 1;
+        if (nextRound > state.numRounds || pieces.filter(p=>p.alive).length === 0) {
+            setTimeout(() => endGame(), 400);
+        } else {
+            setTimeout(() => startRound(), 400);
+        }
     }
 }
 
@@ -548,10 +473,11 @@ function endGame() {
     drawChart();
     chartContainer.style.display = 'block';
 
-    statsSummary.innerHTML = state.colors.map((c, i) => {
-        const entries = state.history[c];
-        const final = entries.length > 0 ? entries[entries.length - 1].count : 0;
-        return `<div class="stat-item"><div class="stat-dot" style="background:${c}"></div>${i+1}号色: ${final}张</div>`;
+    // Final counts from last history entry
+    const last = state.history[state.history.length - 1];
+    statsSummary.innerHTML = state.cardColors.map((c, i) => {
+        const count = last ? last.counts[c] : 0;
+        return `<div class="stat-item"><div class="stat-dot" style="background:${c}"></div>${i+1}号色: ${count}张</div>`;
     }).join('');
 
     settingsPanel.style.display = 'flex';
@@ -561,12 +487,14 @@ function endGame() {
     }));
 }
 
+// ─── Chart ───────────────────────────────────────────────────────────────────
 function drawChart() {
     const canvas = document.getElementById('chartCanvas');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
+    if (rect.width === 0) return;
 
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
@@ -574,13 +502,15 @@ function drawChart() {
     const W = rect.width, H = rect.height;
     ctx.clearRect(0, 0, W, H);
 
-    const colors = state.colors;
-    const allEntries = [];
-    colors.forEach(c => allEntries.push(...state.history[c]));
-    const allCounts = allEntries.map(e => e.count);
+    const history = state.history;
+    const cardColors = state.cardColors;
+    if (history.length === 0 || cardColors.length === 0) return;
+
+    const n = history.length;
+    const allCounts = history.flatMap(h => Object.values(h.counts));
     const maxVal = Math.max(...allCounts, 1);
 
-    const padL = 42, padR = 20, padT = 30, padB = 42;
+    const padL = 42, padR = 80, padT = 30, padB = 42;
     const chartW = W - padL - padR;
     const chartH = H - padT - padB;
 
@@ -596,38 +526,30 @@ function drawChart() {
         ctx.fillText(Math.round(maxVal * (1 - i / 4)), padL - 5, y + 4);
     }
 
-    // Build ordered label list from first color's history
-    const labels = state.colors[0] ? state.history[state.colors[0]].map(e => e.label) : [];
-    const n = labels.length;
-    if (n === 0) return;
-
     // X labels
     ctx.textAlign = 'center';
-    labels.forEach((label, i) => {
+    history.forEach((h, i) => {
         const x = padL + (chartW / (n - 1)) * i;
-        ctx.fillText(label, x, H - padB + 16);
+        ctx.fillText(h.label, x, H - padB + 16);
     });
 
     // Lines
-    colors.forEach(color => {
-        const entries = state.history[color];
-        if (!entries || entries.length === 0) return;
-
+    cardColors.forEach(color => {
         ctx.strokeStyle = color;
         ctx.lineWidth = 2.5;
         ctx.lineJoin = 'round';
         ctx.beginPath();
-        entries.forEach((entry, i) => {
+        history.forEach((h, i) => {
             const x = padL + (chartW / (n - 1)) * i;
-            const y = padT + chartH - (entry.count / maxVal) * chartH;
+            const y = padT + chartH - (h.counts[color] / maxVal) * chartH;
             i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         });
         ctx.stroke();
 
         // Dots
-        entries.forEach((entry, i) => {
+        history.forEach((h, i) => {
             const x = padL + (chartW / (n - 1)) * i;
-            const y = padT + chartH - (entry.count / maxVal) * chartH;
+            const y = padT + chartH - (h.counts[color] / maxVal) * chartH;
             ctx.beginPath();
             ctx.arc(x, y, 4, 0, Math.PI * 2);
             ctx.fillStyle = color;
@@ -635,11 +557,11 @@ function drawChart() {
         });
     });
 
-    // Legend: color swatches at top right
-    const legendX = padL + chartW - 80;
-    ctx.font = '11px Segoe UI';
-    colors.forEach((color, i) => {
-        const ly = padT + 14 + i * 16;
+    // Legend (right side)
+    const legendX = padL + chartW + 12;
+    ctx.font = '12px Segoe UI';
+    cardColors.forEach((color, i) => {
+        const ly = padT + 14 + i * 18;
         ctx.fillStyle = color;
         ctx.fillRect(legendX, ly - 9, 10, 10);
         ctx.fillStyle = '#ccc';
@@ -648,11 +570,14 @@ function drawChart() {
     });
 }
 
+// ─── Start ───────────────────────────────────────────────────────────────────
 document.getElementById('btnStart').addEventListener('click', () => {
     const numColors = parseInt(document.getElementById('numColors').value);
     const totalPieces = parseInt(document.getElementById('totalPieces').value);
+    const numRounds = parseInt(document.getElementById('numRounds').value);
     if (numColors < 2) { alert('颜色种类至少2种'); return; }
     if (totalPieces < numColors) { alert('纸片总数至少等于颜色种类数'); return; }
+    if (!selectedBgColor) { alert('请先选择背景颜色'); return; }
     initGame();
 });
 </script>
