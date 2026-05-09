@@ -270,6 +270,21 @@
       "featured": true
     },
     {
+      "name": "保护色实验",
+      "description": "模拟生物保护色实验，点击你看到的纸片进行自然选择，观看复式折线统计图了解种群变化",
+      "tags": [
+        "生物",
+        "实验",
+        "教学"
+      ],
+      "subject": [
+        "生物"
+      ],
+      "icon": "🦎",
+      "featured": false,
+      "demoFile": "camouflage/index.html"
+    },
+    {
       "name": "番茄钟",
       "description": "专注计时器，适合学习和工作",
       "tags": [

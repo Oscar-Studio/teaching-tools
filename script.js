@@ -124,7 +124,7 @@
                     <div class="morph-big-icon">${tool.icon || '📄'}</div>
                     <h2>${tool.name}</h2>
                     <p>${tool.description}</p>
-                    <a href="${tool.name}/index.html" class="btn-explore">Explore</a>
+                    <a href="${tool.demoFile || (tool.name + '/index.html')}" class="btn-explore">Explore</a>
                 </div>
                 <button class="close-btn">&times;</button>
             `;
