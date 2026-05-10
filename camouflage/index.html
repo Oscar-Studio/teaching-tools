@@ -107,7 +107,7 @@
         </div>
         <div class="setting-item">
             <label>实验轮数</label>
-            <input type="number" id="numRounds" value="8" min="3" max="20">
+            <input type="number" id="numRounds" value="3" min="3" max="20">
         </div>
         <div class="bg-color-select">
             <label>背景颜色（点击选择）</label>
@@ -242,6 +242,8 @@ function recordSnapshot(label) {
 }
 
 // ─── Place & Render ───────────────────────────────────────────────────────────
+function clearCanvas() { gameArea.innerHTML = ''; }
+
 function placePieces() {
     const W=gameArea.clientWidth, H=gameArea.clientHeight;
     const size = Math.max(22, Math.min(34, W*H/2500));
@@ -286,12 +288,12 @@ function startRound() {
 
 function startTimer() {
     timerActive = true;
-    let timeLeft = 3;
+    let timeLeft = 1.5;
     timerFill.style.width = '100%';
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         timeLeft -= 0.05;
-        timerFill.style.width = Math.max(0, (timeLeft/3*100)) + '%';
+        timerFill.style.width = Math.max(0, (timeLeft/1.5*100)) + '%';
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             if (timerActive) { timerActive = false; onTimeout(); }
@@ -337,9 +339,10 @@ function checkThreshold() {
         roundInfo.textContent = `全部淘汰！`;
         setTimeout(() => endGame(), 800);
     } else {
-        // Continue this round: restart timer
+        // Continue this round: clear, wait, re-place, restart timer
         roundInfo.textContent = `第 ${state.currentRound} 轮 | ${n} 张（还需淘汰到≤${thr}）`;
-        setTimeout(() => { placePieces(); renderPieces(); startTimer(); }, 300);
+        clearCanvas();
+        setTimeout(() => { placePieces(); renderPieces(); startTimer(); }, 500);
     }
 }
 
