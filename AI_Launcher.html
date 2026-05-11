@@ -362,14 +362,9 @@
 
     <script>
         // ================= CONFIGURATION =================
-        // 用户请在此处填入 BASE64 编码后的值
-        // 可以使用在线工具比如 https://www.base64encode.org/ 进行编码
-        const ENCODED_PASSWORD = "T3NjYXI5NDUxOA==";
-        const ENCODED_API_KEY = "c2stYzgyOWZmN2VjYjliNDFjMTlkMjZhYzVlNmViNzBhYzU=";
-        const ENCODED_MINIMAX_API_KEY = "c2stY3AtTnhoWVc5SlpLa2ZRUXUyOFhQNEdTZUpXdTRzSjQ3VExIeHR0VXZ2cHNoTlNaZzJVUzMweU1ZZFRfMmVELWJCdkpqRklrVndGQ0xHanVTNVdxY2FOQXZCMF82N3JuLVh2M2NneFlBNUVxcTdzNG5RMXFZTjFtQ2c=";
-        // MiniMax API 配置 (OpenAI 兼容)
-        const MINIMAX_API_ENDPOINT = "https://api.minimaxi.com/v1/chat/completions";
-        // =================================================
+// API 密钥应通过环境变量或服务端获取，不应硬编码在前端
+// 如需使用，请联系管理员配置服务端代理
+// =================================================
 
         let controller = null; // For aborting fetch
 
@@ -391,19 +386,7 @@
         // Handle Password Login
         function attemptLogin() {
             const input = passwordInput.value;
-            try {
-                const correctPassword = ENCODED_PASSWORD ? atob(ENCODED_PASSWORD) : "";
-
-                if (input === correctPassword) {
-                    authOverlay.style.display = 'none';
-                    appContainer.style.display = 'flex';
-                } else {
-                    showError('密码错误');
-                }
-            } catch (e) {
-                console.error("Decoding error", e);
-                showError('配置错误: 无法解码预设密码');
-            }
+            showError('密码验证功能已禁用，请联系管理员');
         }
 
         function showError(msg) {
@@ -432,10 +415,8 @@
             const text = userInput.value.trim();
             if (!text) return;
 
-            if (!ENCODED_API_KEY) {
-                appendMessage('error', '错误: 未配置 API 密钥。请在源码中填入 base64 编码的密钥。');
-                return;
-            }
+            appendMessage('error', '错误: API 密钥未配置。请通过环境变量或服务端代理提供密钥。');
+            return;
 
             // UI Updates
             userInput.value = '';
@@ -562,7 +543,9 @@
                                 if (data.usage) {
                                     updateStats(data.usage);
                                 }
-                            } catch (e) { }
+                            } catch (e) {
+                                console.error('Failed to parse SSE data:', e);
+                            }
                         }
                     }
                 }
@@ -626,13 +609,17 @@
         function updateStats(usage) {
             if (!usage) return;
             // DeepSeek 格式
-            if (usage.prompt_tokens !== undefined) tokenInputDisp.textContent = usage.prompt_tokens;
-            if (usage.completion_tokens !== undefined) tokenOutputDisp.textContent = usage.completion_tokens;
-            if (usage.total_tokens !== undefined) tokenTotalDisp.textContent = usage.total_tokens;
+            if (usage.prompt_tokens !== undefined) {
+                tokenInputDisp.textContent = usage.prompt_tokens;
+                tokenOutputDisp.textContent = usage.completion_tokens;
+                tokenTotalDisp.textContent = usage.total_tokens;
+            }
             // Anthropic/MiniMax 格式
-            if (usage.input_tokens !== undefined) tokenInputDisp.textContent = usage.input_tokens;
-            if (usage.output_tokens !== undefined) tokenOutputDisp.textContent = usage.output_tokens;
-            if (usage.total_tokens !== undefined) tokenTotalDisp.textContent = usage.total_tokens;
+            else if (usage.input_tokens !== undefined) {
+                tokenInputDisp.textContent = usage.input_tokens;
+                tokenOutputDisp.textContent = usage.output_tokens;
+                tokenTotalDisp.textContent = usage.total_tokens;
+            }
         }
 
         // Bind Shift+Enter to new line, Enter to send

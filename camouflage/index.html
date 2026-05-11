@@ -263,7 +263,9 @@ function renderPieces() {
         if (!p.alive) return;
         const el = document.createElement('div');
         el.className='paper';
-        el.style.cssText=`left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;background:${p.color};opacity:0.9;`;
+        // Validate color to prevent XSS
+        const validatedColor = /^#[0-9A-Fa-f]{6}$/.test(p.color) ? p.color : '#888888';
+        el.style.cssText=`left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;background:${validatedColor};opacity:0.9;`;
         el.dataset.id=p.id;
         el.addEventListener('click', ()=>onPaperClick(p.id));
         gameArea.appendChild(el);
@@ -351,8 +353,15 @@ function doReplicate(alive) {
     const size = Math.max(22, Math.min(34, W*H/2500));
     const newPieces = [];
 
+    // Pre-group alive pieces by color for O(n) instead of O(n*m)
+    const byColor = {};
+    alive.forEach(p => {
+        if (!byColor[p.color]) byColor[p.color] = [];
+        byColor[p.color].push(p);
+    });
+
     state.cardColors.forEach(color => {
-        alive.filter(p => p.color === color).forEach(s => {
+        (byColor[color] || []).forEach(s => {
             for (let i=0; i<3; i++) {
                 let x,y,tries=0;
                 do { x=Math.random()*(W-size); y=Math.random()*(H-size); tries++; }

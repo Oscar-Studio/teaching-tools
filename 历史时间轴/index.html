@@ -559,11 +559,23 @@
             bar.style.width = width + 'px';
 
             bar.addEventListener('mouseenter', (e) => {
-                let html = `<h3>${event.title}</h3>`;
+                const titleEl = document.createElement('h3');
+                titleEl.textContent = event.title;
+                tooltip.innerHTML = '';
+                tooltip.appendChild(titleEl);
                 event.details.forEach(d => {
-                    html += `<div class="tooltip-item"><div class="tooltip-label">${d.label}</div><div class="tooltip-value">${d.value}</div></div>`;
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'tooltip-item';
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'tooltip-label';
+                    labelDiv.textContent = d.label;
+                    const valueDiv = document.createElement('div');
+                    valueDiv.className = 'tooltip-value';
+                    valueDiv.textContent = d.value;
+                    itemDiv.appendChild(labelDiv);
+                    itemDiv.appendChild(valueDiv);
+                    tooltip.appendChild(itemDiv);
                 });
-                tooltip.innerHTML = html;
                 tooltip.classList.add('active');
             });
 

@@ -62,6 +62,14 @@
             '道法': '道法', '通用': '通用工具'
         };
 
+        // HTML escape helper to prevent XSS
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
         function renderCards(toolsToRender) {
             cardContainer.innerHTML = '';
             if (toolsToRender.length === 0) {
@@ -79,7 +87,10 @@
             Object.keys(grouped).sort((a, b) => grouped[b].length - grouped[a].length).forEach(subject => {
                 const section = document.createElement('div');
                 section.className = 'category-section';
-                section.innerHTML = `<div class="category-title">${subjectNames[subject] || subject}</div>`;
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'category-title';
+                titleDiv.textContent = subjectNames[subject] || subject;
+                section.appendChild(titleDiv);
                 cardContainer.appendChild(section);
 
                 grouped[subject].forEach(tool => {
@@ -88,11 +99,11 @@
                     card.dataset.tool = tool.name;
                     card.innerHTML = `
                         <div class="card-header">
-                            <span class="card-icon">${tool.icon || '📄'}</span>
-                            <span class="card-name">${tool.name}</span>
+                            <span class="card-icon">${escapeHtml(tool.icon) || '📄'}</span>
+                            <span class="card-name">${escapeHtml(tool.name)}</span>
                         </div>
                         <div class="card-tags">
-                            ${tool.tags ? tool.tags.slice(0, 3).map(t => `<span class="card-tag">${t}</span>`).join('') : ''}
+                            ${tool.tags ? tool.tags.slice(0, 3).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('') : ''}
                         </div>
                     `;
                     card.addEventListener('click', () => selectCard(card, tool));
@@ -114,17 +125,17 @@
             morphCard.className = 'morph-card compact';
             morphCard.innerHTML = `
                 <div class="morph-header">
-                    <span class="morph-icon">${tool.icon || '📄'}</span>
-                    <span class="morph-name">${tool.name}</span>
+                    <span class="morph-icon">${escapeHtml(tool.icon) || '📄'}</span>
+                    <span class="morph-name">${escapeHtml(tool.name)}</span>
                 </div>
                 <div class="morph-tags">
-                    ${tool.tags ? tool.tags.slice(0, 3).map(t => `<span class="morph-tag">${t}</span>`).join('') : ''}
+                    ${tool.tags ? tool.tags.slice(0, 3).map(t => `<span class="morph-tag">${escapeHtml(t)}</span>`).join('') : ''}
                 </div>
                 <div class="morph-content">
-                    <div class="morph-big-icon">${tool.icon || '📄'}</div>
-                    <h2>${tool.name}</h2>
-                    <p>${tool.description}</p>
-                    <a href="${tool.demoFile || (tool.name + '/index.html')}" class="btn-explore">Explore</a>
+                    <div class="morph-big-icon">${escapeHtml(tool.icon) || '📄'}</div>
+                    <h2>${escapeHtml(tool.name)}</h2>
+                    <p>${escapeHtml(tool.description)}</p>
+                    <a href="${escapeHtml(tool.demoFile || (tool.name + '/index.html'))}" class="btn-explore">Explore</a>
                 </div>
                 <button class="close-btn">&times;</button>
             `;
