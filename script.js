@@ -241,9 +241,9 @@
                 // Start returning all cards (from bottom to top)
                 requestAnimationFrame(() => {
                     hidingCards.reverse().forEach((card, i) => {
-                        // Remove hiding so it stays at final position, then animate returning
                         card.classList.remove('hiding');
-                        // Force reflow then add returning to animate from top
+                        card.style.transform = 'translateY(-100vh)';
+                        card.style.opacity = '0';
                         card.getBoundingClientRect();
                         setTimeout(() => {
                             card.classList.add('returning');
