@@ -1,4 +1,4 @@
-        :root {
+:root {
             --primary-color: #2A5CAA;
             --secondary-color: #00E5FF;
             --accent-color: #6A00FF;
@@ -37,10 +37,13 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 40px;
-            background: rgba(1, 4, 9, 0.95);
-            backdrop-filter: blur(10px);
+            /* 液态玻璃导航 - 更透亮 */
+            background: rgba(1, 4, 9, 0.6);
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             z-index: 100;
-            border-bottom: 1px solid var(--card-border);
+            transition: all 0.3s ease;
         }
 
         .breadcrumb {
@@ -93,19 +96,21 @@
         .settings-btn {
             position: absolute;
             right: 20px;
-            background: none;
-            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
             color: var(--text-muted);
             font-size: 1.2rem;
             cursor: pointer;
             padding: 8px;
-            border-radius: 8px;
             transition: all 0.3s ease;
         }
 
         .settings-btn:hover {
             color: var(--secondary-color);
             background: rgba(0, 229, 255, 0.1);
+            border-color: rgba(0, 229, 255, 0.3);
         }
 
         .settings-btn.active {
@@ -118,22 +123,26 @@
             top: 100%;
             right: 0;
             margin-top: 8px;
-            background: rgba(13, 17, 23, 0.98);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
+            /* 液态玻璃效果 */
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
             padding: 12px 0;
             min-width: 180px;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
+            transform: translateY(-10px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             z-index: 1001;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
         }
 
         .settings-dropdown.open {
             opacity: 1;
             visibility: visible;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
 
         .settings-dropdown h4 {
@@ -291,9 +300,12 @@
 
         /* Card */
         .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
+            /* 液态玻璃效果 - 更透亮 */
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px) saturate(150%);
+            -webkit-backdrop-filter: blur(8px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
             min-height: 90px;
             display: flex;
             flex-direction: column;
@@ -304,7 +316,37 @@
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 卡片光泽动效 */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            transition: left 0.6s ease;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-4px) scale(1.02);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 35px rgba(99, 102, 241, 0.15), 0 0 15px rgba(255, 255, 255, 0.05);
         }
 
         .card-icon {
@@ -337,12 +379,6 @@
             border: 1px solid rgba(42, 92, 170, 0.4);
             color: var(--secondary-color);
             border-radius: 10px;
-        }
-
-        .card:hover {
-            border-color: var(--secondary-color);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.15);
         }
 
         .card.hiding {
@@ -383,12 +419,40 @@
         .morph-card {
             position: fixed;
             z-index: 300;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
+            /* 液态玻璃效果 - 更透亮 */
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
             cursor: default;
             pointer-events: auto;
             overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 浮动卡片光泽动效 */
+        .morph-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 150%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.08),
+                transparent
+            );
+            animation: morphShine 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes morphShine {
+            0%, 100% { left: -100%; }
+            50% { left: 100%; }
         }
 
         /* Compact state (initial) */
@@ -440,8 +504,8 @@
             min-height: auto;
             padding: 40px;
             text-align: center;
-            border-color: var(--secondary-color);
-            box-shadow: 0 20px 60px rgba(0, 229, 255, 0.2);
+            border-color: rgba(0, 229, 255, 0.4);
+            box-shadow: 0 20px 60px rgba(0, 229, 255, 0.15);
         }
 
         .morph-card.expanded .morph-header,
