@@ -262,17 +262,15 @@
 
                 if (selectedCard) {
                     selectedCard.style.opacity = '';
-                    selectedCard.style.transition = '';
                 }
 
                 if (!isLowQuality) {
-                    // Clean up after animation
+                    // Clean up after animation - remove class and clear inline styles
                     setTimeout(() => {
                         hidingCards.forEach(card => {
-                            // Only clear opacity, don't touch transform
+                            card.classList.remove('hiding', 'returning');
+                            card.style.transform = '';
                             card.style.opacity = '';
-                            // Remove class but let animation final state remain
-                            card.classList.remove('returning', 'hiding');
                         });
                         if (selectedCard) {
                             selectedCard.style.opacity = '';
