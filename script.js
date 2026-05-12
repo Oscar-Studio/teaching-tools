@@ -266,21 +266,22 @@
                 }
 
                 if (!isLowQuality) {
-                    // Clean up after animation - use getComputedStyle to preserve final position
+                    // Clean up after animation - completely remove animation class and styles
                     setTimeout(() => {
                         hidingCards.forEach(card => {
-                            if (card.classList.contains('returning')) {
-                                // Get current computed transform before removing class
-                                const computedTransform = getComputedStyle(card).transform;
-                                card.classList.remove('returning');
-                                // Re-apply the transform to override animation
-                                card.style.transform = computedTransform !== 'none' ? computedTransform : '';
-                            }
+                            // Force animation to end position by setting transform
+                            card.style.transform = '';
                             card.style.opacity = '';
+                            // Remove class to stop animation
+                            card.classList.remove('returning', 'hiding');
+                            // Force reflow to ensure styles apply
+                            card.getBoundingClientRect();
                         });
-                        selectedCard.style.opacity = '';
-                        selectedCard.style.transition = '';
-                    }, 800);
+                        if (selectedCard) {
+                            selectedCard.style.opacity = '';
+                            selectedCard.style.transition = '';
+                        }
+                    }, 850); // Slightly longer than animation duration
                 }
 
                 selectedCard = null;
