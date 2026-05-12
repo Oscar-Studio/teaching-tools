@@ -241,9 +241,9 @@
                 // Start returning all cards (from bottom to top)
                 requestAnimationFrame(() => {
                     hidingCards.reverse().forEach((card, i) => {
+                        // Remove hiding so it stays at final position, then animate returning
                         card.classList.remove('hiding');
-                        card.style.transform = 'translateY(-100vh)';
-                        card.style.opacity = '0';
+                        // Force reflow then add returning to animate from top
                         card.getBoundingClientRect();
                         setTimeout(() => {
                             card.classList.add('returning');
@@ -266,27 +266,23 @@
                 }
 
                 if (!isLowQuality) {
-                    // Clean up after animation - completely remove animation class and styles
+                    // Clean up after animation
                     setTimeout(() => {
                         hidingCards.forEach(card => {
-                            // Force animation to end position by setting transform
-                            card.style.transform = '';
+                            // Only clear opacity, don't touch transform
                             card.style.opacity = '';
-                            // Remove class to stop animation
+                            // Remove class but let animation final state remain
                             card.classList.remove('returning', 'hiding');
-                            // Force reflow to ensure styles apply
-                            card.getBoundingClientRect();
                         });
                         if (selectedCard) {
                             selectedCard.style.opacity = '';
-                            selectedCard.style.transition = '';
                         }
-                    }, 850); // Slightly longer than animation duration
+                    }, 750);
                 }
 
                 selectedCard = null;
                 selectedTool = null;
-            }, isLowQuality ? 0 : 800);
+            }, isLowQuality ? 0 : 750);
         }
 
         // Keyboard escape
