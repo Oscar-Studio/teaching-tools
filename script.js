@@ -252,7 +252,11 @@
                 });
             }
 
-            // Wait for morphCard shrink animation to complete before removing
+            // Wait for morphCard shrink animation (750ms) to complete before removing
+            // Then wait for all card returning animations (700ms + stagger)
+            const cardReturnTime = hidingCards.length * 40 + 700;
+            const totalCleanupTime = Math.max(750, cardReturnTime + 100);
+
             setTimeout(() => {
                 if (morphCard) {
                     morphCard.remove();
@@ -266,7 +270,7 @@
                 }
 
                 if (!isLowQuality) {
-                    // Clean up after card animations complete (700ms slideDownFromTop + buffer)
+                    // Clean up after all card animations complete
                     setTimeout(() => {
                         hidingCards.forEach(card => {
                             card.classList.remove('hiding', 'returning');
@@ -276,12 +280,12 @@
                         if (selectedCard) {
                             selectedCard.style.opacity = '';
                         }
-                    }, 800);
+                    }, cardReturnTime + 50);
                 }
 
                 selectedCard = null;
                 selectedTool = null;
-            }, isLowQuality ? 0 : 750);
+            }, isLowQuality ? 0 : totalCleanupTime);
         }
 
         // Keyboard escape
