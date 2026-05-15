@@ -57,31 +57,49 @@
             max-height: 70vh;
         }
 
-        .theater-mode .video-wrapper {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1000;
+        .video-wrapper:fullscreen {
             border-radius: 0;
-            max-height: none;
+            max-height: 100vh;
         }
 
-        .theater-mode .playlist-panel,
-        .theater-mode .controls-bar { display: none; }
+        .video-wrapper:fullscreen video {
+            max-height: 100vh;
+        }
 
-        .video-wrapper:fullscreen { max-height: 100vh; }
-
-        /* 控制栏 */
+        /* 控制栏 - 始终在 video-wrapper 内 */
         .controls-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            padding: 20px 15px 15px;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .video-wrapper:not(:fullscreen) .controls-bar {
+            position: relative;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 12px;
+            margin: 15px;
             padding: 15px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        }
+
+        .controls-bar.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .video-wrapper:hover .controls-bar,
+        .video-wrapper:fullscreen .controls-bar {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .video-wrapper:fullscreen .controls-bar {
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
         }
 
         .progress-container {
@@ -89,12 +107,13 @@
             align-items: center;
             gap: 10px;
             cursor: pointer;
+            margin-bottom: 10px;
         }
 
         .progress-bar {
             flex: 1;
             height: 6px;
-            background: var(--border);
+            background: rgba(255,255,255,0.2);
             border-radius: 3px;
             position: relative;
             overflow: visible;
@@ -105,7 +124,7 @@
             top: 0;
             left: 0;
             height: 100%;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.3);
             border-radius: 3px;
         }
 
@@ -119,14 +138,18 @@
             transition: width 0.1s;
         }
 
-        .progress-bar:hover .progress { background: #33fffd; }
         .progress-bar:hover { height: 10px; }
+        .progress-bar:hover .progress { background: #33fffd; }
 
         .time-display {
             font-size: 0.85rem;
-            color: var(--text-secondary);
+            color: #fff;
             min-width: 100px;
             text-align: center;
+        }
+
+        .video-wrapper:not(:fullscreen) .time-display {
+            color: var(--text-secondary);
         }
 
         .controls-row {
@@ -145,7 +168,7 @@
         .btn {
             background: transparent;
             border: none;
-            color: var(--text);
+            color: #fff;
             cursor: pointer;
             padding: 8px;
             border-radius: 6px;
@@ -156,10 +179,16 @@
             font-size: 1.2rem;
         }
 
-        .btn:hover { background: var(--border); }
+        .video-wrapper:not(:fullscreen) .btn {
+            color: var(--text);
+        }
+
+        .btn:hover { background: rgba(255,255,255,0.2); }
         .btn.active { color: var(--secondary); }
         .btn-icon { font-size: 1.3rem; }
         .btn-sm { padding: 5px 10px; font-size: 0.85rem; }
+
+        .video-wrapper:not(:fullscreen) .btn:hover { background: var(--border); }
 
         .volume-control {
             display: flex;
@@ -171,7 +200,7 @@
             width: 80px;
             height: 4px;
             -webkit-appearance: none;
-            background: var(--border);
+            background: rgba(255,255,255,0.3);
             border-radius: 2px;
             cursor: pointer;
         }
@@ -185,17 +214,43 @@
             cursor: pointer;
         }
 
-        .speed-select {
+        .video-wrapper:not(:fullscreen) .volume-slider {
             background: var(--border);
+        }
+
+        .speed-select {
+            background: rgba(255,255,255,0.2);
             border: none;
-            color: var(--text);
+            color: #fff;
             padding: 6px 10px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.85rem;
         }
 
-        .speed-select:hover { background: #444; }
+        .video-wrapper:not(:fullscreen) .speed-select {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .speed-select:hover { background: rgba(255,255,255,0.3); }
+        .video-wrapper:not(:fullscreen) .speed-select:hover { background: #444; }
+
+        /* 加载状态 */
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading-overlay.show { opacity: 1; }
 
         /* 播放列表 */
         .playlist-panel {
@@ -238,9 +293,7 @@
 
         .playlist-item:hover { background: rgba(255,255,255,0.05); }
         .playlist-item.active { background: var(--primary); }
-        .playlist-section {
-            margin-bottom: 20px;
-        }
+        .playlist-section { margin-bottom: 20px; }
 
         .playlist-section h4 {
             color: var(--secondary);
@@ -284,22 +337,6 @@
         }
 
         .drop-zone p { margin: 5px 0; }
-
-        /* 加载状态 */
-        .loading-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        .loading-overlay.show { opacity: 1; }
 
         /* 提示 */
         .toast {
@@ -357,49 +394,49 @@
         <div class="video-wrapper" id="videoWrapper">
             <video id="mediaPlayer" crossorigin="anonymous"></video>
             <div class="loading-overlay" id="loadingOverlay"><i class="fa-solid fa-spinner fa-spin"></i></div>
-        </div>
 
-        <div class="controls-bar" id="controlsBar">
-            <div class="progress-container" id="progressContainer">
-                <span class="time-display" id="currentTime">0:00</span>
-                <div class="progress-bar" id="progressBar">
-                    <div class="buffered" id="bufferedBar"></div>
-                    <div class="progress" id="progressFill"></div>
-                </div>
-                <span class="time-display" id="totalTime">0:00</span>
-            </div>
-
-            <div class="controls-row">
-                <div class="controls-left">
-                    <button class="btn" id="prevBtn" title="上一首 (P)"><i class="fa-solid fa-backward-step"></i></button>
-                    <button class="btn btn-icon" id="playBtn" title="播放/暂停 (Space)"><i class="fa-solid fa-play"></i></button>
-                    <button class="btn" id="nextBtn" title="下一首 (N)"><i class="fa-solid fa-forward-step"></i></button>
-                    <button class="btn" id="stopBtn" title="停止 (X)"><i class="fa-solid fa-stop"></i></button>
-
-                    <div class="volume-control">
-                        <button class="btn btn-icon" id="muteBtn" title="静音 (M)"><i class="fa-solid fa-volume-high"></i></button>
-                        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" title="音量">
+            <div class="controls-bar" id="controlsBar">
+                <div class="progress-container" id="progressContainer">
+                    <span class="time-display" id="currentTime">0:00</span>
+                    <div class="progress-bar" id="progressBar">
+                        <div class="buffered" id="bufferedBar"></div>
+                        <div class="progress" id="progressFill"></div>
                     </div>
+                    <span class="time-display" id="totalTime">0:00</span>
                 </div>
 
-                <div class="controls-right">
-                    <select class="speed-select" id="speedSelect" title="播放速度">
-                        <option value="0.5">0.5x</option>
-                        <option value="0.75">0.75x</option>
-                        <option value="1" selected>1.0x</option>
-                        <option value="1.25">1.25x</option>
-                        <option value="1.5">1.5x</option>
-                        <option value="1.75">1.75x</option>
-                        <option value="2">2.0x</option>
-                        <option value="2.5">2.5x</option>
-                        <option value="3">3.0x</option>
-                    </select>
+                <div class="controls-row">
+                    <div class="controls-left">
+                        <button class="btn" id="prevBtn" title="上一首 (P)"><i class="fa-solid fa-backward-step"></i></button>
+                        <button class="btn btn-icon" id="playBtn" title="播放/暂停 (Space)"><i class="fa-solid fa-play"></i></button>
+                        <button class="btn" id="nextBtn" title="下一首 (N)"><i class="fa-solid fa-forward-step"></i></button>
+                        <button class="btn" id="stopBtn" title="停止 (X)"><i class="fa-solid fa-stop"></i></button>
 
-                    <button class="btn btn-sm" id="loopOneBtn" title="单曲循环 (L)"><i class="fa-solid fa-repeat"></i></button>
-                    <button class="btn btn-sm" id="loopAllBtn" title="列表循环 (R)"><i class="fa-solid fa-repeat"></i></button>
-                    <button class="btn btn-sm" id="shuffleBtn" title="随机播放 (S)"><i class="fa-solid fa-shuffle"></i></button>
-                    <button class="btn btn-icon" id="theaterBtn" title="网页全屏 (T)"><i class="fa-solid fa-display"></i></button>
-                    <button class="btn btn-icon" id="fullscreenBtn" title="全屏 (F)"><i class="fa-solid fa-expand"></i></button>
+                        <div class="volume-control">
+                            <button class="btn btn-icon" id="muteBtn" title="静音 (M)"><i class="fa-solid fa-volume-high"></i></button>
+                            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" title="音量">
+                        </div>
+                    </div>
+
+                    <div class="controls-right">
+                        <select class="speed-select" id="speedSelect" title="播放速度">
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1.0x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="1.75">1.75x</option>
+                            <option value="2">2.0x</option>
+                            <option value="2.5">2.5x</option>
+                            <option value="3">3.0x</option>
+                        </select>
+
+                        <button class="btn btn-sm" id="loopOneBtn" title="单曲循环 (L)"><i class="fa-solid fa-repeat"></i></button>
+                        <button class="btn btn-sm" id="loopAllBtn" title="列表循环 (R)"><i class="fa-solid fa-repeat"></i></button>
+                        <button class="btn btn-sm" id="shuffleBtn" title="随机播放 (S)"><i class="fa-solid fa-shuffle"></i></button>
+                        <button class="btn btn-icon" id="theaterBtn" title="网页全屏 (T)"><i class="fa-solid fa-display"></i></button>
+                        <button class="btn btn-icon" id="fullscreenBtn" title="全屏 (F)"><i class="fa-solid fa-expand"></i></button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -431,7 +468,7 @@
     </div>
 
     <div class="keyboard-hint">
-        <kbd>Space</kbd> 播放/暂停 &middot; <kbd>-</kbd><kbd>+</kbd> 快退/快进 &middot; <kbd>↑↓</kbd> 音量 &middot; <kbd>F</kbd> 全屏
+        <kbd>Space</kbd> 播放/暂停 &middot; <kbd>←</kbd><kbd>→</kbd> 快退/快进 &middot; <kbd>↑↓</kbd> 音量 &middot; <kbd>F</kbd> 全屏
     </div>
     <div class="toast" id="toast"></div>
 
@@ -478,6 +515,7 @@
     let isShuffle = false;
     let isTheaterMode = false;
     let isMediaAudio = false;
+    let controlsTimeout = null;
 
     function showToast(msg) {
         toastEl.textContent = msg;
@@ -552,7 +590,7 @@
         currentListType = 'featured';
         currentIndex = index;
 
-        videoWrapper.style.display = 'none';
+        videoWrapper.style.display = '';
         controlsBar.style.display = 'flex';
 
         media.src = item.url;
@@ -607,12 +645,11 @@
 
         isMediaAudio = item.isAudio;
 
-        videoWrapper.style.display = isMediaAudio ? 'none' : 'block';
+        videoWrapper.style.display = isMediaAudio ? 'none' : '';
+        controlsBar.style.display = 'flex';
 
         media.src = item.url;
         media.load();
-
-        controlsBar.style.display = 'flex';
 
         media.play().catch(() => {});
         setIcon(playBtn, 'fa-pause');
@@ -786,6 +823,19 @@
         document.body.classList.toggle('theater-mode', isTheaterMode);
         theaterBtn.classList.toggle('active', isTheaterMode);
         showToast(isTheaterMode ? '网页全屏模式' : '退出网页全屏');
+    });
+
+    // 全屏时鼠标移动显示/隐藏控制栏
+    videoWrapper.addEventListener('mousemove', () => {
+        if (document.fullscreenElement) {
+            controlsBar.classList.remove('hidden');
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(() => {
+                if (document.fullscreenElement) {
+                    controlsBar.classList.add('hidden');
+                }
+            }, 3000);
+        }
     });
 
     addFilesBtn.addEventListener('click', () => fileInput.click());
