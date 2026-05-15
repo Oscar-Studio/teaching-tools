@@ -309,7 +309,8 @@
         "通用"
       ],
       "icon": "🎵",
-      "featured": true
+      "featured": true,
+      "demoFile": "media-player/index.html"
     }
   ]
 }

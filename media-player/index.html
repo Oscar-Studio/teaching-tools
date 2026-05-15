@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>媒体播放器 - 教学工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #2A5CAA;
@@ -260,7 +261,7 @@
 
         .playlist-item.playing { border-left: 3px solid var(--secondary); }
 
-        .playlist-item .item-icon { font-size: 1.2rem; width: 30px; text-align: center; }
+        .playlist-item .item-icon { font-size: 1.2rem; width: 30px; text-align: center; color: var(--text-secondary); }
         .playlist-item .item-info { flex: 1; overflow: hidden; }
         .playlist-item .item-name { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .playlist-item .item-duration { font-size: 0.75rem; color: var(--text-secondary); }
@@ -348,14 +349,14 @@
 </head>
 <body>
     <div class="header">
-        <h1>🎵 媒体播放器</h1>
-        <p>支持多种音视频格式 · 倍速播放 · 播放模式 · 全屏</p>
+        <h1><i class="fa-solid fa-music"></i> 媒体播放器</h1>
+        <p>支持多种音视频格式 &middot; 倍速播放 &middot; 播放模式 &middot; 全屏</p>
     </div>
 
     <div class="player-container">
         <div class="video-wrapper" id="videoWrapper">
             <video id="mediaPlayer" crossorigin="anonymous"></video>
-            <div class="loading-overlay" id="loadingOverlay">⏳</div>
+            <div class="loading-overlay" id="loadingOverlay"><i class="fa-solid fa-spinner fa-spin"></i></div>
         </div>
 
         <div class="controls-bar" id="controlsBar">
@@ -370,13 +371,13 @@
 
             <div class="controls-row">
                 <div class="controls-left">
-                    <button class="btn" id="prevBtn" title="上一首 (P)">⏮️</button>
-                    <button class="btn btn-icon" id="playBtn" title="播放/暂停 (Space)">▶️</button>
-                    <button class="btn" id="nextBtn" title="下一首 (N)">⏭️</button>
-                    <button class="btn" id="stopBtn" title="停止 (X)">⏹️</button>
+                    <button class="btn" id="prevBtn" title="上一首 (P)"><i class="fa-solid fa-backward-step"></i></button>
+                    <button class="btn btn-icon" id="playBtn" title="播放/暂停 (Space)"><i class="fa-solid fa-play"></i></button>
+                    <button class="btn" id="nextBtn" title="下一首 (N)"><i class="fa-solid fa-forward-step"></i></button>
+                    <button class="btn" id="stopBtn" title="停止 (X)"><i class="fa-solid fa-stop"></i></button>
 
                     <div class="volume-control">
-                        <button class="btn btn-icon" id="muteBtn" title="静音 (M)">🔊</button>
+                        <button class="btn btn-icon" id="muteBtn" title="静音 (M)"><i class="fa-solid fa-volume-high"></i></button>
                         <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" title="音量">
                     </div>
                 </div>
@@ -394,43 +395,43 @@
                         <option value="3">3.0x</option>
                     </select>
 
-                    <button class="btn btn-sm" id="loopOneBtn" title="单曲循环 (L)">🔂</button>
-                    <button class="btn btn-sm" id="loopAllBtn" title="列表循环 (R)">🔁</button>
-                    <button class="btn btn-sm" id="shuffleBtn" title="随机播放 (S)">🔀</button>
-                    <button class="btn btn-icon" id="theaterBtn" title="网页全屏 (T)">🖥️</button>
-                    <button class="btn btn-icon" id="fullscreenBtn" title="全屏 (F)">⛶</button>
+                    <button class="btn btn-sm" id="loopOneBtn" title="单曲循环 (L)"><i class="fa-solid fa-repeat"></i></button>
+                    <button class="btn btn-sm" id="loopAllBtn" title="列表循环 (R)"><i class="fa-solid fa-repeat"></i></button>
+                    <button class="btn btn-sm" id="shuffleBtn" title="随机播放 (S)"><i class="fa-solid fa-shuffle"></i></button>
+                    <button class="btn btn-icon" id="theaterBtn" title="网页全屏 (T)"><i class="fa-solid fa-display"></i></button>
+                    <button class="btn btn-icon" id="fullscreenBtn" title="全屏 (F)"><i class="fa-solid fa-expand"></i></button>
                 </div>
             </div>
         </div>
 
         <div class="playlist-panel">
             <div class="playlist-header">
-                <h3>📋 播放列表 (<span id="playlistCount">0</span>)</h3>
+                <h3><i class="fa-solid fa-list"></i> 播放列表 (<span id="playlistCount">0</span>)</h3>
                 <div class="playlist-actions">
-                    <button class="btn btn-sm" id="addFilesBtn">➕ 添加文件</button>
-                    <button class="btn btn-sm" id="clearPlaylistBtn">🗑️ 清空</button>
+                    <button class="btn btn-sm" id="addFilesBtn"><i class="fa-solid fa-plus"></i> 添加文件</button>
+                    <button class="btn btn-sm" id="clearPlaylistBtn"><i class="fa-solid fa-trash"></i> 清空</button>
                 </div>
             </div>
 
             <div class="playlist-section">
-                <h4>⭐ Oscar 严选 <span class="featured-badge">精选</span></h4>
+                <h4><i class="fa-solid fa-star"></i> Oscar 严选 <span class="featured-badge">精选</span></h4>
                 <div class="playlist" id="featuredPlaylist"></div>
             </div>
 
             <div class="playlist-section">
-                <h4>📁 我的列表</h4>
+                <h4><i class="fa-solid fa-folder"></i> 我的列表</h4>
                 <div class="playlist" id="playlist"></div>
             </div>
 
             <div class="drop-zone" id="dropZone">
-                <p>📁 拖拽媒体文件到这里</p>
+                <p><i class="fa-solid fa-folder-open"></i> 拖拽媒体文件到这里</p>
                 <p style="font-size:0.8rem">支持 MP4, WebM, Ogg, MP3, WAV, AAC, FLAC, MKV 等格式</p>
             </div>
         </div>
     </div>
 
     <div class="keyboard-hint">
-        <kbd>Space</kbd> 播放/暂停 · <kbd>←→</kbd> 快退/快进 · <kbd>↑↓</kbd> 音量 · <kbd>F</kbd> 全屏
+        <kbd>Space</kbd> 播放/暂停 &middot; <kbd>-</kbd><kbd>+</kbd> 快退/快进 &middot; <kbd>↑↓</kbd> 音量 &middot; <kbd>F</kbd> 全屏
     </div>
     <div class="toast" id="toast"></div>
 
@@ -471,7 +472,7 @@
 
     let playlist = [];
     let currentIndex = -1;
-    let currentListType = 'user'; // 'user' or 'featured'
+    let currentListType = 'user';
     let isLoopingOne = false;
     let isLoopingAll = false;
     let isShuffle = false;
@@ -491,9 +492,14 @@
         return `${m}:${sec.toString().padStart(2, '0')}`;
     }
 
-    function getFileIcon(file) {
-        if (file.type.startsWith('audio')) return '🎵';
-        return '🎬';
+    function getFileIcon(item) {
+        return item.isAudio
+            ? '<i class="fa-solid fa-music"></i>'
+            : '<i class="fa-solid fa-film"></i>';
+    }
+
+    function setIcon(el, iconClass) {
+        el.innerHTML = `<i class="${iconClass}"></i>`;
     }
 
     function renderPlaylist() {
@@ -501,13 +507,12 @@
         playlistEl.innerHTML = '';
         featuredPlaylistEl.innerHTML = '';
 
-        // Render Oscar 严选
         if (window.oscarFeatured && window.oscarFeatured.length > 0) {
             window.oscarFeatured.forEach((item, i) => {
                 const div = document.createElement('div');
                 div.className = 'playlist-item' + (currentListType === 'featured' && i === currentIndex ? ' active playing' : '');
                 div.innerHTML = `
-                    <span class="item-icon">🎵</span>
+                    <span class="item-icon"><i class="fa-solid fa-music"></i></span>
                     <div class="item-info">
                         <div class="item-name" title="${item.name}">${item.name}</div>
                         ${item.duration ? `<div class="item-duration">${formatTime(item.duration)}</div>` : ''}
@@ -518,7 +523,6 @@
             });
         }
 
-        // Render user playlist
         playlist.forEach((item, i) => {
             const div = document.createElement('div');
             div.className = 'playlist-item' + (currentListType === 'user' && i === currentIndex ? ' active playing' : '');
@@ -528,10 +532,10 @@
                     <div class="item-name" title="${item.name}">${item.name}</div>
                     ${item.duration ? `<div class="item-duration">${formatTime(item.duration)}</div>` : ''}
                 </div>
-                <button class="btn btn-sm item-remove" data-index="${i}">✖️</button>
+                <button class="btn btn-sm item-remove" data-index="${i}"><i class="fa-solid fa-times"></i></button>
             `;
             div.addEventListener('click', (e) => {
-                if (e.target.classList.contains('item-remove')) {
+                if (e.target.closest('.item-remove')) {
                     e.stopPropagation();
                     removeFromPlaylist(i);
                 } else {
@@ -554,7 +558,7 @@
         media.src = item.url;
         media.load();
         media.play().catch(() => {});
-        playBtn.textContent = '⏸️';
+        setIcon(playBtn, 'fa-pause');
         renderPlaylist();
     }
 
@@ -603,17 +607,15 @@
 
         isMediaAudio = item.isAudio;
 
-        // 隐藏/显示视频-wrapper
         videoWrapper.style.display = isMediaAudio ? 'none' : 'block';
 
         media.src = item.url;
         media.load();
 
-        // 更新控件可见性
-        controlsBar.style.display = isMediaAudio ? 'flex' : 'flex';
+        controlsBar.style.display = 'flex';
 
         media.play().catch(() => {});
-        playBtn.textContent = '⏸️';
+        setIcon(playBtn, 'fa-pause');
         renderPlaylist();
     }
 
@@ -653,7 +655,6 @@
         if (idx !== -1) playByIndex(idx);
     }
 
-    // 播放/暂停
     playBtn.addEventListener('click', () => {
         if (currentIndex === -1 && playlist.length > 0) {
             playByIndex(0);
@@ -663,8 +664,8 @@
         else media.pause();
     });
 
-    media.addEventListener('play', () => { playBtn.textContent = '⏸️'; });
-    media.addEventListener('pause', () => { playBtn.textContent = '▶️'; });
+    media.addEventListener('play', () => { setIcon(playBtn, 'fa-pause'); });
+    media.addEventListener('pause', () => { setIcon(playBtn, 'fa-play'); });
     media.addEventListener('ended', () => {
         if (isLoopingOne) {
             media.currentTime = 0;
@@ -675,23 +676,21 @@
             const next = getNextIndex();
             if (next !== -1) playByIndex(next);
             else {
-                playBtn.textContent = '▶️';
+                setIcon(playBtn, 'fa-play');
                 currentIndex = -1;
                 renderPlaylist();
             }
         }
     });
 
-    // 上一首/下一首
     prevBtn.addEventListener('click', playPrev);
     nextBtn.addEventListener('click', playNext);
     stopBtn.addEventListener('click', () => {
         media.pause();
         media.currentTime = 0;
-        playBtn.textContent = '▶️';
+        setIcon(playBtn, 'fa-play');
     });
 
-    // 进度条
     media.addEventListener('timeupdate', () => {
         if (media.duration) {
             const pct = (media.currentTime / media.duration) * 100;
@@ -723,7 +722,6 @@
         media.currentTime = pct * media.duration;
     });
 
-    // 音量
     volumeSlider.addEventListener('input', () => {
         media.volume = volumeSlider.value;
         updateMuteIcon();
@@ -741,24 +739,22 @@
 
     function updateMuteIcon() {
         const vol = media.muted ? 0 : media.volume;
-        if (vol === 0) muteBtn.textContent = '🔇';
-        else if (vol < 0.5) muteBtn.textContent = '🔉';
-        else muteBtn.textContent = '🔊';
+        if (vol === 0) setIcon(muteBtn, 'fa-volume-xmark');
+        else if (vol < 0.5) setIcon(muteBtn, 'fa-volume-low');
+        else setIcon(muteBtn, 'fa-volume-high');
     }
 
-    // 速度
     speedSelect.addEventListener('change', () => {
         media.playbackRate = parseFloat(speedSelect.value);
         showToast(`播放速度: ${speedSelect.value}x`);
     });
 
-    // 播放模式
     loopOneBtn.addEventListener('click', () => {
         isLoopingOne = !isLoopingOne;
         isLoopingAll = false;
         loopOneBtn.classList.toggle('active', isLoopingOne);
         loopAllBtn.classList.remove('active');
-        showToast(isLoopingOne ? '单曲循环 🔂' : '关闭循环');
+        showToast(isLoopingOne ? '单曲循环' : '关闭循环');
     });
 
     loopAllBtn.addEventListener('click', () => {
@@ -766,16 +762,15 @@
         isLoopingOne = false;
         loopAllBtn.classList.toggle('active', isLoopingAll);
         loopOneBtn.classList.remove('active');
-        showToast(isLoopingAll ? '列表循环 🔁' : '关闭循环');
+        showToast(isLoopingAll ? '列表循环' : '关闭循环');
     });
 
     shuffleBtn.addEventListener('click', () => {
         isShuffle = !isShuffle;
         shuffleBtn.classList.toggle('active', isShuffle);
-        showToast(isShuffle ? '随机播放 🔀' : '顺序播放');
+        showToast(isShuffle ? '随机播放' : '顺序播放');
     });
 
-    // 全屏/网页全屏
     function toggleFullscreen() {
         if (!document.fullscreenElement) {
             videoWrapper.requestFullscreen().catch(() => {});
@@ -785,9 +780,6 @@
     }
 
     fullscreenBtn.addEventListener('click', toggleFullscreen);
-    document.addEventListener('fullscreenchange', () => {
-        fullscreenBtn.textContent = document.fullscreenElement ? '⛶' : '⛶';
-    });
 
     theaterBtn.addEventListener('click', () => {
         isTheaterMode = !isTheaterMode;
@@ -796,7 +788,6 @@
         showToast(isTheaterMode ? '网页全屏模式' : '退出网页全屏');
     });
 
-    // 文件添加
     addFilesBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', () => {
         if (fileInput.files.length) addToPlaylist(fileInput.files);
@@ -812,7 +803,6 @@
         showToast('播放列表已清空');
     });
 
-    // 拖拽
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.classList.add('dragover');
@@ -828,7 +818,6 @@
         if (e.dataTransfer.files.length) addToPlaylist(e.dataTransfer.files);
     });
 
-    // 键盘快捷键
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT') return;
 
@@ -892,13 +881,10 @@
         }
     });
 
-    // 双击全屏
     videoWrapper.addEventListener('dblclick', toggleFullscreen);
 
-    // Oscar 严选 - 内置歌单
     window.oscarFeatured = [];
     function loadFeatured() {
-        // 获取午夜咖啡馆.mp3的URL
         const cafeUrl = '午夜咖啡馆.mp3';
         const xhr = new XMLHttpRequest();
         xhr.open('GET', cafeUrl, true);
@@ -921,7 +907,6 @@
         xhr.send();
     }
 
-    // 初始状态
     updateMuteIcon();
     renderPlaylist();
     loadFeatured();
