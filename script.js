@@ -252,6 +252,7 @@
                 });
             }
 
+            // Wait for morphCard shrink animation to complete before removing
             setTimeout(() => {
                 if (morphCard) {
                     morphCard.remove();
@@ -265,7 +266,7 @@
                 }
 
                 if (!isLowQuality) {
-                    // Clean up after animation - remove class and clear inline styles
+                    // Clean up after card animations complete (700ms slideDownFromTop + buffer)
                     setTimeout(() => {
                         hidingCards.forEach(card => {
                             card.classList.remove('hiding', 'returning');
@@ -275,7 +276,7 @@
                         if (selectedCard) {
                             selectedCard.style.opacity = '';
                         }
-                    }, 750);
+                    }, 800);
                 }
 
                 selectedCard = null;
