@@ -66,6 +66,48 @@
             max-height: 100vh;
         }
 
+        .audio-placeholder {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .audio-placeholder.show {
+            display: block;
+        }
+
+        .audio-placeholder i {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            color: var(--secondary);
+        }
+
+        .audio-placeholder p {
+            font-size: 1.2rem;
+        }
+
+        .video-wrapper.audio-mode .loading-overlay,
+        .video-wrapper.audio-mode video {
+            display: none;
+        }
+
+        .video-wrapper.audio-mode .audio-placeholder {
+            display: block;
+        }
+
+        .video-wrapper.audio-mode .controls-bar {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 15px;
+            padding: 15px 20px;
+        }
+
         /* 控制栏 - 始终在 video-wrapper 内 */
         .controls-bar {
             position: absolute;
@@ -393,6 +435,10 @@
     <div class="player-container">
         <div class="video-wrapper" id="videoWrapper">
             <video id="mediaPlayer" crossorigin="anonymous"></video>
+            <div class="audio-placeholder" id="audioPlaceholder">
+                <i class="fa-solid fa-music"></i>
+                <p id="nowPlayingName">未播放</p>
+            </div>
             <div class="loading-overlay" id="loadingOverlay"><i class="fa-solid fa-spinner fa-spin"></i></div>
 
             <div class="controls-bar" id="controlsBar">
@@ -506,6 +552,8 @@
     const toastEl = document.getElementById('toast');
     const controlsBar = document.getElementById('controlsBar');
     const featuredPlaylistEl = document.getElementById('featuredPlaylist');
+    const audioPlaceholder = document.getElementById('audioPlaceholder');
+    const nowPlayingName = document.getElementById('nowPlayingName');
 
     let playlist = [];
     let currentIndex = -1;
@@ -590,7 +638,8 @@
         currentListType = 'featured';
         currentIndex = index;
 
-        videoWrapper.style.display = '';
+        videoWrapper.classList.toggle('audio-mode', item.isAudio);
+        nowPlayingName.textContent = item.name;
         controlsBar.style.display = 'flex';
 
         media.src = item.url;
@@ -645,7 +694,10 @@
 
         isMediaAudio = item.isAudio;
 
-        videoWrapper.style.display = isMediaAudio ? 'none' : '';
+        videoWrapper.classList.toggle('audio-mode', isMediaAudio);
+        if (isMediaAudio) {
+            nowPlayingName.textContent = item.name;
+        }
         controlsBar.style.display = 'flex';
 
         media.src = item.url;
