@@ -254,30 +254,28 @@
                 });
             }
 
-            // Wait for morphCard shrink animation (750ms) to complete before removing
-            const cardReturnTime = hidingCards.length * 40 + 700;
-
-            setTimeout(() => {
-                if (morphCard) {
-                    morphCard.remove();
-                    morphCard = null;
-                }
+            // Use transitionend event to know exactly when shrink animation completes
+            const onShrinkEnd = () => {
+                morphCard.removeEventListener('transitionend', onShrinkEnd);
+                morphCard.remove();
+                morphCard = null;
                 backdrop.classList.remove('active');
                 backdrop.style.opacity = '';
 
-                if (selectedCard) {
+                if (selectedCard && selectedCard.isConnected) {
                     selectedCard.style.opacity = '';
                 }
 
+                // Clean up returning cards after their animation
                 if (!isLowQuality) {
-                    // Clean up card classes and styles after returning animations finish
+                    const cardReturnTime = hidingCards.length * 40 + 700;
                     setTimeout(() => {
                         hidingCards.forEach(card => {
                             card.classList.remove('hiding', 'returning');
                             card.style.transform = '';
                             card.style.opacity = '';
                         });
-                        if (selectedCard) {
+                        if (selectedCard && selectedCard.isConnected) {
                             selectedCard.style.opacity = '';
                         }
                     }, cardReturnTime);
@@ -286,7 +284,16 @@
                 selectedCard = null;
                 selectedTool = null;
                 isClosing = false;
-            }, 750);
+            };
+
+            morphCard.addEventListener('transitionend', onShrinkEnd);
+            // Fallback timeout in case transitionend doesn't fire
+            setTimeout(() => {
+                if (morphCard) {
+                    morphCard.removeEventListener('transitionend', onShrinkEnd);
+                    onShrinkEnd();
+                }
+            }, 800);
         }
 
         // Keyboard escape
