@@ -66,6 +66,7 @@
             max-height: 100vh;
         }
 
+        /* 音频占位符 */
         .audio-placeholder {
             display: none;
             position: absolute;
@@ -74,10 +75,6 @@
             transform: translate(-50%, -50%);
             text-align: center;
             color: var(--text-secondary);
-        }
-
-        .audio-placeholder.show {
-            display: block;
         }
 
         .audio-placeholder i {
@@ -90,25 +87,22 @@
             font-size: 1.2rem;
         }
 
-        .video-wrapper.audio-mode .loading-overlay,
-        .video-wrapper.audio-mode video {
-            display: none;
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
         }
 
-        .video-wrapper.audio-mode .audio-placeholder {
-            display: block;
-        }
+        .loading-overlay.show { opacity: 1; }
 
-        .video-wrapper.audio-mode .controls-bar {
-            position: relative;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin: 15px;
-            padding: 15px 20px;
-        }
-
-        /* 控制栏 - 始终在 video-wrapper 内 */
+        /* 控制栏 - 视频模式 */
         .controls-bar {
             position: absolute;
             bottom: 0;
@@ -116,34 +110,16 @@
             right: 0;
             background: linear-gradient(transparent, rgba(0,0,0,0.9));
             padding: 20px 15px 15px;
-            opacity: 1;
-            transition: opacity 0.3s;
         }
 
-        .video-wrapper:not(:fullscreen) .controls-bar {
-            position: relative;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin: 15px;
-            padding: 15px 20px;
-        }
-
-        .controls-bar.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .video-wrapper:hover .controls-bar,
-        .video-wrapper:fullscreen .controls-bar {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .controls-bar.hidden { opacity: 0; pointer-events: none; }
+        .video-wrapper:hover .controls-bar { opacity: 1; pointer-events: auto; }
 
         .video-wrapper:fullscreen .controls-bar {
             background: linear-gradient(transparent, rgba(0,0,0,0.9));
         }
 
+        /* 进度条 */
         .progress-container {
             display: flex;
             align-items: center;
@@ -158,28 +134,18 @@
             background: rgba(255,255,255,0.2);
             border-radius: 3px;
             position: relative;
-            overflow: visible;
         }
 
-        .progress-bar .buffered {
+        .progress-bar .buffered, .progress-bar .progress {
             position: absolute;
             top: 0;
             left: 0;
             height: 100%;
-            background: rgba(255,255,255,0.3);
             border-radius: 3px;
         }
 
-        .progress-bar .progress {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background: var(--secondary);
-            border-radius: 3px;
-            transition: width 0.1s;
-        }
-
+        .progress-bar .buffered { background: rgba(255,255,255,0.3); }
+        .progress-bar .progress { background: var(--secondary); transition: width 0.1s; }
         .progress-bar:hover { height: 10px; }
         .progress-bar:hover .progress { background: #33fffd; }
 
@@ -188,10 +154,6 @@
             color: #fff;
             min-width: 100px;
             text-align: center;
-        }
-
-        .video-wrapper:not(:fullscreen) .time-display {
-            color: var(--text-secondary);
         }
 
         .controls-row {
@@ -214,23 +176,16 @@
             cursor: pointer;
             padding: 8px;
             border-radius: 6px;
-            transition: background 0.2s, color 0.2s;
+            transition: background 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
         }
 
-        .video-wrapper:not(:fullscreen) .btn {
-            color: var(--text);
-        }
-
         .btn:hover { background: rgba(255,255,255,0.2); }
         .btn.active { color: var(--secondary); }
-        .btn-icon { font-size: 1.3rem; }
         .btn-sm { padding: 5px 10px; font-size: 0.85rem; }
-
-        .video-wrapper:not(:fullscreen) .btn:hover { background: var(--border); }
 
         .volume-control {
             display: flex;
@@ -244,7 +199,6 @@
             -webkit-appearance: none;
             background: rgba(255,255,255,0.3);
             border-radius: 2px;
-            cursor: pointer;
         }
 
         .volume-slider::-webkit-slider-thumb {
@@ -254,10 +208,6 @@
             background: var(--secondary);
             border-radius: 50%;
             cursor: pointer;
-        }
-
-        .video-wrapper:not(:fullscreen) .volume-slider {
-            background: var(--border);
         }
 
         .speed-select {
@@ -270,36 +220,53 @@
             font-size: 0.85rem;
         }
 
-        .video-wrapper:not(:fullscreen) .speed-select {
-            background: var(--border);
-            color: var(--text);
+        .speed-select:hover { background: rgba(255,255,255,0.3); }
+
+        /* 音频播放控件 - 独立于 video-wrapper */
+        .audio-controls {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
         }
 
-        .speed-select:hover { background: rgba(255,255,255,0.3); }
-        .video-wrapper:not(:fullscreen) .speed-select:hover { background: #444; }
+        .audio-controls.show { display: block; }
 
-        /* 加载状态 */
-        .loading-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
+        .audio-header {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .loading-overlay.show { opacity: 1; }
+        .audio-header i {
+            font-size: 2rem;
+            color: var(--secondary);
+            margin-right: 15px;
+        }
+
+        .audio-header p {
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+
+        .audio-controls .progress-container { cursor: pointer; }
+        .audio-controls .time-display { color: var(--text-secondary); }
+        .audio-controls .btn { color: var(--text); }
+        .audio-controls .btn:hover { background: var(--border); }
+        .audio-controls .volume-slider { background: var(--border); }
+        .audio-controls .speed-select { background: var(--border); color: var(--text); }
+        .audio-controls .speed-select:hover { background: #444; }
 
         /* 播放列表 */
         .playlist-panel {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 12px;
-            margin-top: 20px;
             padding: 15px;
         }
 
@@ -311,7 +278,6 @@
         }
 
         .playlist-header h3 { color: var(--secondary); font-size: 1rem; }
-
         .playlist-actions { display: flex; gap: 8px; }
 
         .playlist {
@@ -330,20 +296,17 @@
             border-radius: 8px;
             cursor: pointer;
             gap: 10px;
-            transition: background 0.2s;
         }
 
         .playlist-item:hover { background: rgba(255,255,255,0.05); }
         .playlist-item.active { background: var(--primary); }
+        .playlist-item.playing { border-left: 3px solid var(--secondary); }
         .playlist-section { margin-bottom: 20px; }
 
         .playlist-section h4 {
             color: var(--secondary);
             font-size: 0.9rem;
             margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .featured-badge {
@@ -352,15 +315,14 @@
             font-size: 0.7rem;
             padding: 2px 8px;
             border-radius: 10px;
+            margin-left: 8px;
         }
-
-        .playlist-item.playing { border-left: 3px solid var(--secondary); }
 
         .playlist-item .item-icon { font-size: 1.2rem; width: 30px; text-align: center; color: var(--text-secondary); }
         .playlist-item .item-info { flex: 1; overflow: hidden; }
         .playlist-item .item-name { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .playlist-item .item-duration { font-size: 0.75rem; color: var(--text-secondary); }
-        .playlist-item .item-remove { opacity: 0; transition: opacity 0.2s; }
+        .playlist-item .item-remove { opacity: 0; }
         .playlist-item:hover .item-remove { opacity: 1; }
 
         .drop-zone {
@@ -370,7 +332,6 @@
             text-align: center;
             color: var(--text-secondary);
             margin-top: 15px;
-            transition: border-color 0.2s, background 0.2s;
         }
 
         .drop-zone.dragover {
@@ -408,7 +369,6 @@
             padding: 10px 15px;
             font-size: 0.75rem;
             color: var(--text-secondary);
-            z-index: 100;
         }
 
         .keyboard-hint kbd {
@@ -440,8 +400,7 @@
                 <p id="nowPlayingName">未播放</p>
             </div>
             <div class="loading-overlay" id="loadingOverlay"><i class="fa-solid fa-spinner fa-spin"></i></div>
-
-            <div class="controls-bar" id="controlsBar">
+            <div class="controls-bar" id="videoControls">
                 <div class="progress-container" id="progressContainer">
                     <span class="time-display" id="currentTime">0:00</span>
                     <div class="progress-bar" id="progressBar">
@@ -450,22 +409,19 @@
                     </div>
                     <span class="time-display" id="totalTime">0:00</span>
                 </div>
-
                 <div class="controls-row">
                     <div class="controls-left">
-                        <button class="btn" id="prevBtn" title="上一首 (P)"><i class="fa-solid fa-backward-step"></i></button>
-                        <button class="btn btn-icon" id="playBtn" title="播放/暂停 (Space)"><i class="fa-solid fa-play"></i></button>
-                        <button class="btn" id="nextBtn" title="下一首 (N)"><i class="fa-solid fa-forward-step"></i></button>
-                        <button class="btn" id="stopBtn" title="停止 (X)"><i class="fa-solid fa-stop"></i></button>
-
+                        <button class="btn" id="prevBtn"><i class="fa-solid fa-backward-step"></i></button>
+                        <button class="btn" id="playBtn"><i class="fa-solid fa-play"></i></button>
+                        <button class="btn" id="nextBtn"><i class="fa-solid fa-forward-step"></i></button>
+                        <button class="btn" id="stopBtn"><i class="fa-solid fa-stop"></i></button>
                         <div class="volume-control">
-                            <button class="btn btn-icon" id="muteBtn" title="静音 (M)"><i class="fa-solid fa-volume-high"></i></button>
-                            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" title="音量">
+                            <button class="btn" id="muteBtn"><i class="fa-solid fa-volume-high"></i></button>
+                            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1">
                         </div>
                     </div>
-
                     <div class="controls-right">
-                        <select class="speed-select" id="speedSelect" title="播放速度">
+                        <select class="speed-select" id="speedSelect">
                             <option value="0.5">0.5x</option>
                             <option value="0.75">0.75x</option>
                             <option value="1" selected>1.0x</option>
@@ -476,13 +432,56 @@
                             <option value="2.5">2.5x</option>
                             <option value="3">3.0x</option>
                         </select>
-
-                        <button class="btn btn-sm" id="loopOneBtn" title="单曲循环 (L)"><i class="fa-solid fa-repeat"></i></button>
-                        <button class="btn btn-sm" id="loopAllBtn" title="列表循环 (R)"><i class="fa-solid fa-repeat"></i></button>
-                        <button class="btn btn-sm" id="shuffleBtn" title="随机播放 (S)"><i class="fa-solid fa-shuffle"></i></button>
-                        <button class="btn btn-icon" id="theaterBtn" title="网页全屏 (T)"><i class="fa-solid fa-display"></i></button>
-                        <button class="btn btn-icon" id="fullscreenBtn" title="全屏 (F)"><i class="fa-solid fa-expand"></i></button>
+                        <button class="btn btn-sm" id="loopOneBtn"><i class="fa-solid fa-repeat"></i></button>
+                        <button class="btn btn-sm" id="loopAllBtn"><i class="fa-solid fa-repeat"></i></button>
+                        <button class="btn btn-sm" id="shuffleBtn"><i class="fa-solid fa-shuffle"></i></button>
+                        <button class="btn" id="theaterBtn"><i class="fa-solid fa-display"></i></button>
+                        <button class="btn" id="fullscreenBtn"><i class="fa-solid fa-expand"></i></button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 音频控制栏 - 独立显示 -->
+        <div class="audio-controls" id="audioControls">
+            <div class="audio-header">
+                <i class="fa-solid fa-music"></i>
+                <p id="audioPlayingName">未播放</p>
+            </div>
+            <div class="progress-container" id="audioProgressContainer">
+                <span class="time-display" id="audioCurrentTime">0:00</span>
+                <div class="progress-bar" id="audioProgressBar">
+                    <div class="buffered" id="audioBufferedBar"></div>
+                    <div class="progress" id="audioProgressFill"></div>
+                </div>
+                <span class="time-display" id="audioTotalTime">0:00</span>
+            </div>
+            <div class="controls-row">
+                <div class="controls-left">
+                    <button class="btn" id="audioPrevBtn"><i class="fa-solid fa-backward-step"></i></button>
+                    <button class="btn" id="audioPlayBtn"><i class="fa-solid fa-play"></i></button>
+                    <button class="btn" id="audioNextBtn"><i class="fa-solid fa-forward-step"></i></button>
+                    <button class="btn" id="audioStopBtn"><i class="fa-solid fa-stop"></i></button>
+                    <div class="volume-control">
+                        <button class="btn" id="audioMuteBtn"><i class="fa-solid fa-volume-high"></i></button>
+                        <input type="range" class="volume-slider" id="audioVolumeSlider" min="0" max="1" step="0.05" value="1">
+                    </div>
+                </div>
+                <div class="controls-right">
+                    <select class="speed-select" id="audioSpeedSelect">
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1.0x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="1.75">1.75x</option>
+                        <option value="2">2.0x</option>
+                        <option value="2.5">2.5x</option>
+                        <option value="3">3.0x</option>
+                    </select>
+                    <button class="btn btn-sm" id="audioLoopOneBtn"><i class="fa-solid fa-repeat"></i></button>
+                    <button class="btn btn-sm" id="audioLoopAllBtn"><i class="fa-solid fa-repeat"></i></button>
+                    <button class="btn btn-sm" id="audioShuffleBtn"><i class="fa-solid fa-shuffle"></i></button>
                 </div>
             </div>
         </div>
@@ -495,17 +494,14 @@
                     <button class="btn btn-sm" id="clearPlaylistBtn"><i class="fa-solid fa-trash"></i> 清空</button>
                 </div>
             </div>
-
             <div class="playlist-section">
                 <h4><i class="fa-solid fa-star"></i> Oscar 严选 <span class="featured-badge">精选</span></h4>
                 <div class="playlist" id="featuredPlaylist"></div>
             </div>
-
             <div class="playlist-section">
                 <h4><i class="fa-solid fa-folder"></i> 我的列表</h4>
                 <div class="playlist" id="playlist"></div>
             </div>
-
             <div class="drop-zone" id="dropZone">
                 <p><i class="fa-solid fa-folder-open"></i> 拖拽媒体文件到这里</p>
                 <p style="font-size:0.8rem">支持 MP4, WebM, Ogg, MP3, WAV, AAC, FLAC, MKV 等格式</p>
@@ -514,7 +510,7 @@
     </div>
 
     <div class="keyboard-hint">
-        <kbd>Space</kbd> 播放/暂停 &middot; <kbd>←</kbd><kbd>→</kbd> 快退/快进 &middot; <kbd>↑↓</kbd> 音量 &middot; <kbd>F</kbd> 全屏
+        <kbd>Space</kbd> 播放/暂停 &middot; <kbd>-</kbd><kbd>+</kbd> 快退/快进 &middot; <kbd>↑↓</kbd> 音量
     </div>
     <div class="toast" id="toast"></div>
 
@@ -524,6 +520,32 @@
 (function() {
     const media = document.getElementById('mediaPlayer');
     const videoWrapper = document.getElementById('videoWrapper');
+    const videoControls = document.getElementById('videoControls');
+    const audioControls = document.getElementById('audioControls');
+    const audioPlaceholder = document.getElementById('audioPlaceholder');
+    const nowPlayingName = document.getElementById('nowPlayingName');
+    const audioPlayingName = document.getElementById('audioPlayingName');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const progressFill = document.getElementById('progressFill');
+    const bufferedBar = document.getElementById('bufferedBar');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalTimeEl = document.getElementById('totalTime');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const audioProgressFill = document.getElementById('audioProgressFill');
+    const audioBufferedBar = document.getElementById('audioBufferedBar');
+    const audioCurrentTimeEl = document.getElementById('audioCurrentTime');
+    const audioTotalTimeEl = document.getElementById('audioTotalTime');
+    const audioProgressContainer = document.getElementById('audioProgressContainer');
+    const audioProgressBar = document.getElementById('audioProgressBar');
+    const playlistEl = document.getElementById('playlist');
+    const featuredPlaylistEl = document.getElementById('featuredPlaylist');
+    const playlistCount = document.getElementById('playlistCount');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const toastEl = document.getElementById('toast');
+
+    // 视频控制按钮
     const playBtn = document.getElementById('playBtn');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
@@ -531,29 +553,26 @@
     const muteBtn = document.getElementById('muteBtn');
     const volumeSlider = document.getElementById('volumeSlider');
     const speedSelect = document.getElementById('speedSelect');
-    const progressContainer = document.getElementById('progressContainer');
-    const progressBar = document.getElementById('progressBar');
-    const progressFill = document.getElementById('progressFill');
-    const bufferedBar = document.getElementById('bufferedBar');
-    const currentTimeEl = document.getElementById('currentTime');
-    const totalTimeEl = document.getElementById('totalTime');
     const loopOneBtn = document.getElementById('loopOneBtn');
     const loopAllBtn = document.getElementById('loopAllBtn');
     const shuffleBtn = document.getElementById('shuffleBtn');
     const theaterBtn = document.getElementById('theaterBtn');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
-    const playlistEl = document.getElementById('playlist');
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
+
+    // 音频控制按钮
+    const audioPlayBtn = document.getElementById('audioPlayBtn');
+    const audioPrevBtn = document.getElementById('audioPrevBtn');
+    const audioNextBtn = document.getElementById('audioNextBtn');
+    const audioStopBtn = document.getElementById('audioStopBtn');
+    const audioMuteBtn = document.getElementById('audioMuteBtn');
+    const audioVolumeSlider = document.getElementById('audioVolumeSlider');
+    const audioSpeedSelect = document.getElementById('audioSpeedSelect');
+    const audioLoopOneBtn = document.getElementById('audioLoopOneBtn');
+    const audioLoopAllBtn = document.getElementById('audioLoopAllBtn');
+    const audioShuffleBtn = document.getElementById('audioShuffleBtn');
+
     const addFilesBtn = document.getElementById('addFilesBtn');
     const clearPlaylistBtn = document.getElementById('clearPlaylistBtn');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const playlistCount = document.getElementById('playlistCount');
-    const toastEl = document.getElementById('toast');
-    const controlsBar = document.getElementById('controlsBar');
-    const featuredPlaylistEl = document.getElementById('featuredPlaylist');
-    const audioPlaceholder = document.getElementById('audioPlaceholder');
-    const nowPlayingName = document.getElementById('nowPlayingName');
 
     let playlist = [];
     let currentIndex = -1;
@@ -573,63 +592,91 @@
 
     function formatTime(s) {
         if (isNaN(s) || !isFinite(s)) return '0:00';
-        const m = Math.floor(s / 60);
-        const sec = Math.floor(s % 60);
-        return `${m}:${sec.toString().padStart(2, '0')}`;
-    }
-
-    function getFileIcon(item) {
-        return item.isAudio
-            ? '<i class="fa-solid fa-music"></i>'
-            : '<i class="fa-solid fa-film"></i>';
+        return Math.floor(s / 60) + ':' + Math.floor(s % 60).toString().padStart(2, '0');
     }
 
     function setIcon(el, iconClass) {
         el.innerHTML = `<i class="${iconClass}"></i>`;
     }
 
-    function renderPlaylist() {
-        playlistCount.textContent = playlist.length;
-        playlistEl.innerHTML = '';
-        featuredPlaylistEl.innerHTML = '';
+    function syncVolume() {
+        media.volume = volumeSlider.value;
+        audioVolumeSlider.value = volumeSlider.value;
+    }
 
-        if (window.oscarFeatured && window.oscarFeatured.length > 0) {
-            window.oscarFeatured.forEach((item, i) => {
-                const div = document.createElement('div');
-                div.className = 'playlist-item' + (currentListType === 'featured' && i === currentIndex ? ' active playing' : '');
-                div.innerHTML = `
-                    <span class="item-icon"><i class="fa-solid fa-music"></i></span>
-                    <div class="item-info">
-                        <div class="item-name" title="${item.name}">${item.name}</div>
-                        ${item.duration ? `<div class="item-duration">${formatTime(item.duration)}</div>` : ''}
-                    </div>
-                `;
-                div.addEventListener('click', () => playFeatured(i));
-                featuredPlaylistEl.appendChild(div);
-            });
+    function updatePlayState() {
+        if (media.paused) {
+            setIcon(playBtn, 'fa-play');
+            setIcon(audioPlayBtn, 'fa-play');
+        } else {
+            setIcon(playBtn, 'fa-pause');
+            setIcon(audioPlayBtn, 'fa-pause');
+        }
+    }
+
+    function updateMuteIcon() {
+        const vol = media.muted ? 0 : media.volume;
+        if (vol === 0) {
+            setIcon(muteBtn, 'fa-volume-xmark');
+            setIcon(audioMuteBtn, 'fa-volume-xmark');
+        } else if (vol < 0.5) {
+            setIcon(muteBtn, 'fa-volume-low');
+            setIcon(audioMuteBtn, 'fa-volume-low');
+        } else {
+            setIcon(muteBtn, 'fa-volume-high');
+            setIcon(audioMuteBtn, 'fa-volume-high');
+        }
+    }
+
+    function updateProgress() {
+        if (media.duration) {
+            const pct = (media.currentTime / media.duration) * 100;
+            progressFill.style.width = pct + '%';
+            audioProgressFill.style.width = pct + '%';
+            currentTimeEl.textContent = formatTime(media.currentTime);
+            audioCurrentTimeEl.textContent = formatTime(media.currentTime);
+        }
+    }
+
+    function updateTotalTime() {
+        totalTimeEl.textContent = formatTime(media.duration);
+        audioTotalTimeEl.textContent = formatTime(media.duration);
+    }
+
+    function playMedia() {
+        if (currentIndex === -1 && playlist.length > 0) {
+            playByIndex(0);
+            return;
+        }
+        if (media.paused) media.play().catch(() => {});
+        else media.pause();
+    }
+
+    function playByIndex(index) {
+        if (index < 0 || index >= playlist.length) return;
+        currentIndex = index;
+        const item = playlist[index];
+        isMediaAudio = item.isAudio;
+
+        if (isMediaAudio) {
+            videoWrapper.style.display = '';
+            videoControls.style.display = 'none';
+            audioControls.classList.add('show');
+            audioPlaceholder.style.display = 'block';
+            media.src = item.url;
+            audioPlayingName.textContent = item.name;
+        } else {
+            videoWrapper.style.display = '';
+            videoControls.style.display = '';
+            audioControls.classList.remove('show');
+            audioPlaceholder.style.display = 'none';
+            media.src = item.url;
         }
 
-        playlist.forEach((item, i) => {
-            const div = document.createElement('div');
-            div.className = 'playlist-item' + (currentListType === 'user' && i === currentIndex ? ' active playing' : '');
-            div.innerHTML = `
-                <span class="item-icon">${getFileIcon(item)}</span>
-                <div class="item-info">
-                    <div class="item-name" title="${item.name}">${item.name}</div>
-                    ${item.duration ? `<div class="item-duration">${formatTime(item.duration)}</div>` : ''}
-                </div>
-                <button class="btn btn-sm item-remove" data-index="${i}"><i class="fa-solid fa-times"></i></button>
-            `;
-            div.addEventListener('click', (e) => {
-                if (e.target.closest('.item-remove')) {
-                    e.stopPropagation();
-                    removeFromPlaylist(i);
-                } else {
-                    playByIndex(i);
-                }
-            });
-            playlistEl.appendChild(div);
-        });
+        media.load();
+        media.play().catch(() => {});
+        updatePlayState();
+        renderPlaylist();
     }
 
     function playFeatured(index) {
@@ -637,74 +684,26 @@
         const item = window.oscarFeatured[index];
         currentListType = 'featured';
         currentIndex = index;
-
-        videoWrapper.classList.toggle('audio-mode', item.isAudio);
-        nowPlayingName.textContent = item.name;
-        controlsBar.style.display = 'flex';
-
-        media.src = item.url;
-        media.load();
-        media.play().catch(() => {});
-        setIcon(playBtn, 'fa-pause');
-        renderPlaylist();
-    }
-
-    function addToPlaylist(files) {
-        Array.from(files).forEach(file => {
-            const isAudio = file.type.startsWith('audio');
-            const url = URL.createObjectURL(file);
-            const item = { file, url, name: file.name, type: file.type, duration: 0, isAudio };
-
-            if (isAudio) {
-                const audio = new Audio(url);
-                audio.addEventListener('loadedmetadata', () => {
-                    item.duration = audio.duration;
-                    renderPlaylist();
-                });
-            }
-
-            playlist.push(item);
-        });
-
-        if (currentIndex === -1 && playlist.length > 0) {
-            playByIndex(0);
-        }
-
-        renderPlaylist();
-        showToast(`已添加 ${files.length} 个文件`);
-    }
-
-    function removeFromPlaylist(index) {
-        if (index === currentIndex) {
-            media.src = '';
-            currentIndex = -1;
-        }
-        URL.revokeObjectURL(playlist[index].url);
-        playlist.splice(index, 1);
-        if (currentIndex > index) currentIndex--;
-        else if (currentIndex === index) currentIndex = -1;
-        renderPlaylist();
-    }
-
-    function playByIndex(index) {
-        if (index < 0 || index >= playlist.length) return;
-
-        currentIndex = index;
-        const item = playlist[index];
-
         isMediaAudio = item.isAudio;
 
-        videoWrapper.classList.toggle('audio-mode', isMediaAudio);
         if (isMediaAudio) {
-            nowPlayingName.textContent = item.name;
+            videoWrapper.style.display = '';
+            videoControls.style.display = 'none';
+            audioControls.classList.add('show');
+            audioPlaceholder.style.display = 'block';
+            media.src = item.url;
+            audioPlayingName.textContent = item.name;
+        } else {
+            videoWrapper.style.display = '';
+            videoControls.style.display = '';
+            audioControls.classList.remove('show');
+            audioPlaceholder.style.display = 'none';
+            media.src = item.url;
         }
-        controlsBar.style.display = 'flex';
 
-        media.src = item.url;
         media.load();
-
         media.play().catch(() => {});
-        setIcon(playBtn, 'fa-pause');
+        updatePlayState();
         renderPlaylist();
     }
 
@@ -731,7 +730,7 @@
     }
 
     function playNext() {
-        const idx = getNextIndex();
+        const idx = currentListType === 'featured' ? -1 : getNextIndex();
         if (idx !== -1) playByIndex(idx);
     }
 
@@ -740,21 +739,99 @@
             media.currentTime = 0;
             return;
         }
-        const idx = getPrevIndex();
+        const idx = currentListType === 'featured' ? -1 : getPrevIndex();
         if (idx !== -1) playByIndex(idx);
     }
 
-    playBtn.addEventListener('click', () => {
+    function addToPlaylist(files) {
+        Array.from(files).forEach(file => {
+            const isAudio = file.type.startsWith('audio');
+            const url = URL.createObjectURL(file);
+            const item = { file, url, name: file.name, type: file.type, duration: 0, isAudio };
+            if (isAudio) {
+                const audio = new Audio(url);
+                audio.addEventListener('loadedmetadata', () => {
+                    item.duration = audio.duration;
+                    renderPlaylist();
+                });
+            }
+            playlist.push(item);
+        });
         if (currentIndex === -1 && playlist.length > 0) {
             playByIndex(0);
-            return;
         }
-        if (media.paused) media.play().catch(() => {});
-        else media.pause();
-    });
+        renderPlaylist();
+        showToast(`已添加 ${files.length} 个文件`);
+    }
 
-    media.addEventListener('play', () => { setIcon(playBtn, 'fa-pause'); });
-    media.addEventListener('pause', () => { setIcon(playBtn, 'fa-play'); });
+    function removeFromPlaylist(index) {
+        if (index === currentIndex) {
+            media.src = '';
+            currentIndex = -1;
+        }
+        URL.revokeObjectURL(playlist[index].url);
+        playlist.splice(index, 1);
+        if (currentIndex > index) currentIndex--;
+        else if (currentIndex === index) currentIndex = -1;
+        renderPlaylist();
+    }
+
+    function renderPlaylist() {
+        playlistCount.textContent = playlist.length;
+        playlistEl.innerHTML = '';
+        featuredPlaylistEl.innerHTML = '';
+
+        if (window.oscarFeatured && window.oscarFeatured.length > 0) {
+            window.oscarFeatured.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.className = 'playlist-item' + (currentListType === 'featured' && i === currentIndex ? ' active playing' : '');
+                div.innerHTML = `<span class="item-icon"><i class="fa-solid fa-music"></i></span>
+                    <div class="item-info"><div class="item-name">${item.name}</div>${item.duration ? `<div class="item-duration">${formatTime(item.duration)}</div>` : ''}</div>`;
+                div.addEventListener('click', () => playFeatured(i));
+                featuredPlaylistEl.appendChild(div);
+            });
+        }
+
+        playlist.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'playlist-item' + (currentListType === 'user' && i === currentIndex ? ' active playing' : '');
+            div.innerHTML = `<span class="item-icon">${item.isAudio ? '<i class="fa-solid fa-music"></i>' : '<i class="fa-solid fa-film"></i>'}</span>
+                <div class="item-info"><div class="item-name">${item.name}</div>${item.duration ? `<div class="item-duration">${formatTime(item.duration)}</div>` : ''}</div>
+                <button class="btn btn-sm item-remove"><i class="fa-solid fa-times"></i></button>`;
+            div.addEventListener('click', (e) => {
+                if (e.target.closest('.item-remove')) {
+                    removeFromPlaylist(i);
+                } else {
+                    playByIndex(i);
+                }
+            });
+            playlistEl.appendChild(div);
+        });
+    }
+
+    // 事件绑定
+    playBtn.addEventListener('click', playMedia);
+    audioPlayBtn.addEventListener('click', playMedia);
+    prevBtn.addEventListener('click', playPrev);
+    audioPrevBtn.addEventListener('click', playPrev);
+    nextBtn.addEventListener('click', playNext);
+    audioNextBtn.addEventListener('click', playNext);
+    stopBtn.addEventListener('click', () => { media.pause(); media.currentTime = 0; updatePlayState(); });
+    audioStopBtn.addEventListener('click', () => { media.pause(); media.currentTime = 0; updatePlayState(); });
+
+    media.addEventListener('play', updatePlayState);
+    media.addEventListener('pause', updatePlayState);
+    media.addEventListener('timeupdate', updateProgress);
+    media.addEventListener('loadedmetadata', updateTotalTime);
+    media.addEventListener('waiting', () => loadingOverlay.classList.add('show'));
+    media.addEventListener('canplay', () => loadingOverlay.classList.remove('show'));
+    media.addEventListener('progress', () => {
+        if (media.buffered.length > 0) {
+            const pct = (media.buffered.end(media.buffered.length - 1) / media.duration) * 100;
+            bufferedBar.style.width = pct + '%';
+            audioBufferedBar.style.width = pct + '%';
+        }
+    });
     media.addEventListener('ended', () => {
         if (isLoopingOne) {
             media.currentTime = 0;
@@ -764,85 +841,39 @@
         } else {
             const next = getNextIndex();
             if (next !== -1) playByIndex(next);
-            else {
-                setIcon(playBtn, 'fa-play');
-                currentIndex = -1;
-                renderPlaylist();
-            }
+            else { updatePlayState(); currentIndex = -1; renderPlaylist(); }
         }
     });
 
-    prevBtn.addEventListener('click', playPrev);
-    nextBtn.addEventListener('click', playNext);
-    stopBtn.addEventListener('click', () => {
-        media.pause();
-        media.currentTime = 0;
-        setIcon(playBtn, 'fa-play');
+    [progressContainer, audioProgressContainer].forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (!media.duration) return;
+            const rect = e.currentTarget.querySelector('.progress-bar').getBoundingClientRect();
+            const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            media.currentTime = pct * media.duration;
+        });
     });
 
-    media.addEventListener('timeupdate', () => {
-        if (media.duration) {
-            const pct = (media.currentTime / media.duration) * 100;
-            progressFill.style.width = pct + '%';
-            currentTimeEl.textContent = formatTime(media.currentTime);
-        }
-    });
+    volumeSlider.addEventListener('input', syncVolume);
+    audioVolumeSlider.addEventListener('input', syncVolume);
+    media.addEventListener('volumechange', updateMuteIcon);
+    muteBtn.addEventListener('click', () => { media.muted = !media.muted; syncVolume(); });
+    audioMuteBtn.addEventListener('click', () => { media.muted = !media.muted; syncVolume(); });
 
-    media.addEventListener('loadedmetadata', () => {
-        totalTimeEl.textContent = formatTime(media.duration);
-        loadingOverlay.classList.remove('show');
-    });
-
-    media.addEventListener('waiting', () => loadingOverlay.classList.add('show'));
-    media.addEventListener('canplay', () => loadingOverlay.classList.remove('show'));
-
-    media.addEventListener('progress', () => {
-        if (media.buffered.length > 0) {
-            const bufferedEnd = media.buffered.end(media.buffered.length - 1);
-            const pct = (bufferedEnd / media.duration) * 100;
-            bufferedBar.style.width = pct + '%';
-        }
-    });
-
-    progressContainer.addEventListener('click', (e) => {
-        if (!media.duration) return;
-        const rect = progressBar.getBoundingClientRect();
-        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        media.currentTime = pct * media.duration;
-    });
-
-    volumeSlider.addEventListener('input', () => {
-        media.volume = volumeSlider.value;
-        updateMuteIcon();
-    });
-
-    media.addEventListener('volumechange', () => {
-        volumeSlider.value = media.muted ? 0 : media.volume;
-        updateMuteIcon();
-    });
-
-    muteBtn.addEventListener('click', () => {
-        media.muted = !media.muted;
-        updateMuteIcon();
-    });
-
-    function updateMuteIcon() {
-        const vol = media.muted ? 0 : media.volume;
-        if (vol === 0) setIcon(muteBtn, 'fa-volume-xmark');
-        else if (vol < 0.5) setIcon(muteBtn, 'fa-volume-low');
-        else setIcon(muteBtn, 'fa-volume-high');
-    }
-
-    speedSelect.addEventListener('change', () => {
+    function syncSpeed() {
         media.playbackRate = parseFloat(speedSelect.value);
-        showToast(`播放速度: ${speedSelect.value}x`);
-    });
+        audioSpeedSelect.value = speedSelect.value;
+    }
+    speedSelect.addEventListener('change', syncSpeed);
+    audioSpeedSelect.addEventListener('change', syncSpeed);
 
     loopOneBtn.addEventListener('click', () => {
         isLoopingOne = !isLoopingOne;
         isLoopingAll = false;
         loopOneBtn.classList.toggle('active', isLoopingOne);
         loopAllBtn.classList.remove('active');
+        audioLoopOneBtn.classList.toggle('active', isLoopingOne);
+        audioLoopAllBtn.classList.remove('active');
         showToast(isLoopingOne ? '单曲循环' : '关闭循环');
     });
 
@@ -851,12 +882,15 @@
         isLoopingOne = false;
         loopAllBtn.classList.toggle('active', isLoopingAll);
         loopOneBtn.classList.remove('active');
+        audioLoopAllBtn.classList.toggle('active', isLoopingAll);
+        audioLoopOneBtn.classList.remove('active');
         showToast(isLoopingAll ? '列表循环' : '关闭循环');
     });
 
     shuffleBtn.addEventListener('click', () => {
         isShuffle = !isShuffle;
         shuffleBtn.classList.toggle('active', isShuffle);
+        audioShuffleBtn.classList.toggle('active', isShuffle);
         showToast(isShuffle ? '随机播放' : '顺序播放');
     });
 
@@ -867,8 +901,8 @@
             document.exitFullscreen();
         }
     }
-
     fullscreenBtn.addEventListener('click', toggleFullscreen);
+    videoWrapper.addEventListener('dblclick', toggleFullscreen);
 
     theaterBtn.addEventListener('click', () => {
         isTheaterMode = !isTheaterMode;
@@ -877,15 +911,12 @@
         showToast(isTheaterMode ? '网页全屏模式' : '退出网页全屏');
     });
 
-    // 全屏时鼠标移动显示/隐藏控制栏
     videoWrapper.addEventListener('mousemove', () => {
         if (document.fullscreenElement) {
-            controlsBar.classList.remove('hidden');
+            videoControls.classList.remove('hidden');
             clearTimeout(controlsTimeout);
             controlsTimeout = setTimeout(() => {
-                if (document.fullscreenElement) {
-                    controlsBar.classList.add('hidden');
-                }
+                if (document.fullscreenElement) videoControls.classList.add('hidden');
             }, 3000);
         }
     });
@@ -901,107 +932,42 @@
         playlist.forEach(item => URL.revokeObjectURL(item.url));
         playlist = [];
         currentIndex = -1;
+        audioControls.classList.remove('show');
         renderPlaylist();
         showToast('播放列表已清空');
     });
 
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('dragover');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        if (e.dataTransfer.files.length) addToPlaylist(e.dataTransfer.files);
-    });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) addToPlaylist(e.dataTransfer.files); });
 
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT') return;
-
         switch (e.key) {
-            case ' ':
-                e.preventDefault();
-                playBtn.click();
-                break;
-            case 'ArrowLeft':
-                e.preventDefault();
-                media.currentTime = Math.max(0, media.currentTime - 10);
-                break;
-            case 'ArrowRight':
-                e.preventDefault();
-                media.currentTime = Math.min(media.duration || 0, media.currentTime + 10);
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                media.volume = Math.min(1, media.volume + 0.1);
-                break;
-            case 'ArrowDown':
-                e.preventDefault();
-                media.volume = Math.max(0, media.volume - 0.1);
-                break;
-            case 'm':
-            case 'M':
-                muteBtn.click();
-                break;
-            case 'f':
-            case 'F':
-                if (!isTheaterMode) toggleFullscreen();
-                break;
-            case 't':
-            case 'T':
-                theaterBtn.click();
-                break;
-            case 'l':
-            case 'L':
-                loopOneBtn.click();
-                break;
-            case 'r':
-            case 'R':
-                loopAllBtn.click();
-                break;
-            case 's':
-            case 'S':
-                shuffleBtn.click();
-                break;
-            case 'p':
-            case 'P':
-                playPrev();
-                break;
-            case 'n':
-            case 'N':
-                playNext();
-                break;
-            case 'x':
-            case 'X':
-                stopBtn.click();
-                break;
+            case ' ': e.preventDefault(); playMedia(); break;
+            case 'ArrowLeft': e.preventDefault(); media.currentTime = Math.max(0, media.currentTime - 10); break;
+            case 'ArrowRight': e.preventDefault(); media.currentTime = Math.min(media.duration || 0, media.currentTime + 10); break;
+            case 'ArrowUp': e.preventDefault(); media.volume = Math.min(1, media.volume + 0.1); volumeSlider.value = media.volume; break;
+            case 'ArrowDown': e.preventDefault(); media.volume = Math.max(0, media.volume - 0.1); volumeSlider.value = media.volume; break;
+            case 'm': case 'M': media.muted = !media.muted; break;
+            case 'f': case 'F': if (!isTheaterMode) toggleFullscreen(); break;
+            case 'l': case 'L': loopOneBtn.click(); break;
+            case 'r': case 'R': loopAllBtn.click(); break;
+            case 's': case 'S': shuffleBtn.click(); break;
         }
     });
 
-    videoWrapper.addEventListener('dblclick', toggleFullscreen);
-
     window.oscarFeatured = [];
     function loadFeatured() {
-        const cafeUrl = '午夜咖啡馆.mp3';
         const xhr = new XMLHttpRequest();
-        xhr.open('GET', cafeUrl, true);
+        xhr.open('GET', '午夜咖啡馆.mp3', true);
         xhr.responseType = 'blob';
         xhr.onload = function() {
             if (xhr.status === 200) {
-                const blob = xhr.response;
-                const url = URL.createObjectURL(blob);
+                const url = URL.createObjectURL(xhr.response);
                 const audio = new Audio(url);
                 audio.addEventListener('loadedmetadata', () => {
-                    window.oscarFeatured = [{
-                        name: '午夜咖啡馆',
-                        url: url,
-                        duration: audio.duration
-                    }];
+                    window.oscarFeatured = [{ name: '午夜咖啡馆', url: url, duration: audio.duration, isAudio: true }];
                     renderPlaylist();
                 });
             }
