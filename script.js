@@ -115,6 +115,11 @@
 
         function selectCard(cardElement, tool) {
             if (morphCard || isClosing) return;
+            // Also check if morphCard is still in the DOM
+            if (morphCard && !morphCard.isConnected) {
+                morphCard = null;
+            }
+            if (morphCard || isClosing) return;
             selectedTool = tool;
             selectedCard = cardElement;
             const isLowQuality = document.body.classList.contains('low-quality');
@@ -211,7 +216,8 @@
         }
 
         function closeMorphCard() {
-            if (!morphCard || !selectedCard || isClosing) return;
+            // Check if morphCard exists and is still in DOM
+            if (!morphCard || !morphCard.isConnected || !selectedCard || isClosing) return;
             isClosing = true;
             const isLowQuality = document.body.classList.contains('low-quality');
 
@@ -257,7 +263,9 @@
             // Use transitionend event to know exactly when shrink animation completes
             const onShrinkEnd = () => {
                 morphCard.removeEventListener('transitionend', onShrinkEnd);
-                morphCard.remove();
+                if (morphCard.isConnected) {
+                    morphCard.remove();
+                }
                 morphCard = null;
                 backdrop.classList.remove('active');
                 backdrop.style.opacity = '';
