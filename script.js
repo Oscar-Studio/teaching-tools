@@ -187,7 +187,14 @@
                 morphCard.style.minHeight = targetHeight + 'px';
             }
 
-            // Other cards hide
+            // Other cards hide - first clean up any stale classes from previous sessions
+            cardContainer.querySelectorAll('.card.hiding, .card.returning').forEach(card => {
+                card.classList.remove('hiding', 'returning');
+                card.style.animationDelay = '';
+                card.style.transform = '';
+                card.style.opacity = '';
+            });
+
             const allCards = Array.from(cardContainer.querySelectorAll('.card'));
             allCards.forEach(card => {
                 if (card === cardElement) return;
