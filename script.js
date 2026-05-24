@@ -114,10 +114,11 @@
         }
 
         function selectCard(cardElement, tool) {
-            if (morphCard || isClosing) return;
-            // Also check if morphCard is still in the DOM
-            if (morphCard && !morphCard.isConnected) {
-                morphCard = null;
+            // Force clean state before opening new card
+            if (morphCard) {
+                if (!morphCard.isConnected) {
+                    morphCard = null;
+                }
             }
             if (morphCard || isClosing) return;
             selectedTool = tool;
@@ -125,6 +126,14 @@
             const isLowQuality = document.body.classList.contains('low-quality');
 
             const rect = cardElement.getBoundingClientRect();
+
+            // Clean up ALL card states before opening
+            cardContainer.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('hiding', 'returning');
+                card.style.animationDelay = '';
+                card.style.transform = '';
+                card.style.opacity = '';
+            });
 
             // Create morph card at card's position
             morphCard = document.createElement('div');
@@ -187,12 +196,13 @@
                 morphCard.style.minHeight = targetHeight + 'px';
             }
 
-            // Other cards hide - first clean up any stale classes from previous sessions
-            cardContainer.querySelectorAll('.card.hiding, .card.returning').forEach(card => {
+            // Other cards hide - clean up ALL card states before adding hiding class
+            cardContainer.querySelectorAll('.card').forEach(card => {
                 card.classList.remove('hiding', 'returning');
                 card.style.animationDelay = '';
                 card.style.transform = '';
                 card.style.opacity = '';
+                card.style.display = '';
             });
 
             const allCards = Array.from(cardContainer.querySelectorAll('.card'));
