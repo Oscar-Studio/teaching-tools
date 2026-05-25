@@ -20,6 +20,10 @@
             --success-color: #28a745;
             --warning-color: #f59e0b;
             --danger-color: #e74c3c;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
         }
 
         * {
@@ -32,75 +36,141 @@
         body {
             background-color: var(--light-color);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
             color: var(--dark-color);
         }
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-            background-color: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            border: var(--card-border);
-            box-shadow: var(--card-shadow);
-        }
-
-        h1 {
-            color: var(--secondary-color);
-            text-align: center;
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            color: var(--text-secondary);
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .mode-tabs {
+        /* Top Bar */
+        .top-bar {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--card-bg);
+            border-bottom: var(--card-border);
+            gap: 15px;
         }
 
-        .mode-tab {
-            flex: 1;
-            min-width: 80px;
-            padding: 10px 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            color: var(--text-secondary);
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--dark-color);
+            font-size: 1.2rem;
             cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .page-title {
+            flex: 1;
+            font-size: 1.1rem;
+            color: var(--dark-color);
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--dark-color);
+        }
+
+        /* Main Menu */
+        .main-menu {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .mode-card {
+            aspect-ratio: 1;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.15;
+        }
+
+        .mode-card .icon {
+            font-size: 3rem;
+            z-index: 1;
+        }
+
+        .mode-card .name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        .mode-card .desc {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            z-index: 1;
             text-align: center;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
+            padding: 0 15px;
         }
 
-        .mode-tab:hover {
-            border-color: var(--secondary-color);
-        }
+        .card-input { background: var(--gradient-1); color: white; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3); }
+        .card-input::before { background: var(--gradient-1); }
+        .card-view { background: var(--gradient-2); color: white; box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3); }
+        .card-view::before { background: var(--gradient-2); }
+        .card-recite { background: var(--gradient-3); color: white; box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3); }
+        .card-recite::before { background: var(--gradient-3); }
+        .card-review { background: var(--gradient-4); color: white; box-shadow: 0 8px 25px rgba(67, 233, 123, 0.3); }
+        .card-review::before { background: var(--gradient-4); }
 
-        .mode-tab.active {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-        }
-
+        /* Mode Panel */
         .mode-panel {
             display: none;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .mode-panel.active {
             display: block;
         }
 
-        /* Input Mode */
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            border: var(--card-border);
+            box-shadow: var(--card-shadow);
+        }
+
+        /* Input Panel */
         .input-group {
             margin-bottom: 15px;
         }
@@ -112,10 +182,10 @@
             font-size: 0.9rem;
         }
 
-        .input-group input, .input-group textarea {
+        .input-group input {
             width: 100%;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 14px;
+            border-radius: 12px;
             border: 2px solid var(--card-border);
             background: var(--light-color);
             color: var(--dark-color);
@@ -123,33 +193,30 @@
             transition: border-color 0.3s;
         }
 
-        .input-group input:focus, .input-group textarea:focus {
+        .input-group input:focus {
             outline: none;
             border-color: var(--secondary-color);
         }
 
-        .input-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
         .btn {
-            padding: 12px 25px;
+            padding: 14px 25px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-weight: 500;
         }
 
         .btn-add {
             width: 100%;
-            background-color: var(--success-color);
+            background: var(--gradient-1);
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .btn-add:hover {
-            background-color: #2ea043;
+            transform: translateY(-2px);
         }
 
         .word-list {
@@ -162,38 +229,51 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
+            padding: 15px;
             background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            margin-bottom: 8px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        .word-item:hover {
+            background: rgba(0, 0, 0, 0.4);
         }
 
         .word-item .word {
             font-size: 1.1rem;
+            font-weight: 500;
         }
 
         .word-item .translation {
             color: var(--text-secondary);
             font-size: 0.9rem;
+            margin-top: 4px;
         }
 
         .word-item .delete-btn {
             background: var(--danger-color);
             color: white;
             border: none;
-            border-radius: 6px;
-            padding: 5px 10px;
+            border-radius: 8px;
+            padding: 8px 14px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+        }
+
+        .word-item .delete-btn:hover {
+            opacity: 0.8;
         }
 
         .empty-state {
             text-align: center;
             color: var(--text-secondary);
             padding: 40px 20px;
+            font-size: 0.95rem;
         }
 
-        /* View Mode */
+        /* View Panel */
         .filter-bar {
             display: flex;
             gap: 10px;
@@ -204,8 +284,8 @@
         .filter-bar select {
             flex: 1;
             min-width: 100px;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
             border: 2px solid var(--card-border);
             background: var(--light-color);
             color: var(--dark-color);
@@ -223,8 +303,8 @@
             align-items: center;
             padding: 15px;
             background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            margin-bottom: 8px;
+            border-radius: 12px;
+            margin-bottom: 10px;
         }
 
         .view-item .word-info {
@@ -233,6 +313,7 @@
 
         .view-item .word {
             font-size: 1.1rem;
+            font-weight: 500;
             margin-bottom: 4px;
         }
 
@@ -248,9 +329,10 @@
         }
 
         .view-item .status {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
         }
 
         .status.new {
@@ -268,10 +350,10 @@
             color: white;
         }
 
-        /* Recite Mode */
+        /* Recite/Review Panel */
         .recite-card {
             background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 30px;
             text-align: center;
             margin-bottom: 20px;
@@ -284,15 +366,16 @@
         }
 
         .recite-chinese {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: var(--secondary-color);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            font-weight: 500;
         }
 
         .recite-input {
             width: 100%;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 16px;
+            border-radius: 12px;
             border: 2px solid var(--card-border);
             background: var(--light-color);
             color: var(--dark-color);
@@ -303,20 +386,23 @@
 
         .recite-input:focus {
             outline: none;
-            border-color: var(--success-color);
+            border-color: var(--secondary-color);
         }
 
         .recite-input.correct {
             border-color: var(--success-color);
+            background: rgba(40, 167, 69, 0.1);
         }
 
         .recite-input.incorrect {
             border-color: var(--danger-color);
+            background: rgba(231, 76, 60, 0.1);
         }
 
         .recite-result {
             margin-top: 15px;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-weight: 500;
         }
 
         .recite-result.correct {
@@ -330,7 +416,7 @@
         .recite-answer {
             margin-top: 10px;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
 
         .recite-progress {
@@ -338,13 +424,14 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding: 10px;
+            padding: 12px 15px;
             background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
+            border-radius: 12px;
         }
 
         .recite-progress .count {
             color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         .recite-progress .progress-bar {
@@ -358,18 +445,19 @@
 
         .recite-progress .progress-fill {
             height: 100%;
-            background: var(--success-color);
+            background: var(--gradient-3);
+            border-radius: 4px;
             transition: width 0.3s;
         }
 
-        /* Review Mode */
+        /* Review Info */
         .review-info {
             display: flex;
             justify-content: space-around;
             margin-bottom: 20px;
             padding: 15px;
             background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
+            border-radius: 12px;
         }
 
         .review-info .stat {
@@ -377,13 +465,17 @@
         }
 
         .review-info .stat-value {
-            font-size: 1.5rem;
-            color: var(--secondary-color);
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: var(--gradient-4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .review-info .stat-label {
             font-size: 0.8rem;
             color: var(--text-secondary);
+            margin-top: 4px;
         }
 
         /* Settings Modal */
@@ -393,7 +485,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -407,50 +499,55 @@
 
         .settings-content {
             background: var(--card-bg);
-            border-radius: 12px;
+            border-radius: 20px;
             padding: 30px;
-            max-width: 400px;
+            max-width: 350px;
             width: 90%;
             border: var(--card-border);
         }
 
         .settings-content h3 {
             color: var(--secondary-color);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 1.2rem;
         }
 
         .setting-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 15px 0;
+            margin: 20px 0;
         }
 
         .setting-row label {
             color: var(--text-secondary);
+            font-size: 0.95rem;
         }
 
         .setting-row input {
             width: 80px;
-            padding: 8px;
-            border-radius: 6px;
+            padding: 10px;
+            border-radius: 8px;
             border: 2px solid var(--card-border);
             background: var(--light-color);
             color: var(--dark-color);
             text-align: center;
+            font-size: 1rem;
         }
 
-        .settings-close {
-            margin-top: 20px;
+        .btn-save {
             width: 100%;
-            background: var(--primary-color);
+            background: var(--gradient-3);
             color: white;
+            margin-top: 10px;
         }
 
         footer {
-            margin-top: 20px;
+            text-align: center;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            padding: 20px;
         }
     </style>
 <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
@@ -458,19 +555,40 @@
 </head>
 
 <body>
-    <div class="container">
-        <h1>📒 摘词本</h1>
-        <p class="subtitle">英语单词背诵与复习工具</p>
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <button class="back-btn" id="backBtn" style="display:none">← 返回</button>
+        <div class="page-title" id="pageTitle">摘词本</div>
+        <button class="settings-btn" id="settingsBtn" onclick="openSettings()">⚙</button>
+    </header>
 
-        <div class="mode-tabs">
-            <div class="mode-tab active" data-mode="input">录入</div>
-            <div class="mode-tab" data-mode="view">查看</div>
-            <div class="mode-tab" data-mode="recite">背诵</div>
-            <div class="mode-tab" data-mode="review">复习</div>
-        </div>
+    <!-- Main Menu -->
+    <div class="main-menu" id="mainMenu">
+        <button class="mode-card card-input" onclick="switchMode('input')">
+            <span class="icon">✏️</span>
+            <span class="name">录入</span>
+            <span class="desc">添加新单词</span>
+        </button>
+        <button class="mode-card card-view" onclick="switchMode('view')">
+            <span class="icon">📖</span>
+            <span class="name">总览</span>
+            <span class="desc">查看所有单词</span>
+        </button>
+        <button class="mode-card card-recite" onclick="switchMode('recite')">
+            <span class="icon">🎯</span>
+            <span class="name">背诵</span>
+            <span class="desc">每日定量背诵</span>
+        </button>
+        <button class="mode-card card-review" onclick="switchMode('review')">
+            <span class="icon">🧠</span>
+            <span class="name">复习</span>
+            <span class="desc">艾宾浩斯复习</span>
+        </button>
+    </div>
 
-        <!-- Input Mode -->
-        <div class="mode-panel active" id="inputPanel">
+    <!-- Input Panel -->
+    <div class="mode-panel" id="inputPanel">
+        <div class="container">
             <div class="input-group">
                 <label>单词 (English)</label>
                 <input type="text" id="wordInput" placeholder="输入英语单词">
@@ -480,12 +598,13 @@
                 <input type="text" id="transInput" placeholder="输入中文释义">
             </div>
             <button class="btn btn-add" onclick="addWord()">添加生词</button>
-
             <div class="word-list" id="wordList"></div>
         </div>
+    </div>
 
-        <!-- View Mode -->
-        <div class="mode-panel" id="viewPanel">
+    <!-- View Panel -->
+    <div class="mode-panel" id="viewPanel">
+        <div class="container">
             <div class="filter-bar">
                 <select id="filterStatus">
                     <option value="all">全部状态</option>
@@ -501,9 +620,11 @@
             </div>
             <div class="view-list" id="viewList"></div>
         </div>
+    </div>
 
-        <!-- Recite Mode -->
-        <div class="mode-panel" id="recitePanel">
+    <!-- Recite Panel -->
+    <div class="mode-panel" id="recitePanel">
+        <div class="container">
             <div class="recite-progress">
                 <span class="count" id="reciteCount">0/0</span>
                 <div class="progress-bar">
@@ -518,11 +639,13 @@
                 <div class="recite-result" id="reciteResult"></div>
                 <div class="recite-answer" id="reciteAnswer"></div>
             </div>
-            <button class="btn btn-add" id="reciteNextBtn" onclick="nextRecite()" style="display:none">下一个</button>
+            <button class="btn btn-add" id="reciteNextBtn" onclick="nextRecite()" style="display:none">下一个 →</button>
         </div>
+    </div>
 
-        <!-- Review Mode -->
-        <div class="mode-panel" id="reviewPanel">
+    <!-- Review Panel -->
+    <div class="mode-panel" id="reviewPanel">
+        <div class="container">
             <div class="review-info">
                 <div class="stat">
                     <div class="stat-value" id="reviewDue">0</div>
@@ -547,7 +670,7 @@
                 <div class="recite-result" id="reviewResult"></div>
                 <div class="recite-answer" id="reviewAnswer"></div>
             </div>
-            <button class="btn btn-add" id="reviewNextBtn" onclick="nextReview()" style="display:none">下一个</button>
+            <button class="btn btn-add" id="reviewNextBtn" onclick="nextReview()" style="display:none">下一个 →</button>
         </div>
     </div>
 
@@ -559,7 +682,7 @@
                 <label>每日背诵数量:</label>
                 <input type="number" id="dailyCount" value="10" min="1" max="50">
             </div>
-            <button class="btn settings-close" onclick="closeSettings()">确定</button>
+            <button class="btn btn-save" onclick="closeSettings()">确定</button>
         </div>
     </div>
 
@@ -568,77 +691,69 @@
     </footer>
 
     <script>
-        // Data storage
         let words = JSON.parse(localStorage.getItem('wordbook') || '[]');
         let settings = JSON.parse(localStorage.getItem('wordbook_settings') || '{"dailyCount":10}');
         const STORAGE_KEY = 'wordbook';
         const SETTINGS_KEY = 'wordbook_settings';
 
-        // Ebbinghaus intervals (in milliseconds)
         const REVIEW_INTERVALS = {
-            1: 1 * 60 * 60 * 1000,      // 1 hour
-            2: 12 * 60 * 60 * 1000,     // 12 hours
-            3: 1 * 24 * 60 * 60 * 1000, // 1 day
-            4: 2 * 24 * 60 * 60 * 1000, // 2 days
-            5: 4 * 24 * 60 * 60 * 1000, // 4 days
-            6: 7 * 24 * 60 * 60 * 1000, // 7 days
-            7: 15 * 24 * 60 * 60 * 1000 // 15 days
+            1: 1 * 60 * 60 * 1000,
+            2: 12 * 60 * 60 * 1000,
+            3: 1 * 24 * 60 * 60 * 1000,
+            4: 2 * 24 * 60 * 60 * 1000,
+            5: 4 * 24 * 60 * 60 * 1000,
+            6: 7 * 24 * 60 * 60 * 1000,
+            7: 15 * 24 * 60 * 60 * 1000
         };
 
-        let currentMode = 'input';
+        let currentMode = 'menu';
         let reciteQueue = [];
         let reciteIndex = 0;
         let reviewQueue = [];
         let reviewIndex = 0;
 
-        // Init
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('dailyCount').value = settings.dailyCount;
-            setupModeTabs();
-            setupInputListeners();
-            renderWordList();
-            openSettings = function() {
-                document.getElementById('settingsModal').classList.add('open');
-            };
-        });
+        const backBtn = document.getElementById('backBtn');
+        const pageTitle = document.getElementById('pageTitle');
+        const mainMenu = document.getElementById('mainMenu');
+        const settingsBtn = document.getElementById('settingsBtn');
 
-        function setupModeTabs() {
-            document.querySelectorAll('.mode-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const mode = tab.dataset.mode;
-                    switchMode(mode);
-                });
-            });
-        }
+        document.getElementById('dailyCount').value = settings.dailyCount;
 
-        function switchMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
-            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
-            document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(`${mode}Panel`).classList.add('active');
+        backBtn.addEventListener('click', () => switchMode('menu'));
 
-            if (mode === 'view') renderViewList();
-            if (mode === 'recite') initRecite();
-            if (mode === 'review') initReview();
-        }
-
-        function setupInputListeners() {
-            // Global settings button
-            window.openSettings = function() {
-                document.getElementById('settingsModal').classList.add('open');
-            };
-
-            document.getElementById('dailyCount').addEventListener('change', (e) => {
-                settings.dailyCount = parseInt(e.target.value) || 10;
-                localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-            });
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('open');
         }
 
         function closeSettings() {
             settings.dailyCount = parseInt(document.getElementById('dailyCount').value) || 10;
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
             document.getElementById('settingsModal').classList.remove('open');
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+
+            // Reset panels
+            document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+            mainMenu.style.display = 'none';
+
+            if (mode === 'menu') {
+                mainMenu.style.display = 'grid';
+                backBtn.style.display = 'none';
+                pageTitle.textContent = '摘词本';
+                settingsBtn.style.display = 'block';
+            } else {
+                backBtn.style.display = 'block';
+                settingsBtn.style.display = 'none';
+                const titles = { input: '录入', view: '总览', recite: '背诵', review: '复习' };
+                pageTitle.textContent = titles[mode];
+                document.getElementById(`${mode}Panel`).classList.add('active');
+
+                if (mode === 'view') renderViewList();
+                if (mode === 'recite') initRecite();
+                if (mode === 'review') initReview();
+            }
         }
 
         function addWord() {
@@ -652,7 +767,6 @@
                 return;
             }
 
-            // Check if word already exists
             if (words.some(w => w.word.toLowerCase() === word.toLowerCase())) {
                 alert('该单词已存在');
                 return;
@@ -680,7 +794,6 @@
             words = words.filter(w => w.id !== id);
             saveWords();
             renderWordList();
-            renderViewList();
         }
 
         function saveWords() {
@@ -690,11 +803,11 @@
         function renderWordList() {
             const list = document.getElementById('wordList');
             if (words.length === 0) {
-                list.innerHTML = '<div class="empty-state">暂无生词，添加一个吧</div>';
+                list.innerHTML = '<div class="empty-state">暂无生词，添加一个吧 ✨</div>';
                 return;
             }
 
-            list.innerHTML = words.map(w => `
+            list.innerHTML = words.slice().reverse().map(w => `
                 <div class="word-item">
                     <div>
                         <div class="word">${escapeHtml(w.word)}</div>
@@ -702,7 +815,7 @@
                     </div>
                     <button class="delete-btn" onclick="deleteWord(${w.id})">删除</button>
                 </div>
-            `).reverse().join('');
+            `).join('');
         }
 
         function renderViewList() {
@@ -750,14 +863,13 @@
 
         // Recite Mode
         function initRecite() {
-            // Get words that haven't been mastered (status !== mastered)
             const notMastered = words.filter(w => w.status !== 'mastered');
             reciteQueue = notMastered.slice(0, settings.dailyCount);
             reciteIndex = 0;
             updateReciteProgress();
 
             if (reciteQueue.length === 0) {
-                document.getElementById('reciteChinese').textContent = '恭喜！所有单词已背完';
+                document.getElementById('reciteChinese').textContent = '🎉 恭喜！所有单词已背完';
                 document.getElementById('reciteInput').style.display = 'none';
                 document.getElementById('reciteNextBtn').style.display = 'none';
                 return;
@@ -768,7 +880,7 @@
 
         function showReciteWord() {
             if (reciteIndex >= reciteQueue.length) {
-                document.getElementById('reciteChinese').textContent = '今日任务完成！';
+                document.getElementById('reciteChinese').textContent = '🎉 今日任务完成！';
                 document.getElementById('reciteInput').style.display = 'none';
                 document.getElementById('reciteResult').textContent = '';
                 document.getElementById('reciteAnswer').textContent = '';
@@ -795,26 +907,21 @@
             const input = document.getElementById('reciteInput');
             const word = reciteQueue[reciteIndex];
             const userAnswer = input.value.trim();
-
             if (!userAnswer) return;
 
             const isCorrect = userAnswer.toLowerCase() === word.word.toLowerCase();
-
-            input.classList.remove('correct', 'incorrect');
             input.classList.add(isCorrect ? 'correct' : 'incorrect');
 
             const result = document.getElementById('reciteResult');
             result.textContent = isCorrect ? '✓ 正确！' : '✗ 错误';
             result.className = 'recite-result ' + (isCorrect ? 'correct' : 'incorrect');
-
             document.getElementById('reciteAnswer').textContent = word.word;
 
-            // Update word status
             if (isCorrect) {
                 word.status = 'learning';
                 word.reviewCount++;
                 word.lastReview = new Date().toISOString();
-                word.nextReview = new Date(Date.now() + REVIEW_INTERVALS[word.reviewCount] || REVIEW_INTERVALS[7]).toISOString();
+                word.nextReview = new Date(Date.now() + (REVIEW_INTERVALS[word.reviewCount] || REVIEW_INTERVALS[7])).toISOString();
                 if (word.reviewCount >= 4) word.status = 'mastered';
             }
 
@@ -832,14 +939,12 @@
         function updateReciteProgress() {
             const total = reciteQueue.length;
             const current = reciteIndex;
-            const remaining = Math.max(0, total - current);
-
             document.getElementById('reciteCount').textContent = `${current}/${total}`;
-            document.getElementById('reciteRemaining').textContent = `剩余: ${remaining}`;
+            document.getElementById('reciteRemaining').textContent = `剩余: ${Math.max(0, total - current)}`;
             document.getElementById('reciteProgress').style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
         }
 
-        // Review Mode (Ebbinghaus)
+        // Review Mode
         function initReview() {
             const now = new Date().getTime();
             const dueWords = words.filter(w => {
@@ -854,11 +959,10 @@
             const totalCount = words.filter(w => w.status !== 'new').length;
             document.getElementById('reviewDue').textContent = dueWords.length;
             document.getElementById('reviewTotal').textContent = totalCount;
-
             updateReviewProgress();
 
             if (reviewQueue.length === 0) {
-                document.getElementById('reviewChinese').textContent = '暂无需要复习的单词';
+                document.getElementById('reviewChinese').textContent = '✨ 暂无需要复习的单词';
                 document.getElementById('reviewInput').style.display = 'none';
                 document.getElementById('reviewNextBtn').style.display = 'none';
                 return;
@@ -869,7 +973,7 @@
 
         function showReviewWord() {
             if (reviewIndex >= reviewQueue.length) {
-                document.getElementById('reviewChinese').textContent = '复习完成！';
+                document.getElementById('reviewChinese').textContent = '🎉 复习完成！';
                 document.getElementById('reviewInput').style.display = 'none';
                 document.getElementById('reviewResult').textContent = '';
                 document.getElementById('reviewAnswer').textContent = '';
@@ -896,28 +1000,22 @@
             const input = document.getElementById('reviewInput');
             const word = reviewQueue[reviewIndex];
             const userAnswer = input.value.trim();
-
             if (!userAnswer) return;
 
             const isCorrect = userAnswer.toLowerCase() === word.word.toLowerCase();
-
-            input.classList.remove('correct', 'incorrect');
             input.classList.add(isCorrect ? 'correct' : 'incorrect');
 
             const result = document.getElementById('reviewResult');
             result.textContent = isCorrect ? '✓ 正确！' : '✗ 错误';
             result.className = 'recite-result ' + (isCorrect ? 'correct' : 'incorrect');
-
             document.getElementById('reviewAnswer').textContent = word.word;
 
-            // Update word - even if wrong, continue with review schedule
             word.lastReview = new Date().toISOString();
             if (isCorrect) {
                 word.reviewCount++;
                 word.nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(word.reviewCount, 7)]).toISOString();
                 if (word.reviewCount >= 4) word.status = 'mastered';
             } else {
-                // Reset review count on wrong answer
                 word.reviewCount = 0;
                 word.nextReview = new Date(Date.now() + REVIEW_INTERVALS[1]).toISOString();
                 word.status = 'learning';
@@ -925,7 +1023,7 @@
 
             saveWords();
             updateReviewProgress();
-            initReview(); // Refresh due count
+            initReview();
             document.getElementById('reviewNextBtn').style.display = 'block';
         }
 
@@ -938,14 +1036,11 @@
         function updateReviewProgress() {
             const total = reviewQueue.length;
             const current = reviewIndex;
-            const remaining = Math.max(0, total - current);
-
             document.getElementById('reviewCount').textContent = `${current}/${total}`;
-            document.getElementById('reviewRemaining').textContent = `剩余: ${remaining}`;
+            document.getElementById('reviewRemaining').textContent = `剩余: ${Math.max(0, total - current)}`;
             document.getElementById('reviewProgress').style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
         }
 
-        // Event listeners for recite/review input
         document.getElementById('reciteInput').addEventListener('keydown', checkRecite);
         document.getElementById('reviewInput').addEventListener('keydown', checkReview);
         document.getElementById('filterStatus').addEventListener('change', renderViewList);
