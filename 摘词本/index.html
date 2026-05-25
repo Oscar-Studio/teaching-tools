@@ -31,7 +31,6 @@
             min-height: 100vh;
         }
 
-        /* Top Bar */
         .top-bar {
             position: fixed;
             top: 0;
@@ -58,17 +57,9 @@
             transition: all 0.2s;
         }
 
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-color);
-        }
+        .back-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-color); }
 
-        .page-title {
-            flex: 1;
-            text-align: center;
-            font-size: 1rem;
-            font-weight: 500;
-        }
+        .page-title { flex: 1; text-align: center; font-size: 1rem; font-weight: 500; }
 
         .settings-btn {
             background: none;
@@ -81,12 +72,8 @@
             transition: all 0.2s;
         }
 
-        .settings-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--secondary-color);
-        }
+        .settings-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--secondary-color); }
 
-        /* Main Menu */
         .main-menu {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -112,27 +99,11 @@
             transform: translateY(-2px);
         }
 
-        .mode-card .icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
-        }
+        .mode-card .icon { font-size: 2rem; margin-bottom: 10px; }
+        .mode-card .name { font-size: 0.95rem; font-weight: 500; }
 
-        .mode-card .name {
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        /* Mode Panel */
-        .mode-panel {
-            display: none;
-            padding: 80px 20px 20px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .mode-panel.active {
-            display: block;
-        }
+        .mode-panel { display: none; padding: 80px 20px 20px; max-width: 500px; margin: 0 auto; }
+        .mode-panel.active { display: block; }
 
         .container {
             background: rgba(255, 255, 255, 0.03);
@@ -141,18 +112,8 @@
             padding: 20px;
         }
 
-        /* Input Panel */
-        .input-group {
-            margin-bottom: 12px;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
         .input-group input {
             width: 100%;
             padding: 12px 14px;
@@ -163,10 +124,7 @@
             font-size: 0.95rem;
         }
 
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--secondary-color);
-        }
+        .input-group input:focus { outline: none; border-color: var(--secondary-color); }
 
         .btn {
             width: 100%;
@@ -178,20 +136,10 @@
             transition: all 0.2s;
         }
 
-        .btn-add {
-            background: var(--primary-color);
-            color: #fff;
-        }
+        .btn-add { background: var(--primary-color); color: #fff; }
+        .btn-add:active { background: #1e4a8a; }
 
-        .btn-add:active {
-            background: #1e4a8a;
-        }
-
-        .word-list {
-            max-height: 280px;
-            overflow-y: auto;
-            margin-top: 16px;
-        }
+        .word-list { max-height: 280px; overflow-y: auto; margin-top: 16px; }
 
         .word-item {
             display: flex;
@@ -203,17 +151,8 @@
             margin-bottom: 8px;
         }
 
-        .word-item .word {
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .word-item .translation {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
+        .word-item .word { font-size: 0.95rem; font-weight: 500; }
+        .word-item .translation { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
         .word-item .delete-btn {
             background: #c9302c;
             color: #fff;
@@ -224,20 +163,9 @@
             cursor: pointer;
         }
 
-        .empty-state {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 30px;
-            font-size: 0.9rem;
-        }
+        .empty-state { text-align: center; color: var(--text-muted); padding: 30px; font-size: 0.9rem; }
 
-        /* View Panel */
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
+        .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; }
         .filter-bar select {
             flex: 1;
             padding: 10px 12px;
@@ -248,10 +176,7 @@
             font-size: 0.85rem;
         }
 
-        .view-list {
-            max-height: 380px;
-            overflow-y: auto;
-        }
+        .view-list { max-height: 380px; overflow-y: auto; }
 
         .view-item {
             display: flex;
@@ -263,39 +188,15 @@
             margin-bottom: 8px;
         }
 
-        .view-item .word-info {
-            flex: 1;
-        }
-
-        .view-item .word {
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .view-item .translation {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        .view-item .meta {
-            font-size: 0.75rem;
-            color: #666;
-            margin-top: 2px;
-        }
-
-        .view-item .status {
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            color: #fff;
-        }
-
+        .view-item .word-info { flex: 1; }
+        .view-item .word { font-size: 0.95rem; font-weight: 500; }
+        .view-item .translation { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+        .view-item .meta { font-size: 0.75rem; color: #666; margin-top: 2px; }
+        .view-item .status { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; color: #fff; }
         .status.new { background: var(--primary-color); }
         .status.learning { background: #ff9500; }
         .status.mastered { background: #34c759; }
 
-        /* Recite/Review Panel */
         .recite-card {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 12px;
@@ -304,18 +205,8 @@
             margin-bottom: 16px;
         }
 
-        .recite-hint {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-        }
-
-        .recite-chinese {
-            font-size: 1.4rem;
-            font-weight: 500;
-            color: var(--secondary-color);
-            margin-bottom: 20px;
-        }
+        .recite-hint { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
+        .recite-chinese { font-size: 1.4rem; font-weight: 500; color: var(--secondary-color); margin-bottom: 20px; }
 
         .recite-input {
             width: 100%;
@@ -328,35 +219,15 @@
             text-align: center;
         }
 
-        .recite-input:focus {
-            outline: none;
-            border-color: var(--secondary-color);
-        }
+        .recite-input:focus { outline: none; border-color: var(--secondary-color); }
+        .recite-input.correct { border-color: #34c759; background: rgba(52, 199, 89, 0.1); }
+        .recite-input.incorrect { border-color: #ff3b30; background: rgba(255, 59, 48, 0.1); }
 
-        .recite-input.correct {
-            border-color: #34c759;
-            background: rgba(52, 199, 89, 0.1);
-        }
-
-        .recite-input.incorrect {
-            border-color: #ff3b30;
-            background: rgba(255, 59, 48, 0.1);
-        }
-
-        .recite-result {
-            margin-top: 12px;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
+        .recite-result { margin-top: 12px; font-size: 0.95rem; font-weight: 500; }
         .recite-result.correct { color: #34c759; }
         .recite-result.incorrect { color: #ff3b30; }
 
-        .recite-answer {
-            margin-top: 8px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
+        .recite-answer { margin-top: 8px; font-size: 0.85rem; color: var(--text-muted); }
 
         .recite-progress {
             display: flex;
@@ -366,10 +237,7 @@
             color: var(--text-muted);
         }
 
-        .recite-progress .count {
-            min-width: 50px;
-        }
-
+        .recite-progress .count { min-width: 50px; }
         .recite-progress .progress-bar {
             flex: 1;
             height: 6px;
@@ -385,7 +253,6 @@
             transition: width 0.3s;
         }
 
-        /* Review Info */
         .review-info {
             display: flex;
             justify-content: space-around;
@@ -395,24 +262,12 @@
             border-radius: 8px;
         }
 
-        .review-info .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
+        .review-info .stat-label { font-size: 0.8rem; color: var(--text-muted); }
+        .review-info .stat-value { font-size: 1.3rem; font-weight: 600; color: var(--secondary-color); }
 
-        .review-info .stat-value {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: var(--secondary-color);
-        }
-
-        /* Settings Modal */
         .settings-modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.7);
             display: flex;
             justify-content: center;
@@ -421,9 +276,7 @@
             display: none;
         }
 
-        .settings-modal.open {
-            display: flex;
-        }
+        .settings-modal.open { display: flex; }
 
         .settings-content {
             background: var(--card-bg);
@@ -433,24 +286,10 @@
             width: 280px;
         }
 
-        .settings-content h3 {
-            font-size: 1rem;
-            margin-bottom: 16px;
-            color: var(--secondary-color);
-        }
+        .settings-content h3 { font-size: 1rem; margin-bottom: 16px; color: var(--secondary-color); }
 
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .setting-row label {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .setting-row label { font-size: 0.9rem; color: var(--text-muted); }
         .setting-row input {
             width: 60px;
             padding: 8px;
@@ -462,10 +301,23 @@
             font-size: 0.9rem;
         }
 
-        .btn-save {
+        .btn-save { background: var(--primary-color); color: #fff; margin-top: 12px; }
+
+        /* Login prompt */
+        .login-prompt {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .login-prompt h3 { margin-bottom: 15px; color: var(--text-color); }
+        .login-prompt p { color: var(--text-muted); margin-bottom: 20px; }
+        .login-prompt .btn-login {
             background: var(--primary-color);
             color: #fff;
-            margin-top: 12px;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
         }
     </style>
 <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
@@ -481,20 +333,16 @@
 
     <div class="main-menu" id="mainMenu">
         <div class="mode-card" onclick="switchMode('input')">
-            <div class="icon">✏️</div>
-            <div class="name">录入</div>
+            <div class="icon">✏️</div><div class="name">录入</div>
         </div>
         <div class="mode-card" onclick="switchMode('view')">
-            <div class="icon">📖</div>
-            <div class="name">总览</div>
+            <div class="icon">📖</div><div class="name">总览</div>
         </div>
         <div class="mode-card" onclick="switchMode('recite')">
-            <div class="icon">🎯</div>
-            <div class="name">背诵</div>
+            <div class="icon">🎯</div><div class="name">背诵</div>
         </div>
         <div class="mode-card" onclick="switchMode('review')">
-            <div class="icon">🧠</div>
-            <div class="name">复习</div>
+            <div class="icon">🧠</div><div class="name">复习</div>
         </div>
     </div>
 
@@ -590,18 +438,54 @@
     </div>
 
     <script>
-        let words = JSON.parse(localStorage.getItem('wordbook') || '[]');
-        let settings = JSON.parse(localStorage.getItem('wordbook_settings') || '{"dailyCount":10}');
-        const STORAGE_KEY = 'wordbook';
-        const SETTINGS_KEY = 'wordbook_settings';
-
+        const API_BASE = 'https://api.oscarstudio.cn';
         const REVIEW_INTERVALS = [1, 12, 24, 48, 96, 168, 360].map(h => h * 3600000);
 
+        let token = localStorage.getItem('token');
+        let words = [];
+        let settings = JSON.parse(localStorage.getItem('wordbook_settings') || '{"dailyCount":10}');
         let reciteQueue = [], reciteIndex = 0;
         let reviewQueue = [], reviewIndex = 0;
 
         document.getElementById('dailyCount').value = settings.dailyCount;
         document.getElementById('backBtn').addEventListener('click', () => switchMode('menu'));
+
+        function getHeaders() {
+            return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+        }
+
+        async function fetchWords() {
+            const res = await fetch(API_BASE + '/api/wordbook', { headers: getHeaders() });
+            const data = await res.json();
+            if (data.success) words = data.words;
+            else if (res.status === 401) { token = null; localStorage.removeItem('token'); }
+        }
+
+        async function addWordAPI(word, translation) {
+            const res = await fetch(API_BASE + '/api/wordbook', {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ word, translation })
+            });
+            return res.json();
+        }
+
+        async function deleteWordAPI(id) {
+            const res = await fetch(API_BASE + '/api/wordbook/' + id, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            return res.json();
+        }
+
+        async function updateWordAPI(id, data) {
+            const res = await fetch(API_BASE + '/api/wordbook/' + id, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            });
+            return res.json();
+        }
 
         function openSettings() {
             document.getElementById('settingsModal').classList.add('open');
@@ -609,49 +493,66 @@
 
         function closeSettings() {
             settings.dailyCount = parseInt(document.getElementById('dailyCount').value) || 10;
-            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            localStorage.setItem('wordbook_settings', JSON.stringify(settings));
             document.getElementById('settingsModal').classList.remove('open');
         }
 
         function switchMode(mode) {
+            if (!token && mode !== 'menu') {
+                alert('请先登录后再使用');
+                return;
+            }
+
             document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
             document.getElementById('mainMenu').style.display = mode === 'menu' ? 'grid' : 'none';
             document.getElementById('backBtn').style.display = mode === 'menu' ? 'none' : 'block';
             document.getElementById('settingsBtn').style.display = mode === 'menu' ? 'block' : 'none';
             document.getElementById('pageTitle').textContent = mode === 'menu' ? '摘词本' : {input:'录入',view:'总览',recite:'背诵',review:'复习'}[mode];
-            if (mode !== 'menu') document.getElementById(mode + 'Panel').classList.add('active');
+
+            if (mode !== 'menu') {
+                document.getElementById(mode + 'Panel').classList.add('active');
+                loadModeData(mode);
+            }
+        }
+
+        async function loadModeData(mode) {
+            await fetchWords();
             if (mode === 'view') renderViewList();
             if (mode === 'recite') initRecite();
             if (mode === 'review') initReview();
+            if (mode === 'input') renderWordList();
         }
 
-        function addWord() {
+        async function addWord() {
             const word = document.getElementById('wordInput').value.trim();
             const trans = document.getElementById('transInput').value.trim();
             if (!word || !trans) return alert('请填写单词和释义');
-            if (words.some(w => w.word.toLowerCase() === word.toLowerCase())) return alert('单词已存在');
-            words.push({id:Date.now(), word, translation:trans, status:'new', reviewCount:0, lastReview:null, nextReview:null, createdAt:new Date().toISOString()});
-            saveWords();
-            document.getElementById('wordInput').value = '';
-            document.getElementById('transInput').value = '';
-            document.getElementById('wordInput').focus();
-            renderWordList();
+
+            const result = await addWordAPI(word, trans);
+            if (result.success) {
+                words.unshift(result.word);
+                document.getElementById('wordInput').value = '';
+                document.getElementById('transInput').value = '';
+                document.getElementById('wordInput').focus();
+                renderWordList();
+            } else {
+                alert(result.message || '添加失败');
+            }
         }
 
-        function deleteWord(id) {
-            words = words.filter(w => w.id !== id);
-            saveWords();
-            renderWordList();
-        }
-
-        function saveWords() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
+        async function deleteWord(id) {
+            if (!confirm('确定删除？')) return;
+            const result = await deleteWordAPI(id);
+            if (result.success) {
+                words = words.filter(w => w.id !== id);
+                renderWordList();
+            }
         }
 
         function renderWordList() {
             const list = document.getElementById('wordList');
             if (!words.length) { list.innerHTML = '<div class="empty-state">暂无生词</div>'; return; }
-            list.innerHTML = words.slice().reverse().map(w => `<div class="word-item"><div><div class="word">${w.word}</div><div class="translation">${w.translation}</div></div><button class="delete-btn" onclick="deleteWord(${w.id})">删除</button></div>`).join('');
+            list.innerHTML = words.map(w => `<div class="word-item"><div><div class="word">${w.word}</div><div class="translation">${w.translation}</div></div><button class="delete-btn" onclick="deleteWord(${w.id})">删除</button></div>`).join('');
         }
 
         function renderViewList() {
@@ -659,11 +560,15 @@
             const fs = document.getElementById('filterStatus').value;
             const ft = document.getElementById('filterSort').value;
             let filtered = words.filter(w => fs === 'all' || w.status === fs);
-            filtered.sort((a, b) => ft === 'alpha' ? a.word.localeCompare(b.word) : ft === 'date-asc' ? new Date(a.createdAt) - new Date(b.createdAt) : new Date(b.createdAt) - new Date(a.createdAt));
+            filtered.sort((a, b) => {
+                if (ft === 'alpha') return a.word.localeCompare(b.word);
+                if (ft === 'date-asc') return new Date(a.created_at) - new Date(b.created_at);
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
             if (!filtered.length) { list.innerHTML = '<div class="empty-state">没有单词</div>'; return; }
             const statusText = {new:'未学习',learning:'学习中',mastered:'已掌握'};
             const statusCss = {new:'new',learning:'learning',mastered:'mastered'};
-            list.innerHTML = filtered.map(w => `<div class="view-item"><div class="word-info"><div class="word">${w.word}</div><div class="translation">${w.translation}</div><div class="meta">${new Date(w.createdAt).toLocaleDateString()}</div></div><span class="status ${statusCss[w.status]}">${statusText[w.status]}</span></div>`).join('');
+            list.innerHTML = filtered.map(w => `<div class="view-item"><div class="word-info"><div class="word">${w.word}</div><div class="translation">${w.translation}</div><div class="meta">${new Date(w.created_at).toLocaleDateString()}</div></div><span class="status ${statusCss[w.status]}">${statusText[w.status]}</span></div>`).join('');
         }
 
         function initRecite() {
@@ -687,18 +592,26 @@
             setTimeout(() => document.getElementById('reciteInput').focus(), 50);
         }
 
-        function checkRecite(e) {
+        async function checkRecite(e) {
             if (e.key !== 'Enter') return;
             const w = reciteQueue[reciteIndex];
             const ans = document.getElementById('reciteInput').value.trim();
             if (!ans) return;
             const ok = ans.toLowerCase() === w.word.toLowerCase();
             document.getElementById('reciteInput').classList.add(ok ? 'correct' : 'incorrect');
-            document.getElementById('reciteResult').textContent = ok ? '✓' : '✗ ' + w.word;
+            document.getElementById('reciteResult').textContent = ok ? '✓' : '✗';
             document.getElementById('reciteResult').className = 'recite-result ' + (ok ? 'correct' : 'incorrect');
             document.getElementById('reciteAnswer').textContent = ok ? '' : '答案: ' + w.word;
-            if (ok) { w.status = 'learning'; w.reviewCount++; w.lastReview = new Date().toISOString(); w.nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(w.reviewCount, 6)]).toISOString(); if (w.reviewCount >= 4) w.status = 'mastered'; }
-            saveWords();
+
+            if (ok) {
+                const newStatus = w.review_count >= 3 ? 'mastered' : 'learning';
+                const newCount = (w.review_count || 0) + 1;
+                const nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(newCount, 6)]).toISOString();
+                await updateWordAPI(w.id, { status: newStatus, review_count: newCount, last_review: new Date().toISOString(), next_review: nextReview });
+                w.status = newStatus;
+                w.review_count = newCount;
+            }
+
             updateReciteProgress();
             document.getElementById('reciteNextBtn').style.display = 'block';
         }
@@ -708,7 +621,7 @@
 
         function initReview() {
             const now = Date.now();
-            reviewQueue = words.filter(w => w.status !== 'new' && (!w.nextReview || new Date(w.nextReview).getTime() <= now));
+            reviewQueue = words.filter(w => w.status !== 'new' && (!w.next_review || new Date(w.next_review).getTime() <= now));
             reviewIndex = 0;
             document.getElementById('reviewDue').textContent = reviewQueue.length;
             document.getElementById('reviewTotal').textContent = words.filter(w => w.status !== 'new').length;
@@ -730,20 +643,31 @@
             setTimeout(() => document.getElementById('reviewInput').focus(), 50);
         }
 
-        function checkReview(e) {
+        async function checkReview(e) {
             if (e.key !== 'Enter') return;
             const w = reviewQueue[reviewIndex];
             const ans = document.getElementById('reviewInput').value.trim();
             if (!ans) return;
             const ok = ans.toLowerCase() === w.word.toLowerCase();
             document.getElementById('reviewInput').classList.add(ok ? 'correct' : 'incorrect');
-            document.getElementById('reviewResult').textContent = ok ? '✓' : '✗ ' + w.word;
+            document.getElementById('reviewResult').textContent = ok ? '✓' : '✗';
             document.getElementById('reviewResult').className = 'recite-result ' + (ok ? 'correct' : 'incorrect');
             document.getElementById('reviewAnswer').textContent = ok ? '' : '答案: ' + w.word;
-            w.lastReview = new Date().toISOString();
-            if (ok) { w.reviewCount++; w.nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(w.reviewCount, 6)]).toISOString(); if (w.reviewCount >= 4) w.status = 'mastered'; }
-            else { w.reviewCount = 0; w.nextReview = new Date(Date.now() + REVIEW_INTERVALS[0]).toISOString(); w.status = 'learning'; }
-            saveWords();
+
+            const lastReview = new Date().toISOString();
+            if (ok) {
+                const newCount = (w.review_count || 0) + 1;
+                const nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(newCount, 6)]).toISOString();
+                const newStatus = newCount >= 4 ? 'mastered' : 'learning';
+                await updateWordAPI(w.id, { status: newStatus, review_count: newCount, last_review: lastReview, next_review: nextReview });
+                w.status = newStatus;
+                w.review_count = newCount;
+            } else {
+                await updateWordAPI(w.id, { status: 'learning', review_count: 0, last_review: lastReview, next_review: new Date(Date.now() + REVIEW_INTERVALS[0]).toISOString() });
+                w.status = 'learning';
+                w.review_count = 0;
+            }
+
             updateReviewProgress();
             initReview();
             document.getElementById('reviewNextBtn').style.display = 'block';
@@ -756,6 +680,13 @@
         document.getElementById('reviewInput').addEventListener('keydown', checkReview);
         document.getElementById('filterStatus').addEventListener('change', renderViewList);
         document.getElementById('filterSort').addEventListener('change', renderViewList);
+
+        // Check login status
+        if (!token) {
+            // Try to get token from cookie
+            const match = document.cookie.match(/userToken=(\S+)/);
+            if (match) token = match[1];
+        }
     </script>
 </body>
 </html>
