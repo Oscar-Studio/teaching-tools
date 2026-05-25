@@ -604,8 +604,8 @@
             document.getElementById('reciteAnswer').textContent = ok ? '' : '答案: ' + w.word;
 
             if (ok) {
-                const newStatus = w.review_count >= 3 ? 'mastered' : 'learning';
                 const newCount = (w.review_count || 0) + 1;
+                const newStatus = newCount >= 4 ? 'mastered' : 'learning';
                 const nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(newCount, 6)]).toISOString();
                 await updateWordAPI(w.id, { status: newStatus, review_count: newCount, last_review: new Date().toISOString(), next_review: nextReview });
                 w.status = newStatus;
