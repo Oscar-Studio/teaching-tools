@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>摘词本 - 教学工具</title>
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+            --success-color: #28a745;
+            --warning-color: #f59e0b;
+            --danger-color: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            border: var(--card-border);
+            box-shadow: var(--card-shadow);
+        }
+
+        h1 {
+            color: var(--secondary-color);
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mode-tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .mode-tab:hover {
+            border-color: var(--secondary-color);
+        }
+
+        .mode-tab.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .mode-panel {
+            display: none;
+        }
+
+        .mode-panel.active {
+            display: block;
+        }
+
+        /* Input Mode */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid var(--card-border);
+            background: var(--light-color);
+            color: var(--dark-color);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add {
+            width: 100%;
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-add:hover {
+            background-color: #2ea043;
+        }
+
+        .word-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .word-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .word-item .word {
+            font-size: 1.1rem;
+        }
+
+        .word-item .translation {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .word-item .delete-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px 20px;
+        }
+
+        /* View Mode */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--card-border);
+            background: var(--light-color);
+            color: var(--dark-color);
+            font-size: 0.9rem;
+        }
+
+        .view-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .view-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .view-item .word-info {
+            flex: 1;
+        }
+
+        .view-item .word {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .view-item .translation {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .view-item .meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .view-item .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .status.new {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .status.learning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status.mastered {
+            background: var(--success-color);
+            color: white;
+        }
+
+        /* Recite Mode */
+        .recite-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .recite-hint {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .recite-chinese {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .recite-input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid var(--card-border);
+            background: var(--light-color);
+            color: var(--dark-color);
+            font-size: 1.2rem;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        .recite-input:focus {
+            outline: none;
+            border-color: var(--success-color);
+        }
+
+        .recite-input.correct {
+            border-color: var(--success-color);
+        }
+
+        .recite-input.incorrect {
+            border-color: var(--danger-color);
+        }
+
+        .recite-result {
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+
+        .recite-result.correct {
+            color: var(--success-color);
+        }
+
+        .recite-result.incorrect {
+            color: var(--danger-color);
+        }
+
+        .recite-answer {
+            margin-top: 10px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .recite-progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .recite-progress .count {
+            color: var(--text-secondary);
+        }
+
+        .recite-progress .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--card-border);
+            border-radius: 4px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+
+        .recite-progress .progress-fill {
+            height: 100%;
+            background: var(--success-color);
+            transition: width 0.3s;
+        }
+
+        /* Review Mode */
+        .review-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .review-info .stat {
+            text-align: center;
+        }
+
+        .review-info .stat-value {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+        }
+
+        .review-info .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Settings Modal */
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            display: none;
+        }
+
+        .settings-modal.open {
+            display: flex;
+        }
+
+        .settings-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            border: var(--card-border);
+        }
+
+        .settings-content h3 {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .setting-row label {
+            color: var(--text-secondary);
+        }
+
+        .setting-row input {
+            width: 80px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 2px solid var(--card-border);
+            background: var(--light-color);
+            color: var(--dark-color);
+            text-align: center;
+        }
+
+        .settings-close {
+            margin-top: 20px;
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+        }
+
+        footer {
+            margin-top: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📒 摘词本</h1>
+        <p class="subtitle">英语单词背诵与复习工具</p>
+
+        <div class="mode-tabs">
+            <div class="mode-tab active" data-mode="input">录入</div>
+            <div class="mode-tab" data-mode="view">查看</div>
+            <div class="mode-tab" data-mode="recite">背诵</div>
+            <div class="mode-tab" data-mode="review">复习</div>
+        </div>
+
+        <!-- Input Mode -->
+        <div class="mode-panel active" id="inputPanel">
+            <div class="input-group">
+                <label>单词 (English)</label>
+                <input type="text" id="wordInput" placeholder="输入英语单词">
+            </div>
+            <div class="input-group">
+                <label>中文释义</label>
+                <input type="text" id="transInput" placeholder="输入中文释义">
+            </div>
+            <button class="btn btn-add" onclick="addWord()">添加生词</button>
+
+            <div class="word-list" id="wordList"></div>
+        </div>
+
+        <!-- View Mode -->
+        <div class="mode-panel" id="viewPanel">
+            <div class="filter-bar">
+                <select id="filterStatus">
+                    <option value="all">全部状态</option>
+                    <option value="new">未学习</option>
+                    <option value="learning">学习中</option>
+                    <option value="mastered">已掌握</option>
+                </select>
+                <select id="filterSort">
+                    <option value="date-desc">按时间 (新→旧)</option>
+                    <option value="date-asc">按时间 (旧→新)</option>
+                    <option value="alpha">按字母顺序</option>
+                </select>
+            </div>
+            <div class="view-list" id="viewList"></div>
+        </div>
+
+        <!-- Recite Mode -->
+        <div class="mode-panel" id="recitePanel">
+            <div class="recite-progress">
+                <span class="count" id="reciteCount">0/0</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="reciteProgress"></div>
+                </div>
+                <span class="count" id="reciteRemaining">剩余: 0</span>
+            </div>
+            <div class="recite-card">
+                <div class="recite-hint">请写出单词</div>
+                <div class="recite-chinese" id="reciteChinese"></div>
+                <input type="text" class="recite-input" id="reciteInput" placeholder="输入英文单词" autocomplete="off">
+                <div class="recite-result" id="reciteResult"></div>
+                <div class="recite-answer" id="reciteAnswer"></div>
+            </div>
+            <button class="btn btn-add" id="reciteNextBtn" onclick="nextRecite()" style="display:none">下一个</button>
+        </div>
+
+        <!-- Review Mode -->
+        <div class="mode-panel" id="reviewPanel">
+            <div class="review-info">
+                <div class="stat">
+                    <div class="stat-value" id="reviewDue">0</div>
+                    <div class="stat-label">待复习</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="reviewTotal">0</div>
+                    <div class="stat-label">总单词</div>
+                </div>
+            </div>
+            <div class="recite-progress">
+                <span class="count" id="reviewCount">0/0</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="reviewProgress"></div>
+                </div>
+                <span class="count" id="reviewRemaining">剩余: 0</span>
+            </div>
+            <div class="recite-card">
+                <div class="recite-hint">请写出单词</div>
+                <div class="recite-chinese" id="reviewChinese"></div>
+                <input type="text" class="recite-input" id="reviewInput" placeholder="输入英文单词" autocomplete="off">
+                <div class="recite-result" id="reviewResult"></div>
+                <div class="recite-answer" id="reviewAnswer"></div>
+            </div>
+            <button class="btn btn-add" id="reviewNextBtn" onclick="nextReview()" style="display:none">下一个</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-content">
+            <h3>⚙️ 设置</h3>
+            <div class="setting-row">
+                <label>每日背诵数量:</label>
+                <input type="number" id="dailyCount" value="10" min="1" max="50">
+            </div>
+            <button class="btn settings-close" onclick="closeSettings()">确定</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>摘词本 &copy; 2026 - Designed by Oscar</p>
+    </footer>
+
+    <script>
+        // Data storage
+        let words = JSON.parse(localStorage.getItem('wordbook') || '[]');
+        let settings = JSON.parse(localStorage.getItem('wordbook_settings') || '{"dailyCount":10}');
+        const STORAGE_KEY = 'wordbook';
+        const SETTINGS_KEY = 'wordbook_settings';
+
+        // Ebbinghaus intervals (in milliseconds)
+        const REVIEW_INTERVALS = {
+            1: 1 * 60 * 60 * 1000,      // 1 hour
+            2: 12 * 60 * 60 * 1000,     // 12 hours
+            3: 1 * 24 * 60 * 60 * 1000, // 1 day
+            4: 2 * 24 * 60 * 60 * 1000, // 2 days
+            5: 4 * 24 * 60 * 60 * 1000, // 4 days
+            6: 7 * 24 * 60 * 60 * 1000, // 7 days
+            7: 15 * 24 * 60 * 60 * 1000 // 15 days
+        };
+
+        let currentMode = 'input';
+        let reciteQueue = [];
+        let reciteIndex = 0;
+        let reviewQueue = [];
+        let reviewIndex = 0;
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dailyCount').value = settings.dailyCount;
+            setupModeTabs();
+            setupInputListeners();
+            renderWordList();
+            openSettings = function() {
+                document.getElementById('settingsModal').classList.add('open');
+            };
+        });
+
+        function setupModeTabs() {
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const mode = tab.dataset.mode;
+                    switchMode(mode);
+                });
+            });
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+            document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(`${mode}Panel`).classList.add('active');
+
+            if (mode === 'view') renderViewList();
+            if (mode === 'recite') initRecite();
+            if (mode === 'review') initReview();
+        }
+
+        function setupInputListeners() {
+            // Global settings button
+            window.openSettings = function() {
+                document.getElementById('settingsModal').classList.add('open');
+            };
+
+            document.getElementById('dailyCount').addEventListener('change', (e) => {
+                settings.dailyCount = parseInt(e.target.value) || 10;
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            });
+        }
+
+        function closeSettings() {
+            settings.dailyCount = parseInt(document.getElementById('dailyCount').value) || 10;
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            document.getElementById('settingsModal').classList.remove('open');
+        }
+
+        function addWord() {
+            const wordInput = document.getElementById('wordInput');
+            const transInput = document.getElementById('transInput');
+            const word = wordInput.value.trim();
+            const translation = transInput.value.trim();
+
+            if (!word || !translation) {
+                alert('请填写单词和中文释义');
+                return;
+            }
+
+            // Check if word already exists
+            if (words.some(w => w.word.toLowerCase() === word.toLowerCase())) {
+                alert('该单词已存在');
+                return;
+            }
+
+            words.push({
+                id: Date.now(),
+                word: word,
+                translation: translation,
+                status: 'new',
+                reviewCount: 0,
+                lastReview: null,
+                nextReview: null,
+                createdAt: new Date().toISOString()
+            });
+
+            saveWords();
+            wordInput.value = '';
+            transInput.value = '';
+            wordInput.focus();
+            renderWordList();
+        }
+
+        function deleteWord(id) {
+            words = words.filter(w => w.id !== id);
+            saveWords();
+            renderWordList();
+            renderViewList();
+        }
+
+        function saveWords() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
+        }
+
+        function renderWordList() {
+            const list = document.getElementById('wordList');
+            if (words.length === 0) {
+                list.innerHTML = '<div class="empty-state">暂无生词，添加一个吧</div>';
+                return;
+            }
+
+            list.innerHTML = words.map(w => `
+                <div class="word-item">
+                    <div>
+                        <div class="word">${escapeHtml(w.word)}</div>
+                        <div class="translation">${escapeHtml(w.translation)}</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteWord(${w.id})">删除</button>
+                </div>
+            `).reverse().join('');
+        }
+
+        function renderViewList() {
+            const list = document.getElementById('viewList');
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterSort = document.getElementById('filterSort').value;
+
+            let filtered = words.filter(w => {
+                if (filterStatus === 'all') return true;
+                return w.status === filterStatus;
+            });
+
+            filtered.sort((a, b) => {
+                if (filterSort === 'alpha') return a.word.localeCompare(b.word);
+                if (filterSort === 'date-asc') return new Date(a.createdAt) - new Date(b.createdAt);
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state">没有符合条件的单词</div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(w => `
+                <div class="view-item">
+                    <div class="word-info">
+                        <div class="word">${escapeHtml(w.word)}</div>
+                        <div class="translation">${escapeHtml(w.translation)}</div>
+                        <div class="meta">添加时间: ${formatDate(w.createdAt)}</div>
+                    </div>
+                    <span class="status ${w.status}">${getStatusText(w.status)}</span>
+                </div>
+            `).join('');
+        }
+
+        function getStatusText(status) {
+            const map = { new: '未学习', learning: '学习中', mastered: '已掌握' };
+            return map[status] || status;
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        // Recite Mode
+        function initRecite() {
+            // Get words that haven't been mastered (status !== mastered)
+            const notMastered = words.filter(w => w.status !== 'mastered');
+            reciteQueue = notMastered.slice(0, settings.dailyCount);
+            reciteIndex = 0;
+            updateReciteProgress();
+
+            if (reciteQueue.length === 0) {
+                document.getElementById('reciteChinese').textContent = '恭喜！所有单词已背完';
+                document.getElementById('reciteInput').style.display = 'none';
+                document.getElementById('reciteNextBtn').style.display = 'none';
+                return;
+            }
+
+            showReciteWord();
+        }
+
+        function showReciteWord() {
+            if (reciteIndex >= reciteQueue.length) {
+                document.getElementById('reciteChinese').textContent = '今日任务完成！';
+                document.getElementById('reciteInput').style.display = 'none';
+                document.getElementById('reciteResult').textContent = '';
+                document.getElementById('reciteAnswer').textContent = '';
+                document.getElementById('reciteNextBtn').style.display = 'none';
+                return;
+            }
+
+            const word = reciteQueue[reciteIndex];
+            document.getElementById('reciteChinese').textContent = word.translation;
+            document.getElementById('reciteInput').value = '';
+            document.getElementById('reciteInput').style.display = 'block';
+            document.getElementById('reciteInput').classList.remove('correct', 'incorrect');
+            document.getElementById('reciteResult').textContent = '';
+            document.getElementById('reciteResult').className = 'recite-result';
+            document.getElementById('reciteAnswer').textContent = '';
+            document.getElementById('reciteNextBtn').style.display = 'none';
+
+            setTimeout(() => document.getElementById('reciteInput').focus(), 50);
+        }
+
+        function checkRecite(e) {
+            if (e.key !== 'Enter') return;
+
+            const input = document.getElementById('reciteInput');
+            const word = reciteQueue[reciteIndex];
+            const userAnswer = input.value.trim();
+
+            if (!userAnswer) return;
+
+            const isCorrect = userAnswer.toLowerCase() === word.word.toLowerCase();
+
+            input.classList.remove('correct', 'incorrect');
+            input.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+            const result = document.getElementById('reciteResult');
+            result.textContent = isCorrect ? '✓ 正确！' : '✗ 错误';
+            result.className = 'recite-result ' + (isCorrect ? 'correct' : 'incorrect');
+
+            document.getElementById('reciteAnswer').textContent = word.word;
+
+            // Update word status
+            if (isCorrect) {
+                word.status = 'learning';
+                word.reviewCount++;
+                word.lastReview = new Date().toISOString();
+                word.nextReview = new Date(Date.now() + REVIEW_INTERVALS[word.reviewCount] || REVIEW_INTERVALS[7]).toISOString();
+                if (word.reviewCount >= 4) word.status = 'mastered';
+            }
+
+            saveWords();
+            updateReciteProgress();
+            document.getElementById('reciteNextBtn').style.display = 'block';
+        }
+
+        function nextRecite() {
+            reciteIndex++;
+            updateReciteProgress();
+            showReciteWord();
+        }
+
+        function updateReciteProgress() {
+            const total = reciteQueue.length;
+            const current = reciteIndex;
+            const remaining = Math.max(0, total - current);
+
+            document.getElementById('reciteCount').textContent = `${current}/${total}`;
+            document.getElementById('reciteRemaining').textContent = `剩余: ${remaining}`;
+            document.getElementById('reciteProgress').style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
+        }
+
+        // Review Mode (Ebbinghaus)
+        function initReview() {
+            const now = new Date().getTime();
+            const dueWords = words.filter(w => {
+                if (w.status === 'new') return false;
+                if (!w.nextReview) return true;
+                return new Date(w.nextReview).getTime() <= now;
+            });
+
+            reviewQueue = dueWords;
+            reviewIndex = 0;
+
+            const totalCount = words.filter(w => w.status !== 'new').length;
+            document.getElementById('reviewDue').textContent = dueWords.length;
+            document.getElementById('reviewTotal').textContent = totalCount;
+
+            updateReviewProgress();
+
+            if (reviewQueue.length === 0) {
+                document.getElementById('reviewChinese').textContent = '暂无需要复习的单词';
+                document.getElementById('reviewInput').style.display = 'none';
+                document.getElementById('reviewNextBtn').style.display = 'none';
+                return;
+            }
+
+            showReviewWord();
+        }
+
+        function showReviewWord() {
+            if (reviewIndex >= reviewQueue.length) {
+                document.getElementById('reviewChinese').textContent = '复习完成！';
+                document.getElementById('reviewInput').style.display = 'none';
+                document.getElementById('reviewResult').textContent = '';
+                document.getElementById('reviewAnswer').textContent = '';
+                document.getElementById('reviewNextBtn').style.display = 'none';
+                return;
+            }
+
+            const word = reviewQueue[reviewIndex];
+            document.getElementById('reviewChinese').textContent = word.translation;
+            document.getElementById('reviewInput').value = '';
+            document.getElementById('reviewInput').style.display = 'block';
+            document.getElementById('reviewInput').classList.remove('correct', 'incorrect');
+            document.getElementById('reviewResult').textContent = '';
+            document.getElementById('reviewResult').className = 'recite-result';
+            document.getElementById('reviewAnswer').textContent = '';
+            document.getElementById('reviewNextBtn').style.display = 'none';
+
+            setTimeout(() => document.getElementById('reviewInput').focus(), 50);
+        }
+
+        function checkReview(e) {
+            if (e.key !== 'Enter') return;
+
+            const input = document.getElementById('reviewInput');
+            const word = reviewQueue[reviewIndex];
+            const userAnswer = input.value.trim();
+
+            if (!userAnswer) return;
+
+            const isCorrect = userAnswer.toLowerCase() === word.word.toLowerCase();
+
+            input.classList.remove('correct', 'incorrect');
+            input.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+            const result = document.getElementById('reviewResult');
+            result.textContent = isCorrect ? '✓ 正确！' : '✗ 错误';
+            result.className = 'recite-result ' + (isCorrect ? 'correct' : 'incorrect');
+
+            document.getElementById('reviewAnswer').textContent = word.word;
+
+            // Update word - even if wrong, continue with review schedule
+            word.lastReview = new Date().toISOString();
+            if (isCorrect) {
+                word.reviewCount++;
+                word.nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(word.reviewCount, 7)]).toISOString();
+                if (word.reviewCount >= 4) word.status = 'mastered';
+            } else {
+                // Reset review count on wrong answer
+                word.reviewCount = 0;
+                word.nextReview = new Date(Date.now() + REVIEW_INTERVALS[1]).toISOString();
+                word.status = 'learning';
+            }
+
+            saveWords();
+            updateReviewProgress();
+            initReview(); // Refresh due count
+            document.getElementById('reviewNextBtn').style.display = 'block';
+        }
+
+        function nextReview() {
+            reviewIndex++;
+            updateReviewProgress();
+            showReviewWord();
+        }
+
+        function updateReviewProgress() {
+            const total = reviewQueue.length;
+            const current = reviewIndex;
+            const remaining = Math.max(0, total - current);
+
+            document.getElementById('reviewCount').textContent = `${current}/${total}`;
+            document.getElementById('reviewRemaining').textContent = `剩余: ${remaining}`;
+            document.getElementById('reviewProgress').style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
+        }
+
+        // Event listeners for recite/review input
+        document.getElementById('reciteInput').addEventListener('keydown', checkRecite);
+        document.getElementById('reviewInput').addEventListener('keydown', checkReview);
+        document.getElementById('filterStatus').addEventListener('change', renderViewList);
+        document.getElementById('filterSort').addEventListener('change', renderViewList);
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
