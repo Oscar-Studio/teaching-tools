@@ -466,7 +466,7 @@
             const res = await fetch(API_BASE + '/api/wordbook', { headers: getHeaders() });
             const data = await res.json();
             if (data.success) words = data.words;
-            else if (res.status === 401) { token = null; localStorage.removeItem('token'); }
+            else if (res.status === 401) { token = null; localStorage.removeItem('userToken'); }
         }
 
         async function addWordAPI(word, translation) {
@@ -505,7 +505,7 @@
             document.getElementById('settingsModal').classList.remove('open');
         }
 
-        function switchMode(mode) {
+        async function switchMode(mode) {
             if (!token && mode !== 'menu') {
                 alert('请先登录后再使用');
                 return;
@@ -519,12 +519,9 @@
 
             if (mode !== 'menu') {
                 document.getElementById(mode + 'Panel').classList.add('active');
-                loadModeData(mode);
+                await loadModeData(mode);
             }
         }
-
-        async function loadModeData(mode) {
-            await fetchWords();
             if (mode === 'view') renderViewList();
             if (mode === 'recite') initRecite();
             if (mode === 'review') initReview();
@@ -567,7 +564,13 @@
             const list = document.getElementById('viewList');
             const fs = document.getElementById('filterStatus').value;
             const ft = document.getElementById('filterSort').value;
-            let filtered = words.filter(w => fs === 'all' || w.status === fs);
+            let filtered = words.filter(w => {
+                if (fs === 'all') return true;
+                if (fs === 'new') return w.status === 'new';
+                if (fs === 'learning') return w.status !== 'new';
+                if (fs === 'mastered') return w.status === 'mastered';
+                return true;
+            });
             filtered.sort((a, b) => {
                 if (ft === 'alpha') return a.word.localeCompare(b.word);
                 if (ft === 'date-asc') return new Date(a.created_at) - new Date(b.created_at);
@@ -576,7 +579,7 @@
             if (!filtered.length) { list.innerHTML = '<div class="empty-state">没有单词</div>'; return; }
             const statusText = {new:'未学习',learning:'学习中',mastered:'已掌握'};
             const statusCss = {new:'new',learning:'learning',mastered:'mastered'};
-            list.innerHTML = filtered.map(w => `<div class="view-item"><div class="word-info"><div class="word">${w.word}</div><div class="translation">${w.translation}</div><div class="meta">${new Date(w.created_at).toLocaleDateString()}</div></div><span class="status ${statusCss[w.status]}">${statusText[w.status]}</span></div>`).join('');
+            list.innerHTML = filtered.map(w => `<div class="view-item"><div class="word-info"><div class="word">${w.word}</div><div class="translation">${w.translation}</div><div class="meta">复习 ${w.review_count || 0} 次</div></div><span class="status ${statusCss[w.status]}">${statusText[w.status]}</span></div>`).join('');
         }
 
         function initRecite() {
@@ -612,8 +615,9 @@
             document.getElementById('reciteAnswer').textContent = ok ? '' : '答案: ' + w.word;
 
             if (ok) {
-                const newCount = (w.review_count || 0) + 1;
-                const newStatus = newCount >= 4 ? 'mastered' : 'learning';
+                const prevCount = w.review_count || 0;
+                const newCount = prevCount + 1;
+                const newStatus = newCount >= 4 ? 'mastered' : (prevCount === 0 ? 'learning' : w.status);
                 const nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(newCount, 6)]).toISOString();
                 await updateWordAPI(w.id, { status: newStatus, review_count: newCount, last_review: new Date().toISOString(), next_review: nextReview });
                 w.status = newStatus;
