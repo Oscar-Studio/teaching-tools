@@ -7,154 +7,93 @@
     <script defer src="https://cloud.umami.is/script.js"
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <style>
-        :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-            --success-color: #28a745;
-            --warning-color: #f59e0b;
-            --danger-color: #e74c3c;
-            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
-            background-color: var(--light-color);
+            background: #f5f5f5;
             min-height: 100vh;
-            color: var(--dark-color);
+            color: #333;
         }
 
         /* Top Bar */
         .top-bar {
             display: flex;
             align-items: center;
-            padding: 15px 20px;
-            background: var(--card-bg);
-            border-bottom: var(--card-border);
-            gap: 15px;
+            padding: 12px 16px;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+            gap: 12px;
         }
 
         .back-btn {
             background: none;
             border: none;
-            color: var(--dark-color);
             font-size: 1.2rem;
             cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-
-        .back-btn:hover {
-            background: rgba(255,255,255,0.1);
+            padding: 6px 10px;
+            color: #333;
         }
 
         .page-title {
             flex: 1;
-            font-size: 1.1rem;
-            color: var(--dark-color);
+            font-size: 1rem;
+            font-weight: 500;
         }
 
         .settings-btn {
             background: none;
             border: none;
-            color: var(--text-secondary);
             font-size: 1.2rem;
             cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .settings-btn:hover {
-            background: rgba(255,255,255,0.1);
-            color: var(--dark-color);
+            padding: 6px 10px;
+            color: #666;
         }
 
         /* Main Menu */
         .main-menu {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            padding: 20px;
-            max-width: 500px;
+            gap: 12px;
+            padding: 16px;
+            max-width: 400px;
             margin: 0 auto;
         }
 
         .mode-card {
-            aspect-ratio: 1;
-            border-radius: 20px;
-            border: none;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
             cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: transform 0.3s, box-shadow 0.3s;
-            position: relative;
-            overflow: hidden;
+            text-align: center;
+            transition: box-shadow 0.2s;
         }
 
         .mode-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .mode-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            opacity: 0.15;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .mode-card .icon {
-            font-size: 3rem;
-            z-index: 1;
+            font-size: 2rem;
+            margin-bottom: 8px;
         }
 
         .mode-card .name {
-            font-size: 1.1rem;
-            font-weight: 600;
-            z-index: 1;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #333;
         }
-
-        .mode-card .desc {
-            font-size: 0.75rem;
-            opacity: 0.8;
-            z-index: 1;
-            text-align: center;
-            padding: 0 15px;
-        }
-
-        .card-input { background: var(--gradient-1); color: white; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3); }
-        .card-input::before { background: var(--gradient-1); }
-        .card-view { background: var(--gradient-2); color: white; box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3); }
-        .card-view::before { background: var(--gradient-2); }
-        .card-recite { background: var(--gradient-3); color: white; box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3); }
-        .card-recite::before { background: var(--gradient-3); }
-        .card-review { background: var(--gradient-4); color: white; box-shadow: 0 8px 25px rgba(67, 233, 123, 0.3); }
-        .card-review::before { background: var(--gradient-4); }
 
         /* Mode Panel */
         .mode-panel {
             display: none;
-            padding: 20px;
-            max-width: 600px;
+            padding: 16px;
+            max-width: 500px;
             margin: 0 auto;
         }
 
@@ -163,137 +102,117 @@
         }
 
         .container {
-            background-color: var(--card-bg);
-            border-radius: 20px;
-            padding: 25px;
-            border: var(--card-border);
-            box-shadow: var(--card-shadow);
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #ddd;
         }
 
         /* Input Panel */
         .input-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .input-group label {
             display: block;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 6px;
         }
 
         .input-group input {
             width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 2px solid var(--card-border);
-            background: var(--light-color);
-            color: var(--dark-color);
-            font-size: 1rem;
-            transition: border-color 0.3s;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
         }
 
         .input-group input:focus {
             outline: none;
-            border-color: var(--secondary-color);
+            border-color: #333;
         }
 
         .btn {
-            padding: 14px 25px;
+            width: 100%;
+            padding: 12px;
             border: none;
-            border-radius: 12px;
-            font-size: 1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
         }
 
         .btn-add {
-            width: 100%;
-            background: var(--gradient-1);
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            background: #333;
+            color: #fff;
         }
 
-        .btn-add:hover {
-            transform: translateY(-2px);
+        .btn-add:active {
+            background: #555;
         }
 
         .word-list {
-            max-height: 300px;
+            max-height: 280px;
             overflow-y: auto;
-            margin-top: 20px;
+            margin-top: 16px;
         }
 
         .word-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            margin-bottom: 10px;
-            transition: background 0.2s;
-        }
-
-        .word-item:hover {
-            background: rgba(0, 0, 0, 0.4);
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 8px;
         }
 
         .word-item .word {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 500;
         }
 
         .word-item .translation {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-top: 4px;
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 2px;
         }
 
         .word-item .delete-btn {
-            background: var(--danger-color);
-            color: white;
+            background: #ff3b30;
+            color: #fff;
             border: none;
-            border-radius: 8px;
-            padding: 8px 14px;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
             cursor: pointer;
-            font-size: 0.85rem;
-            transition: opacity 0.2s;
-        }
-
-        .word-item .delete-btn:hover {
-            opacity: 0.8;
         }
 
         .empty-state {
             text-align: center;
-            color: var(--text-secondary);
-            padding: 40px 20px;
-            font-size: 0.95rem;
+            color: #999;
+            padding: 30px;
+            font-size: 0.9rem;
         }
 
         /* View Panel */
         .filter-bar {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
         .filter-bar select {
             flex: 1;
-            min-width: 100px;
-            padding: 12px;
-            border-radius: 10px;
-            border: 2px solid var(--card-border);
-            background: var(--light-color);
-            color: var(--dark-color);
-            font-size: 0.9rem;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: #fff;
         }
 
         .view-list {
-            max-height: 400px;
+            max-height: 380px;
             overflow-y: auto;
         }
 
@@ -301,10 +220,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            margin-bottom: 10px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 8px;
         }
 
         .view-item .word-info {
@@ -312,141 +231,117 @@
         }
 
         .view-item .word {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 500;
-            margin-bottom: 4px;
         }
 
         .view-item .translation {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 2px;
         }
 
         .view-item .meta {
             font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 4px;
+            color: #aaa;
+            margin-top: 2px;
         }
 
         .view-item .status {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #fff;
         }
 
-        .status.new {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .status.learning {
-            background: var(--warning-color);
-            color: white;
-        }
-
-        .status.mastered {
-            background: var(--success-color);
-            color: white;
-        }
+        .status.new { background: #007aff; }
+        .status.learning { background: #ff9500; }
+        .status.mastered { background: #34c759; }
 
         /* Recite/Review Panel */
         .recite-card {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 16px;
-            padding: 30px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 24px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .recite-hint {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 15px;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 12px;
         }
 
         .recite-chinese {
-            font-size: 1.6rem;
-            color: var(--secondary-color);
-            margin-bottom: 25px;
+            font-size: 1.4rem;
             font-weight: 500;
+            margin-bottom: 16px;
         }
 
         .recite-input {
             width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            border: 2px solid var(--card-border);
-            background: var(--light-color);
-            color: var(--dark-color);
-            font-size: 1.2rem;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1rem;
             text-align: center;
-            transition: border-color 0.3s;
         }
 
         .recite-input:focus {
             outline: none;
-            border-color: var(--secondary-color);
+            border-color: #333;
         }
 
         .recite-input.correct {
-            border-color: var(--success-color);
-            background: rgba(40, 167, 69, 0.1);
+            border-color: #34c759;
+            background: #f0fdf4;
         }
 
         .recite-input.incorrect {
-            border-color: var(--danger-color);
-            background: rgba(231, 76, 60, 0.1);
+            border-color: #ff3b30;
+            background: #fff5f5;
         }
 
         .recite-result {
-            margin-top: 15px;
-            font-size: 1.1rem;
+            margin-top: 12px;
+            font-size: 0.95rem;
             font-weight: 500;
         }
 
-        .recite-result.correct {
-            color: var(--success-color);
-        }
-
-        .recite-result.incorrect {
-            color: var(--danger-color);
-        }
+        .recite-result.correct { color: #34c759; }
+        .recite-result.incorrect { color: #ff3b30; }
 
         .recite-answer {
-            margin-top: 10px;
-            color: var(--text-secondary);
-            font-size: 0.95rem;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #888;
         }
 
         .recite-progress {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 12px 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            color: #888;
         }
 
         .recite-progress .count {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+            min-width: 50px;
         }
 
         .recite-progress .progress-bar {
             flex: 1;
-            height: 8px;
-            background: var(--card-border);
-            border-radius: 4px;
-            margin: 0 15px;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin: 0 12px;
             overflow: hidden;
         }
 
         .recite-progress .progress-fill {
             height: 100%;
-            background: var(--gradient-3);
-            border-radius: 4px;
+            background: #333;
             transition: width 0.3s;
         }
 
@@ -454,28 +349,21 @@
         .review-info {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-        }
-
-        .review-info .stat {
-            text-align: center;
-        }
-
-        .review-info .stat-value {
-            font-size: 1.6rem;
-            font-weight: 600;
-            background: var(--gradient-4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
         }
 
         .review-info .stat-label {
             font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-top: 4px;
+            color: #888;
+        }
+
+        .review-info .stat-value {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
         }
 
         /* Settings Modal */
@@ -485,7 +373,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0,0,0,0.4);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -498,56 +386,49 @@
         }
 
         .settings-content {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 350px;
-            width: 90%;
-            border: var(--card-border);
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            width: 280px;
         }
 
         .settings-content h3 {
-            color: var(--secondary-color);
-            margin-bottom: 25px;
-            text-align: center;
-            font-size: 1.2rem;
+            font-size: 1rem;
+            margin-bottom: 16px;
         }
 
         .setting-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 20px 0;
+            margin-bottom: 12px;
         }
 
         .setting-row label {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            color: #666;
         }
 
         .setting-row input {
-            width: 80px;
-            padding: 10px;
-            border-radius: 8px;
-            border: 2px solid var(--card-border);
-            background: var(--light-color);
-            color: var(--dark-color);
+            width: 60px;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
             text-align: center;
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
 
         .btn-save {
-            width: 100%;
-            background: var(--gradient-3);
-            color: white;
-            margin-top: 10px;
+            background: #333;
+            color: #fff;
+            margin-top: 12px;
         }
 
         footer {
             text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            padding: 20px;
+            color: #aaa;
+            font-size: 0.8rem;
+            padding: 16px;
         }
     </style>
 <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
@@ -555,95 +436,83 @@
 </head>
 
 <body>
-    <!-- Top Bar -->
     <header class="top-bar">
-        <button class="back-btn" id="backBtn" style="display:none">← 返回</button>
+        <button class="back-btn" id="backBtn" style="display:none">←</button>
         <div class="page-title" id="pageTitle">摘词本</div>
         <button class="settings-btn" id="settingsBtn" onclick="openSettings()">⚙</button>
     </header>
 
-    <!-- Main Menu -->
     <div class="main-menu" id="mainMenu">
-        <button class="mode-card card-input" onclick="switchMode('input')">
-            <span class="icon">✏️</span>
-            <span class="name">录入</span>
-            <span class="desc">添加新单词</span>
-        </button>
-        <button class="mode-card card-view" onclick="switchMode('view')">
-            <span class="icon">📖</span>
-            <span class="name">总览</span>
-            <span class="desc">查看所有单词</span>
-        </button>
-        <button class="mode-card card-recite" onclick="switchMode('recite')">
-            <span class="icon">🎯</span>
-            <span class="name">背诵</span>
-            <span class="desc">每日定量背诵</span>
-        </button>
-        <button class="mode-card card-review" onclick="switchMode('review')">
-            <span class="icon">🧠</span>
-            <span class="name">复习</span>
-            <span class="desc">艾宾浩斯复习</span>
-        </button>
+        <div class="mode-card" onclick="switchMode('input')">
+            <div class="icon">✏️</div>
+            <div class="name">录入</div>
+        </div>
+        <div class="mode-card" onclick="switchMode('view')">
+            <div class="icon">📖</div>
+            <div class="name">总览</div>
+        </div>
+        <div class="mode-card" onclick="switchMode('recite')">
+            <div class="icon">🎯</div>
+            <div class="name">背诵</div>
+        </div>
+        <div class="mode-card" onclick="switchMode('review')">
+            <div class="icon">🧠</div>
+            <div class="name">复习</div>
+        </div>
     </div>
 
-    <!-- Input Panel -->
     <div class="mode-panel" id="inputPanel">
         <div class="container">
             <div class="input-group">
-                <label>单词 (English)</label>
-                <input type="text" id="wordInput" placeholder="输入英语单词">
+                <label>单词</label>
+                <input type="text" id="wordInput" placeholder="English word">
             </div>
             <div class="input-group">
-                <label>中文释义</label>
-                <input type="text" id="transInput" placeholder="输入中文释义">
+                <label>释义</label>
+                <input type="text" id="transInput" placeholder="中文释义">
             </div>
-            <button class="btn btn-add" onclick="addWord()">添加生词</button>
+            <button class="btn btn-add" onclick="addWord()">添加</button>
             <div class="word-list" id="wordList"></div>
         </div>
     </div>
 
-    <!-- View Panel -->
     <div class="mode-panel" id="viewPanel">
         <div class="container">
             <div class="filter-bar">
                 <select id="filterStatus">
-                    <option value="all">全部状态</option>
+                    <option value="all">全部</option>
                     <option value="new">未学习</option>
                     <option value="learning">学习中</option>
                     <option value="mastered">已掌握</option>
                 </select>
                 <select id="filterSort">
-                    <option value="date-desc">按时间 (新→旧)</option>
-                    <option value="date-asc">按时间 (旧→新)</option>
-                    <option value="alpha">按字母顺序</option>
+                    <option value="date-desc">新→旧</option>
+                    <option value="date-asc">旧→新</option>
+                    <option value="alpha">字母</option>
                 </select>
             </div>
             <div class="view-list" id="viewList"></div>
         </div>
     </div>
 
-    <!-- Recite Panel -->
     <div class="mode-panel" id="recitePanel">
         <div class="container">
             <div class="recite-progress">
                 <span class="count" id="reciteCount">0/0</span>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="reciteProgress"></div>
-                </div>
-                <span class="count" id="reciteRemaining">剩余: 0</span>
+                <div class="progress-bar"><div class="progress-fill" id="reciteProgress"></div></div>
+                <span id="reciteRemaining">剩余 0</span>
             </div>
             <div class="recite-card">
                 <div class="recite-hint">请写出单词</div>
                 <div class="recite-chinese" id="reciteChinese"></div>
-                <input type="text" class="recite-input" id="reciteInput" placeholder="输入英文单词" autocomplete="off">
+                <input type="text" class="recite-input" id="reciteInput" placeholder="输入英文" autocomplete="off">
                 <div class="recite-result" id="reciteResult"></div>
                 <div class="recite-answer" id="reciteAnswer"></div>
             </div>
-            <button class="btn btn-add" id="reciteNextBtn" onclick="nextRecite()" style="display:none">下一个 →</button>
+            <button class="btn btn-add" id="reciteNextBtn" onclick="nextRecite()" style="display:none">下一个</button>
         </div>
     </div>
 
-    <!-- Review Panel -->
     <div class="mode-panel" id="reviewPanel">
         <div class="container">
             <div class="review-info">
@@ -658,37 +527,32 @@
             </div>
             <div class="recite-progress">
                 <span class="count" id="reviewCount">0/0</span>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="reviewProgress"></div>
-                </div>
-                <span class="count" id="reviewRemaining">剩余: 0</span>
+                <div class="progress-bar"><div class="progress-fill" id="reviewProgress"></div></div>
+                <span id="reviewRemaining">剩余 0</span>
             </div>
             <div class="recite-card">
                 <div class="recite-hint">请写出单词</div>
                 <div class="recite-chinese" id="reviewChinese"></div>
-                <input type="text" class="recite-input" id="reviewInput" placeholder="输入英文单词" autocomplete="off">
+                <input type="text" class="recite-input" id="reviewInput" placeholder="输入英文" autocomplete="off">
                 <div class="recite-result" id="reviewResult"></div>
                 <div class="recite-answer" id="reviewAnswer"></div>
             </div>
-            <button class="btn btn-add" id="reviewNextBtn" onclick="nextReview()" style="display:none">下一个 →</button>
+            <button class="btn btn-add" id="reviewNextBtn" onclick="nextReview()" style="display:none">下一个</button>
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div class="settings-modal" id="settingsModal">
         <div class="settings-content">
-            <h3>⚙️ 设置</h3>
+            <h3>每日背诵数量</h3>
             <div class="setting-row">
-                <label>每日背诵数量:</label>
+                <label>数量:</label>
                 <input type="number" id="dailyCount" value="10" min="1" max="50">
             </div>
             <button class="btn btn-save" onclick="closeSettings()">确定</button>
         </div>
     </div>
 
-    <footer>
-        <p>摘词本 &copy; 2026 - Designed by Oscar</p>
-    </footer>
+    <footer>摘词本 &copy; 2026</footer>
 
     <script>
         let words = JSON.parse(localStorage.getItem('wordbook') || '[]');
@@ -696,30 +560,13 @@
         const STORAGE_KEY = 'wordbook';
         const SETTINGS_KEY = 'wordbook_settings';
 
-        const REVIEW_INTERVALS = {
-            1: 1 * 60 * 60 * 1000,
-            2: 12 * 60 * 60 * 1000,
-            3: 1 * 24 * 60 * 60 * 1000,
-            4: 2 * 24 * 60 * 60 * 1000,
-            5: 4 * 24 * 60 * 60 * 1000,
-            6: 7 * 24 * 60 * 60 * 1000,
-            7: 15 * 24 * 60 * 60 * 1000
-        };
+        const REVIEW_INTERVALS = [1, 12, 24, 48, 96, 168, 360].map(h => h * 3600000);
 
-        let currentMode = 'menu';
-        let reciteQueue = [];
-        let reciteIndex = 0;
-        let reviewQueue = [];
-        let reviewIndex = 0;
-
-        const backBtn = document.getElementById('backBtn');
-        const pageTitle = document.getElementById('pageTitle');
-        const mainMenu = document.getElementById('mainMenu');
-        const settingsBtn = document.getElementById('settingsBtn');
+        let reciteQueue = [], reciteIndex = 0;
+        let reviewQueue = [], reviewIndex = 0;
 
         document.getElementById('dailyCount').value = settings.dailyCount;
-
-        backBtn.addEventListener('click', () => switchMode('menu'));
+        document.getElementById('backBtn').addEventListener('click', () => switchMode('menu'));
 
         function openSettings() {
             document.getElementById('settingsModal').classList.add('open');
@@ -732,61 +579,27 @@
         }
 
         function switchMode(mode) {
-            currentMode = mode;
-
-            // Reset panels
             document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
-            mainMenu.style.display = 'none';
-
-            if (mode === 'menu') {
-                mainMenu.style.display = 'grid';
-                backBtn.style.display = 'none';
-                pageTitle.textContent = '摘词本';
-                settingsBtn.style.display = 'block';
-            } else {
-                backBtn.style.display = 'block';
-                settingsBtn.style.display = 'none';
-                const titles = { input: '录入', view: '总览', recite: '背诵', review: '复习' };
-                pageTitle.textContent = titles[mode];
-                document.getElementById(`${mode}Panel`).classList.add('active');
-
-                if (mode === 'view') renderViewList();
-                if (mode === 'recite') initRecite();
-                if (mode === 'review') initReview();
-            }
+            document.getElementById('mainMenu').style.display = mode === 'menu' ? 'grid' : 'none';
+            document.getElementById('backBtn').style.display = mode === 'menu' ? 'none' : 'block';
+            document.getElementById('settingsBtn').style.display = mode === 'menu' ? 'block' : 'none';
+            document.getElementById('pageTitle').textContent = mode === 'menu' ? '摘词本' : {input:'录入',view:'总览',recite:'背诵',review:'复习'}[mode];
+            if (mode !== 'menu') document.getElementById(mode + 'Panel').classList.add('active');
+            if (mode === 'view') renderViewList();
+            if (mode === 'recite') initRecite();
+            if (mode === 'review') initReview();
         }
 
         function addWord() {
-            const wordInput = document.getElementById('wordInput');
-            const transInput = document.getElementById('transInput');
-            const word = wordInput.value.trim();
-            const translation = transInput.value.trim();
-
-            if (!word || !translation) {
-                alert('请填写单词和中文释义');
-                return;
-            }
-
-            if (words.some(w => w.word.toLowerCase() === word.toLowerCase())) {
-                alert('该单词已存在');
-                return;
-            }
-
-            words.push({
-                id: Date.now(),
-                word: word,
-                translation: translation,
-                status: 'new',
-                reviewCount: 0,
-                lastReview: null,
-                nextReview: null,
-                createdAt: new Date().toISOString()
-            });
-
+            const word = document.getElementById('wordInput').value.trim();
+            const trans = document.getElementById('transInput').value.trim();
+            if (!word || !trans) return alert('请填写单词和释义');
+            if (words.some(w => w.word.toLowerCase() === word.toLowerCase())) return alert('单词已存在');
+            words.push({id:Date.now(), word, translation:trans, status:'new', reviewCount:0, lastReview:null, nextReview:null, createdAt:new Date().toISOString()});
             saveWords();
-            wordInput.value = '';
-            transInput.value = '';
-            wordInput.focus();
+            document.getElementById('wordInput').value = '';
+            document.getElementById('transInput').value = '';
+            document.getElementById('wordInput').focus();
             renderWordList();
         }
 
@@ -802,256 +615,112 @@
 
         function renderWordList() {
             const list = document.getElementById('wordList');
-            if (words.length === 0) {
-                list.innerHTML = '<div class="empty-state">暂无生词，添加一个吧 ✨</div>';
-                return;
-            }
-
-            list.innerHTML = words.slice().reverse().map(w => `
-                <div class="word-item">
-                    <div>
-                        <div class="word">${escapeHtml(w.word)}</div>
-                        <div class="translation">${escapeHtml(w.translation)}</div>
-                    </div>
-                    <button class="delete-btn" onclick="deleteWord(${w.id})">删除</button>
-                </div>
-            `).join('');
+            if (!words.length) { list.innerHTML = '<div class="empty-state">暂无生词</div>'; return; }
+            list.innerHTML = words.slice().reverse().map(w => `<div class="word-item"><div><div class="word">${w.word}</div><div class="translation">${w.translation}</div></div><button class="delete-btn" onclick="deleteWord(${w.id})">删除</button></div>`).join('');
         }
 
         function renderViewList() {
             const list = document.getElementById('viewList');
-            const filterStatus = document.getElementById('filterStatus').value;
-            const filterSort = document.getElementById('filterSort').value;
-
-            let filtered = words.filter(w => {
-                if (filterStatus === 'all') return true;
-                return w.status === filterStatus;
-            });
-
-            filtered.sort((a, b) => {
-                if (filterSort === 'alpha') return a.word.localeCompare(b.word);
-                if (filterSort === 'date-asc') return new Date(a.createdAt) - new Date(b.createdAt);
-                return new Date(b.createdAt) - new Date(a.createdAt);
-            });
-
-            if (filtered.length === 0) {
-                list.innerHTML = '<div class="empty-state">没有符合条件的单词</div>';
-                return;
-            }
-
-            list.innerHTML = filtered.map(w => `
-                <div class="view-item">
-                    <div class="word-info">
-                        <div class="word">${escapeHtml(w.word)}</div>
-                        <div class="translation">${escapeHtml(w.translation)}</div>
-                        <div class="meta">添加时间: ${formatDate(w.createdAt)}</div>
-                    </div>
-                    <span class="status ${w.status}">${getStatusText(w.status)}</span>
-                </div>
-            `).join('');
+            const fs = document.getElementById('filterStatus').value;
+            const ft = document.getElementById('filterSort').value;
+            let filtered = words.filter(w => fs === 'all' || w.status === fs);
+            filtered.sort((a, b) => ft === 'alpha' ? a.word.localeCompare(b.word) : ft === 'date-asc' ? new Date(a.createdAt) - new Date(b.createdAt) : new Date(b.createdAt) - new Date(a.createdAt));
+            if (!filtered.length) { list.innerHTML = '<div class="empty-state">没有单词</div>'; return; }
+            const statusText = {new:'未学习',learning:'学习中',mastered:'已掌握'};
+            const statusCss = {new:'new',learning:'learning',mastered:'mastered'};
+            list.innerHTML = filtered.map(w => `<div class="view-item"><div class="word-info"><div class="word">${w.word}</div><div class="translation">${w.translation}</div><div class="meta">${new Date(w.createdAt).toLocaleDateString()}</div></div><span class="status ${statusCss[w.status]}">${statusText[w.status]}</span></div>`).join('');
         }
 
-        function getStatusText(status) {
-            const map = { new: '未学习', learning: '学习中', mastered: '已掌握' };
-            return map[status] || status;
-        }
-
-        function formatDate(dateStr) {
-            const d = new Date(dateStr);
-            return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-        }
-
-        // Recite Mode
         function initRecite() {
-            const notMastered = words.filter(w => w.status !== 'mastered');
-            reciteQueue = notMastered.slice(0, settings.dailyCount);
+            reciteQueue = words.filter(w => w.status !== 'mastered').slice(0, settings.dailyCount);
             reciteIndex = 0;
             updateReciteProgress();
-
-            if (reciteQueue.length === 0) {
-                document.getElementById('reciteChinese').textContent = '🎉 恭喜！所有单词已背完';
-                document.getElementById('reciteInput').style.display = 'none';
-                document.getElementById('reciteNextBtn').style.display = 'none';
-                return;
-            }
-
+            if (!reciteQueue.length) { document.getElementById('reciteChinese').textContent = '已全部背完'; document.getElementById('reciteInput').style.display = 'none'; document.getElementById('reciteNextBtn').style.display = 'none'; return; }
             showReciteWord();
         }
 
         function showReciteWord() {
-            if (reciteIndex >= reciteQueue.length) {
-                document.getElementById('reciteChinese').textContent = '🎉 今日任务完成！';
-                document.getElementById('reciteInput').style.display = 'none';
-                document.getElementById('reciteResult').textContent = '';
-                document.getElementById('reciteAnswer').textContent = '';
-                document.getElementById('reciteNextBtn').style.display = 'none';
-                return;
-            }
-
-            const word = reciteQueue[reciteIndex];
-            document.getElementById('reciteChinese').textContent = word.translation;
+            if (reciteIndex >= reciteQueue.length) { document.getElementById('reciteChinese').textContent = '完成'; document.getElementById('reciteInput').style.display = 'none'; document.getElementById('reciteResult').textContent = ''; document.getElementById('reciteAnswer').textContent = ''; document.getElementById('reciteNextBtn').style.display = 'none'; return; }
+            const w = reciteQueue[reciteIndex];
+            document.getElementById('reciteChinese').textContent = w.translation;
             document.getElementById('reciteInput').value = '';
             document.getElementById('reciteInput').style.display = 'block';
-            document.getElementById('reciteInput').classList.remove('correct', 'incorrect');
+            document.getElementById('reciteInput').className = 'recite-input';
             document.getElementById('reciteResult').textContent = '';
-            document.getElementById('reciteResult').className = 'recite-result';
             document.getElementById('reciteAnswer').textContent = '';
             document.getElementById('reciteNextBtn').style.display = 'none';
-
             setTimeout(() => document.getElementById('reciteInput').focus(), 50);
         }
 
         function checkRecite(e) {
             if (e.key !== 'Enter') return;
-
-            const input = document.getElementById('reciteInput');
-            const word = reciteQueue[reciteIndex];
-            const userAnswer = input.value.trim();
-            if (!userAnswer) return;
-
-            const isCorrect = userAnswer.toLowerCase() === word.word.toLowerCase();
-            input.classList.add(isCorrect ? 'correct' : 'incorrect');
-
-            const result = document.getElementById('reciteResult');
-            result.textContent = isCorrect ? '✓ 正确！' : '✗ 错误';
-            result.className = 'recite-result ' + (isCorrect ? 'correct' : 'incorrect');
-            document.getElementById('reciteAnswer').textContent = word.word;
-
-            if (isCorrect) {
-                word.status = 'learning';
-                word.reviewCount++;
-                word.lastReview = new Date().toISOString();
-                word.nextReview = new Date(Date.now() + (REVIEW_INTERVALS[word.reviewCount] || REVIEW_INTERVALS[7])).toISOString();
-                if (word.reviewCount >= 4) word.status = 'mastered';
-            }
-
+            const w = reciteQueue[reciteIndex];
+            const ans = document.getElementById('reciteInput').value.trim();
+            if (!ans) return;
+            const ok = ans.toLowerCase() === w.word.toLowerCase();
+            document.getElementById('reciteInput').classList.add(ok ? 'correct' : 'incorrect');
+            document.getElementById('reciteResult').textContent = ok ? '✓' : '✗ ' + w.word;
+            document.getElementById('reciteResult').className = 'recite-result ' + (ok ? 'correct' : 'incorrect');
+            document.getElementById('reciteAnswer').textContent = ok ? '' : '答案: ' + w.word;
+            if (ok) { w.status = 'learning'; w.reviewCount++; w.lastReview = new Date().toISOString(); w.nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(w.reviewCount, 6)]).toISOString(); if (w.reviewCount >= 4) w.status = 'mastered'; }
             saveWords();
             updateReciteProgress();
             document.getElementById('reciteNextBtn').style.display = 'block';
         }
 
-        function nextRecite() {
-            reciteIndex++;
-            updateReciteProgress();
-            showReciteWord();
-        }
+        function nextRecite() { reciteIndex++; updateReciteProgress(); showReciteWord(); }
+        function updateReciteProgress() { const t = reciteQueue.length, c = reciteIndex; document.getElementById('reciteCount').textContent = c + '/' + t; document.getElementById('reciteRemaining').textContent = '剩余 ' + Math.max(0, t-c); document.getElementById('reciteProgress').style.width = t ? (c/t*100) + '%' : '0%'; }
 
-        function updateReciteProgress() {
-            const total = reciteQueue.length;
-            const current = reciteIndex;
-            document.getElementById('reciteCount').textContent = `${current}/${total}`;
-            document.getElementById('reciteRemaining').textContent = `剩余: ${Math.max(0, total - current)}`;
-            document.getElementById('reciteProgress').style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
-        }
-
-        // Review Mode
         function initReview() {
-            const now = new Date().getTime();
-            const dueWords = words.filter(w => {
-                if (w.status === 'new') return false;
-                if (!w.nextReview) return true;
-                return new Date(w.nextReview).getTime() <= now;
-            });
-
-            reviewQueue = dueWords;
+            const now = Date.now();
+            reviewQueue = words.filter(w => w.status !== 'new' && (!w.nextReview || new Date(w.nextReview).getTime() <= now));
             reviewIndex = 0;
-
-            const totalCount = words.filter(w => w.status !== 'new').length;
-            document.getElementById('reviewDue').textContent = dueWords.length;
-            document.getElementById('reviewTotal').textContent = totalCount;
+            document.getElementById('reviewDue').textContent = reviewQueue.length;
+            document.getElementById('reviewTotal').textContent = words.filter(w => w.status !== 'new').length;
             updateReviewProgress();
-
-            if (reviewQueue.length === 0) {
-                document.getElementById('reviewChinese').textContent = '✨ 暂无需要复习的单词';
-                document.getElementById('reviewInput').style.display = 'none';
-                document.getElementById('reviewNextBtn').style.display = 'none';
-                return;
-            }
-
+            if (!reviewQueue.length) { document.getElementById('reviewChinese').textContent = '无需复习'; document.getElementById('reviewInput').style.display = 'none'; document.getElementById('reviewNextBtn').style.display = 'none'; return; }
             showReviewWord();
         }
 
         function showReviewWord() {
-            if (reviewIndex >= reviewQueue.length) {
-                document.getElementById('reviewChinese').textContent = '🎉 复习完成！';
-                document.getElementById('reviewInput').style.display = 'none';
-                document.getElementById('reviewResult').textContent = '';
-                document.getElementById('reviewAnswer').textContent = '';
-                document.getElementById('reviewNextBtn').style.display = 'none';
-                return;
-            }
-
-            const word = reviewQueue[reviewIndex];
-            document.getElementById('reviewChinese').textContent = word.translation;
+            if (reviewIndex >= reviewQueue.length) { document.getElementById('reviewChinese').textContent = '完成'; document.getElementById('reviewInput').style.display = 'none'; document.getElementById('reviewResult').textContent = ''; document.getElementById('reviewAnswer').textContent = ''; document.getElementById('reviewNextBtn').style.display = 'none'; return; }
+            const w = reviewQueue[reviewIndex];
+            document.getElementById('reviewChinese').textContent = w.translation;
             document.getElementById('reviewInput').value = '';
             document.getElementById('reviewInput').style.display = 'block';
-            document.getElementById('reviewInput').classList.remove('correct', 'incorrect');
+            document.getElementById('reviewInput').className = 'recite-input';
             document.getElementById('reviewResult').textContent = '';
-            document.getElementById('reviewResult').className = 'recite-result';
             document.getElementById('reviewAnswer').textContent = '';
             document.getElementById('reviewNextBtn').style.display = 'none';
-
             setTimeout(() => document.getElementById('reviewInput').focus(), 50);
         }
 
         function checkReview(e) {
             if (e.key !== 'Enter') return;
-
-            const input = document.getElementById('reviewInput');
-            const word = reviewQueue[reviewIndex];
-            const userAnswer = input.value.trim();
-            if (!userAnswer) return;
-
-            const isCorrect = userAnswer.toLowerCase() === word.word.toLowerCase();
-            input.classList.add(isCorrect ? 'correct' : 'incorrect');
-
-            const result = document.getElementById('reviewResult');
-            result.textContent = isCorrect ? '✓ 正确！' : '✗ 错误';
-            result.className = 'recite-result ' + (isCorrect ? 'correct' : 'incorrect');
-            document.getElementById('reviewAnswer').textContent = word.word;
-
-            word.lastReview = new Date().toISOString();
-            if (isCorrect) {
-                word.reviewCount++;
-                word.nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(word.reviewCount, 7)]).toISOString();
-                if (word.reviewCount >= 4) word.status = 'mastered';
-            } else {
-                word.reviewCount = 0;
-                word.nextReview = new Date(Date.now() + REVIEW_INTERVALS[1]).toISOString();
-                word.status = 'learning';
-            }
-
+            const w = reviewQueue[reviewIndex];
+            const ans = document.getElementById('reviewInput').value.trim();
+            if (!ans) return;
+            const ok = ans.toLowerCase() === w.word.toLowerCase();
+            document.getElementById('reviewInput').classList.add(ok ? 'correct' : 'incorrect');
+            document.getElementById('reviewResult').textContent = ok ? '✓' : '✗ ' + w.word;
+            document.getElementById('reviewResult').className = 'recite-result ' + (ok ? 'correct' : 'incorrect');
+            document.getElementById('reviewAnswer').textContent = ok ? '' : '答案: ' + w.word;
+            w.lastReview = new Date().toISOString();
+            if (ok) { w.reviewCount++; w.nextReview = new Date(Date.now() + REVIEW_INTERVALS[Math.min(w.reviewCount, 6)]).toISOString(); if (w.reviewCount >= 4) w.status = 'mastered'; }
+            else { w.reviewCount = 0; w.nextReview = new Date(Date.now() + REVIEW_INTERVALS[0]).toISOString(); w.status = 'learning'; }
             saveWords();
             updateReviewProgress();
             initReview();
             document.getElementById('reviewNextBtn').style.display = 'block';
         }
 
-        function nextReview() {
-            reviewIndex++;
-            updateReviewProgress();
-            showReviewWord();
-        }
-
-        function updateReviewProgress() {
-            const total = reviewQueue.length;
-            const current = reviewIndex;
-            document.getElementById('reviewCount').textContent = `${current}/${total}`;
-            document.getElementById('reviewRemaining').textContent = `剩余: ${Math.max(0, total - current)}`;
-            document.getElementById('reviewProgress').style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
-        }
+        function nextReview() { reviewIndex++; updateReviewProgress(); showReviewWord(); }
+        function updateReviewProgress() { const t = reviewQueue.length, c = reviewIndex; document.getElementById('reviewCount').textContent = c + '/' + t; document.getElementById('reviewRemaining').textContent = '剩余 ' + Math.max(0, t-c); document.getElementById('reviewProgress').style.width = t ? (c/t*100) + '%' : '0%'; }
 
         document.getElementById('reciteInput').addEventListener('keydown', checkRecite);
         document.getElementById('reviewInput').addEventListener('keydown', checkReview);
         document.getElementById('filterStatus').addEventListener('change', renderViewList);
         document.getElementById('filterSort').addEventListener('change', renderViewList);
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
     </script>
 </body>
 </html>
