@@ -625,6 +625,12 @@
                 await updateWordAPI(w.id, { status: newStatus, review_count: newCount, last_review: new Date().toISOString(), next_review: nextReview });
                 w.status = newStatus;
                 w.review_count = newCount;
+                // 同时更新 words 数组中对应单词的状态
+                const wordInList = words.find(x => x.id === w.id);
+                if (wordInList) {
+                    wordInList.status = newStatus;
+                    wordInList.review_count = newCount;
+                }
             }
 
             updateReciteProgress();
@@ -677,10 +683,20 @@
                 await updateWordAPI(w.id, { status: newStatus, review_count: newCount, last_review: lastReview, next_review: nextReview });
                 w.status = newStatus;
                 w.review_count = newCount;
+                const wordInList = words.find(x => x.id === w.id);
+                if (wordInList) {
+                    wordInList.status = newStatus;
+                    wordInList.review_count = newCount;
+                }
             } else {
                 await updateWordAPI(w.id, { status: 'learning', review_count: 0, last_review: lastReview, next_review: new Date(Date.now() + REVIEW_INTERVALS[0]).toISOString() });
                 w.status = 'learning';
                 w.review_count = 0;
+                const wordInList = words.find(x => x.id === w.id);
+                if (wordInList) {
+                    wordInList.status = 'learning';
+                    wordInList.review_count = 0;
+                }
             }
 
             updateReviewProgress();
