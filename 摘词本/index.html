@@ -522,6 +522,9 @@
                 await loadModeData(mode);
             }
         }
+
+        async function loadModeData(mode) {
+            await fetchWords();
             if (mode === 'view') renderViewList();
             if (mode === 'recite') initRecite();
             if (mode === 'review') initReview();
