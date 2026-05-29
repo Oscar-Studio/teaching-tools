@@ -586,7 +586,7 @@
         }
 
         function initRecite() {
-            reciteQueue = words.filter(w => w.status !== 'mastered').slice(0, settings.dailyCount);
+            reciteQueue = words.filter(w => w.status === 'new').slice(0, settings.dailyCount);
             reciteIndex = 0;
             updateReciteProgress();
             if (!reciteQueue.length) { document.getElementById('reciteChinese').textContent = '已全部背完'; document.getElementById('reciteInput').style.display = 'none'; document.getElementById('reciteNextBtn').style.display = 'none'; return; }
