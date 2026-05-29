@@ -589,7 +589,8 @@
                 const rc = w.review_count || 0;
                 const progress = w.status === 'mastered' ? 100 : (w.status === 'learning' ? Math.min(rc / 5, 1) * 100 : 0);
                 const progressHtml = w.status !== 'new' ? `<div class="mastery-bar"><div class="mastery-fill" style="width:${progress}%"></div></div>` : '';
-                return `<div class="view-item"><div class="word-info"><div class="word">${w.word}</div><div class="translation">${w.translation}</div>${progressHtml}</div>${w.status !== 'new' ? `<span class="status ${statusCss[w.status]}">${statusText[w.status]}</span>` : ''}</div>`;
+                const statusHtml = w.status === 'mastered' ? `<span class="status ${statusCss[w.status]}">${statusText[w.status]}</span>` : '';
+                return `<div class="view-item"><div class="word-info"><div class="word">${w.word}</div><div class="translation">${w.translation}</div>${progressHtml}</div>${statusHtml}</div>`;
             }).join('');
         }
 
