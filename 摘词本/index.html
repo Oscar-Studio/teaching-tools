@@ -86,21 +86,32 @@
         .mode-card {
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 25px 20px;
+            border-radius: 16px;
+            padding: 35px 25px;
             cursor: pointer;
             text-align: center;
             transition: all 0.3s;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .mode-card:nth-child(2) { animation-delay: 0.5s; }
+        .mode-card:nth-child(3) { animation-delay: 1s; }
+        .mode-card:nth-child(4) { animation-delay: 1.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
         }
 
         .mode-card:hover {
             background: rgba(255, 255, 255, 0.08);
             border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
+            transform: translateY(-8px);
+            animation: none;
         }
 
-        .mode-card .icon { font-size: 2rem; margin-bottom: 10px; }
-        .mode-card .name { font-size: 0.95rem; font-weight: 500; }
+        .mode-card .icon { font-size: 2.5rem; margin-bottom: 14px; }
+        .mode-card .name { font-size: 1.1rem; font-weight: 500; }
 
         .mode-panel { display: none; padding: 80px 20px 20px; max-width: 500px; margin: 0 auto; }
         .mode-panel.active { display: block; }
