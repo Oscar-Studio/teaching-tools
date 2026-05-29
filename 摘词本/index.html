@@ -570,7 +570,7 @@
             let filtered = words.filter(w => {
                 if (fs === 'all') return true;
                 if (fs === 'new') return w.status === 'new';
-                if (fs === 'learning') return w.status !== 'new';
+                if (fs === 'learning') return w.status === 'learning';
                 if (fs === 'mastered') return w.status === 'mastered';
                 return true;
             });
