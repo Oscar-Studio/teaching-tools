@@ -54,6 +54,7 @@
         }
 
         .demo-area {
+            position: relative;
             background: #000;
             border-radius: 8px;
             box-shadow: var(--card-shadow);
@@ -65,6 +66,14 @@
         canvas {
             display: block;
             background-color: #050505;
+        }
+
+        .lens-svg {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
         }
 
         .control-panel {
@@ -214,6 +223,21 @@
 
     <div class="demo-area">
         <canvas id="lensCanvas" width="1000" height="400"></canvas>
+        <svg class="lens-svg" width="60" height="200" viewBox="0 0 60 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="lensGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#4da6ff" stop-opacity="0.45" />
+                    <stop offset="50%" stop-color="#c8e6ff" stop-opacity="0.25" />
+                    <stop offset="100%" stop-color="#4da6ff" stop-opacity="0.45" />
+                </linearGradient>
+            </defs>
+            <path d="M 30,2 A 200,200 0 0 1 30,198 A 200,200 0 0 1 30,2 Z"
+                  fill="url(#lensGradient)"
+                  stroke="#4da6ff"
+                  stroke-width="2"
+                  stroke-linejoin="round" />
+            <circle cx="30" cy="100" r="5" fill="#ffcc00" />
+        </svg>
     </div>
 
     <div class="control-panel">
@@ -284,12 +308,13 @@
         <p>放大率公式：m = v/u = h'/h</p>
 
         <h3>光线追踪原理</h3>
-        <p>在演示中，我们追踪两条特殊光线：</p>
+        <p>在演示中，我们追踪三条特殊光线：</p>
         <ol>
             <li>平行于主光轴的光线，经过凸透镜后通过焦点</li>
             <li>通过光心的光线，传播方向不变</li>
+            <li>经过焦点的光线，折射后平行于主光轴</li>
         </ol>
-        <p>这两条光线的交点即为物体顶点的像点。</p>
+        <p>这三条光线的交点即为物体顶点的像点。</p>
     </div>
 
     <script>
@@ -437,28 +462,6 @@
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // 绘制凸透镜
-            const lensWidth = 20;
-            const lensHeight = 200;
-            ctx.beginPath();
-            ctx.moveTo(centerX - lensWidth / 2, centerY - lensHeight / 2);
-            ctx.lineTo(centerX + lensWidth / 2, centerY - lensHeight / 2);
-            ctx.arcTo(centerX + lensWidth / 2 + 30, centerY, centerX + lensWidth / 2, centerY + lensHeight / 2, 100);
-            ctx.lineTo(centerX - lensWidth / 2, centerY + lensHeight / 2);
-            ctx.arcTo(centerX - lensWidth / 2 - 30, centerY, centerX - lensWidth / 2, centerY - lensHeight / 2, 100);
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(200, 230, 255, 0.3)';
-            ctx.fill();
-            ctx.strokeStyle = '#4da6ff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // 绘制光心
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffcc00';
-            ctx.fill();
-
             // 绘制焦点 F 和 2F
             const f = focalLength;
             const scale = 2; // 缩放因子，使演示更清晰
@@ -539,6 +542,16 @@
             ctx.setLineDash([]);
             ctx.stroke();
 
+            // 绘制光线3：经过左侧焦点，折射后平行于主光轴
+            ctx.beginPath();
+            ctx.moveTo(objectX, objectTopY);
+            ctx.lineTo(centerX, imageBottomY);
+            ctx.lineTo(imageX, imageBottomY);
+            ctx.strokeStyle = 'rgba(200, 100, 255, 0.75)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([]);
+            ctx.stroke();
+
             // 绘制虚线辅助线
             ctx.beginPath();
             ctx.moveTo(objectX, objectTopY);
@@ -557,6 +570,7 @@
             ctx.fillText('像', imageX - 10, centerY + 30);
             ctx.fillText('光线1: 平行光→过焦点', 50, 30);
             ctx.fillText('光线2: 过光心→方向不变', 50, 50);
+            ctx.fillText('光线3: 过焦点→平行射出', 50, 70);
 
             ctx.beginPath();
             ctx.moveTo(40, 25);
@@ -569,6 +583,13 @@
             ctx.moveTo(40, 45);
             ctx.lineTo(80, 45);
             ctx.strokeStyle = 'rgba(50, 150, 255, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(40, 65);
+            ctx.lineTo(80, 65);
+            ctx.strokeStyle = 'rgba(200, 100, 255, 0.75)';
             ctx.lineWidth = 2;
             ctx.stroke();
         }
