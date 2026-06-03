@@ -325,7 +325,7 @@
                     <div id="boxPlot" class="chart-box"></div>
                 </div>
                 <div class="card">
-                    <h2>条形图 (各组平均数对比)</h2>
+                    <h2>频数直方图 (各组分布对比)</h2>
                     <div id="barChart" class="chart-box"></div>
                 </div>
             </div>
@@ -577,34 +577,45 @@
                 console.error("Plotly BoxPlot failed", e);
             }
 
-            // 2. 条形图配置 (显示平均值)
-            const means = groups.map(g => {
-                const sum = g.data.reduce((a, b) => a + b, 0);
-                return sum / g.data.length;
-            });
-            const names = groups.map(g => g.name);
+            // 2. 频数直方图配置
+            const allData = groups.flatMap(g => g.data);
+            const globalMin = Math.min(...allData);
+            const globalMax = Math.max(...allData);
+            const range = globalMax - globalMin;
+            const binCount = Math.min(15, Math.max(5, Math.ceil(Math.sqrt(allData.length))));
+            const binSize = range > 0 ? range / binCount : 1;
 
-            const barData = [{
-                x: names,
-                y: means,
-                type: 'bar',
-                text: means.map(m => m.toFixed(2)),
-                textposition: 'auto',
+            const palette = ['#2A5CAA', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#ecf0f1'];
+
+            const histData = groups.map((g, i) => ({
+                x: g.data,
+                type: 'histogram',
+                name: g.name,
                 marker: {
-                    color: '#2A5CAA'
+                    color: palette[i % palette.length],
+                    line: { color: '#0d1117', width: 1 }
+                },
+                opacity: 0.7,
+                xbins: {
+                    start: globalMin,
+                    end: globalMax + binSize,
+                    size: binSize
                 }
-            }];
+            }));
 
-            const barLayout = {
+            const histLayout = {
                 ...layoutDefaults,
+                barmode: 'overlay',
                 margin: { t: 30, b: 40, l: 50, r: 20 },
-                yaxis: { ...layoutDefaults.yaxis, title: '平均值' }
+                xaxis: { ...layoutDefaults.xaxis, title: '数值' },
+                yaxis: { ...layoutDefaults.yaxis, title: '频数' },
+                legend: { x: 1, y: 1, xanchor: 'right', yanchor: 'top', bgcolor: 'rgba(13,17,23,0.6)', bordercolor: '#30363d', borderwidth: 1 }
             };
 
             try {
-                Plotly.newPlot('barChart', barData, barLayout, { responsive: true });
+                Plotly.newPlot('barChart', histData, histLayout, { responsive: true });
             } catch (e) {
-                console.error("Plotly BarChart failed", e);
+                console.error("Plotly Histogram failed", e);
                 renderCanvasCharts(groups);
             }
         }
@@ -741,17 +752,35 @@
             const chartW = width - padding.l - padding.r;
             const chartH = height - padding.t - padding.b;
 
-            const means = groups.map(g => {
-                const sum = g.data.reduce((a, b) => a + b, 0);
-                return sum / g.data.length;
+            const allData = groups.flatMap(g => g.data);
+            if (allData.length === 0) return;
+            const globalMin = Math.min(...allData);
+            const globalMax = Math.max(...allData);
+            const range = globalMax - globalMin || 1;
+            const binCount = Math.min(15, Math.max(5, Math.ceil(Math.sqrt(allData.length))));
+            const binSize = range / binCount;
+
+            // 分箱
+            const binned = groups.map(g => {
+                const bins = new Array(binCount).fill(0);
+                g.data.forEach(val => {
+                    let idx = Math.floor((val - globalMin) / binSize);
+                    if (idx >= binCount) idx = binCount - 1;
+                    if (idx < 0) idx = 0;
+                    bins[idx]++;
+                });
+                return bins;
             });
 
-            let maxMean = Math.max(...means, 0);
-            let yMax = maxMean * 1.2 || 1;
+            const maxFreq = Math.max(...binned.flat(), 1);
+            const yMax = maxFreq * 1.2;
 
+            const getX = (binIdx) => padding.l + (binIdx / binCount) * chartW;
             const getY = (val) => padding.t + chartH - (val / yMax) * chartH;
 
-            // Draw axes
+            const palette = ['#2A5CAA', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#ecf0f1'];
+
+            // 坐标轴
             ctx.strokeStyle = '#30363d';
             ctx.beginPath();
             ctx.moveTo(padding.l, padding.t);
@@ -759,46 +788,61 @@
             ctx.lineTo(padding.l + chartW, padding.t + chartH);
             ctx.stroke();
 
-            // Y labels
+            // Y 标签
             ctx.fillStyle = '#8b949e';
             ctx.font = '12px Segoe UI';
             ctx.textAlign = 'right';
             for (let i = 0; i <= 5; i++) {
                 const val = (yMax * i) / 5;
                 const y = getY(val);
-                ctx.fillText(formatNum(val), padding.l - 10, y + 4);
-
+                ctx.fillText(Math.round(val), padding.l - 10, y + 4);
                 ctx.beginPath();
                 ctx.moveTo(padding.l, y);
                 ctx.lineTo(padding.l + chartW, y);
                 ctx.stroke();
             }
 
-            // Bars
-            const groupW = chartW / groups.length;
+            // X 标签
+            ctx.textAlign = 'center';
+            ctx.fillText(formatNum(globalMin), getX(0), padding.t + chartH + 20);
+            if (binCount > 2) {
+                ctx.fillText(formatNum(globalMin + range / 2), getX(binCount / 2), padding.t + chartH + 20);
+            }
+            ctx.fillText(formatNum(globalMax), getX(binCount), padding.t + chartH + 20);
+
+            // 直方图柱
+            const barW = chartW / binCount;
+            ctx.globalAlpha = 0.6;
+            binned.forEach((bins, gIdx) => {
+                ctx.fillStyle = palette[gIdx % palette.length];
+                bins.forEach((freq, bIdx) => {
+                    if (freq > 0) {
+                        const x = getX(bIdx);
+                        const y = getY(freq);
+                        ctx.fillRect(x, y, barW, padding.t + chartH - y);
+                    }
+                });
+            });
+            ctx.globalAlpha = 1.0;
+
+            // 图例
+            ctx.font = '12px Segoe UI';
+            ctx.textAlign = 'left';
+            const legendX = padding.l + 10;
+            const legendY = padding.t + 10;
             groups.forEach((g, i) => {
-                const centerX = padding.l + (i + 0.5) * groupW;
-                const barW = Math.min(groupW * 0.7, 60);
-                const val = means[i];
-                const y = getY(val);
-
-                ctx.fillStyle = '#2A5CAA';
-                ctx.fillRect(centerX - barW / 2, y, barW, padding.t + chartH - y);
-
-                // Label
+                const y = legendY + i * 18;
+                ctx.fillStyle = palette[i % palette.length];
+                ctx.fillRect(legendX, y, 12, 12);
                 ctx.fillStyle = '#8b949e';
-                ctx.textAlign = 'center';
-                ctx.fillText(g.name, centerX, padding.t + chartH + 20);
-
-                // Value on top
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText(val.toFixed(2), centerX, y - 5);
+                ctx.fillText(g.name, legendX + 18, y + 10);
             });
 
-            // Title
+            // 标题
             ctx.fillStyle = '#00E5FF';
             ctx.font = 'bold 14px Segoe UI';
-            ctx.fillText('平均数对比 (Canvas Fallback)', width / 2, 25);
+            ctx.textAlign = 'center';
+            ctx.fillText('频数直方图 (Canvas Fallback)', width / 2, 25);
         }
     </script>
     <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
