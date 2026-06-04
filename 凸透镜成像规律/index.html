@@ -590,25 +590,27 @@
                 ctx.stroke();
             }
 
-            // 光线3：经过左侧焦点
-            ctx.strokeStyle = 'rgba(200, 100, 255, 0.75)';
-            ctx.setLineDash([]);
-            ctx.beginPath();
-            ctx.moveTo(objectX, objectTopY);
-            ctx.lineTo(centerX, imageBottomY);
-            ctx.stroke();
-            if (finiteImage) {
-                ctx.setLineDash(backDash);
+            // 光线3：经过左侧焦点（虚像时不画此光线）
+            if (!isVirtual) {
+                ctx.strokeStyle = 'rgba(200, 100, 255, 0.75)';
+                ctx.setLineDash([]);
                 ctx.beginPath();
-                ctx.moveTo(centerX, imageBottomY);
-                ctx.lineTo(imageX, imageBottomY);
+                ctx.moveTo(objectX, objectTopY);
+                ctx.lineTo(centerX, imageBottomY);
                 ctx.stroke();
-            } else {
-                ctx.setLineDash(infDash);
-                ctx.beginPath();
-                ctx.moveTo(centerX, imageBottomY);
-                ctx.lineTo(rightEdge, imageBottomY);
-                ctx.stroke();
+                if (finiteImage) {
+                    ctx.setLineDash(backDash);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, imageBottomY);
+                    ctx.lineTo(imageX, imageBottomY);
+                    ctx.stroke();
+                } else {
+                    ctx.setLineDash(infDash);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, imageBottomY);
+                    ctx.lineTo(rightEdge, imageBottomY);
+                    ctx.stroke();
+                }
             }
             ctx.setLineDash([]);
 
