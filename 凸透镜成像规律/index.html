@@ -254,8 +254,8 @@
             <div class="control-item">
                 <label for="objectDistance">物距 (u)</label>
                 <div class="slider-container">
-                    <input type="range" id="objectDistance" min="101" max="400" value="200">
-                    <input type="number" id="objectDistanceValue" min="101" max="400" value="200">
+                    <input type="range" id="objectDistance" min="30" max="400" value="200">
+                    <input type="number" id="objectDistanceValue" min="30" max="400" value="200">
                 </div>
             </div>
 
@@ -292,7 +292,7 @@
 
     <div class="explanation">
         <h3>凸透镜成像原理</h3>
-        <p>凸透镜成像遵循光的折射定律。当物体位于凸透镜的焦点以外时，会在透镜的另一侧形成倒立的实像。</p>
+        <p>凸透镜成像遵循光的折射定律。当物体位于凸透镜的焦点以外时，会在透镜的另一侧形成倒立的实像；当物体位于焦点以内时，会在物体同侧形成正立的虚像。</p>
 
         <div class="formula">
             1/f = 1/u + 1/v
@@ -394,17 +394,10 @@
             draw();
         });
 
-        // 更新最小物距（确保物距>焦距）
+        // 固定最小物距 30（支持 u<f 虚像情况）
         function updateMinObjectDistance() {
-            const minDistance = focalLength + 1;
-            objectDistanceSlider.min = minDistance;
-            objectDistanceValue.min = minDistance;
-
-            if (objectDistance < minDistance) {
-                objectDistance = minDistance;
-                objectDistanceSlider.value = objectDistance;
-                objectDistanceValue.value = objectDistance;
-            }
+            objectDistanceSlider.min = 30;
+            objectDistanceValue.min = 30;
         }
 
         // 计算像距和像高
@@ -420,19 +413,22 @@
 
             // 确定成像性质
             let imageType = "";
-            if (objectDistance > 2 * focalLength) {
+            if (objectDistance < focalLength) {
+                imageType = "正立放大虚像";
+            } else if (objectDistance > 2 * focalLength) {
                 imageType = "倒立缩小实像";
-            } else if (objectDistance > focalLength && objectDistance < 2 * focalLength) {
-                imageType = "倒立放大实像";
             } else if (objectDistance === 2 * focalLength) {
                 imageType = "倒立等大实像";
+            } else {
+                imageType = "倒立放大实像";
             }
 
             return {
                 imageDistance,
                 imageHeight,
                 magnification: Math.abs(magnification),
-                imageType
+                imageType,
+                isVirtual: imageDistance < 0
             };
         }
 
@@ -442,7 +438,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // 计算像的性质
-            const { imageDistance, imageHeight, magnification, imageType } = calculateImageProperties();
+            const { imageDistance, imageHeight, magnification, imageType, isVirtual } = calculateImageProperties();
 
             // 更新信息显示
             imageDistanceDisplay.textContent = imageDistance.toFixed(2);
@@ -507,50 +503,114 @@
             ctx.lineWidth = 3;
             ctx.stroke();
 
-            // 绘制像（向下的箭头）
-            const imageX = centerX + imageDistance * scale;
+            // 绘制像（虚像用虚线 + 正立箭头；u=f 时标记为无穷远）
+            const finiteImage = isFinite(imageDistance) && isFinite(imageHeight);
             const imageTopY = centerY;
-            const imageBottomY = centerY - imageHeight;
+            let imageX, imageBottomY;
+            if (finiteImage) {
+                imageX = centerX + imageDistance * scale;
+                imageX = Math.max(60, Math.min(canvas.width - 60, imageX));
+                imageBottomY = centerY - imageHeight;
+                ctx.setLineDash(isVirtual ? [5, 5] : []);
+                ctx.beginPath();
+                ctx.moveTo(imageX, imageTopY);
+                ctx.lineTo(imageX, imageBottomY);
+                if (isVirtual) {
+                    // 正立箭头（向下）
+                    ctx.lineTo(imageX - 10, imageBottomY + 15);
+                    ctx.moveTo(imageX, imageBottomY);
+                    ctx.lineTo(imageX + 10, imageBottomY + 15);
+                } else {
+                    // 倒立箭头（向上）
+                    ctx.lineTo(imageX - 10, imageBottomY - 15);
+                    ctx.moveTo(imageX, imageBottomY);
+                    ctx.lineTo(imageX + 10, imageBottomY - 15);
+                }
+                ctx.strokeStyle = '#ff9500';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.setLineDash([]);
+            } else {
+                // u ≈ f：不成像
+                imageX = canvas.width - 60;
+                imageBottomY = centerY;
+                ctx.fillStyle = '#ff9500';
+                ctx.font = '14px Arial';
+                ctx.fillText('像在无穷远', canvas.width - 130, 70);
+            }
 
-            ctx.beginPath();
-            ctx.moveTo(imageX, imageTopY);
-            ctx.lineTo(imageX, imageBottomY);
-            ctx.lineTo(imageX - 10, imageBottomY - 15);
-            ctx.moveTo(imageX, imageBottomY);
-            ctx.lineTo(imageX + 10, imageBottomY - 15);
-            ctx.strokeStyle = '#ff9500';
-            ctx.lineWidth = 3;
-            ctx.stroke();
+            // 绘制三条光线：凸透镜前实线；虚像时凸透镜后虚线；u=f 时凸透镜后画到画布边缘
+            ctx.lineWidth = 2;
+            const backDash = isVirtual ? [5, 5] : [];
+            const infDash = [8, 4];
+            const rightEdge = canvas.width - 50;
 
-            // 绘制光线1：平行于主光轴，经过焦点
+            // 光线1：平行于主光轴
+            ctx.strokeStyle = 'rgba(255, 50, 50, 0.7)';
+            ctx.setLineDash([]);
             ctx.beginPath();
             ctx.moveTo(objectX, objectTopY);
             ctx.lineTo(centerX, objectTopY);
-            ctx.lineTo(imageX, imageBottomY);
-            ctx.strokeStyle = 'rgba(255, 50, 50, 0.7)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([]);
             ctx.stroke();
+            if (finiteImage) {
+                ctx.setLineDash(backDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, objectTopY);
+                ctx.lineTo(imageX, imageBottomY);
+                ctx.stroke();
+            } else {
+                ctx.setLineDash(infDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, objectTopY);
+                ctx.lineTo(rightEdge, objectTopY);
+                ctx.stroke();
+            }
 
-            // 绘制光线2：经过光心，方向不变
+            // 光线2：经过光心
+            ctx.strokeStyle = 'rgba(50, 150, 255, 0.7)';
+            ctx.setLineDash([]);
             ctx.beginPath();
             ctx.moveTo(objectX, objectTopY);
             ctx.lineTo(centerX, centerY);
-            ctx.lineTo(imageX, imageBottomY);
-            ctx.strokeStyle = 'rgba(50, 150, 255, 0.7)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([]);
             ctx.stroke();
+            if (finiteImage) {
+                ctx.setLineDash(backDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(imageX, imageBottomY);
+                ctx.stroke();
+            } else {
+                // 沿原方向延伸到画布右边缘
+                const slope = (centerY - objectTopY) / (centerX - objectX);
+                const endY = centerY + slope * (rightEdge - centerX);
+                ctx.setLineDash(infDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(rightEdge, endY);
+                ctx.stroke();
+            }
 
-            // 绘制光线3：经过左侧焦点，折射后平行于主光轴
+            // 光线3：经过左侧焦点
+            ctx.strokeStyle = 'rgba(200, 100, 255, 0.75)';
+            ctx.setLineDash([]);
             ctx.beginPath();
             ctx.moveTo(objectX, objectTopY);
             ctx.lineTo(centerX, imageBottomY);
-            ctx.lineTo(imageX, imageBottomY);
-            ctx.strokeStyle = 'rgba(200, 100, 255, 0.75)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([]);
             ctx.stroke();
+            if (finiteImage) {
+                ctx.setLineDash(backDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, imageBottomY);
+                ctx.lineTo(imageX, imageBottomY);
+                ctx.stroke();
+            } else {
+                ctx.setLineDash(infDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, imageBottomY);
+                ctx.lineTo(rightEdge, imageBottomY);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
 
             // 绘制虚线辅助线
             ctx.beginPath();
