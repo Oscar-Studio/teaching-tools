@@ -553,6 +553,17 @@
             ctx.lineTo(centerX, objectTopY);
             ctx.stroke();
             if (finiteImage) {
+                if (isVirtual) {
+                    // 实际发散光路（实线）：指向右焦点方向
+                    const t1 = (rightEdge - centerX) / (f * scale);
+                    const actualEndY1 = objectTopY + t1 * (centerY - objectTopY);
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, objectTopY);
+                    ctx.lineTo(rightEdge, actualEndY1);
+                    ctx.stroke();
+                }
+                // 反向延长线/像点连线（虚像虚线，实像实线）
                 ctx.setLineDash(backDash);
                 ctx.beginPath();
                 ctx.moveTo(centerX, objectTopY);
@@ -574,6 +585,17 @@
             ctx.lineTo(centerX, centerY);
             ctx.stroke();
             if (finiteImage) {
+                if (isVirtual) {
+                    // 实际光路（实线）：沿原方向延伸到画布右边缘
+                    const t2 = (rightEdge - centerX) / (objectDistance * scale);
+                    const actualEndY2 = centerY + t2 * (centerY - objectTopY);
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(rightEdge, actualEndY2);
+                    ctx.stroke();
+                }
+                // 反向延长线/像点连线
                 ctx.setLineDash(backDash);
                 ctx.beginPath();
                 ctx.moveTo(centerX, centerY);
