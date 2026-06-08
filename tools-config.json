@@ -74,7 +74,11 @@
         "英语"
       ],
       "icon": "📝",
-      "featured": false
+      "featured": false,
+      "prefill": {
+        "params": ["textInput"],
+        "description": "要分析的英语句子"
+      }
     },
     {
       "name": "语文句子成分分析",
@@ -87,7 +91,11 @@
         "语文"
       ],
       "icon": "📝",
-      "featured": true
+      "featured": true,
+      "prefill": {
+        "params": ["textInput"],
+        "description": "要分析的中文句子"
+      }
     },
     {
       "name": "数据统计PRO",
@@ -113,7 +121,11 @@
         "化学"
       ],
       "icon": "🧪",
-      "featured": true
+      "featured": true,
+      "prefill": {
+        "params": ["equation"],
+        "description": "化学方程式字符串，如 H2+O2"
+      }
     },
     {
       "name": "科学计算器",
@@ -138,7 +150,11 @@
         "化学"
       ],
       "icon": "🧪",
-      "featured": true
+      "featured": true,
+      "prefill": {
+        "params": ["massA", "concA", "massB", "concB"],
+        "description": "溶液A/B的质量和浓度（数字）"
+      }
     },
     {
       "name": "PolygonBloom",
@@ -227,7 +243,11 @@
         "通用"
       ],
       "icon": "🎯",
-      "featured": false
+      "featured": false,
+      "prefill": {
+        "params": ["namesInput"],
+        "description": "换行分隔的姓名列表"
+      }
     },
     {
       "name": "计时器",
