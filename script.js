@@ -46,11 +46,13 @@
         fetch('tools-config.json')
             .then(response => response.json())
             .then(data => {
-                tools = data.tools || [];
-                tools.sort((a, b) => {
+                const loaded = data.tools || [];
+                loaded.sort((a, b) => {
                     if (a.featured !== b.featured) return b.featured ? 1 : -1;
                     return a.name.localeCompare(b.name);
                 });
+                tools.length = 0;
+                tools.push(...loaded);
                 renderCards(tools);
             })
             .catch(error => {
@@ -337,7 +339,8 @@ searchInput.addEventListener('blur', () => {
 
 if (window.Opilot) {
     Opilot.enhance(searchInput, {
-        tools: tools,
+        // 用 getter 让 Opilot 始终拿到最新的 tools 引用
+        get tools() { return tools; },
         site: 'tools',
         onKeyword: (term) => {
             const lower = (term || '').toLowerCase().trim();
