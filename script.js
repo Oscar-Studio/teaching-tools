@@ -353,6 +353,9 @@ if (window.Opilot) {
             ));
         }
     });
+    // 顶部 Opilot 按钮 → 打开面板
+    const panelBtn = document.getElementById('opilotPanelTrigger');
+    if (panelBtn) panelBtn.addEventListener('click', () => Opilot.openPanel());
 } else {
     // Opilot 加载失败的兜底：保留原行为
     searchInput.addEventListener('input', (e) => {
