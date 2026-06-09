@@ -193,6 +193,36 @@
             color: var(--text-secondary);
             font-size: 0.9em;
         }
+
+        /* 模式切换（一次 / 二次） */
+        .mode-toggle {
+            display: inline-flex;
+            background: var(--card-bg);
+            border: var(--card-border);
+            border-radius: 10px;
+            padding: 4px;
+            margin-top: 16px;
+            gap: 4px;
+        }
+
+        .mode-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .mode-btn:hover { color: var(--dark-color); }
+
+        .mode-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
     </style>
 
 <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
@@ -202,8 +232,12 @@
 
 <body>
     <header>
-        <h1>一次函数演示</h1>
-        <p class="subtitle">探索一次函数 y = kx + b 中斜率和截距的作用</p>
+        <h1 id="pageTitle">一次函数演示</h1>
+        <p class="subtitle" id="pageSubtitle">探索一次函数 y = kx + b 中斜率和截距的作用</p>
+        <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="linear" type="button">一次函数  y = kx + b</button>
+            <button class="mode-btn" data-mode="quadratic" type="button">二次函数  y = ax² + bx + c</button>
+        </div>
     </header>
 
     <div class="content">
@@ -212,50 +246,107 @@
         </div>
 
         <div class="controls">
-            <div class="control-group">
-                <div class="control-title">
-                    <span>斜率 (k)</span>
-                </div>
-                <div class="slider-container">
-                    <div class="slider-label">
-                        <span>负斜率</span>
-                        <span id="kValue">1.0</span>
-                        <span>正斜率</span>
+            <!-- 一次函数控件 -->
+            <div id="linearControls">
+                <div class="control-group">
+                    <div class="control-title">
+                        <span>斜率 (k)</span>
                     </div>
-                    <input type="range" id="kSlider" min="-3" max="3" step="0.1" value="1">
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>负斜率</span>
+                            <span id="kValue">1.0</span>
+                            <span>正斜率</span>
+                        </div>
+                        <input type="range" id="kSlider" min="-3" max="3" step="0.1" value="1">
+                    </div>
+                    <p>斜率表示直线的倾斜程度：</p>
+                    <ul>
+                        <li>k &gt; 0: 函数递增</li>
+                        <li>k = 0: 水平直线</li>
+                        <li>k &lt; 0: 函数递减</li>
+                    </ul>
                 </div>
-                <p>斜率表示直线的倾斜程度：</p>
-                <ul>
-                    <li>k > 0: 函数递增</li>
-                    <li>k = 0: 水平直线</li>
-                    <li>k < 0: 函数递减</li>
-                </ul>
+
+                <div class="control-group">
+                    <div class="control-title">
+                        <span>截距 (b)</span>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>负截距</span>
+                            <span id="bValue">0.0</span>
+                            <span>正截距</span>
+                        </div>
+                        <input type="range" id="bSlider" min="-5" max="5" step="0.1" value="0">
+                    </div>
+                    <p>截距表示直线与y轴的交点：</p>
+                    <ul>
+                        <li>当x=0时，y=b</li>
+                        <li>b值上下平移直线</li>
+                    </ul>
+                </div>
             </div>
 
-            <div class="control-group">
-                <div class="control-title">
-                    <span>截距 (b)</span>
-                </div>
-                <div class="slider-container">
-                    <div class="slider-label">
-                        <span>负截距</span>
-                        <span id="bValue">0.0</span>
-                        <span>正截距</span>
+            <!-- 二次函数控件 -->
+            <div id="quadraticControls" hidden>
+                <div class="control-group">
+                    <div class="control-title">
+                        <span>二次项系数 (a)</span>
                     </div>
-                    <input type="range" id="bSlider" min="-5" max="5" step="0.1" value="0">
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>开口向下</span>
+                            <span id="aValue">1.0</span>
+                            <span>开口向上</span>
+                        </div>
+                        <input type="range" id="aSlider" min="-2" max="2" step="0.1" value="1">
+                    </div>
+                    <p>二次项系数 a 决定抛物线的开口与宽窄：</p>
+                    <ul>
+                        <li>a &gt; 0: 开口向上</li>
+                        <li>a &lt; 0: 开口向下</li>
+                        <li>|a| 越大，抛物线越窄</li>
+                    </ul>
                 </div>
-                <p>截距表示直线与y轴的交点：</p>
-                <ul>
-                    <li>当x=0时，y=b</li>
-                    <li>b值上下平移直线</li>
-                </ul>
+
+                <div class="control-group">
+                    <div class="control-title">
+                        <span>一次项系数 (b)</span>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>负</span>
+                            <span id="bQValue">0.0</span>
+                            <span>正</span>
+                        </div>
+                        <input type="range" id="bQSlider" min="-5" max="5" step="0.1" value="0">
+                    </div>
+                    <p>b 决定对称轴的位置（对称轴 x = -b/2a）。</p>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-title">
+                        <span>常数项 (c)</span>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>负</span>
+                            <span id="cValue">0.0</span>
+                            <span>正</span>
+                        </div>
+                        <input type="range" id="cSlider" min="-5" max="5" step="0.1" value="0">
+                    </div>
+                    <p>c 是抛物线与 y 轴的交点 (0, c)。</p>
+                </div>
             </div>
 
             <div class="function-display" id="functionText">
                 y = 1.0x + 0.0
             </div>
 
-            <div class="key-points">
+            <!-- 一次函数关键点 -->
+            <div class="key-points" id="linearInfo">
                 <div class="point-card">
                     <div class="point-title">斜率 (k)</div>
                     <div id="slopeInfo">k = 1.0</div>
@@ -274,18 +365,65 @@
                 </div>
             </div>
 
+            <!-- 二次函数关键点 -->
+            <div class="key-points" id="quadraticInfo" hidden>
+                <div class="point-card">
+                    <div class="point-title">二次项系数 (a)</div>
+                    <div id="qAInfo">a = 1.0</div>
+                </div>
+                <div class="point-card">
+                    <div class="point-title">一次项系数 (b)</div>
+                    <div id="qBInfo">b = 0.0</div>
+                </div>
+                <div class="point-card">
+                    <div class="point-title">常数项 (c)</div>
+                    <div id="qCInfo">c = 0.0</div>
+                </div>
+                <div class="point-card">
+                    <div class="point-title">顶点</div>
+                    <div id="qVertex">(0.00, 0.00)</div>
+                </div>
+                <div class="point-card">
+                    <div class="point-title">对称轴</div>
+                    <div id="qAxis">x = 0.00</div>
+                </div>
+                <div class="point-card">
+                    <div class="point-title">与x轴交点</div>
+                    <div id="qXIntercept">—</div>
+                </div>
+            </div>
+
             <button class="reset-btn" id="resetBtn">重置为默认值</button>
         </div>
     </div>
 
-    <div class="explanation">
+    <div class="explanation" id="linearExplanation">
         <h3>一次函数解析</h3>
         <p>一次函数是形如 y = kx + b 的函数，其中：</p>
         <ul>
-            <li><strong>k</strong> 是斜率，表示直线的倾斜程度。当k>0时，函数递增；当k<0时，函数递减；当k=0时，函数为水平直线。< /li>
+            <li><strong>k</strong> 是斜率，表示直线的倾斜程度。当k&gt;0时，函数递增；当k&lt;0时，函数递减；当k=0时，函数为水平直线。</li>
             <li><strong>b</strong> 是y轴截距，表示当x=0时，函数与y轴的交点。</li>
         </ul>
         <p>通过调整上方的滑块，您可以直观地看到斜率和截距如何影响一次函数的图像。</p>
+    </div>
+
+    <div class="explanation" id="quadraticExplanation" hidden>
+        <h3>二次函数解析</h3>
+        <p>二次函数是形如 y = ax² + bx + c 的函数，图像为一条抛物线，其中：</p>
+        <ul>
+            <li><strong>a</strong> 是二次项系数，决定抛物线的开口方向与宽窄。a &gt; 0 开口向上，a &lt; 0 开口向下；|a| 越大，抛物线越窄。</li>
+            <li><strong>b</strong> 是一次项系数，影响对称轴的位置。对称轴为 x = -b/(2a)。</li>
+            <li><strong>c</strong> 是常数项，决定抛物线与 y 轴的交点 (0, c)。</li>
+            <li><strong>顶点</strong>坐标为 (-b/(2a), c - b²/(4a))，是抛物线的最高点或最低点。</li>
+            <li><strong>与 x 轴的交点</strong>由 ax² + bx + c = 0 决定：
+                <ul>
+                    <li>判别式 Δ = b² - 4ac &gt; 0：两个不同的实数根</li>
+                    <li>Δ = 0：一个二重实数根（顶点在 x 轴上）</li>
+                    <li>Δ &lt; 0：无实数根（抛物线不与 x 轴相交）</li>
+                </ul>
+            </li>
+        </ul>
+        <p>通过调整上方的滑块，您可以直观地看到 a、b、c 如何影响二次函数的图像、顶点、对称轴和与 x 轴的交点。</p>
     </div>
 
     <footer>
@@ -293,207 +431,335 @@
     </footer>
 
     <script>
-        // 获取DOM元素
+        // ===== 公共 =====
         const canvas = document.getElementById('graphCanvas');
         const ctx = canvas.getContext('2d');
+        const functionText = document.getElementById('functionText');
+        const resetBtn = document.getElementById('resetBtn');
+        const STEP = 30; // 网格间距（每数学单位对应的像素数）
+
+        // ===== 模式状态 =====
+        let currentMode = 'linear';
+
+        // ===== 一次函数状态 =====
+        let k = 1, b = 0;
         const kSlider = document.getElementById('kSlider');
         const bSlider = document.getElementById('bSlider');
         const kValue = document.getElementById('kValue');
         const bValue = document.getElementById('bValue');
-        const functionText = document.getElementById('functionText');
+
+        // ===== 二次函数状态（bq, cq 避免与一次函数 b 冲突）=====
+        let aq = 1, bq = 0, cq = 0;
+        const aSlider = document.getElementById('aSlider');
+        const bQSlider = document.getElementById('bQSlider');
+        const cSlider = document.getElementById('cSlider');
+        const aValue = document.getElementById('aValue');
+        const bQValue = document.getElementById('bQValue');
+        const cValue = document.getElementById('cValue');
+
+        // ===== 模式切换 UI =====
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        const linearControls = document.getElementById('linearControls');
+        const quadraticControls = document.getElementById('quadraticControls');
+        const linearInfo = document.getElementById('linearInfo');
+        const quadraticInfo = document.getElementById('quadraticInfo');
+        const linearExplanation = document.getElementById('linearExplanation');
+        const quadraticExplanation = document.getElementById('quadraticExplanation');
+        const pageTitle = document.getElementById('pageTitle');
+        const pageSubtitle = document.getElementById('pageSubtitle');
+
+        modeButtons.forEach((btn) => {
+            btn.addEventListener('click', () => setMode(btn.dataset.mode));
+        });
+
+        function setMode(mode) {
+            currentMode = mode;
+            modeButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.mode === mode));
+            linearControls.hidden = mode !== 'linear';
+            quadraticControls.hidden = mode !== 'quadratic';
+            linearInfo.hidden = mode !== 'linear';
+            quadraticInfo.hidden = mode !== 'quadratic';
+            linearExplanation.hidden = mode !== 'linear';
+            quadraticExplanation.hidden = mode !== 'quadratic';
+
+            if (mode === 'linear') {
+                pageTitle.textContent = '一次函数演示';
+                pageSubtitle.textContent = '探索一次函数 y = kx + b 中斜率和截距的作用';
+                document.title = '一次函数演示';
+            } else {
+                pageTitle.textContent = '二次函数演示';
+                pageSubtitle.textContent = '探索二次函数 y = ax² + bx + c 中系数的作用';
+                document.title = '二次函数演示';
+            }
+            drawFunction();
+        }
+
+        // ===== 一次函数关键点 DOM =====
         const slopeInfo = document.getElementById('slopeInfo');
         const interceptInfo = document.getElementById('interceptInfo');
         const yIntercept = document.getElementById('yIntercept');
         const xIntercept = document.getElementById('xIntercept');
-        const resetBtn = document.getElementById('resetBtn');
 
-        // 初始值
-        let k = parseFloat(kSlider.value);
-        let b = parseFloat(bSlider.value);
+        // ===== 二次函数关键点 DOM =====
+        const qAInfo = document.getElementById('qAInfo');
+        const qBInfo = document.getElementById('qBInfo');
+        const qCInfo = document.getElementById('qCInfo');
+        const qVertex = document.getElementById('qVertex');
+        const qAxis = document.getElementById('qAxis');
+        const qXIntercept = document.getElementById('qXIntercept');
 
-        // 绘制网格
+        // ===== 网格 =====
         function drawGrid() {
             const width = canvas.width;
             const height = canvas.height;
             const centerX = width / 2;
             const centerY = height / 2;
-            const step = 30; // 网格间距
 
-            // 绘制背景
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, width, height);
 
-            // 绘制网格线
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 1;
 
-            // 垂直网格线
-            for (let x = centerX; x < width; x += step) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-                ctx.stroke();
+            for (let x = centerX; x < width; x += STEP) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
             }
-            for (let x = centerX; x > 0; x -= step) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-                ctx.stroke();
+            for (let x = centerX; x > 0; x -= STEP) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
             }
-
-            // 水平网格线
-            for (let y = centerY; y < height; y += step) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
+            for (let y = centerY; y < height; y += STEP) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
             }
-            for (let y = centerY; y > 0; y -= step) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
+            for (let y = centerY; y > 0; y -= STEP) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
             }
 
-            // 绘制坐标轴
             ctx.strokeStyle = '#8b949e';
             ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, centerY); ctx.lineTo(width, centerY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(centerX, 0); ctx.lineTo(centerX, height); ctx.stroke();
 
-            // X轴
-            ctx.beginPath();
-            ctx.moveTo(0, centerY);
-            ctx.lineTo(width, centerY);
-            ctx.stroke();
-
-            // Y轴
-            ctx.beginPath();
-            ctx.moveTo(centerX, 0);
-            ctx.lineTo(centerX, height);
-            ctx.stroke();
-
-            // 绘制刻度值
             ctx.fillStyle = '#8b949e';
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
-
-            // X轴刻度
-            for (let x = centerX + step; x < width; x += step) {
-                ctx.fillText(((x - centerX) / step).toString(), x, centerY + 5);
+            for (let x = centerX + STEP; x < width; x += STEP) {
+                ctx.fillText(((x - centerX) / STEP).toString(), x, centerY + 5);
             }
-            for (let x = centerX - step; x > 0; x -= step) {
-                ctx.fillText(((x - centerX) / step).toString(), x, centerY + 5);
+            for (let x = centerX - STEP; x > 0; x -= STEP) {
+                ctx.fillText(((x - centerX) / STEP).toString(), x, centerY + 5);
             }
-
-            // Y轴刻度
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-            for (let y = centerY + step; y < height; y += step) {
-                ctx.fillText((-(y - centerY) / step).toString(), centerX - 5, y);
+            for (let y = centerY + STEP; y < height; y += STEP) {
+                ctx.fillText((-(y - centerY) / STEP).toString(), centerX - 5, y);
             }
-            for (let y = centerY - step; y > 0; y -= step) {
-                ctx.fillText((-(y - centerY) / step).toString(), centerX - 5, y);
+            for (let y = centerY - STEP; y > 0; y -= STEP) {
+                ctx.fillText((-(y - centerY) / STEP).toString(), centerX - 5, y);
             }
-
             ctx.fillText('0', centerX - 5, centerY + 5);
         }
 
-        // 绘制函数
-        function drawFunction() {
-            // 清除画布
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // ===== 一次函数 =====
+        function formatLinear(k, b) {
+            let kDisplay = k === 1 ? '' : (k === -1 ? '-' : k.toFixed(1));
+            if (b === 0) return `y = ${kDisplay}x`;
+            if (b > 0) return `y = ${kDisplay}x + ${b.toFixed(1)}`;
+            return `y = ${kDisplay}x - ${Math.abs(b).toFixed(1)}`;
+        }
 
-            // 绘制网格和坐标轴
-            drawGrid();
-
-            // 绘制函数图像
+        function drawLinearCurve() {
             ctx.beginPath();
             ctx.strokeStyle = '#e74c3c';
             ctx.lineWidth = 3;
-
-            // 计算函数在画布上的点
-            for (let x = -10; x <= 10; x += 0.1) {
+            for (let x = -10; x <= 10; x += 0.05) {
                 const y = k * x + b;
-
-                // 将数学坐标转换为画布坐标
-                const canvasX = x * 30 + canvas.width / 2;
-                const canvasY = canvas.height / 2 - y * 30;
-
-                if (x === -10) {
-                    ctx.moveTo(canvasX, canvasY);
-                } else {
-                    ctx.lineTo(canvasX, canvasY);
-                }
+                const canvasX = x * STEP + canvas.width / 2;
+                const canvasY = canvas.height / 2 - y * STEP;
+                if (x === -10) ctx.moveTo(canvasX, canvasY);
+                else ctx.lineTo(canvasX, canvasY);
             }
             ctx.stroke();
+        }
 
-
-            // 处理显示格式
-            let kDisplay = k.toFixed(1);
-            let bDisplay = b.toFixed(1);
-
-            if (k === 1) kDisplay = '';
-            else if (k === -1) kDisplay = '-';
-
-            if (b === 0) {
-                functionText.textContent = `y = ${kDisplay}x`;
-            } else if (b > 0) {
-                functionText.textContent = `y = ${kDisplay}x + ${bDisplay}`;
-            } else {
-                functionText.textContent = `y = ${kDisplay}x - ${Math.abs(b).toFixed(1)}`;
-            }
-
-            // 更新关键点信息
+        function updateLinearInfo() {
+            functionText.textContent = formatLinear(k, b);
             slopeInfo.textContent = `k = ${k.toFixed(1)}`;
             interceptInfo.textContent = `b = ${b.toFixed(1)}`;
             yIntercept.textContent = `(0, ${b.toFixed(1)})`;
-
-            // 计算与x轴交点
-            let xInterceptValue = 0;
             if (k !== 0) {
-                xInterceptValue = (-b / k).toFixed(1);
+                xIntercept.textContent = `(${(-b / k).toFixed(1)}, 0)`;
+            } else if (b === 0) {
+                xIntercept.textContent = '所有点';
             } else {
-                xInterceptValue = b === 0 ? "所有点" : "无";
-            }
-
-            if (k === 0 && b !== 0) {
-                xIntercept.textContent = "无交点";
-            } else if (k === 0 && b === 0) {
-                xIntercept.textContent = "所有点";
-            } else {
-                xIntercept.textContent = `(${xInterceptValue}, 0)`;
+                xIntercept.textContent = '无交点';
             }
         }
 
-        // 事件监听器
+        // ===== 二次函数 =====
+        function formatQuadratic(a, b, c) {
+            let aPart;
+            if (a === 1) aPart = 'x²';
+            else if (a === -1) aPart = '-x²';
+            else aPart = a.toFixed(1) + 'x²';
+
+            let bPart = '';
+            if (b !== 0) {
+                if (b === 1) bPart = ' + x';
+                else if (b === -1) bPart = ' - x';
+                else if (b > 0) bPart = ' + ' + b.toFixed(1) + 'x';
+                else bPart = ' - ' + Math.abs(b).toFixed(1) + 'x';
+            }
+
+            let cPart = '';
+            if (c !== 0) {
+                cPart = c > 0 ? ' + ' + c.toFixed(1) : ' - ' + Math.abs(c).toFixed(1);
+            }
+            return `y = ${aPart}${bPart}${cPart}`;
+        }
+
+        function drawQuadraticCurve() {
+            ctx.beginPath();
+            ctx.strokeStyle = '#2ecc71';
+            ctx.lineWidth = 3;
+            // 在 [-10, 10] 范围细步长采样，超出画布的部分由 canvas 自身裁剪
+            for (let x = -10; x <= 10; x += 0.02) {
+                const y = aq * x * x + bq * x + cq;
+                const canvasX = x * STEP + canvas.width / 2;
+                const canvasY = canvas.height / 2 - y * STEP;
+                if (x === -10) ctx.moveTo(canvasX, canvasY);
+                else ctx.lineTo(canvasX, canvasY);
+            }
+            ctx.stroke();
+
+            if (aq === 0) return; // a=0 时退化为直线，没有顶点/对称轴
+
+            const vx = -bq / (2 * aq);
+            const vy = cq - (bq * bq) / (4 * aq);
+            const canvasVx = vx * STEP + canvas.width / 2;
+            const canvasVy = canvas.height / 2 - vy * STEP;
+
+            // 对称轴（虚线，仅在画布范围内绘制）
+            if (canvasVx >= 0 && canvasVx <= canvas.width) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(46, 204, 113, 0.35)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(canvasVx, 0);
+                ctx.lineTo(canvasVx, canvas.height);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 顶点（小圆点，仅在画布范围内绘制）
+            if (canvasVx >= 0 && canvasVx <= canvas.width &&
+                canvasVy >= 0 && canvasVy <= canvas.height) {
+                ctx.beginPath();
+                ctx.fillStyle = '#2ecc71';
+                ctx.arc(canvasVx, canvasVy, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function updateQuadraticInfo() {
+            functionText.textContent = formatQuadratic(aq, bq, cq);
+            qAInfo.textContent = `a = ${aq.toFixed(1)}`;
+            qBInfo.textContent = `b = ${bq.toFixed(1)}`;
+            qCInfo.textContent = `c = ${cq.toFixed(1)}`;
+
+            if (aq === 0) {
+                // 退化为一次函数，不显示顶点/对称轴
+                qVertex.textContent = '—';
+                qAxis.textContent = '—';
+                if (bq === 0) {
+                    qXIntercept.textContent = cq === 0 ? '所有点' : '无交点';
+                } else {
+                    qXIntercept.textContent = `(${(-cq / bq).toFixed(2)}, 0)`;
+                }
+                return;
+            }
+
+            const vx = -bq / (2 * aq);
+            const vy = cq - (bq * bq) / (4 * aq);
+            qVertex.textContent = `(${vx.toFixed(2)}, ${vy.toFixed(2)})`;
+            qAxis.textContent = `x = ${vx.toFixed(2)}`;
+
+            // 判别式 Δ = b² - 4ac
+            const disc = bq * bq - 4 * aq * cq;
+            if (disc > 1e-9) {
+                const r1 = (-bq + Math.sqrt(disc)) / (2 * aq);
+                const r2 = (-bq - Math.sqrt(disc)) / (2 * aq);
+                qXIntercept.textContent = `(${r1.toFixed(2)}, 0), (${r2.toFixed(2)}, 0)`;
+            } else if (disc < -1e-9) {
+                qXIntercept.textContent = '无实数根';
+            } else {
+                const r = -bq / (2 * aq);
+                qXIntercept.textContent = `(${r.toFixed(2)}, 0)`;
+            }
+        }
+
+        // ===== 入口 =====
+        function drawFunction() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            if (currentMode === 'linear') {
+                drawLinearCurve();
+                updateLinearInfo();
+            } else {
+                drawQuadraticCurve();
+                updateQuadraticInfo();
+            }
+        }
+
+        // ===== 事件绑定 =====
         kSlider.addEventListener('input', function () {
             k = parseFloat(this.value);
             kValue.textContent = k.toFixed(1);
             drawFunction();
         });
-
         bSlider.addEventListener('input', function () {
             b = parseFloat(this.value);
             bValue.textContent = b.toFixed(1);
             drawFunction();
         });
+        aSlider.addEventListener('input', function () {
+            aq = parseFloat(this.value);
+            aValue.textContent = aq.toFixed(1);
+            drawFunction();
+        });
+        bQSlider.addEventListener('input', function () {
+            bq = parseFloat(this.value);
+            bQValue.textContent = bq.toFixed(1);
+            drawFunction();
+        });
+        cSlider.addEventListener('input', function () {
+            cq = parseFloat(this.value);
+            cValue.textContent = cq.toFixed(1);
+            drawFunction();
+        });
 
         resetBtn.addEventListener('click', function () {
-            k = 1;
-            b = 0;
-            kSlider.value = k;
-            bSlider.value = b;
-            kValue.textContent = k.toFixed(1);
-            bValue.textContent = b.toFixed(1);
+            if (currentMode === 'linear') {
+                k = 1; b = 0;
+                kSlider.value = k; bSlider.value = b;
+                kValue.textContent = k.toFixed(1);
+                bValue.textContent = b.toFixed(1);
+            } else {
+                aq = 1; bq = 0; cq = 0;
+                aSlider.value = aq; bQSlider.value = bq; cSlider.value = cq;
+                aValue.textContent = aq.toFixed(1);
+                bQValue.textContent = bq.toFixed(1);
+                cValue.textContent = cq.toFixed(1);
+            }
             drawFunction();
         });
 
         // 初始绘制
         drawFunction();
 
-        // 响应窗口大小变化
         window.addEventListener('resize', function () {
-            // 在实际应用中，这里可以添加响应式调整画布大小的代码
+            // 可在此扩展响应式调整
         });
     </script>
     <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>

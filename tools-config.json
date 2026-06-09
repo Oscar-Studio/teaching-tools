@@ -2,7 +2,7 @@
   "tools": [
     {
       "name": "一次函数演示",
-      "description": "演示一次函数",
+      "description": "演示一次函数与二次函数（顶部可切换）",
       "tags": [
         "图像",
         "函数"
