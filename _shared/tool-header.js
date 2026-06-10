@@ -29,7 +29,10 @@
           'align-items:center;gap:4px;padding:6px 10px;border-radius:6px;' +
           'transition:all .2s}' +
         '.tt-sh-back:hover{color:#fff;background:rgba(255,255,255,.06)}' +
-        '.tt-sh-opilot{margin-left:auto}' +
+          '.tt-sh-opilot{margin-left:auto}' +
+        // 兼容 44px 共享头：把 opilot-prefill-banner 往下挪
+        '.opilot-prefill-banner{top:90px!important}' +
+        '@media(max-width:640px){.opilot-prefill-banner{top:80px!important}}' +
         '@media(max-width:768px){.tt-sh-opilot .opilot-trigger-text,' +
           '.tt-sh-opilot kbd{display:none}}';
       document.head.appendChild(style);
