@@ -48,6 +48,12 @@
   }
 
   function loadPrefill() {
+    if (!document.querySelector('link[href*="opilot.css"]')) {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.href = 'https://ai.oscarstudio.cn/opilot.css';
+      document.head.appendChild(l);
+    }
     if (document.querySelector('script[data-tt-prefill]')) return;
     var s = document.createElement('script');
     s.src = 'https://ai.oscarstudio.cn/opilot-prefill.js';
