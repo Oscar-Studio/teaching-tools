@@ -236,9 +236,8 @@
     </div>
 
     <script>
-        // 请在这里填入您的Base64编码的API密钥
-        // 格式: const encodedApiKey = "您的基础64编码API密钥";
-        const encodedApiKey = "c2stYzgyOWZmN2VjYjliNDFjMTlkMjZhYzVlNmViNzBhYzU=";
+        // 通过 Oscar Studio 后端 /api/chat 代理调用 DeepSeek（免费模型）
+        // 用户需先在 tools.oscarstudio.cn 登录，token 由 user-auth.js 写入 localStorage.userToken
 
         document.addEventListener('DOMContentLoaded', function () {
             const equationInput = document.getElementById('equation');
@@ -273,6 +272,11 @@
                     return;
                 }
 
+                if (!localStorage.getItem('userToken')) {
+                    showErrorHTML('请先<a href="https://tools.oscarstudio.cn/" style="color:#00E5FF">登录</a>后再使用本工具。');
+                    return;
+                }
+
                 // 显示加载状态
                 loading.style.display = 'block';
                 resultSection.style.display = 'none';
@@ -290,28 +294,18 @@
             }
 
             function callDeepSeekAPI(equation) {
-                // 解码API密钥
-                let apiKey;
-                try {
-                    if (encodedApiKey === "在此处填入您的基础64编码API密钥") {
-                        throw new Error("请先设置API密钥");
-                    }
-                    apiKey = atob(encodedApiKey);
-                } catch (e) {
-                    showError("API密钥配置错误: " + e.message);
-                    return;
-                }
+                const token = localStorage.getItem('userToken');
 
                 // 准备请求数据
                 const requestData = {
-                    model: "deepseek-chat",
+                    model: 'deepseek/deepseek-v4-flash:free',
                     messages: [
                         {
-                            role: "system",
-                            content: "你是化学专家，专门配平化学方程式。请直接返回配平后的方程式，不要添加任何额外文本，只返回最终结果。"
+                            role: 'system',
+                            content: '你是化学专家，专门配平化学方程式。请直接返回配平后的方程式，不要添加任何额外文本，只返回最终结果。'
                         },
                         {
-                            role: "user",
+                            role: 'user',
                             content: `请配平以下化学方程式: ${equation}`
                         }
                     ],
@@ -319,30 +313,34 @@
                     max_tokens: 150
                 };
 
-                // 发送API请求
-                fetch('https://api.deepseek.com/v1/chat/completions', {
+                // 通过 Oscar Studio 后端代理调用
+                fetch('https://api.oscarstudio.cn/api/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify(requestData)
                 })
-                    .then(response => {
+                    .then(async response => {
                         if (!response.ok) {
-                            throw new Error(`API请求失败: ${response.status}`);
+                            let msg = `API请求失败: ${response.status}`;
+                            try {
+                                const err = await response.json();
+                                if (err && err.message) msg = err.message;
+                            } catch (_) { /* ignore parse error */ }
+                            throw new Error(msg);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        // 隐藏加载状态
                         loading.style.display = 'none';
 
                         if (data.choices && data.choices.length > 0) {
                             const balancedEq = data.choices[0].message.content.trim();
                             displayResult(balancedEq);
                         } else {
-                            throw new Error("API返回的数据格式不正确");
+                            throw new Error(data.message || 'API返回的数据格式不正确');
                         }
                     })
                     .catch(error => {
@@ -361,6 +359,13 @@
 
             function showError(message) {
                 errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                loading.style.display = 'none';
+                resultSection.style.display = 'none';
+            }
+
+            function showErrorHTML(html) {
+                errorDiv.innerHTML = html;
                 errorDiv.style.display = 'block';
                 loading.style.display = 'none';
                 resultSection.style.display = 'none';

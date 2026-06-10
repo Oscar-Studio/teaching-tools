@@ -292,8 +292,8 @@
     </div>
 
     <script>
-        // 预留API密钥变量 - 请将您的Base64编码后的DeepSeek API密钥填入下方引号内
-        const encodedApiKey = "c2stYzgyOWZmN2VjYjliNDFjMTlkMjZhYzVlNmViNzBhYzU="; // 例如："c2t-eC1h...（请替换为您的Base64编码API密钥）"
+        // 通过 Oscar Studio 后端 /api/chat 代理调用 DeepSeek（免费模型）
+        // 用户需先在 tools.oscarstudio.cn 登录，token 由 user-auth.js 写入 localStorage.userToken
 
         // DOM元素
         const sentenceInput = document.getElementById('sentence-input');
@@ -328,8 +328,9 @@
                 return;
             }
 
-            if (!encodedApiKey) {
-                showError('请先在代码中配置您的DeepSeek API密钥。');
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                showErrorHTML('请先<a href="https://tools.oscarstudio.cn/" style="color:#00E5FF">登录</a>后再使用本工具。');
                 return;
             }
 
@@ -350,25 +351,22 @@
                 // 记录请求时间
                 recordRequest();
 
-                // 解码API密钥
-                const apiKey = atob(encodedApiKey);
-
-                // 调用DeepSeek API
-                const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                // 通过 Oscar Studio 后端代理调用
+                const response = await fetch('https://api.oscarstudio.cn/api/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        model: "deepseek-chat",
+                        model: 'deepseek/deepseek-v4-flash:free',
                         messages: [
                             {
-                                role: "system",
+                                role: 'system',
                                 content: "你是一个中文语法分析专家。请严格按照以下格式分析句子成分：\n主语[主语]谓语[谓语]宾语[宾语]状语[状语]补语[补语]定语[定语]\n示例：昨天下午[状语]我[主语]开心地[状语]吃[谓语]一个红彤彤的[定语]苹果[宾语]，吃得津津有味[补语]。\n只返回分析结果，不添加解释。"
                             },
                             {
-                                role: "user",
+                                role: 'user',
                                 content: `请分析这个句子的句子成分："${sentence}"`
                             }
                         ],
@@ -378,11 +376,17 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API请求失败: ${response.status}`);
+                    let msg = `API请求失败: ${response.status}`;
+                    try {
+                        const err = await response.json();
+                        if (err && err.message) msg = err.message;
+                    } catch (_) { /* ignore */ }
+                    throw new Error(msg);
                 }
 
                 const data = await response.json();
-                const analysis = data.choices[0].message.content;
+                const analysis = data.choices?.[0]?.message?.content;
+                if (!analysis) throw new Error(data.message || 'API返回的数据格式不正确');
 
                 // 显示结果
                 analysisResult.textContent = analysis;
@@ -407,6 +411,12 @@
         // 显示错误信息
         function showError(message) {
             errorMessage.textContent = message;
+            errorSection.style.display = 'block';
+            resultSection.style.display = 'none';
+        }
+
+        function showErrorHTML(html) {
+            errorMessage.innerHTML = html;
             errorSection.style.display = 'block';
             resultSection.style.display = 'none';
         }
