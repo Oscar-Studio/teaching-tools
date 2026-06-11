@@ -292,8 +292,7 @@
     </div>
 
     <script>
-        // 通过 Oscar Studio 后端 /api/chat 代理调用 DeepSeek（免费模型）
-        // 用户需先在 tools.oscarstudio.cn 登录，token 由 user-auth.js 写入 localStorage.userToken
+        // 通过 Oscar Studio 后端 /api/tools/chat 公共端点调用免费模型（无需登录）
 
         // DOM元素
         const sentenceInput = document.getElementById('sentence-input');
@@ -328,12 +327,6 @@
                 return;
             }
 
-            const token = localStorage.getItem('userToken');
-            if (!token) {
-                showErrorHTML('请先<a href="https://tools.oscarstudio.cn/" style="color:#00E5FF">登录</a>后再使用本工具。');
-                return;
-            }
-
             // 检查频率限制
             const rateLimitCheck = checkRateLimit();
             if (!rateLimitCheck.allowed) {
@@ -351,12 +344,11 @@
                 // 记录请求时间
                 recordRequest();
 
-                // 通过 Oscar Studio 后端代理调用
-                const response = await fetch('https://api.oscarstudio.cn/api/chat', {
+                // 通过 Oscar Studio 公共端点调用（无需登录）
+                const response = await fetch('https://api.oscarstudio.cn/api/tools/chat', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         model: 'deepseek/deepseek-v4-flash:free',
@@ -411,12 +403,6 @@
         // 显示错误信息
         function showError(message) {
             errorMessage.textContent = message;
-            errorSection.style.display = 'block';
-            resultSection.style.display = 'none';
-        }
-
-        function showErrorHTML(html) {
-            errorMessage.innerHTML = html;
             errorSection.style.display = 'block';
             resultSection.style.display = 'none';
         }
