@@ -29,23 +29,15 @@
           'align-items:center;gap:4px;padding:6px 10px;border-radius:6px;' +
           'transition:all .2s}' +
         '.tt-sh-back:hover{color:#fff;background:rgba(255,255,255,.06)}' +
-          '.tt-sh-opilot{margin-left:auto}' +
         // 兼容 44px 共享头：把 opilot-prefill-banner 往下挪（避开 H1 标题）
         '.opilot-prefill-banner{top:140px!important}' +
-        '@media(max-width:640px){.opilot-prefill-banner{top:120px!important}}' +
-        '@media(max-width:768px){.tt-sh-opilot .opilot-trigger-text,' +
-          '.tt-sh-opilot kbd{display:none}}';
+        '@media(max-width:640px){.opilot-prefill-banner{top:120px!important}}';
       document.head.appendChild(style);
     }
     var bar = document.createElement('div');
     bar.id = 'tt-shared-header';
     bar.innerHTML =
-      '<a class="tt-sh-back" href="https://tools.oscarstudio.cn/">← 教学工具</a>' +
-      '<button class="tt-sh-opilot opilot-panel-btn-header" id="opilotPanelTrigger" title="打开 Opilot 面板 (⌘K)">' +
-        '<span class="opilot-trigger-icon">✨</span>' +
-        '<span class="opilot-trigger-text">Opilot</span>' +
-        '<kbd>⌘K</kbd>' +
-      '</button>';
+      '<a class="tt-sh-back" href="https://tools.oscarstudio.cn/">← 教学工具</a>';
     document.body.appendChild(bar);
     document.body.classList.add('tt-sh-has-bar');
   }
