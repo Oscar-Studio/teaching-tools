@@ -39,7 +39,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             width: 100%;
         }
@@ -69,7 +69,7 @@
         }
 
         .input-section {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         label {
@@ -78,15 +78,46 @@
             color: var(--text-secondary);
         }
 
+        .equation-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: stretch;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .side-input {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .side-input .side-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .arrow-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2em;
+            color: var(--secondary-color);
+            text-shadow: 0 0 12px rgba(0, 229, 255, 0.45);
+            padding: 0 4px;
+            user-select: none;
+        }
+
         .equation-input {
             width: 100%;
-            padding: 15px;
+            padding: 16px 14px;
             background: #161b22;
             border: 1px solid #30363d;
             border-radius: 5px;
             color: var(--dark-color);
             font-size: 1.1em;
-            margin-bottom: 10px;
+            font-family: 'Courier New', Courier, monospace;
             transition: all 0.3s;
         }
 
@@ -99,12 +130,25 @@
         .examples {
             font-size: 0.9em;
             color: var(--text-secondary);
-            margin-top: 5px;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        .examples .example-link {
+            color: var(--secondary-color);
+            cursor: pointer;
+            margin-right: 12px;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        .examples .example-link:hover {
+            color: #fff;
         }
 
         .button-container {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .balance-btn {
@@ -119,9 +163,14 @@
             box-shadow: 0 5px 15px rgba(42, 92, 170, 0.4);
         }
 
-        .balance-btn:hover {
+        .balance-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(42, 92, 170, 0.6);
+        }
+
+        .balance-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .loading {
@@ -142,9 +191,7 @@
         }
 
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
         .result-section {
@@ -180,12 +227,40 @@
             border: 1px solid rgba(231, 76, 60, 0.3);
         }
 
+        .login-prompt {
+            display: none;
+            text-align: center;
+            margin-top: 16px;
+            padding: 14px;
+            background: rgba(0, 229, 255, 0.06);
+            border: 1px dashed rgba(0, 229, 255, 0.4);
+            border-radius: 8px;
+            color: var(--text-secondary);
+        }
+
+        .login-prompt a {
+            color: var(--secondary-color);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
         footer {
             text-align: center;
             margin-top: auto;
             padding-top: 40px;
             color: var(--text-secondary);
             font-size: 0.9em;
+        }
+
+        @media (max-width: 640px) {
+            .equation-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .arrow-wrap {
+                font-size: 1.6em;
+                padding: 4px 0;
+            }
         }
     </style>
 
@@ -198,14 +273,30 @@
     <div class="container">
         <header>
             <h1>化学方程式配平工具</h1>
-            <div class="subtitle">使用AI技术自动配平化学方程式</div>
+            <div class="subtitle">左右填入反应物和生成物，AI 自动配平方程式</div>
         </header>
 
         <div class="content">
             <div class="input-section">
-                <label for="equation">输入未配平的化学方程式：</label>
-                <input type="text" id="equation" class="equation-input" placeholder="例如: H2 + O2 → H2O">
-                <div class="examples">示例: Fe + O2 → Fe2O3, CH4 + O2 → CO2 + H2O, Al + HCl → AlCl3 + H2</div>
+                <label>输入未配平的化学方程式：</label>
+                <div class="equation-row">
+                    <div class="side-input">
+                        <div class="side-label">反应物</div>
+                        <input type="text" id="reactants" class="equation-input" placeholder="例如: H2 + O2" autocomplete="off">
+                    </div>
+                    <div class="arrow-wrap" title="反应方向">→</div>
+                    <div class="side-input">
+                        <div class="side-label">生成物</div>
+                        <input type="text" id="products" class="equation-input" placeholder="例如: H2O" autocomplete="off">
+                    </div>
+                </div>
+                <div class="examples">
+                    示例:
+                    <span class="example-link" data-r="H2 + O2" data-p="H2O">H2 + O2 → H2O</span>
+                    <span class="example-link" data-r="Fe + O2" data-p="Fe2O3">Fe + O2 → Fe2O3</span>
+                    <span class="example-link" data-r="CH4 + O2" data-p="CO2 + H2O">CH4 + O2 → CO2 + H2O</span>
+                    <span class="example-link" data-r="Al + HCl" data-p="AlCl3 + H2">Al + HCl → AlCl3 + H2</span>
+                </div>
             </div>
 
             <div class="button-container">
@@ -214,9 +305,13 @@
                 </button>
             </div>
 
+            <div id="loginPrompt" class="login-prompt">
+                请先 <a id="loginLink">登录</a> 后再使用配平功能（使用 DeepSeek V4-flash 模型）。
+            </div>
+
             <div id="loading" class="loading">
                 <div class="spinner"></div>
-                <p>正在使用AI配平方程式，请稍候...</p>
+                <p>正在使用 DeepSeek V4-flash 配平方程式，请稍候...</p>
             </div>
 
             <div id="error" class="error">
@@ -231,120 +326,146 @@
         </div>
 
         <footer>
-            <p>本工具使用DeepSeek API进行化学方程式配平 | 仅供教育用途</p>
+            <p>本工具使用 DeepSeek V4-flash 进行化学方程式配平（需登录） | 仅供教育用途</p>
         </footer>
     </div>
 
     <script>
-        // 通过 Oscar Studio 后端 /api/tools/chat 公共端点调用免费模型（无需登录）
+        const API_BASE = 'https://api.oscarstudio.cn';
+        const MODEL = 'deepseek-v4-flash';
 
+        // ====== 登录态管理 ======
+        function getCookie(name) {
+            const v = `; ${document.cookie}`;
+            const parts = v.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function getToken() {
+            return localStorage.getItem('userToken') || getCookie('userToken');
+        }
+
+        function isLoggedIn() {
+            return !!getToken();
+        }
+
+        // ====== 初始化 ======
         document.addEventListener('DOMContentLoaded', function () {
-            const equationInput = document.getElementById('equation');
+            const reactantsInput = document.getElementById('reactants');
+            const productsInput = document.getElementById('products');
             const balanceBtn = document.getElementById('balanceBtn');
             const loading = document.getElementById('loading');
             const resultSection = document.getElementById('resultSection');
             const balancedEquation = document.getElementById('balancedEquation');
             const errorDiv = document.getElementById('error');
-            const explanation = document.getElementById('explanation');
+            const loginPrompt = document.getElementById('loginPrompt');
+            const loginLink = document.getElementById('loginLink');
 
-            // 示例方程式
-            const examples = [
-                "H2 + O2 → H2O",
-                "Fe + O2 → Fe2O3",
-                "CH4 + O2 → CO2 + H2O"
-            ];
+            // 未登录时给出跳转登录入口
+            loginLink.addEventListener('click', () => {
+                window.open('https://api.oscarstudio.cn/auth', '_blank');
+            });
 
-            // 随机显示一个示例
-            equationInput.placeholder = `例如: ${examples[Math.floor(Math.random() * examples.length)]}`;
+            // 示例点击：填入两侧
+            document.querySelectorAll('.example-link').forEach(el => {
+                el.addEventListener('click', () => {
+                    reactantsInput.value = el.dataset.r;
+                    productsInput.value = el.dataset.p;
+                    reactantsInput.focus();
+                });
+            });
 
-            balanceBtn.addEventListener('click', function () {
-                const equation = equationInput.value.trim();
-
-                if (!equation) {
-                    showError("请输入一个化学方程式");
+            balanceBtn.addEventListener('click', async () => {
+                if (!isLoggedIn()) {
+                    showLoginPrompt();
                     return;
                 }
 
-                // 验证是否为有效的化学方程式格式
-                if (!isValidEquation(equation)) {
-                    showError("请输入有效的化学方程式格式，例如: H2 + O2 → H2O");
+                const reactants = reactantsInput.value.trim();
+                const products = productsInput.value.trim();
+
+                if (!reactants || !products) {
+                    showError('请在两侧分别填入反应物和生成物');
+                    return;
+                }
+                if (!/[A-Za-z]/.test(reactants) || !/[A-Za-z]/.test(products)) {
+                    showError('请输入有效的化学式（需包含元素符号）');
                     return;
                 }
 
-                // 显示加载状态
+                const equation = `${reactants} → ${products}`;
+
                 loading.style.display = 'block';
                 resultSection.style.display = 'none';
                 errorDiv.style.display = 'none';
+                loginPrompt.style.display = 'none';
+                balanceBtn.disabled = true;
 
-                // 调用API
-                callDeepSeekAPI(equation);
+                try {
+                    const data = await callChatAPI(equation);
+                    const content = data.choices?.[0]?.message?.content?.trim();
+                    if (!content) {
+                        throw new Error(data.message || 'API 返回的数据格式不正确');
+                    }
+                    displayResult(content);
+                } catch (err) {
+                    showError('配平失败: ' + err.message);
+                } finally {
+                    loading.style.display = 'none';
+                    balanceBtn.disabled = false;
+                }
             });
 
-            function isValidEquation(equation) {
-                // 简单的验证：检查是否包含箭头和化学式
-                return equation.includes('→') || equation.includes('->') ||
-                    equation.includes('=') &&
-                    /[A-Za-z]/.test(equation) && /\d/.test(equation);
-            }
+            // 回车提交（在任一输入框按 Enter 触发）
+            [reactantsInput, productsInput].forEach(el => {
+                el.addEventListener('keypress', e => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        balanceBtn.click();
+                    }
+                });
+            });
 
-            function callDeepSeekAPI(equation) {
-                // 准备请求数据
-                const requestData = {
-                    model: 'deepseek/deepseek-v4-flash:free',
-                    messages: [
-                        {
-                            role: 'system',
-                            content: '你是化学专家，专门配平化学方程式。请直接返回配平后的方程式，不要添加任何额外文本，只返回最终结果。'
-                        },
-                        {
-                            role: 'user',
-                            content: `请配平以下化学方程式: ${equation}`
-                        }
-                    ],
-                    temperature: 0.3,
-                    max_tokens: 150
-                };
-
-                // 通过 Oscar Studio 公共端点调用（无需登录）
-                fetch('https://api.oscarstudio.cn/api/tools/chat', {
+            // ====== API 调用 ======
+            async function callChatAPI(equation) {
+                const response = await fetch(`${API_BASE}/api/chat`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
                     },
-                    body: JSON.stringify(requestData)
-                })
-                    .then(async response => {
-                        if (!response.ok) {
-                            let msg = `API请求失败: ${response.status}`;
-                            try {
-                                const err = await response.json();
-                                if (err && err.message) msg = err.message;
-                            } catch (_) { /* ignore parse error */ }
-                            throw new Error(msg);
-                        }
-                        return response.json();
+                    body: JSON.stringify({
+                        model: MODEL,
+                        messages: [
+                            {
+                                role: 'system',
+                                content: '你是化学专家，专门配平化学方程式。请直接返回配平后的方程式（含 → 箭头），不要添加任何额外文本、解释或代码块标记，只返回最终结果。'
+                            },
+                            {
+                                role: 'user',
+                                content: `请配平以下化学方程式: ${equation}`
+                            }
+                        ],
+                        temperature: 0.2,
+                        max_tokens: 150
                     })
-                    .then(data => {
-                        loading.style.display = 'none';
+                });
 
-                        if (data.choices && data.choices.length > 0) {
-                            const balancedEq = data.choices[0].message.content.trim();
-                            displayResult(balancedEq);
-                        } else {
-                            throw new Error(data.message || 'API返回的数据格式不正确');
-                        }
-                    })
-                    .catch(error => {
-                        loading.style.display = 'none';
-                        showError("配平失败: " + error.message);
-                    });
+                if (!response.ok) {
+                    let msg = `API 请求失败: ${response.status}`;
+                    try {
+                        const err = await response.json();
+                        if (err && err.message) msg = err.message;
+                    } catch (_) {}
+                    throw new Error(msg);
+                }
+                return response.json();
             }
 
-            function displayResult(balancedEquationText) {
-                balancedEquation.textContent = balancedEquationText;
+            function displayResult(text) {
+                balancedEquation.textContent = text;
                 resultSection.style.display = 'block';
-
-                // 滚动到结果区域
                 resultSection.scrollIntoView({ behavior: 'smooth' });
             }
 
@@ -353,14 +474,15 @@
                 errorDiv.style.display = 'block';
                 loading.style.display = 'none';
                 resultSection.style.display = 'none';
+                loginPrompt.style.display = 'none';
             }
 
-            // 允许按Enter键提交
-            equationInput.addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') {
-                    balanceBtn.click();
-                }
-            });
+            function showLoginPrompt() {
+                loginPrompt.style.display = 'block';
+                errorDiv.style.display = 'none';
+                resultSection.style.display = 'none';
+                loading.style.display = 'none';
+            }
         });
     </script>
     <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
