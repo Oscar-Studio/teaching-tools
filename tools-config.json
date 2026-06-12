@@ -76,7 +76,7 @@
       "icon": "📝",
       "featured": false,
       "prefill": {
-        "params": ["textInput"],
+        "params": ["sentence-input"],
         "description": "要分析的英语句子"
       }
     },
@@ -93,7 +93,7 @@
       "icon": "📝",
       "featured": true,
       "prefill": {
-        "params": ["textInput"],
+        "params": ["sentence-input"],
         "description": "要分析的中文句子"
       }
     },
@@ -123,8 +123,8 @@
       "icon": "🧪",
       "featured": true,
       "prefill": {
-        "params": ["equation"],
-        "description": "化学方程式字符串，如 H2+O2"
+        "params": ["reactants", "products"],
+        "description": "反应物和生成物（中间用 → 或 -> 分隔，例如 H2+O2 → H2O）"
       }
     },
     {
