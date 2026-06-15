@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>几何画板</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg-2: #161b22;
+            --bg-3: #1f262e;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-2: #8b949e;
+            --primary: #2a5caa;
+            --primary-2: #1f4787;
+            --accent: #00e5ff;
+            --danger: #f85149;
+            --warn: #d29922;
+            --success: #3fb950;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            font-size: 13px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ===== 布局 ===== */
+        #app {
+            display: flex;
+            height: 100vh;
+            padding-top: 44px;
+        }
+
+        /* ===== 侧边栏 ===== */
+        #sidebar {
+            width: 220px;
+            background: var(--bg-2);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 12px 0;
+            flex-shrink: 0;
+        }
+        #sidebar::-webkit-scrollbar { width: 6px; }
+        #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .group {
+            margin-bottom: 14px;
+        }
+        .group-title {
+            font-size: 11px;
+            color: var(--text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 12px;
+            margin-bottom: 4px;
+        }
+        .tool {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 6px 12px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            text-align: left;
+            cursor: pointer;
+            font-size: 13px;
+            border-left: 3px solid transparent;
+            transition: background 0.1s;
+        }
+        .tool:hover { background: var(--bg-3); }
+        .tool.active {
+            background: var(--bg-3);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+        .tool .icon {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .tool .shortcut {
+            margin-left: auto;
+            color: var(--text-2);
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 12px;
+        }
+
+        /* ===== 画布区 ===== */
+        #canvas-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        #board {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #ffffff;
+            cursor: crosshair;
+        }
+        #board.tool-select { cursor: default; }
+        #board.tool-pan { cursor: grab; }
+        #board.tool-pan.dragging { cursor: grabbing; }
+        #board.tool-text { cursor: text; }
+        #board.tool-delete { cursor: not-allowed; }
+
+        /* 画布中的图形样式 */
+        .point { fill: #1a1a1a; }
+        .point.highlight { fill: #ff6b35; }
+        .point.selected { fill: #0066ff; }
+        .point-label {
+            font-size: 14px;
+            font-family: "Times New Roman", serif;
+            font-style: italic;
+            fill: #1a1a1a;
+            pointer-events: none;
+        }
+        .segment, .ray, .line {
+            stroke: #1a1a1a;
+            stroke-width: 1.6;
+            fill: none;
+            stroke-linecap: round;
+        }
+        .segment.dashed, .ray.dashed, .line.dashed {
+            stroke-dasharray: 6 4;
+        }
+        .polygon {
+            stroke: #1a1a1a;
+            stroke-width: 1.6;
+            fill: rgba(173, 216, 230, 0.18);
+        }
+        .circle {
+            stroke: #1a1a1a;
+            stroke-width: 1.6;
+            fill: none;
+        }
+        .angle-arc {
+            stroke: #cc5500;
+            stroke-width: 1.4;
+            fill: none;
+        }
+        .angle-text {
+            font-size: 13px;
+            fill: #cc5500;
+            pointer-events: none;
+            font-family: "Times New Roman", serif;
+        }
+        .measure-text {
+            font-size: 12px;
+            fill: #0066ff;
+            pointer-events: none;
+            font-family: "Times New Roman", serif;
+        }
+        .text-label {
+            font-size: 14px;
+            fill: #1a1a1a;
+            pointer-events: none;
+            font-family: "Times New Roman", serif;
+        }
+        .text-label.large { font-size: 18px; }
+
+        .grid-line { stroke: #e8eaed; stroke-width: 0.5; }
+        .grid-line.major { stroke: #d0d7de; stroke-width: 0.8; }
+        .grid-axis { stroke: #5a5a5a; stroke-width: 1; }
+
+        .hit-target {
+            fill: transparent;
+            stroke: transparent;
+            stroke-width: 12;
+            pointer-events: stroke;
+        }
+        .hit-target.fill { fill: transparent; stroke: transparent; }
+        .selected-outline {
+            fill: none;
+            stroke: #0066ff;
+            stroke-width: 2;
+            stroke-dasharray: 4 3;
+            pointer-events: none;
+        }
+
+        /* ===== 状态栏 ===== */
+        #status-bar {
+            height: 32px;
+            background: var(--bg-2);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-2);
+            flex-shrink: 0;
+        }
+        #status-bar .item { display: flex; align-items: center; gap: 6px; }
+        #status-bar .item b { color: var(--text); font-weight: 500; }
+        #status-bar .prompt { color: var(--accent); font-weight: 500; }
+        #status-bar .spacer { flex: 1; }
+
+        /* ===== 模态框 ===== */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal {
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 380px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: auto;
+        }
+        .modal h3 { margin-bottom: 12px; color: var(--text); }
+        .modal label { display: block; margin: 10px 0 4px; color: var(--text-2); font-size: 12px; }
+        .modal input, .modal textarea {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font: inherit;
+            font-family: monospace;
+        }
+        .modal textarea { min-height: 120px; resize: vertical; }
+        .modal .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+        .btn {
+            padding: 6px 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn:hover { background: var(--primary-2); }
+        .btn.secondary { background: var(--bg-3); color: var(--text); }
+        .btn.secondary:hover { background: var(--border); }
+        .btn.danger { background: var(--danger); }
+
+        /* ===== 浮动提示 ===== */
+        #toast {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-3);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        #toast.show { opacity: 1; }
+        #toast.error { border-color: var(--danger); color: var(--danger); }
+
+        /* ===== 浮动帮助 ===== */
+        .help-icon {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            line-height: 14px;
+            text-align: center;
+            font-size: 10px;
+            background: var(--border);
+            color: var(--text-2);
+            border-radius: 50%;
+            margin-left: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <aside id="sidebar"></aside>
+        <div id="canvas-area">
+            <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div id="status-bar">
+                <div class="item">工具:<b id="status-tool">选择</b></div>
+                <div class="item prompt" id="status-prompt"></div>
+                <div class="spacer"></div>
+                <div class="item">元素:<b id="status-count">0</b></div>
+                <div class="item">坐标:<b id="status-pos">—</b></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文本输入模态 -->
+    <div class="modal-backdrop" id="modal-text">
+        <div class="modal">
+            <h3>输入文本</h3>
+            <input type="text" id="text-input" maxlength="60" placeholder="如: A、△ABC 等等">
+            <div class="row">
+                <button class="btn secondary" id="text-cancel">取消</button>
+                <button class="btn" id="text-ok">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 等分点输入模态 -->
+    <div class="modal-backdrop" id="modal-divide">
+        <div class="modal">
+            <h3>等分线段</h3>
+            <label>等分数 (n ≥ 2):</label>
+            <input type="number" id="divide-n" min="2" max="20" value="2">
+            <div class="row">
+                <button class="btn secondary" id="divide-cancel">取消</button>
+                <button class="btn" id="divide-ok">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分享 / 导入 模态 -->
+    <div class="modal-backdrop" id="modal-share">
+        <div class="modal" style="min-width: 520px;">
+            <h3 id="share-title">分享链接</h3>
+            <p style="color: var(--text-2); font-size: 12px; margin-bottom: 8px;">
+                复制下面的链接,任何人都可以打开并看到你的图形。
+            </p>
+            <textarea id="share-url" readonly style="min-height: 80px; word-break: break-all;"></textarea>
+            <div class="row">
+                <button class="btn secondary" id="share-close">关闭</button>
+                <button class="btn" id="share-copy">复制链接</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入 JSON 模态 -->
+    <div class="modal-backdrop" id="modal-import">
+        <div class="modal">
+            <h3>导入 JSON</h3>
+            <p style="color: var(--text-2); font-size: 12px; margin-bottom: 8px;">
+                粘贴之前导出的 JSON 内容:
+            </p>
+            <textarea id="import-json" placeholder="{ &quot;v&quot;: 1, &quot;elements&quot;: [...] }"></textarea>
+            <div class="row">
+                <button class="btn secondary" id="import-cancel">取消</button>
+                <button class="btn danger" id="import-replace">替换当前画板</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 标签编辑模态 -->
+    <div class="modal-backdrop" id="modal-label">
+        <div class="modal">
+            <h3>编辑点标签</h3>
+            <input type="text" id="label-input" maxlength="10">
+            <div class="row">
+                <button class="btn secondary" id="label-cancel">取消</button>
+                <button class="btn" id="label-ok">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <!-- LZString 1.5.0 (MIT, https://github.com/pieroxy/lz-string) -->
+    <script>
+var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",e={};function t(r,o){if(!e[r]){e[r]={};for(var n=0;n<r.length;n++)e[r][r.charAt(n)]=n}return e[r][o]}var i={compressToBase64:function(r){if(null==r)return"";var n=i._compress(r,6,function(r){return o.charAt(r)});switch(n.length%4){default:case 0:return n;case 1:return n+"===";case 2:return n+"==";case 3:return n+"="}},decompressFromBase64:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(n){return t(o,r.charAt(n))})},compressToUTF16:function(o){return null==o?"":i._compress(o,15,function(o){return r(o+32)})+" "},decompressFromUTF16:function(r){return null==r?"":""==r?null:i._decompress(r.length,16384,function(o){return r.charCodeAt(o)-32})},compressToUint8Array:function(r){for(var o=i.compress(r),n=new Uint8Array(2*o.length),e=0,t=o.length;e<t;e++){var s=o.charCodeAt(e);n[2*e]=s>>>8,n[2*e+1]=s%256}return n},decompressFromUint8Array:function(o){if(null==o)return i.decompress(o);for(var n=new Array(o.length/2),e=0,t=n.length;e<t;e++)n[e]=256*o[2*e]+o[2*e+1];var s=[];return n.forEach(function(o){s.push(r(o))}),i.decompress(s.join(""))},compressToEncodedURIComponent:function(r){return null==r?"":i._compress(r,6,function(r){return n.charAt(r)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:(r=r.replace(/ /g,"+"),i._decompress(r.length,32,function(o){return t(n,r.charAt(o))}))},compress:function(o){return i._compress(o,16,function(o){return r(o)})},_compress:function(r,o,n){if(null==r)return"";var e,t,i,s={},u={},a="",p="",c="",l=2,f=3,h=2,d=[],m=0,v=0;for(i=0;i<r.length;i+=1)if(a=r.charAt(i),Object.prototype.hasOwnProperty.call(s,a)||(s[a]=f++,u[a]=!0),p=c+a,Object.prototype.hasOwnProperty.call(s,p))c=p;else{if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++),s[p]=f++,c=String(a)}if(""!==c){if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++)}for(t=2,e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;for(;;){if(m<<=1,v==o-1){d.push(n(m));break}v++}return d.join("")},decompress:function(r){return null==r?"":""==r?null:i._decompress(r.length,32768,function(o){return r.charCodeAt(o)})},_decompress:function(o,n,e){var t,i,s,u,a,p,c,l=[],f=4,h=4,d=3,m="",v=[],g={val:e(0),position:n,index:1};for(t=0;t<3;t+=1)l[t]=t;for(s=0,a=Math.pow(2,2),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 2:return""}for(l[3]=c,i=c,v.push(c);;){if(g.index>o)return"";for(s=0,a=Math.pow(2,d),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(c=s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 2:return v.join("")}if(0==f&&(f=Math.pow(2,d),d++),l[c])m=l[c];else{if(c!==h)return null;m=i+i.charAt(0)}v.push(m),l[h++]=i+m.charAt(0),i=m,0==--f&&(f=Math.pow(2,d),d++)}}};return i}();"function"==typeof define&&define.amd?define(function(){return LZString}):"undefined"!=typeof module&&null!=module?module.exports=LZString:"undefined"!=typeof angular&&null!=angular&&angular.module("LZString",[]).factory("LZString",function(){return LZString});
+    </script>
+
+<script>
+// 几何画板 - 主应用
+(function() {
+  'use strict';
+
+  // ==================== 常量 ====================
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const HIT_DIST = 10;
+  const HIT_DIST_LINE = 7;
+  const VIEW_DEFAULT_SCALE = 40;
+
+  // ==================== 状态 ====================
+  const state = {
+    elements: [],
+    view: { x: 0, y: 0, scale: VIEW_DEFAULT_SCALE },
+    selection: new Set(),
+    currentTool: 'select',
+    pendingVertex: null,    // 多步工具的第一个点
+    toolStep: 0,            // 多步工具的当前步
+    toolPicked: [],         // 多步工具已选
+    pendingPoly: [],        // 多边形已选点 {x, y}
+    pendingCircleCenter: null,
+    showGrid: false,
+    nextId: 1,
+    nextLabelIdx: 0,
+    history: [],
+    redoStack: [],
+    pendingTextPos: null,
+    pendingDivide: null,
+    editingLabel: null,
+  };
+
+  // ==================== 工具配置 ====================
+  const TOOLS = [
+    { group: '基本', items: [
+      { id: 'select', name: '选择 / 移动', icon: '↖', shortcut: 'V' },
+      { id: 'pan', name: '平移视图', icon: '✋', shortcut: 'H' },
+      { id: 'point', name: '点', icon: '·', shortcut: 'P' },
+      { id: 'segment', name: '线段', icon: '──', shortcut: 'L' },
+      { id: 'ray', name: '射线', icon: '──▶', shortcut: 'R' },
+      { id: 'line', name: '直线', icon: '────', shortcut: 'T' },
+      { id: 'polygon', name: '多边形', icon: '⬠' },
+      { id: 'circle', name: '圆', icon: '○', shortcut: 'C' },
+      { id: 'angle', name: '角度标', icon: '∠', shortcut: 'A' },
+      { id: 'text', name: '文本', icon: 'T', shortcut: 'X' },
+      { id: 'delete', name: '删除', icon: '✕', shortcut: 'D' },
+    ]},
+    { group: '构造', items: [
+      { id: 'midpoint', name: '中点', icon: '◐', prompt: '请依次选择 2 个点' },
+      { id: 'bisect', name: '角平分线', icon: '⌿', prompt: '请依次选择 3 个点（角顶点和两边各一点）' },
+      { id: 'perpendicular', name: '垂线', icon: '⊥', prompt: '请先选一条线（线段/射线/直线），再选 1 个点' },
+      { id: 'parallel', name: '平行线', icon: '∥', prompt: '请先选一条线，再选 1 个点' },
+      { id: 'perpbisect', name: '垂直平分线', icon: '⊕', prompt: '请依次选择 2 个点' },
+      { id: 'intersection', name: '交点', icon: '✕', prompt: '请选择 2 个对象（线/圆），取第一组交点' },
+      { id: 'divide', name: '等分点', icon: '⋯', prompt: '请依次选择 2 个点，然后输入等分数' },
+    ]},
+    { group: '三角形', items: [
+      { id: 'tri-altitude', name: '三条高', icon: 'H', prompt: '请依次选择三角形的 3 个顶点' },
+      { id: 'tri-median', name: '三条中线', icon: 'M', prompt: '请依次选择三角形的 3 个顶点' },
+      { id: 'tri-bisector', name: '三角平分线', icon: 'B', prompt: '请依次选择三角形的 3 个顶点' },
+      { id: 'tri-midsegment', name: '三条中位线', icon: 'I', prompt: '请依次选择三角形的 3 个顶点' },
+      { id: 'tri-circumcircle', name: '外接圆', icon: '◯', prompt: '请依次选择三角形的 3 个顶点' },
+      { id: 'tri-incircle', name: '内切圆', icon: '◉', prompt: '请依次选择三角形的 3 个顶点' },
+      { id: 'tri-centroid', name: '重心', icon: 'G', prompt: '请依次选择三角形的 3 个顶点' },
+      { id: 'tri-orthocenter', name: '垂心', icon: 'O', prompt: '请依次选择三角形的 3 个顶点' },
+      { id: 'tri-circumcenter', name: '外心', icon: 'C', prompt: '请依次选择三角形的 3 个顶点' },
+      { id: 'tri-incenter', name: '内心', icon: 'I', prompt: '请依次选择三角形的 3 个顶点' },
+    ]},
+    { group: '测量', items: [
+      { id: 'measure-length', name: '长度', icon: '|x|', prompt: '请选择 2 个点' },
+      { id: 'measure-angle', name: '角度', icon: '∠°', prompt: '请依次选择 3 个点（角顶点和两边各一点）' },
+    ]},
+    { group: '文件', items: [
+      { id: 'export-png', name: '导出 PNG', icon: '🖼' },
+      { id: 'export-json', name: '导出 JSON', icon: '{ }' },
+      { id: 'share-link', name: '分享链接', icon: '🔗' },
+      { id: 'import-json', name: '导入 JSON', icon: '↓' },
+      { id: 'clear', name: '清空画板', icon: '🗑' },
+    ]},
+    { group: '视图', items: [
+      { id: 'toggle-grid', name: '显示 / 隐藏栅格', icon: '#', shortcut: 'G 键' },
+      { id: 'reset-view', name: '重置视图', icon: '⌖' },
+    ]},
+  ];
+
+  const CONSTRUCTION_DEFS = {
+    'midpoint':         { n: 2, types: ['p', 'p'] },
+    'bisect':           { n: 3, types: ['p', 'p', 'p'] },
+    'perpendicular':    { n: 2, types: ['line-like', 'p'] },
+    'parallel':         { n: 2, types: ['line-like', 'p'] },
+    'perpbisect':       { n: 2, types: ['p', 'p'] },
+    'intersection':     { n: 2, types: ['line-or-circle', 'line-or-circle'] },
+    'divide':           { n: 2, types: ['p', 'p'] },
+    'tri-altitude':     { n: 3, types: ['p', 'p', 'p'] },
+    'tri-median':       { n: 3, types: ['p', 'p', 'p'] },
+    'tri-bisector':     { n: 3, types: ['p', 'p', 'p'] },
+    'tri-midsegment':   { n: 3, types: ['p', 'p', 'p'] },
+    'tri-circumcircle': { n: 3, types: ['p', 'p', 'p'] },
+    'tri-incircle':     { n: 3, types: ['p', 'p', 'p'] },
+    'tri-centroid':     { n: 3, types: ['p', 'p', 'p'] },
+    'tri-orthocenter':  { n: 3, types: ['p', 'p', 'p'] },
+    'tri-circumcenter': { n: 3, types: ['p', 'p', 'p'] },
+    'tri-incenter':     { n: 3, types: ['p', 'p', 'p'] },
+    'measure-length':   { n: 2, types: ['p', 'p'] },
+    'measure-angle':    { n: 3, types: ['p', 'p', 'p'] },
+  };
+
+  // ==================== 几何工具 ====================
+  const G = {
+    add: (a, b) => ({ x: a.x + b.x, y: a.y + b.y }),
+    sub: (a, b) => ({ x: a.x - b.x, y: a.y - b.y }),
+    mul: (a, s) => ({ x: a.x * s, y: a.y * s }),
+    dot: (a, b) => a.x * b.x + a.y * b.y,
+    cross: (a, b) => a.x * b.y - a.y * b.x,
+    len: (a) => Math.hypot(a.x, a.y),
+    dist: (a, b) => Math.hypot(a.x - b.x, a.y - b.y),
+    norm: (a) => { const l = Math.hypot(a.x, a.y); return l === 0 ? {x:0,y:0} : { x: a.x/l, y: a.y/l }; },
+    perp: (a) => ({ x: -a.y, y: a.x }),
+    midpoint: (a, b) => ({ x: (a.x + b.x)/2, y: (a.y + b.y)/2 }),
+    closestOnSegment: (p, a, b) => {
+      const ab = G.sub(b, a);
+      const len2 = G.dot(ab, ab);
+      if (len2 === 0) return a;
+      const t = Math.max(0, Math.min(1, G.dot(G.sub(p, a), ab) / len2));
+      return G.add(a, G.mul(ab, t));
+    },
+    closestOnLine: (p, a, b) => {
+      const ab = G.sub(b, a);
+      const len2 = G.dot(ab, ab);
+      if (len2 === 0) return a;
+      return G.add(a, G.mul(ab, G.dot(G.sub(p, a), ab) / len2));
+    },
+    angleAt: (v, p1, p2) => {
+      const u1 = G.sub(p1, v), u2 = G.sub(p2, v);
+      const c = G.dot(u1, u2) / (G.len(u1) * G.len(u2));
+      return Math.acos(Math.max(-1, Math.min(1, c)));
+    },
+    lineLineIntersect: (a, b, c, d) => {
+      const d1 = G.sub(b, a), d2 = G.sub(d, c);
+      const det = G.cross(d1, d2);
+      if (Math.abs(det) < 1e-9) return null;
+      const t = G.cross(G.sub(c, a), d2) / det;
+      return G.add(a, G.mul(d1, t));
+    },
+    lineCircleIntersect: (a, b, O, r) => {
+      const d = G.sub(b, a);
+      const f = G.sub(a, O);
+      const A = G.dot(d, d);
+      const B = 2 * G.dot(f, d);
+      const C = G.dot(f, f) - r * r;
+      const disc = B * B - 4 * A * C;
+      if (disc < 0) return [];
+      const sq = Math.sqrt(Math.max(0, disc));
+      const t1 = (-B - sq) / (2 * A);
+      const t2 = (-B + sq) / (2 * A);
+      return [G.add(a, G.mul(d, t1)), G.add(a, G.mul(d, t2))];
+    },
+    circleCircleIntersect: (O1, r1, O2, r2) => {
+      const d = G.dist(O1, O2);
+      if (d < 1e-9 || d > r1 + r2 + 1e-9 || d < Math.abs(r1 - r2) - 1e-9) return [];
+      const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+      const h2 = Math.max(0, r1 * r1 - a * a);
+      const h = Math.sqrt(h2);
+      const dir = G.norm(G.sub(O2, O1));
+      const P = G.add(O1, G.mul(dir, a));
+      const perp = G.perp(dir);
+      return [G.add(P, G.mul(perp, h)), G.sub(P, G.mul(perp, h))];
+    },
+    triangleArea: (A, B, C) => Math.abs(G.cross(G.sub(B, A), G.sub(C, A))) / 2,
+    circumcenter: (A, B, C) => {
+      const a2 = G.dot(A, A), b2 = G.dot(B, B), c2 = G.dot(C, C);
+      const D = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
+      if (Math.abs(D) < 1e-9) return null;
+      return {
+        x: (a2 * (B.y - C.y) + b2 * (C.y - A.y) + c2 * (A.y - B.y)) / D,
+        y: (a2 * (C.x - B.x) + b2 * (A.x - C.x) + c2 * (B.x - A.x)) / D,
+      };
+    },
+    incenter: (A, B, C) => {
+      const a = G.dist(B, C), b = G.dist(A, C), c = G.dist(A, B);
+      const s = a + b + c;
+      if (s < 1e-9) return null;
+      return { x: (a * A.x + b * B.x + c * C.x) / s, y: (a * A.y + b * B.y + c * C.y) / s };
+    },
+    centroid: (A, B, C) => ({ x: (A.x + B.x + C.x) / 3, y: (A.y + B.y + C.y) / 3 }),
+    orthocenter: (A, B, C) => {
+      const O = G.circumcenter(A, B, C);
+      if (!O) return null;
+      return { x: A.x + B.x + C.x - 2 * O.x, y: A.y + B.y + C.y - 2 * O.y };
+    },
+    bisectorDir: (v, p1, p2) => G.norm(G.add(G.norm(G.sub(p1, v)), G.norm(G.sub(p2, v)))),
+  };
+
+  // ==================== ID / 标签 / 工具 ====================
+  function newId() { return state.nextId++; }
+  function nextLabel() {
+    if (state.nextLabelIdx < 26) return String.fromCharCode(65 + state.nextLabelIdx++);
+    return 'P' + (state.nextLabelIdx++ - 25);
+  }
+  function findEl(id) { return state.elements.find(e => e.id === id); }
+  function findPoint(id) { const e = findEl(id); return e && e.t === 'p' ? e : null; }
+  function pointAt(id) { const p = findPoint(id); return p ? { x: p.x, y: p.y } : null; }
+  function isLineLike(el) { return el && (el.t === 'l' || el.t === 'r' || el.t === 's' || el.t === 'g'); }
+  function isCircleLike(el) { return el && (el.t === 'c' || el.t === 'g'); }
+  function isLineOrCircle(el) { return el && (el.t === 'l' || el.t === 'r' || el.t === 's' || el.t === 'c' || el.t === 'g'); }
+  function typeMatches(el, type) {
+    if (type === 'p') return el.t === 'p';
+    if (type === 'line-like') return isLineLike(el);
+    if (type === 'line-or-circle') return isLineOrCircle(el);
+    return false;
+  }
+
+  // ==================== 序列化 / 历史 ====================
+  function serialize() {
+    return {
+      v: 1,
+      view: { ...state.view },
+      nextId: state.nextId,
+      nextLabelIdx: state.nextLabelIdx,
+      elements: state.elements.map(e => {
+        const o = { id: e.id, t: e.t };
+        for (const k in e) if (k !== 'id' && k !== 't') o[k] = e[k];
+        return o;
+      }),
+    };
+  }
+  function loadFrom(data) {
+    if (!data || !data.elements) return;
+    state.elements = data.elements.map(e => ({ id: e.id, t: e.t, ...e }));
+    state.nextId = data.nextId || (Math.max(0, ...data.elements.map(e => e.id)) + 1);
+    state.nextLabelIdx = data.nextLabelIdx || 0;
+    state.view = data.view || { x: 0, y: 0, scale: VIEW_DEFAULT_SCALE };
+    state.selection.clear();
+    state.pendingVertex = null;
+    state.pendingCircleCenter = null;
+    state.pendingPoly = [];
+    state.toolStep = 0;
+    state.toolPicked = [];
+    render();
+  }
+  function pushHistory() {
+    state.history.push(serialize());
+    if (state.history.length > 100) state.history.shift();
+    state.redoStack.length = 0;
+  }
+  function undo() {
+    if (state.history.length === 0) { toast('已是最早'); return; }
+    state.redoStack.push(serialize());
+    loadFrom(state.history.pop());
+    toast('撤销');
+  }
+  function redo() {
+    if (state.redoStack.length === 0) { toast('已是最晚'); return; }
+    state.history.push(serialize());
+    loadFrom(state.redoStack.pop());
+    toast('重做');
+  }
+
+  // ==================== 元素创建 / 删除 ====================
+  function addEl(el) { state.elements.push(el); return el; }
+  function createPoint(x, y, label) { return addEl({ id: newId(), t: 'p', x, y, label: label || nextLabel() }); }
+  function findOrCreatePointAt(x, y) {
+    for (const e of state.elements) {
+      if (e.t === 'p' && Math.abs(e.x - x) < 0.5 && Math.abs(e.y - y) < 0.5) return e;
+    }
+    return createPoint(x, y);
+  }
+  function deleteEl(id) {
+    state.elements = state.elements.filter(e => e.id !== id);
+    // 清除引用
+    state.elements.forEach(e => {
+      if (e.t === 's' || e.t === 'r' || e.t === 'l') {
+        if (e.a === id) e.a = null; if (e.b === id) e.b = null;
+      } else if (e.t === 'c') {
+        if (e.center === id) e.center = null; if (e.radius === id) e.radius = null;
+      } else if (e.t === 'g') e.points = e.points.filter(p => p !== id);
+      else if (e.t === 'a') {
+        if (e.vertex === id) e.vertex = null;
+        if (e.p1 === id) e.p1 = null;
+        if (e.p2 === id) e.p2 = null;
+      } else if (e.t === 'm') {
+        if (e.a === id) e.a = null; if (e.b === id) e.b = null;
+      } else if (e.t === 'x' && e.anchor === id) e.anchor = null;
+    });
+    // 清理孤儿元素
+    state.elements = state.elements.filter(e => {
+      if (e.t === 'p') return true;
+      if (e.t === 's' || e.t === 'r' || e.t === 'l') return e.a && e.b;
+      if (e.t === 'c') return e.center && e.radius;
+      if (e.t === 'g') return e.points.length >= 3;
+      if (e.t === 'a') return e.vertex && e.p1 && e.p2;
+      if (e.t === 'm') return e.a && e.b;
+      if (e.t === 'x') return !e.anchor || e.anchor;
+      return true;
+    });
+    // 清理无引用的点
+    cleanupPoints();
+    state.selection.delete(id);
+  }
+  function cleanupPoints() {
+    const used = new Set();
+    state.elements.forEach(e => {
+      if (e.t === 'p') return;
+      if (e.t === 's' || e.t === 'r' || e.t === 'l') { used.add(e.a); used.add(e.b); }
+      else if (e.t === 'c') { used.add(e.center); used.add(e.radius); }
+      else if (e.t === 'g') e.points.forEach(p => used.add(p));
+      else if (e.t === 'a') { used.add(e.vertex); used.add(e.p1); used.add(e.p2); }
+      else if (e.t === 'm') { used.add(e.a); used.add(e.b); }
+      else if (e.t === 'x' && e.anchor) used.add(e.anchor);
+    });
+    state.elements = state.elements.filter(e => {
+      if (e.t !== 'p') return true;
+      return used.has(e.id);
+    });
+  }
+
+  // ==================== 坐标转换 ====================
+  const svg = document.getElementById('board');
+  function getRect() { return svg.getBoundingClientRect(); }
+  function screenToWorld(sx, sy) {
+    const r = getRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    return { x: (sx - cx) / state.view.scale + state.view.x, y: (sy - cy) / state.view.scale + state.view.y };
+  }
+  function worldToScreen(p) {
+    const r = getRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    return { x: (p.x - state.view.x) * state.view.scale + cx, y: (p.y - state.view.y) * state.view.scale + cy };
+  }
+
+  // ==================== 侧边栏 ====================
+  const sidebar = document.getElementById('sidebar');
+  function renderSidebar() {
+    sidebar.innerHTML = '';
+    TOOLS.forEach(group => {
+      const g = document.createElement('div');
+      g.className = 'group';
+      const title = document.createElement('div');
+      title.className = 'group-title';
+      title.textContent = group.name;
+      g.appendChild(title);
+      group.items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'tool';
+        btn.dataset.tool = item.id;
+        btn.innerHTML = `<span class="icon">${item.icon}</span><span>${item.name}</span>` +
+          (item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : '');
+        btn.addEventListener('click', () => activateTool(item.id));
+        g.appendChild(btn);
+      });
+      sidebar.appendChild(g);
+    });
+  }
+
+  function toolDef(id) { return TOOLS.flatMap(g => g.items).find(i => i.id === id); }
+  function activateTool(id) {
+    if (id === 'export-png') return exportPng();
+    if (id === 'export-json') return exportJson();
+    if (id === 'share-link') return shareLink();
+    if (id === 'import-json') return openImportModal();
+    if (id === 'clear') return clearAll();
+    if (id === 'toggle-grid') return toggleGrid();
+    if (id === 'reset-view') return resetView();
+
+    state.currentTool = id;
+    state.pendingVertex = null;
+    state.pendingCircleCenter = null;
+    state.pendingPoly = [];
+    state.toolStep = 0;
+    state.toolPicked = [];
+    state.selection.clear();
+    clearPreview();
+
+    document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.dataset.tool === id));
+
+    svg.classList.remove('tool-select', 'tool-pan', 'tool-text', 'tool-delete');
+    if (id === 'select') svg.classList.add('tool-select');
+    else if (id === 'pan') svg.classList.add('tool-pan');
+    else if (id === 'text') svg.classList.add('tool-text');
+    else if (id === 'delete') svg.classList.add('tool-delete');
+
+    const def = toolDef(id);
+    if (def) {
+      document.getElementById('status-tool').textContent = def.name;
+      if (CONSTRUCTION_DEFS[id]) {
+        state.toolPicked = [];
+        state.toolStep = 0;
+        document.getElementById('status-prompt').textContent = def.prompt || '';
+      } else {
+        document.getElementById('status-prompt').textContent = '';
+      }
+    }
+  }
+
+  // ==================== 渲染 ====================
+  function svgEl(name, attrs) {
+    const el = document.createElementNS(SVG_NS, name);
+    if (attrs) for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function clearChildren(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+
+  function render() {
+    const rect = getRect();
+    svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+    svg.setAttribute('width', rect.width);
+    svg.setAttribute('height', rect.height);
+    clearChildren(svg);
+    svg.appendChild(svgEl('rect', { x: 0, y: 0, width: '100%', height: '100%', fill: '#ffffff' }));
+    if (state.showGrid) renderGrid();  // (renderGrid appends <g id="grid"> to svg)
+    state.elements.forEach(renderElement);
+    state.selection.forEach(id => { const e = findEl(id); if (e) renderSelectionOutline(e); });
+    renderPreviews();
+    document.getElementById('status-count').textContent = state.elements.length;
+  }
+
+  function renderGrid() {
+    const rect = getRect();
+    const tl = screenToWorld(0, 0);
+    const br = screenToWorld(rect.width, rect.height);
+    const g = svgEl('g', { id: 'grid' });
+    const step = 1, major = 5;
+    const startX = Math.floor(tl.x / step) * step;
+    const endX = Math.ceil(br.x / step) * step;
+    const startY = Math.floor(tl.y / step) * step;
+    const endY = Math.ceil(br.y / step) * step;
+    for (let x = startX; x <= endX; x += step) {
+      const sx = worldToScreen({ x, y: 0 }).x;
+      const isMajor = Math.abs(x % major) < 1e-6;
+      g.appendChild(svgEl('line', { x1: sx, y1: 0, x2: sx, y2: rect.height,
+        class: isMajor ? 'grid-line major' : 'grid-line' }));
+    }
+    for (let y = startY; y <= endY; y += step) {
+      const sy = worldToScreen({ x: 0, y }).y;
+      const isMajor = Math.abs(y % major) < 1e-6;
+      g.appendChild(svgEl('line', { x1: 0, y1: sy, x2: rect.width, y2: sy,
+        class: isMajor ? 'grid-line major' : 'grid-line' }));
+    }
+    const o = worldToScreen({ x: 0, y: 0 });
+    g.appendChild(svgEl('line', { x1: o.x, y1: 0, x2: o.x, y2: rect.height, class: 'grid-axis' }));
+    g.appendChild(svgEl('line', { x1: 0, y1: o.y, x2: rect.width, y2: o.y, class: 'grid-axis' }));
+    svg.appendChild(g);
+  }
+
+  function renderElement(el) {
+    if (el.t === 'p') renderPoint(el);
+    else if (el.t === 's') renderSegment(el);
+    else if (el.t === 'r') renderRay(el);
+    else if (el.t === 'l') renderLine(el);
+    else if (el.t === 'g') renderPolygon(el);
+    else if (el.t === 'c') renderCircle(el);
+    else if (el.t === 'a') renderAngle(el);
+    else if (el.t === 'x') renderText(el);
+    else if (el.t === 'm') renderMeasure(el);
+  }
+
+  function renderPoint(p) {
+    const s = worldToScreen(p);
+    const highlight = state.toolPicked.some(x => x.id === p.id);
+    const selected = state.selection.has(p.id);
+    const cls = 'point' + (highlight ? ' highlight' : '') + (selected ? ' selected' : '');
+    svg.appendChild(svgEl('circle', { cx: s.x, cy: s.y, r: 4, class: cls, 'data-id': p.id }));
+    if (p.label) {
+      const t = svgEl('text', { x: s.x + 8, y: s.y - 7, class: 'point-label', 'data-id': p.id });
+      t.textContent = p.label;
+      svg.appendChild(t);
+    }
+  }
+
+  function lineTwoPts(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    return (a && b) ? { a, b } : null;
+  }
+
+  function renderSegment(el) {
+    const p = lineTwoPts(el); if (!p) return;
+    const a = worldToScreen(p.a), b = worldToScreen(p.b);
+    const cls = 'segment' + (el.dashed ? ' dashed' : '');
+    const l = svgEl('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: cls, 'data-id': el.id });
+    if (el.derived) l.style.opacity = '0.55';
+    svg.appendChild(l);
+  }
+
+  function renderRay(el) {
+    const p = lineTwoPts(el); if (!p) return;
+    const a = worldToScreen(p.a);
+    const FAR = 5000;
+    const far = worldToScreen({ x: p.a.x + (p.b.x - p.a.x) / G.dist(p.a, p.b) * FAR, y: p.a.y + (p.b.y - p.a.y) / G.dist(p.a, p.b) * FAR });
+    const cls = 'ray' + (el.dashed ? ' dashed' : '');
+    const l = svgEl('line', { x1: a.x, y1: a.y, x2: far.x, y2: far.y, class: cls, 'data-id': el.id });
+    if (el.derived) l.style.opacity = '0.55';
+    svg.appendChild(l);
+  }
+
+  function renderLine(el) {
+    const p = lineTwoPts(el); if (!p) return;
+    const FAR = 5000;
+    const d = G.norm(G.sub(p.b, p.a));
+    const fa = worldToScreen({ x: p.a.x - d.x * FAR, y: p.a.y - d.y * FAR });
+    const fb = worldToScreen({ x: p.a.x + d.x * FAR, y: p.a.y + d.y * FAR });
+    const cls = 'line' + (el.dashed ? ' dashed' : '');
+    const l = svgEl('line', { x1: fa.x, y1: fa.y, x2: fb.x, y2: fb.y, class: cls, 'data-id': el.id });
+    if (el.derived) l.style.opacity = '0.55';
+    svg.appendChild(l);
+  }
+
+  function renderPolygon(el) {
+    const pts = el.points.map(id => pointAt(id)).filter(Boolean);
+    if (pts.length < 2) return;
+    const sp = pts.map(worldToScreen);
+    const dStr = 'M ' + sp.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' L ') + ' Z';
+    svg.appendChild(svgEl('path', { d: dStr, class: 'polygon', 'data-id': el.id }));
+  }
+
+  function renderCircle(el) {
+    const c = pointAt(el.center), r = pointAt(el.radius);
+    if (!c || !r) return;
+    const cs = worldToScreen(c);
+    const radius = G.dist(c, r) * state.view.scale;
+    const cls = 'circle' + (el.dashed ? ' dashed' : '');
+    const l = svgEl('circle', { cx: cs.x, cy: cs.y, r: radius, class: cls, 'data-id': el.id });
+    if (el.derived) l.style.opacity = '0.55';
+    svg.appendChild(l);
+  }
+
+  function renderAngle(el) {
+    const v = pointAt(el.vertex), p1 = pointAt(el.p1), p2 = pointAt(el.p2);
+    if (!v || !p1 || !p2) return;
+    const sV = worldToScreen(v);
+    const sP1 = worldToScreen(p1);
+    const sP2 = worldToScreen(p2);
+    const arcR = 30;
+    const a1 = Math.atan2(sP1.y - sV.y, sP1.x - sV.x);
+    const a2 = Math.atan2(sP2.y - sV.y, sP2.x - sV.x);
+    // 调整到 [-pi, pi] 范围
+    let da = a2 - a1;
+    while (da < -Math.PI) da += 2 * Math.PI;
+    while (da > Math.PI) da -= 2 * Math.PI;
+    let startA = a1, endA = a2;
+    let largeArc = 0, sweep = 0;
+    if (da < 0) { startA = a2; endA = a1; }
+    // 屏幕 y 朝下, sweep=1 是顺时针 (顺时针是较大角)
+    const angDiff = Math.abs(da);
+    if (angDiff > Math.PI) largeArc = 1;
+    if (angDiff > Math.PI) sweep = 1;
+    const sx = sV.x + Math.cos(startA) * arcR;
+    const sy = sV.y + Math.sin(startA) * arcR;
+    const ex = sV.x + Math.cos(endA) * arcR;
+    const ey = sV.y + Math.sin(endA) * arcR;
+    svg.appendChild(svgEl('path', {
+      d: `M ${sx} ${sy} A ${arcR} ${arcR} 0 ${largeArc} ${sweep} ${ex} ${ey}`,
+      class: 'angle-arc', fill: 'none',
+    }));
+    const deg = G.angleAt(v, p1, p2) * 180 / Math.PI;
+    const label = el.text || (deg.toFixed(1) + '°');
+    if (label) {
+      const midA = (startA + endA) / 2;
+      const tx = sV.x + Math.cos(midA) * (arcR + 18);
+      const ty = sV.y + Math.sin(midA) * (arcR + 18);
+      const t = svgEl('text', { x: tx, y: ty, class: 'angle-text', 'text-anchor': 'middle' });
+      t.textContent = label;
+      svg.appendChild(t);
+    }
+  }
+
+  function renderText(el) {
+    let pos;
+    if (el.anchor) {
+      const p = findPoint(el.anchor);
+      pos = p ? worldToScreen(p) : worldToScreen({ x: el.x, y: el.y });
+    } else {
+      pos = worldToScreen({ x: el.x, y: el.y });
+    }
+    const t = svgEl('text', { x: pos.x + 6, y: pos.y - 6, class: 'text-label' });
+    t.textContent = el.text;
+    svg.appendChild(t);
+  }
+
+  function renderMeasure(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return;
+    const mid = G.midpoint(a, b);
+    const d = G.norm(G.sub(b, a));
+    const off = G.perp(d);
+    const labelPos = G.add(mid, G.mul(off, 12 / state.view.scale));
+    const ls = worldToScreen(labelPos);
+    const t = svgEl('text', { x: ls.x, y: ls.y - 4, class: 'measure-text', 'text-anchor': 'middle' });
+    t.textContent = el.text || G.dist(a, b).toFixed(2);
+    svg.appendChild(t);
+  }
+
+  function renderSelectionOutline(el) {
+    if (el.t === 'p') {
+      const s = worldToScreen(el);
+      svg.appendChild(svgEl('circle', { cx: s.x, cy: s.y, r: 8, class: 'selected-outline' }));
+    } else if (el.t === 's' || el.t === 'r' || el.t === 'l') {
+      const p = lineTwoPts(el); if (!p) return;
+      const a = worldToScreen(p.a), b = worldToScreen(p.b);
+      if (el.t === 'l') {
+        const FAR = 5000, d = G.norm(G.sub(p.b, p.a));
+        const f1 = worldToScreen({ x: p.a.x - d.x * FAR, y: p.a.y - d.y * FAR });
+        const f2 = worldToScreen({ x: p.a.x + d.x * FAR, y: p.a.y + d.y * FAR });
+        svg.appendChild(svgEl('line', { x1: f1.x, y1: f1.y, x2: f2.x, y2: f2.y, class: 'selected-outline' }));
+      } else if (el.t === 'r') {
+        const FAR = 5000, d = G.norm(G.sub(p.b, p.a));
+        const f = worldToScreen({ x: p.a.x + d.x * FAR, y: p.a.y + d.y * FAR });
+        svg.appendChild(svgEl('line', { x1: a.x, y1: a.y, x2: f.x, y2: f.y, class: 'selected-outline' }));
+      } else {
+        svg.appendChild(svgEl('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'selected-outline' }));
+      }
+    } else if (el.t === 'c') {
+      const c = pointAt(el.center), r = pointAt(el.radius);
+      if (!c || !r) return;
+      const cs = worldToScreen(c);
+      const radius = G.dist(c, r) * state.view.scale;
+      svg.appendChild(svgEl('circle', { cx: cs.x, cy: cs.y, r: radius, class: 'selected-outline' }));
+    } else if (el.t === 'g') {
+      const pts = el.points.map(id => pointAt(id)).filter(Boolean);
+      if (pts.length < 2) return;
+      const sp = pts.map(worldToScreen);
+      const dStr = 'M ' + sp.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' L ') + ' Z';
+      svg.appendChild(svgEl('path', { d: dStr, class: 'selected-outline' }));
+    }
+  }
+
+  // ==================== 预览 ====================
+  let preview = null;
+  function setPreview(p) { preview = p; }
+  function clearPreview() { preview = null; }
+
+  function renderPreviews() {
+    if (!preview) return;
+    if (preview.type === 'line' || preview.type === 'segment' || preview.type === 'ray') {
+      const a = worldToScreen(preview.a), b = worldToScreen(preview.b);
+      let x1 = a.x, y1 = a.y, x2 = b.x, y2 = b.y;
+      if (preview.type === 'ray') {
+        const FAR = 5000, d = G.norm(G.sub(preview.b, preview.a));
+        x2 = a.x + d.x * FAR; y2 = a.y + d.y * FAR;
+      } else if (preview.type === 'line') {
+        const FAR = 5000, d = G.norm(G.sub(preview.b, preview.a));
+        x1 = a.x - d.x * FAR; y1 = a.y - d.y * FAR;
+        x2 = a.x + d.x * FAR; y2 = a.y + d.y * FAR;
+      }
+      svg.appendChild(svgEl('line', { x1, y1, x2, y2, class: 'segment',
+        'stroke-dasharray': '4 3', opacity: '0.6' }));
+    } else if (preview.type === 'circle') {
+      const sa = worldToScreen(preview.center);
+      const r = G.dist(preview.center, preview.point) * state.view.scale;
+      svg.appendChild(svgEl('circle', { cx: sa.x, cy: sa.y, r, class: 'circle',
+        'stroke-dasharray': '4 3', opacity: '0.6' }));
+    } else if (preview.type === 'polygon') {
+      if (preview.points.length < 1) return;
+      const sp = preview.points.map(worldToScreen);
+      const dStr = 'M ' + sp.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' L ');
+      svg.appendChild(svgEl('path', { d: dStr, class: 'segment', 'stroke-dasharray': '4 3', opacity: '0.6', fill: 'none' }));
+    }
+  }
+
+  // ==================== 命中测试 ====================
+  function hitTest(sx, sy) {
+    const w = screenToWorld(sx, sy);
+    const scale = state.view.scale;
+    let best = null, bestDist = HIT_DIST;
+    for (const el of state.elements) {
+      if (el.t === 'p') {
+        const d = Math.hypot(el.x - w.x, el.y - w.y) * scale;
+        if (d < bestDist) { bestDist = d; best = el; }
+      } else if (el.t === 's' || el.t === 'r' || el.t === 'l') {
+        const p = lineTwoPts(el); if (!p) continue;
+        const cp = el.t === 's' ? G.closestOnSegment(w, p.a, p.b) : G.closestOnLine(w, p.a, p.b);
+        const d = Math.hypot(cp.x - w.x, cp.y - w.y) * scale;
+        if (d < HIT_DIST_LINE && d < bestDist) { bestDist = d; best = el; }
+      } else if (el.t === 'c') {
+        const c = pointAt(el.center), r = pointAt(el.radius);
+        if (!c || !r) continue;
+        const dist = G.dist(w, c);
+        const radius = G.dist(c, r);
+        const d = Math.abs(dist - radius) * scale;
+        if (d < HIT_DIST_LINE && d < bestDist) { bestDist = d; best = el; }
+      } else if (el.t === 'g') {
+        const pts = el.points.map(id => pointAt(id)).filter(Boolean);
+        if (pts.length < 3) continue;
+        if (pointInPolygon(w, pts)) { best = el; bestDist = 0; }
+      }
+    }
+    return best;
+  }
+  function pointInPolygon(p, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i].x, yi = poly[i].y;
+      const xj = poly[j].x, yj = poly[j].y;
+      const intersect = ((yi > p.y) !== (yj > p.y)) &&
+        (p.x < (xj - xi) * (p.y - yi) / (yj - yi + 1e-12) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // 在世界坐标 w 周围 0.5*scale (px) 内找最近的点
+  function findClosestPoint(w, maxDistWorld) {
+    let best = null, bestD = maxDistWorld;
+    for (const el of state.elements) {
+      if (el.t !== 'p') continue;
+      const d = Math.hypot(el.x - w.x, el.y - w.y);
+      if (d < bestD) { bestD = d; best = el; }
+    }
+    return best;
+  }
+
+  // ==================== 鼠标事件 ====================
+  let dragInfo = null;
+  let mouseWorld = { x: 0, y: 0 };
+
+  svg.addEventListener('mousemove', e => {
+    const r = getRect();
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    mouseWorld = screenToWorld(sx, sy);
+    document.getElementById('status-pos').textContent = `${mouseWorld.x.toFixed(1)}, ${mouseWorld.y.toFixed(1)}`;
+
+    if (dragInfo) {
+      if (dragInfo.type === 'pan') {
+        state.view.x -= (e.clientX - dragInfo.lastX) / state.view.scale;
+        state.view.y -= (e.clientY - dragInfo.lastY) / state.view.scale;
+        dragInfo.lastX = e.clientX; dragInfo.lastY = e.clientY;
+        render();
+      } else if (dragInfo.type === 'move-point') {
+        const el = findEl(dragInfo.id);
+        if (el && el.t === 'p') { el.x = mouseWorld.x; el.y = mouseWorld.y; render(); }
+      } else if (dragInfo.type === 'move-element') {
+        const el = findEl(dragInfo.id);
+        if (el) {
+          const dx = mouseWorld.x - dragInfo.lastWX;
+          const dy = mouseWorld.y - dragInfo.lastWY;
+          moveElementBy(el, dx, dy);
+          dragInfo.lastWX = mouseWorld.x;
+          dragInfo.lastWY = mouseWorld.y;
+          render();
+        }
+      }
+      return;
+    }
+
+    // 预览
+    const tool = state.currentTool;
+    if (tool === 'segment' || tool === 'ray' || tool === 'line') {
+      if (state.pendingVertex) {
+        setPreview({ type: tool, a: pointAt(state.pendingVertex), b: mouseWorld });
+        render();
+      }
+    } else if (tool === 'circle') {
+      if (state.pendingCircleCenter) {
+        setPreview({ type: 'circle', center: pointAt(state.pendingCircleCenter), point: mouseWorld });
+        render();
+      }
+    } else if (tool === 'polygon') {
+      if (state.pendingPoly.length > 0) {
+        setPreview({ type: 'polygon', points: [...state.pendingPoly, mouseWorld] });
+        render();
+      }
+    }
+  });
+
+  svg.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    const r = getRect();
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const w = screenToWorld(sx, sy);
+
+    if (state.currentTool === 'pan') {
+      dragInfo = { type: 'pan', lastX: e.clientX, lastY: e.clientY };
+      svg.classList.add('dragging');
+      return;
+    }
+
+    if (state.currentTool === 'select') {
+      const hit = hitTest(sx, sy);
+      if (hit) {
+        state.selection.clear();
+        state.selection.add(hit.id);
+        if (hit.t === 'p') {
+          dragInfo = { type: 'move-point', id: hit.id };
+        } else {
+          dragInfo = { type: 'move-element', id: hit.id, lastWX: w.x, lastWY: w.y };
+        }
+        pushHistory();
+        render();
+      } else {
+        state.selection.clear();
+        dragInfo = { type: 'pan', lastX: e.clientX, lastY: e.clientY };
+        render();
+      }
+      return;
+    }
+
+    if (state.currentTool === 'delete') {
+      const hit = hitTest(sx, sy);
+      if (hit) { pushHistory(); deleteEl(hit.id); render(); }
+      return;
+    }
+
+    if (state.currentTool === 'point') {
+      pushHistory();
+      createPoint(w.x, w.y);
+      render();
+      return;
+    }
+
+    if (state.currentTool === 'text') {
+      openTextModal(w.x, w.y);
+      return;
+    }
+
+    if (state.currentTool === 'segment' || state.currentTool === 'ray' || state.currentTool === 'line') {
+      const hit = hitTest(sx, sy);
+      if (!state.pendingVertex) {
+        // 第一个点
+        if (hit && hit.t === 'p') state.pendingVertex = hit.id;
+        else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
+      } else {
+        // 第二个点
+        let pid;
+        if (hit && hit.t === 'p') pid = hit.id;
+        else { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        if (pid === state.pendingVertex) { toast('请选择不同的点'); return; }
+        const tt = state.currentTool;
+        pushHistory();
+        addEl({ id: newId(), t: tt === 'segment' ? 's' : (tt === 'ray' ? 'r' : 'l'), a: state.pendingVertex, b: pid });
+        state.pendingVertex = null;
+        clearPreview();
+        render();
+      }
+      return;
+    }
+
+    if (state.currentTool === 'circle') {
+      const hit = hitTest(sx, sy);
+      if (!state.pendingCircleCenter) {
+        if (hit && hit.t === 'p') state.pendingCircleCenter = hit.id;
+        else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingCircleCenter = p.id; render(); }
+      } else {
+        let pid;
+        if (hit && hit.t === 'p') pid = hit.id;
+        else { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        if (pid === state.pendingCircleCenter) { toast('请选择不同的点'); return; }
+        pushHistory();
+        addEl({ id: newId(), t: 'c', center: state.pendingCircleCenter, radius: pid });
+        state.pendingCircleCenter = null;
+        clearPreview();
+        render();
+      }
+      return;
+    }
+
+    if (state.currentTool === 'polygon') {
+      const hit = hitTest(sx, sy);
+      let p;
+      if (hit && hit.t === 'p') p = { x: hit.x, y: hit.y };
+      else { pushHistory(); const pt = createPoint(w.x, w.y); p = { x: pt.x, y: pt.y }; render(); }
+      state.pendingPoly.push(p);
+      return;
+    }
+
+    if (state.currentTool === 'angle') {
+      const hit = hitTest(sx, sy);
+      if (!state.pendingVertex) {
+        if (hit && hit.t === 'p') state.pendingVertex = hit.id;
+        else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
+      } else if (!state.toolPicked[0]) {
+        if (hit && hit.t === 'p') state.toolPicked.push(hit);
+        else { pushHistory(); const p = createPoint(w.x, w.y); state.toolPicked.push(p); render(); }
+      } else {
+        let pid;
+        if (hit && hit.t === 'p') pid = hit.id;
+        else { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        pushHistory();
+        addEl({ id: newId(), t: 'a', vertex: state.pendingVertex, p1: state.toolPicked[0].id, p2: pid, text: '' });
+        state.pendingVertex = null;
+        state.toolPicked = [];
+        render();
+      }
+      return;
+    }
+
+    if (CONSTRUCTION_DEFS[state.currentTool]) {
+      const def = CONSTRUCTION_DEFS[state.currentTool];
+      const wantType = def.types[state.toolPicked.length];
+      let hit = hitTest(sx, sy);
+      // 如果需要点，优先找最近的点（即使有更近的线）
+      if (wantType === 'p') {
+        const pHit = findClosestPoint(w, state.view.scale * 0.5);
+        if (pHit) hit = pHit;
+        if (!hit) {
+          pushHistory();
+          hit = createPoint(w.x, w.y);
+        }
+      } else {
+        if (!hit) {
+          toast('请点击一个' + (wantType === 'line-like' ? '线' : '对象'));
+          return;
+        }
+        if (!typeMatches(hit, wantType)) {
+          toast('类型不匹配: 需要 ' + wantType);
+          return;
+        }
+      }
+      state.toolPicked.push(hit);
+      if (state.toolPicked.length >= def.n) {
+        executeConstruction(state.currentTool, state.toolPicked);
+        state.toolPicked = [];
+      }
+      render();
+      return;
+    }
+  });
+
+  svg.addEventListener('mouseup', () => {
+    if (dragInfo) {
+      svg.classList.remove('dragging');
+      dragInfo = null;
+    }
+  });
+
+  svg.addEventListener('dblclick', e => {
+    if (state.currentTool === 'polygon' && state.pendingPoly.length >= 3) {
+      pushHistory();
+      const ids = [];
+      for (const p of state.pendingPoly) {
+        const existing = state.elements.find(el => el.t === 'p' && Math.abs(el.x - p.x) < 0.5 && Math.abs(el.y - p.y) < 0.5);
+        if (existing) {
+          if (ids[ids.length - 1] !== existing.id) ids.push(existing.id);
+        } else {
+          const np = createPoint(p.x, p.y);
+          ids.push(np.id);
+        }
+      }
+      if (ids.length >= 3) addEl({ id: newId(), t: 'g', points: ids });
+      state.pendingPoly = [];
+      clearPreview();
+      render();
+    } else {
+      const r = getRect();
+      const sx = e.clientX - r.left, sy = e.clientY - r.top;
+      const hit = hitTest(sx, sy);
+      if (hit && hit.t === 'p') openLabelModal(hit);
+    }
+  });
+
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = getRect();
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const before = screenToWorld(sx, sy);
+    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    state.view.scale = Math.max(2, Math.min(800, state.view.scale * factor));
+    const after = screenToWorld(sx, sy);
+    state.view.x += before.x - after.x;
+    state.view.y += before.y - after.y;
+    render();
+  }, { passive: false });
+
+  // ==================== 元素操作 ====================
+  function moveElementBy(el, dx, dy) {
+    if (el.t === 'p') { el.x += dx; el.y += dy; return; }
+    if (el.t === 's' || el.t === 'r' || el.t === 'l') {
+      [el.a, el.b].forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'c') {
+      [el.center, el.radius].forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'g') {
+      el.points.forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'a') {
+      [el.vertex, el.p1, el.p2].forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'm') {
+      [el.a, el.b].forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'x') {
+      el.x += dx; el.y += dy;
+      if (el.anchor) { const p = findPoint(el.anchor); if (p) { p.x += dx; p.y += dy; } }
+    }
+  }
+
+  // ==================== 构造执行 ====================
+  function executeConstruction(id, picked) {
+    const ref = picked.map(p => p.id);
+    if (id === 'midpoint') {
+      const a = pointAt(ref[0]), b = pointAt(ref[1]);
+      pushHistory();
+      createPoint(G.midpoint(a, b).x, G.midpoint(a, b).y);
+    } else if (id === 'bisect') {
+      const v = pointAt(ref[0]), p1 = pointAt(ref[1]), p2 = pointAt(ref[2]);
+      const dir = G.bisectorDir(v, p1, p2);
+      if (G.len(dir) < 1e-9) { toast('无法构造角平分线'); return; }
+      const far = G.add(v, G.mul(dir, 200));
+      pushHistory();
+      const farPoint = createPoint(far.x, far.y);
+      addEl({ id: newId(), t: 'r', a: ref[0], b: farPoint.id, derived: true, dashed: true });
+    } else if (id === 'perpendicular') {
+      const line = picked[0], pt = picked[1];
+      const a = pointAt(line.a), b = pointAt(line.b);
+      const P = pointAt(pt.id);
+      const d = G.norm(G.sub(b, a));
+      const Pfoot = G.closestOnLine(P, a, b);
+      const na = G.add(Pfoot, G.mul(G.perp(d), 100));
+      const nb = G.add(Pfoot, G.mul(G.perp(d), -100));
+      pushHistory();
+      const p1 = createPoint(na.x, na.y);
+      const p2 = createPoint(nb.x, nb.y);
+      addEl({ id: newId(), t: 'l', a: p1.id, b: p2.id, derived: true, dashed: true });
+    } else if (id === 'parallel') {
+      const line = picked[0], pt = picked[1];
+      const a = pointAt(line.a), b = pointAt(line.b);
+      const P = pointAt(pt.id);
+      const d = G.norm(G.sub(b, a));
+      const na = G.add(P, G.mul(d, 100));
+      const nb = G.sub(P, G.mul(d, 100));
+      pushHistory();
+      const p1 = createPoint(na.x, na.y);
+      const p2 = createPoint(nb.x, nb.y);
+      addEl({ id: newId(), t: 'l', a: p1.id, b: p2.id, derived: true, dashed: true });
+    } else if (id === 'perpbisect') {
+      const a = pointAt(ref[0]), b = pointAt(ref[1]);
+      const m = G.midpoint(a, b);
+      const d = G.norm(G.sub(b, a));
+      const p1 = G.add(m, G.mul(G.perp(d), 100));
+      const p2 = G.add(m, G.mul(G.perp(d), -100));
+      pushHistory();
+      const pa = createPoint(p1.x, p1.y);
+      const pb = createPoint(p2.x, p2.y);
+      createPoint(m.x, m.y);
+      addEl({ id: newId(), t: 'l', a: pa.id, b: pb.id, derived: true, dashed: true });
+    } else if (id === 'intersection') {
+      const pts = computeIntersection(picked[0], picked[1]);
+      if (pts.length === 0) { toast('无交点'); return; }
+      pushHistory();
+      pts.forEach(p => createPoint(p.x, p.y));
+    } else if (id === 'divide') {
+      const a = pointAt(ref[0]), b = pointAt(ref[1]);
+      openDivideModal(a, b);
+    } else if (id === 'tri-altitude') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const verts = [A, B, C];
+      const opps = [[B, C], [C, A], [A, B]];
+      pushHistory();
+      for (let i = 0; i < 3; i++) {
+        const V = verts[i], P = opps[i][0], Q = opps[i][1];
+        const foot = G.closestOnLine(V, P, Q);
+        const d = G.sub(Q, P);
+        const t = G.dot(G.sub(foot, P), d) / G.dot(d, d);
+        const tt = Math.max(0, Math.min(1, t));
+        const F = G.add(P, G.mul(d, tt));
+        const fId = createPoint(F.x, F.y);
+        addEl({ id: newId(), t: 's', a: ref[i], b: fId.id, derived: true, dashed: true });
+      }
+    } else if (id === 'tri-median') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const opps = [[B, C], [C, A], [A, B]];
+      pushHistory();
+      for (let i = 0; i < 3; i++) {
+        const m = G.midpoint(opps[i][0], opps[i][1]);
+        const mId = createPoint(m.x, m.y);
+        addEl({ id: newId(), t: 's', a: ref[i], b: mId.id, derived: true, dashed: true });
+      }
+    } else if (id === 'tri-bisector') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const verts = [A, B, C];
+      const opps = [[B, C], [C, A], [A, B]];
+      pushHistory();
+      for (let i = 0; i < 3; i++) {
+        const V = verts[i], P = opps[i][0], Q = opps[i][1];
+        const dir = G.bisectorDir(V, P, Q);
+        if (G.len(dir) < 1e-9) continue;
+        const int = G.lineLineIntersect(V, G.add(V, dir), P, Q);
+        if (!int) continue;
+        const fId = createPoint(int.x, int.y);
+        addEl({ id: newId(), t: 's', a: ref[i], b: fId.id, derived: true, dashed: true });
+      }
+    } else if (id === 'tri-midsegment') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const mBC = G.midpoint(B, C), mCA = G.midpoint(C, A), mAB = G.midpoint(A, B);
+      pushHistory();
+      const p1 = createPoint(mBC.x, mBC.y);
+      const p2 = createPoint(mCA.x, mCA.y);
+      const p3 = createPoint(mAB.x, mAB.y);
+      addEl({ id: newId(), t: 's', a: p1.id, b: p2.id, derived: true, dashed: true });
+      addEl({ id: newId(), t: 's', a: p2.id, b: p3.id, derived: true, dashed: true });
+      addEl({ id: newId(), t: 's', a: p3.id, b: p1.id, derived: true, dashed: true });
+    } else if (id === 'tri-circumcircle') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const O = G.circumcenter(A, B, C);
+      if (!O) { toast('三点共线'); return; }
+      pushHistory();
+      const oId = createPoint(O.x, O.y);
+      const rId = createPoint(A.x, A.y);
+      addEl({ id: newId(), t: 'c', center: oId.id, radius: rId.id, derived: true, dashed: true });
+    } else if (id === 'tri-incircle') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const I = G.incenter(A, B, C);
+      if (!I) { toast('无法构造'); return; }
+      const a = G.dist(B, C), b = G.dist(A, C), c = G.dist(A, B);
+      const s = (a + b + c) / 2;
+      const area = G.triangleArea(A, B, C);
+      const r = s > 0 ? area / s : 0;
+      const dir = G.norm(G.sub(B, A));
+      const onC = G.add(I, G.mul(G.perp(dir), r));
+      pushHistory();
+      const iId = createPoint(I.x, I.y);
+      const rId = createPoint(onC.x, onC.y);
+      addEl({ id: newId(), t: 'c', center: iId.id, radius: rId.id, derived: true, dashed: true });
+    } else if (id === 'tri-centroid') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const Cp = G.centroid(A, B, C);
+      pushHistory();
+      createPoint(Cp.x, Cp.y);
+    } else if (id === 'tri-orthocenter') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const H = G.orthocenter(A, B, C);
+      if (!H) { toast('三点共线'); return; }
+      pushHistory();
+      createPoint(H.x, H.y);
+    } else if (id === 'tri-circumcenter') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const O = G.circumcenter(A, B, C);
+      if (!O) { toast('三点共线'); return; }
+      pushHistory();
+      createPoint(O.x, O.y);
+    } else if (id === 'tri-incenter') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const I = G.incenter(A, B, C);
+      if (!I) return;
+      pushHistory();
+      createPoint(I.x, I.y);
+    } else if (id === 'measure-length') {
+      const a = pointAt(ref[0]), b = pointAt(ref[1]);
+      const txt = G.dist(a, b).toFixed(2);
+      pushHistory();
+      addEl({ id: newId(), t: 'm', a: ref[0], b: ref[1], text: txt });
+    } else if (id === 'measure-angle') {
+      const v = pointAt(ref[0]), p1 = pointAt(ref[1]), p2 = pointAt(ref[2]);
+      const deg = G.angleAt(v, p1, p2) * 180 / Math.PI;
+      const txt = deg.toFixed(1) + '°';
+      pushHistory();
+      addEl({ id: newId(), t: 'a', vertex: ref[0], p1: ref[1], p2: ref[2], text: txt });
+    }
+    render();
+  }
+
+  function computeIntersection(e1, e2) {
+    const e1Line = isLineLike(e1);
+    const e2Line = isLineLike(e2);
+    if (e1Line && e2Line) {
+      const a1 = pointAt(e1.a), b1 = pointAt(e1.b);
+      const a2 = pointAt(e2.a), b2 = pointAt(e2.b);
+      const p = G.lineLineIntersect(a1, b1, a2, b2);
+      return p ? [p] : [];
+    }
+    if ((e1Line && e2.t === 'c') || (e2Line && e1.t === 'c')) {
+      const line = e1Line ? e1 : e2;
+      const circ = e1Line ? e2 : e1;
+      const a = pointAt(line.a), b = pointAt(line.b);
+      const O = pointAt(circ.center);
+      const r = G.dist(pointAt(circ.center), pointAt(circ.radius));
+      return G.lineCircleIntersect(a, b, O, r);
+    }
+    if (e1.t === 'c' && e2.t === 'c') {
+      const O1 = pointAt(e1.center), r1 = G.dist(pointAt(e1.center), pointAt(e1.radius));
+      const O2 = pointAt(e2.center), r2 = G.dist(pointAt(e2.center), pointAt(e2.radius));
+      return G.circleCircleIntersect(O1, r1, O2, r2);
+    }
+    return [];
+  }
+
+  // ==================== 等分点 ====================
+  function openDivideModal(a, b) {
+    state.pendingDivide = { a, b };
+    document.getElementById('divide-n').value = 2;
+    document.getElementById('modal-divide').classList.add('open');
+    setTimeout(() => document.getElementById('divide-n').focus(), 50);
+  }
+  document.getElementById('divide-cancel').onclick = () => {
+    document.getElementById('modal-divide').classList.remove('open');
+    state.pendingDivide = null;
+  };
+  document.getElementById('divide-ok').onclick = () => {
+    const n = parseInt(document.getElementById('divide-n').value, 10);
+    if (!n || n < 2 || n > 20) { toast('等分数应为 2-20'); return; }
+    if (state.pendingDivide) {
+      const { a, b } = state.pendingDivide;
+      pushHistory();
+      for (let i = 1; i < n; i++) {
+        const t = i / n;
+        const p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+        createPoint(p.x, p.y);
+      }
+      render();
+    }
+    document.getElementById('modal-divide').classList.remove('open');
+    state.pendingDivide = null;
+  };
+
+  // ==================== 文本输入 ====================
+  function openTextModal(x, y) {
+    state.pendingTextPos = { x, y };
+    const input = document.getElementById('text-input');
+    input.value = '';
+    document.getElementById('modal-text').classList.add('open');
+    setTimeout(() => input.focus(), 50);
+  }
+  document.getElementById('text-cancel').onclick = () => {
+    document.getElementById('modal-text').classList.remove('open');
+  };
+  document.getElementById('text-ok').onclick = () => {
+    const v = document.getElementById('text-input').value.trim();
+    if (v && state.pendingTextPos) {
+      pushHistory();
+      addEl({ id: newId(), t: 'x', x: state.pendingTextPos.x, y: state.pendingTextPos.y, text: v });
+      render();
+    }
+    document.getElementById('modal-text').classList.remove('open');
+  };
+  document.getElementById('text-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('text-ok').click();
+  });
+
+  // ==================== 标签编辑 ====================
+  function openLabelModal(p) {
+    state.editingLabel = p;
+    const input = document.getElementById('label-input');
+    input.value = p.label || '';
+    document.getElementById('modal-label').classList.add('open');
+    setTimeout(() => input.focus(), 50);
+  }
+  document.getElementById('label-cancel').onclick = () => {
+    document.getElementById('modal-label').classList.remove('open');
+  };
+  document.getElementById('label-ok').onclick = () => {
+    const v = document.getElementById('label-input').value.trim();
+    if (state.editingLabel) {
+      pushHistory();
+      state.editingLabel.label = v || undefined;
+      render();
+    }
+    document.getElementById('modal-label').classList.remove('open');
+  };
+  document.getElementById('label-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('label-ok').click();
+  });
+
+  // ==================== 分享 / 导入 / 导出 ====================
+  function shareLink() {
+    const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(serialize()));
+    const url = location.origin + location.pathname + '?d=' + compressed;
+    document.getElementById('share-url').value = url;
+    document.getElementById('modal-share').classList.add('open');
+  }
+  document.getElementById('share-close').onclick = () => {
+    document.getElementById('modal-share').classList.remove('open');
+  };
+  document.getElementById('share-copy').onclick = () => {
+    const ta = document.getElementById('share-url');
+    ta.select();
+    try {
+      document.execCommand('copy');
+      toast('已复制到剪贴板');
+    } catch (e) { toast('复制失败,请手动复制'); }
+  };
+
+  function openImportModal() {
+    document.getElementById('import-json').value = '';
+    document.getElementById('modal-import').classList.add('open');
+  }
+  document.getElementById('import-cancel').onclick = () => {
+    document.getElementById('modal-import').classList.remove('open');
+  };
+  document.getElementById('import-replace').onclick = () => {
+    const txt = document.getElementById('import-json').value.trim();
+    if (!txt) return;
+    try {
+      const data = JSON.parse(txt);
+      if (!data.elements) { toast('JSON 格式错误'); return; }
+      pushHistory();
+      loadFrom(data);
+      document.getElementById('modal-import').classList.remove('open');
+      toast('已导入');
+    } catch (err) {
+      toast('JSON 解析失败');
+    }
+  };
+
+  function loadFromUrl() {
+    const d = new URLSearchParams(location.search).get('d');
+    if (!d) return;
+    try {
+      const json = LZString.decompressFromEncodedURIComponent(d);
+      if (json) { loadFrom(JSON.parse(json)); toast('已加载分享内容'); }
+    } catch (err) { /* ignore */ }
+  }
+
+  function exportPng() {
+    const rect = getRect();
+    const clone = svg.cloneNode(true);
+    clone.querySelectorAll('.selected-outline').forEach(n => n.remove());
+    clone.setAttribute('xmlns', SVG_NS);
+    const xml = new XMLSerializer().serializeToString(clone);
+    const blob = new Blob([xml], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = rect.width; c.height = rect.height;
+      c.getContext('2d').drawImage(img, 0, 0);
+      c.toBlob(b => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b);
+        a.download = 'geometry-' + Date.now() + '.png';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      }, 'image/png');
+      URL.revokeObjectURL(url);
+      toast('已导出 PNG');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); toast('导出失败'); };
+    img.src = url;
+  }
+
+  function exportJson() {
+    const json = JSON.stringify(serialize(), null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'geometry-' + Date.now() + '.json';
+    a.click();
+    toast('已导出 JSON');
+  }
+
+  function clearAll() {
+    if (state.elements.length === 0) return;
+    if (!confirm('确定要清空画板吗?')) return;
+    pushHistory();
+    state.elements = [];
+    state.nextId = 1;
+    state.nextLabelIdx = 0;
+    state.selection.clear();
+    state.pendingVertex = null;
+    state.pendingCircleCenter = null;
+    state.pendingPoly = [];
+    state.toolPicked = [];
+    clearPreview();
+    render();
+  }
+
+  function toggleGrid() {
+    state.showGrid = !state.showGrid;
+    render();
+    toast(state.showGrid ? '已显示栅格' : '已隐藏栅格');
+  }
+
+  function resetView() {
+    state.view = { x: 0, y: 0, scale: VIEW_DEFAULT_SCALE };
+    render();
+  }
+
+  // ==================== Toast ====================
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+  function toast(msg, isError) {
+    toastEl.textContent = msg;
+    toastEl.classList.toggle('error', !!isError);
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+  }
+
+  // ==================== 键盘 ====================
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const k = e.key;
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (ctrl && k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
+    if (ctrl && (k === 'y' || (k === 'z' && e.shiftKey))) { e.preventDefault(); redo(); return; }
+    if (k === 'Delete' || k === 'Backspace') {
+      if (state.selection.size > 0) {
+        pushHistory();
+        [...state.selection].forEach(deleteEl);
+        render();
+        e.preventDefault();
+      }
+      return;
+    }
+    if (k === 'Escape') {
+      state.pendingVertex = null;
+      state.pendingCircleCenter = null;
+      state.pendingPoly = [];
+      state.toolPicked = [];
+      clearPreview();
+      activateTool('select');
+      render();
+      return;
+    }
+    if (k === 'Enter' && state.currentTool === 'polygon' && state.pendingPoly.length >= 3) {
+      pushHistory();
+      const ids = [];
+      for (const p of state.pendingPoly) {
+        const existing = state.elements.find(el => el.t === 'p' && Math.abs(el.x - p.x) < 0.5 && Math.abs(el.y - p.y) < 0.5);
+        if (existing) { if (ids[ids.length - 1] !== existing.id) ids.push(existing.id); }
+        else ids.push(createPoint(p.x, p.y).id);
+      }
+      if (ids.length >= 3) addEl({ id: newId(), t: 'g', points: ids });
+      state.pendingPoly = [];
+      clearPreview();
+      render();
+      return;
+    }
+    if (k === 'g' || k === 'G') { toggleGrid(); return; }
+    if (k === 'v' || k === 'V') activateTool('select');
+    else if (k === 'h' || k === 'H') activateTool('pan');
+    else if (k === 'p' || k === 'P') activateTool('point');
+    else if (k === 'l' || k === 'L') activateTool('segment');
+    else if (k === 'r' || k === 'R') activateTool('ray');
+    else if (k === 't' || k === 'T') activateTool('line');
+    else if (k === 'c' || k === 'C') activateTool('circle');
+    else if (k === 'a' || k === 'A') activateTool('angle');
+    else if (k === 'x' || k === 'X') activateTool('text');
+    else if (k === 'd' || k === 'D') activateTool('delete');
+  });
+
+  // ==================== 窗口大小 ====================
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(render, 100);
+  });
+
+  // ==================== 初始化 ====================
+  function init() {
+    renderSidebar();
+    activateTool('select');
+    render();
+    loadFromUrl();
+  }
+  init();
+})();
+</script>
+
+    <script src="../_shared/tool-header.js" defer></script>
+</body>
+
+</html>

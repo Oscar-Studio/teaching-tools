@@ -347,6 +347,20 @@
       "icon": "🎵",
       "featured": true,
       "demoFile": "media-player/index.html"
+    },
+    {
+      "name": "几何画板",
+      "description": "交互式几何画板，支持点、线段、射线、直线、圆、多边形、角度标、文本;可一键构造中点、垂线、平行线、角平分线、三角形的高/中线/角平分线/中位线/外接圆/内切圆/四心(重/垂/外/内);支持 PNG / JSON 导出与可分享链接",
+      "tags": [
+        "几何",
+        "画板",
+        "绘图"
+      ],
+      "subject": [
+        "数学"
+      ],
+      "icon": "📐",
+      "featured": true
     }
   ]
 }
