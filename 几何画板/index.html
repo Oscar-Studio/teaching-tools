@@ -106,6 +106,88 @@
             margin: 8px 12px;
         }
 
+        /* ===== 工具下拉菜单 (多边形 等) ===== */
+        .tool-wrapper {
+            position: relative;
+            display: flex;
+            width: 100%;
+        }
+        .tool-wrapper .tool {
+            flex: 1;
+            border-left: 3px solid transparent;
+        }
+        .tool-wrapper.active > .tool {
+            background: var(--bg-3);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+        .tool-wrapper .dropdown-arrow {
+            width: 26px;
+            flex-shrink: 0;
+            background: transparent;
+            border: none;
+            color: var(--text-2);
+            cursor: pointer;
+            font-size: 9px;
+            transition: background 0.1s, color 0.1s;
+        }
+        .tool-wrapper .dropdown-arrow:hover {
+            background: var(--bg-3);
+            color: var(--text);
+        }
+        .dropdown-popup {
+            position: absolute;
+            left: 100%;
+            top: 0;
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 0;
+            min-width: 140px;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+        .dropdown-popup.dropdown-popup-fixed {
+            position: fixed;
+            left: auto;
+            top: auto;
+        }
+        .dropdown-popup.open { display: block; }
+        .dropdown-popup .item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text);
+            white-space: nowrap;
+            user-select: none;
+        }
+        .dropdown-popup .item:hover { background: var(--bg-3); }
+        .dropdown-popup .item.has-submenu::after {
+            content: '▶';
+            margin-left: 16px;
+            color: var(--text-2);
+            font-size: 9px;
+        }
+        .dropdown-popup .submenu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: -5px;
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 0;
+            min-width: 130px;
+            z-index: 201;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+        .dropdown-popup .item.has-submenu:hover > .submenu,
+        .dropdown-popup .item.has-submenu.expanded > .submenu { display: block; }
+
         /* ===== 画布区 ===== */
         #canvas-area {
             flex: 1;
@@ -414,7 +496,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     pendingVertex: null,    // 多步工具的第一个点
     toolStep: 0,            // 多步工具的当前步
     toolPicked: [],         // 多步工具已选
-    pendingPoly: [],        // 多边形已选点 {x, y}
+    pendingPoly: [],        // 多边形已选点的 ID 数组
     pendingCircleCenter: null,
     showGrid: false,
     nextId: 1,
@@ -435,9 +517,9 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       { id: 'segment', name: '线段', icon: '──', shortcut: 'L' },
       { id: 'ray', name: '射线', icon: '──▶', shortcut: 'R' },
       { id: 'line', name: '直线', icon: '────', shortcut: 'T' },
-      { id: 'polygon', name: '多边形', icon: '⬠' },
+      { id: 'polygon', name: '多边形', icon: '⬠', dropdown: true },
       { id: 'circle', name: '圆', icon: '○', shortcut: 'C' },
-      { id: 'angle', name: '角度标', icon: '∠', shortcut: 'A' },
+      { id: 'angle', name: '角度标', icon: '∠', shortcut: 'A', prompt: '请依次选择 3 个点（中间一个为角的顶点）' },
       { id: 'text', name: '文本', icon: 'T', shortcut: 'X' },
       { id: 'delete', name: '删除', icon: '✕', shortcut: 'D' },
     ]},
@@ -478,6 +560,20 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       { id: 'reset-view', name: '重置视图', icon: '⌖' },
     ]},
   ];
+
+  // 预设多边形: 2 次点击生成（除特别说明）
+  const PREDIFINED_SHAPES = {
+    'tri-isoceles':       { name: '等腰三角形',   icon: '△',  p1: '底边中点', p2: '顶点' },
+    'tri-equilateral':    { name: '等边三角形',   icon: '△',  p1: '中心',     p2: '一个顶点' },
+    'quad-parallelogram': { name: '平行四边形',   icon: '▱',  p1: '一个角',   p2: '相邻角' },
+    'quad-rectangle':     { name: '矩形',         icon: '▭',  p1: '一个角',   p2: '对角' },
+    'quad-rhombus':       { name: '菱形',         icon: '◇',  p1: '一个角',   p2: '相邻角' },
+    'quad-square':        { name: '正方形',       icon: '□',  p1: '一个角',   p2: '对角' },
+  };
+  function shapePrompt(id) {
+    const s = PREDIFINED_SHAPES[id];
+    return s ? `请依次选择 2 个点: ${s.p1}, ${s.p2}` : '';
+  }
 
   const CONSTRUCTION_DEFS = {
     'midpoint':         { n: 2, types: ['p', 'p'] },
@@ -726,6 +822,10 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
 
   // ==================== 侧边栏 ====================
   const sidebar = document.getElementById('sidebar');
+  function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-popup.open').forEach(p => p.classList.remove('open'));
+  }
+
   function renderSidebar() {
     sidebar.innerHTML = '';
     TOOLS.forEach(group => {
@@ -736,16 +836,82 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       title.textContent = group.name;
       g.appendChild(title);
       group.items.forEach(item => {
-        const btn = document.createElement('button');
-        btn.className = 'tool';
-        btn.dataset.tool = item.id;
-        btn.innerHTML = `<span class="icon">${item.icon}</span><span>${item.name}</span>` +
-          (item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : '');
-        btn.addEventListener('click', () => activateTool(item.id));
-        g.appendChild(btn);
+        if (item.dropdown) {
+          g.appendChild(buildDropdownButton(item));
+        } else {
+          const btn = document.createElement('button');
+          btn.className = 'tool';
+          btn.dataset.tool = item.id;
+          btn.innerHTML = `<span class="icon">${item.icon}</span><span>${item.name}</span>` +
+            (item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : '');
+          btn.addEventListener('click', () => activateTool(item.id));
+          g.appendChild(btn);
+        }
       });
       sidebar.appendChild(g);
     });
+  }
+
+  function buildDropdownButton(item) {
+    const wrap = document.createElement('div');
+    wrap.className = 'tool-wrapper';
+    wrap.dataset.tool = item.id;
+    const main = document.createElement('button');
+    main.className = 'tool';
+    main.innerHTML = `<span class="icon">${item.icon}</span><span>${item.name}</span>`;
+    main.addEventListener('click', () => { closeAllDropdowns(); activateTool(item.id); });
+    const arrow = document.createElement('button');
+    arrow.className = 'dropdown-arrow';
+    arrow.innerHTML = '▼';
+    arrow.addEventListener('click', e => {
+      e.stopPropagation();
+      const popup = wrap.querySelector('.dropdown-popup');
+      const wasOpen = popup.classList.contains('open');
+      closeAllDropdowns();
+      if (!wasOpen) {
+        const r = wrap.getBoundingClientRect();
+        popup.style.left = (r.right + 4) + 'px';
+        popup.style.top = r.top + 'px';
+        popup.classList.add('open');
+      }
+    });
+    const popup = document.createElement('div');
+    popup.className = 'dropdown-popup dropdown-popup-fixed';
+    popup.innerHTML = `
+      <div class="item" data-action="polygon">任意多边形</div>
+      <div class="item has-submenu" data-action="toggle-tri">
+        <span>三角形</span>
+        <div class="submenu">
+          <div class="item" data-action="tri-isoceles">等腰三角形</div>
+          <div class="item" data-action="tri-equilateral">等边三角形</div>
+        </div>
+      </div>
+      <div class="item has-submenu" data-action="toggle-quad">
+        <span>四边形</span>
+        <div class="submenu">
+          <div class="item" data-action="quad-parallelogram">平行四边形</div>
+          <div class="item" data-action="quad-rectangle">矩形</div>
+          <div class="item" data-action="quad-rhombus">菱形</div>
+          <div class="item" data-action="quad-square">正方形</div>
+        </div>
+      </div>
+    `;
+    popup.querySelectorAll('.item').forEach(it => {
+      it.addEventListener('click', e => {
+        e.stopPropagation();
+        const action = it.dataset.action;
+        if (action === 'toggle-tri' || action === 'toggle-quad') {
+          it.classList.toggle('expanded');
+        } else {
+          closeAllDropdowns();
+          activateTool(action);
+        }
+      });
+    });
+    wrap.appendChild(main);
+    wrap.appendChild(arrow);
+    wrap.appendChild(popup);
+    return wrap;
   }
 
   function toolDef(id) { return TOOLS.flatMap(g => g.items).find(i => i.id === id); }
@@ -767,7 +933,9 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     state.selection.clear();
     clearPreview();
 
-    document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.dataset.tool === id));
+    document.querySelectorAll('.tool-wrapper, .tool').forEach(b => {
+      b.classList.toggle('active', b.dataset.tool === id);
+    });
 
     svg.classList.remove('tool-select', 'tool-pan', 'tool-text', 'tool-delete');
     if (id === 'select') svg.classList.add('tool-select');
@@ -775,17 +943,21 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     else if (id === 'text') svg.classList.add('tool-text');
     else if (id === 'delete') svg.classList.add('tool-delete');
 
-    const def = toolDef(id);
-    if (def) {
-      document.getElementById('status-tool').textContent = def.name;
-      if (CONSTRUCTION_DEFS[id]) {
-        state.toolPicked = [];
-        state.toolStep = 0;
-        document.getElementById('status-prompt').textContent = def.prompt || '';
-      } else {
-        document.getElementById('status-prompt').textContent = '';
-      }
+    let def = toolDef(id);
+    let name = def ? def.name : (PREDIFINED_SHAPES[id] ? PREDIFINED_SHAPES[id].name : id);
+    let prompt = '';
+    if (CONSTRUCTION_DEFS[id]) {
+      state.toolPicked = [];
+      state.toolStep = 0;
+      prompt = def.prompt || '';
+    } else if (PREDIFINED_SHAPES[id]) {
+      prompt = shapePrompt(id);
+    } else if (def) {
+      prompt = def.prompt || '';
     }
+    document.getElementById('status-tool').textContent = name;
+    document.getElementById('status-prompt').textContent = prompt;
+    closeAllDropdowns();
   }
 
   // ==================== 渲染 ====================
@@ -1151,8 +1323,11 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       }
     } else if (tool === 'polygon') {
       if (state.pendingPoly.length > 0) {
-        setPreview({ type: 'polygon', points: [...state.pendingPoly, mouseWorld] });
-        render();
+        const pts = state.pendingPoly.map(id => pointAt(id)).filter(Boolean);
+        if (pts.length > 0) {
+          setPreview({ type: 'polygon', points: [...pts, mouseWorld] });
+          render();
+        }
       }
     }
   });
@@ -1250,29 +1425,57 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
 
     if (state.currentTool === 'polygon') {
       const hit = hitTest(sx, sy);
-      let p;
-      if (hit && hit.t === 'p') p = { x: hit.x, y: hit.y };
-      else { pushHistory(); const pt = createPoint(w.x, w.y); p = { x: pt.x, y: pt.y }; render(); }
-      state.pendingPoly.push(p);
+      // 已有 3+ 个点时, 点击首点则完成
+      if (state.pendingPoly.length >= 3 && hit && hit.t === 'p' && hit.id === state.pendingPoly[0]) {
+        finishPolygon();
+        return;
+      }
+      let pid;
+      if (hit && hit.t === 'p') pid = hit.id;
+      else { pushHistory(); pid = createPoint(w.x, w.y).id; render(); }
+      // 避免连续重复同一 ID
+      if (state.pendingPoly[state.pendingPoly.length - 1] !== pid) {
+        state.pendingPoly.push(pid);
+      }
       return;
     }
 
     if (state.currentTool === 'angle') {
+      // 1st = p1 (边 1 上的点), 2nd = vertex (顶点), 3rd = p2 (边 2 上的点)
       const hit = hitTest(sx, sy);
       if (!state.pendingVertex) {
+        // 1st click: p1
         if (hit && hit.t === 'p') state.pendingVertex = hit.id;
         else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
       } else if (!state.toolPicked[0]) {
-        if (hit && hit.t === 'p') state.toolPicked.push(hit);
-        else { pushHistory(); const p = createPoint(w.x, w.y); state.toolPicked.push(p); render(); }
+        // 2nd click: vertex
+        if (hit && hit.t === 'p') state.toolPicked.push({ id: hit.id });
+        else { pushHistory(); const p = createPoint(w.x, w.y); state.toolPicked.push({ id: p.id }); render(); }
       } else {
+        // 3rd click: p2
         let pid;
         if (hit && hit.t === 'p') pid = hit.id;
         else { pushHistory(); pid = createPoint(w.x, w.y).id; }
         pushHistory();
-        addEl({ id: newId(), t: 'a', vertex: state.pendingVertex, p1: state.toolPicked[0].id, p2: pid, text: '' });
+        addEl({ id: newId(), t: 'a', vertex: state.toolPicked[0].id, p1: state.pendingVertex, p2: pid, text: '' });
         state.pendingVertex = null;
         state.toolPicked = [];
+        render();
+      }
+      return;
+    }
+
+    if (PREDIFINED_SHAPES[state.currentTool]) {
+      const hit = hitTest(sx, sy);
+      if (!state.pendingVertex) {
+        if (hit && hit.t === 'p') state.pendingVertex = hit.id;
+        else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
+      } else {
+        let pid;
+        if (hit && hit.t === 'p') pid = hit.id;
+        else { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        executePredefinedShape(state.currentTool, state.pendingVertex, pid);
+        state.pendingVertex = null;
         render();
       }
       return;
@@ -1319,21 +1522,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
 
   svg.addEventListener('dblclick', e => {
     if (state.currentTool === 'polygon' && state.pendingPoly.length >= 3) {
-      pushHistory();
-      const ids = [];
-      for (const p of state.pendingPoly) {
-        const existing = state.elements.find(el => el.t === 'p' && Math.abs(el.x - p.x) < 0.5 && Math.abs(el.y - p.y) < 0.5);
-        if (existing) {
-          if (ids[ids.length - 1] !== existing.id) ids.push(existing.id);
-        } else {
-          const np = createPoint(p.x, p.y);
-          ids.push(np.id);
-        }
-      }
-      if (ids.length >= 3) addEl({ id: newId(), t: 'g', points: ids });
-      state.pendingPoly = [];
-      clearPreview();
-      render();
+      finishPolygon();
     } else {
       const r = getRect();
       const sx = e.clientX - r.left, sy = e.clientY - r.top;
@@ -1375,6 +1564,84 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
   }
 
   // ==================== 构造执行 ====================
+  function finishPolygon() {
+    if (state.pendingPoly.length < 3) return;
+    // 过滤掉被删除/无效的点
+    const validIds = state.pendingPoly.filter(id => findPoint(id));
+    if (validIds.length < 3) { state.pendingPoly = []; clearPreview(); return; }
+    pushHistory();
+    addEl({ id: newId(), t: 'g', points: validIds });
+    state.pendingPoly = [];
+    clearPreview();
+    render();
+  }
+
+  function executePredefinedShape(id, p1Id, p2Id) {
+    const p1 = pointAt(p1Id), p2 = pointAt(p2Id);
+    if (!p1 || !p2) return;
+    pushHistory();
+    const makeIds = (pts) => pts.map(p => createPoint(p.x, p.y).id);
+    if (id === 'tri-isoceles') {
+      // 底边中点 + 顶点, 底宽 = 高 * 1.2
+      const mid = p1, apex = p2;
+      const dir = G.norm(G.sub(apex, mid));
+      const perp = G.perp(dir);
+      const h = G.dist(mid, apex);
+      const halfBase = 0.6 * h;
+      const left = G.add(mid, G.mul(perp, -halfBase));
+      const right = G.add(mid, G.mul(perp, halfBase));
+      addEl({ id: newId(), t: 'g', points: makeIds([left, right, apex]) });
+    } else if (id === 'tri-equilateral') {
+      // 中心 + 一个顶点, 另两个顶点按 120° 间隔
+      const c = p1, v = p2;
+      const r = G.dist(c, v);
+      const a0 = Math.atan2(v.y - c.y, v.x - c.x);
+      const v2 = { x: c.x + r * Math.cos(a0 + 2 * Math.PI / 3), y: c.y + r * Math.sin(a0 + 2 * Math.PI / 3) };
+      const v3 = { x: c.x + r * Math.cos(a0 + 4 * Math.PI / 3), y: c.y + r * Math.sin(a0 + 4 * Math.PI / 3) };
+      addEl({ id: newId(), t: 'g', points: makeIds([v, v2, v3]) });
+    } else if (id === 'quad-parallelogram') {
+      // 相邻两角 c1, c2, 邻边向量旋转 60°, 长度 0.8 * |c1c2|
+      const c1 = p1, c2 = p2;
+      const v = G.sub(c2, c1);
+      const len = G.len(v);
+      const ang = Math.PI / 3;  // 60°
+      const wLen = 0.8 * len;
+      const w = { x: Math.cos(ang) * wLen, y: Math.sin(ang) * wLen };
+      const c3 = { x: c2.x + w.x, y: c2.y + w.y };
+      const c4 = { x: c1.x + w.x, y: c1.y + w.y };
+      addEl({ id: newId(), t: 'g', points: makeIds([c1, c2, c3, c4]) });
+    } else if (id === 'quad-rectangle') {
+      // 角 1, 对角 3, 矩形轴对齐
+      const c1 = p1, c3 = p2;
+      const c2 = { x: c3.x, y: c1.y };
+      const c4 = { x: c1.x, y: c3.y };
+      addEl({ id: newId(), t: 'g', points: makeIds([c1, c2, c3, c4]) });
+    } else if (id === 'quad-rhombus') {
+      // 相邻两角, 邻边向量旋转 60° (与平行四边形同公式, 但因 w 与 v 等长所以是菱形)
+      const c1 = p1, c2 = p2;
+      const v = G.sub(c2, c1);
+      const ang = Math.PI / 3;
+      const w = { x: v.x * Math.cos(ang) - v.y * Math.sin(ang), y: v.x * Math.sin(ang) + v.y * Math.cos(ang) };
+      const c3 = { x: c2.x + w.x, y: c2.y + w.y };
+      const c4 = { x: c1.x + w.x, y: c1.y + w.y };
+      addEl({ id: newId(), t: 'g', points: makeIds([c1, c2, c3, c4]) });
+    } else if (id === 'quad-square') {
+      // 角 1, 对角 3, 正方形对角重合 -> 中心 + 4 个 90° 顶点
+      const c1 = p1, c3 = p2;
+      const center = G.midpoint(c1, c3);
+      const halfDiag = G.dist(c1, c3) / 2;
+      const ang = Math.atan2(c3.y - c1.y, c3.x - c1.x);
+      const startAng = ang + Math.PI / 4;
+      const corners = [];
+      for (let i = 0; i < 4; i++) {
+        const a = startAng + i * Math.PI / 2;
+        corners.push({ x: center.x + halfDiag * Math.cos(a), y: center.y + halfDiag * Math.sin(a) });
+      }
+      addEl({ id: newId(), t: 'g', points: makeIds(corners) });
+    }
+    render();
+  }
+
   function executeConstruction(id, picked) {
     const ref = picked.map(p => p.id);
     if (id === 'midpoint') {
@@ -1792,17 +2059,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       return;
     }
     if (k === 'Enter' && state.currentTool === 'polygon' && state.pendingPoly.length >= 3) {
-      pushHistory();
-      const ids = [];
-      for (const p of state.pendingPoly) {
-        const existing = state.elements.find(el => el.t === 'p' && Math.abs(el.x - p.x) < 0.5 && Math.abs(el.y - p.y) < 0.5);
-        if (existing) { if (ids[ids.length - 1] !== existing.id) ids.push(existing.id); }
-        else ids.push(createPoint(p.x, p.y).id);
-      }
-      if (ids.length >= 3) addEl({ id: newId(), t: 'g', points: ids });
-      state.pendingPoly = [];
-      clearPreview();
-      render();
+      finishPolygon();
       return;
     }
     if (k === 'g' || k === 'G') { toggleGrid(); return; }
@@ -1824,6 +2081,9 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(render, 100);
   });
+
+  // 点击空白处关闭所有 dropdown
+  document.addEventListener('click', () => closeAllDropdowns());
 
   // ==================== 初始化 ====================
   function init() {
