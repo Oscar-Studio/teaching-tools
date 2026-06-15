@@ -506,6 +506,8 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     pendingTextPos: null,
     pendingDivide: null,
     editingLabel: null,
+    shapeDrag: null,
+    hoverPoint: null,
   };
 
   // ==================== 工具配置 ====================
@@ -852,6 +854,8 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     state.pendingPoly = [];
     state.toolStep = 0;
     state.toolPicked = [];
+    state.shapeDrag = null;
+    state.hoverPoint = null;
     render();
   }
   function pushHistory() {
@@ -1054,6 +1058,8 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     state.pendingPoly = [];
     state.toolStep = 0;
     state.toolPicked = [];
+    state.shapeDrag = null;
+    state.hoverPoint = null;
     state.selection.clear();
     clearPreview();
 
@@ -1146,9 +1152,19 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     else if (el.t === 'm') renderMeasure(el);
   }
 
+  function isPointSnapped(id) {
+    // 在 segment/ray/line 工具下, 选中的端点也要高亮
+    if (state.currentTool === 'segment' || state.currentTool === 'ray' || state.currentTool === 'line') {
+      if (state.pendingVertex === id) return true;
+    }
+    return false;
+  }
+
   function renderPoint(p) {
     const s = worldToScreen(p);
-    const highlight = state.toolPicked.some(x => x.id === p.id);
+    const highlight = state.toolPicked.some(x => x.id === p.id)
+      || state.hoverPoint === p.id
+      || isPointSnapped(p.id);
     const selected = state.selection.has(p.id);
     const cls = 'point' + (highlight ? ' highlight' : '') + (selected ? ' selected' : '');
     svg.appendChild(svgEl('circle', { cx: s.x, cy: s.y, r: 4, class: cls, 'data-id': p.id }));
@@ -1229,12 +1245,12 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     while (da < -Math.PI) da += 2 * Math.PI;
     while (da > Math.PI) da -= 2 * Math.PI;
     let startA = a1, endA = a2;
-    let largeArc = 0, sweep = 0;
-    if (da < 0) { startA = a2; endA = a1; }
-    // 屏幕 y 朝下, sweep=1 是顺时针 (顺时针是较大角)
     const angDiff = Math.abs(da);
-    if (angDiff > Math.PI) largeArc = 1;
-    if (angDiff > Math.PI) sweep = 1;
+    let largeArc = 0, sweep;
+    if (da < 0) { startA = a2; endA = a1; }
+    // 短弧(≤180°)走屏幕顺时针 (sweep=1), 长弧(>180°)走逆时针 (sweep=0)
+    if (angDiff > Math.PI) { largeArc = 1; sweep = 0; }
+    else { sweep = 1; }
     const sx = sV.x + Math.cos(startA) * arcR;
     const sy = sV.y + Math.sin(startA) * arcR;
     const ex = sV.x + Math.cos(endA) * arcR;
@@ -1345,6 +1361,16 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       const sp = preview.points.map(worldToScreen);
       const dStr = 'M ' + sp.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' L ');
       svg.appendChild(svgEl('path', { d: dStr, class: 'segment', 'stroke-dasharray': '4 3', opacity: '0.6', fill: 'none' }));
+    } else if (preview.type === 'shape') {
+      const verts = shapeVertices(preview.toolId, preview.anchor, preview.current);
+      if (verts.length >= 3) {
+        const sp = verts.map(worldToScreen);
+        const dStr = 'M ' + sp.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' L ') + ' Z';
+        svg.appendChild(svgEl('path', { d: dStr, class: 'segment', 'stroke-dasharray': '5 4', 'stroke-width': '2', opacity: '0.75', fill: 'rgba(0, 200, 255, 0.08)' }));
+      }
+      // Anchor indicator
+      const sa = worldToScreen(preview.anchor);
+      svg.appendChild(svgEl('circle', { cx: sa.x, cy: sa.y, r: 6, fill: 'none', stroke: '#0066ff', 'stroke-width': 2 }));
     }
   }
 
@@ -1433,9 +1459,18 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       return;
     }
 
-    // 预览
+    // 预览 + 端点吸附提示
     const tool = state.currentTool;
     if (tool === 'segment' || tool === 'ray' || tool === 'line') {
+      // hover 端点提示
+      if (!state.shapeDrag) {
+        const hit = hitTest(sx, sy);
+        const newHover = (hit && hit.t === 'p') ? hit.id : null;
+        if (newHover !== state.hoverPoint) {
+          state.hoverPoint = newHover;
+          render();
+        }
+      }
       if (state.pendingVertex) {
         setPreview({ type: tool, a: pointAt(state.pendingVertex), b: mouseWorld });
         render();
@@ -1453,6 +1488,11 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
           render();
         }
       }
+    } else if (state.shapeDrag) {
+      // 预设形状拖拽中: 更新预览
+      state.shapeDrag.moved = true;
+      setPreview({ type: 'shape', toolId: state.shapeDrag.toolId, anchor: state.shapeDrag.anchor, current: mouseWorld });
+      render();
     }
   });
 
@@ -1507,21 +1547,37 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     }
 
     if (state.currentTool === 'segment' || state.currentTool === 'ray' || state.currentTool === 'line') {
+      // 端点选取: 优先 hit, 否则找最近点 (snap 0.5 * scale 像素)
+      let pid = null;
       const hit = hitTest(sx, sy);
+      if (hit && hit.t === 'p') pid = hit.id;
+      else {
+        const snap = findClosestPoint(w, state.view.scale * 0.5);
+        if (snap) pid = snap.id;
+      }
+      const tt = state.currentTool;
       if (!state.pendingVertex) {
         // 第一个点
-        if (hit && hit.t === 'p') state.pendingVertex = hit.id;
-        else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
+        if (pid) {
+          state.pendingVertex = pid;
+          render();
+        } else {
+          pushHistory();
+          const p = createPoint(w.x, w.y);
+          state.pendingVertex = p.id;
+          render();
+        }
       } else {
         // 第二个点
-        let pid;
-        if (hit && hit.t === 'p') pid = hit.id;
-        else { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        if (!pid) {
+          pushHistory();
+          pid = createPoint(w.x, w.y).id;
+        }
         if (pid === state.pendingVertex) { toast('请选择不同的点'); return; }
-        const tt = state.currentTool;
         pushHistory();
         addEl({ id: newId(), t: tt === 'segment' ? 's' : (tt === 'ray' ? 'r' : 'l'), a: state.pendingVertex, b: pid });
         state.pendingVertex = null;
+        state.hoverPoint = null;
         clearPreview();
         render();
       }
@@ -1590,18 +1646,10 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     }
 
     if (PREDIFINED_SHAPES[state.currentTool]) {
-      const hit = hitTest(sx, sy);
-      if (!state.pendingVertex) {
-        if (hit && hit.t === 'p') state.pendingVertex = hit.id;
-        else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
-      } else {
-        let pid;
-        if (hit && hit.t === 'p') pid = hit.id;
-        else { pushHistory(); pid = createPoint(w.x, w.y).id; }
-        executePredefinedShape(state.currentTool, state.pendingVertex, pid);
-        state.pendingVertex = null;
-        render();
-      }
+      // 点击 + 拖拽: mousedown 记录 anchor, mouseup 时按拖动距离或默认尺寸创建
+      state.shapeDrag = { toolId: state.currentTool, anchor: w, moved: false };
+      setPreview({ type: 'shape', toolId: state.currentTool, anchor: w, current: w });
+      render();
       return;
     }
 
@@ -1637,12 +1685,31 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     }
   });
 
-  svg.addEventListener('mouseup', () => {
+  function finalizeShapeDrag() {
+    if (!state.shapeDrag) return;
+    const { toolId, anchor, moved } = state.shapeDrag;
+    let current = mouseWorld;
+    if (!moved) {
+      // 未拖动: 使用默认尺寸
+      const d = SHAPE_DEFAULT_OFFSETS[toolId] || { x: 2, y: 0 };
+      current = { x: anchor.x + d.x, y: anchor.y + d.y };
+    }
+    executePredefinedShape(toolId, anchor, current);
+    state.shapeDrag = null;
+    clearPreview();
+    render();
+  }
+
+  function onGlobalMouseUp() {
     if (dragInfo) {
       svg.classList.remove('dragging');
       dragInfo = null;
     }
-  });
+    if (state.shapeDrag) finalizeShapeDrag();
+  }
+  // 监听 window 而不是 svg, 这样在 svg 外释放也能完成拖动
+  window.addEventListener('mouseup', onGlobalMouseUp);
+  svg.addEventListener('mouseup', onGlobalMouseUp);
 
   svg.addEventListener('dblclick', e => {
     if (state.currentTool === 'polygon' && state.pendingPoly.length >= 3) {
@@ -1700,70 +1767,81 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     render();
   }
 
-  function executePredefinedShape(id, p1Id, p2Id) {
-    const p1 = pointAt(p1Id), p2 = pointAt(p2Id);
-    if (!p1 || !p2) return;
-    pushHistory();
-    const makeIds = (pts) => pts.map(p => createPoint(p.x, p.y).id);
-    if (id === 'tri-isoceles') {
-      // 底边中点 + 顶点, 底宽 = 高 * 1.2
-      const mid = p1, apex = p2;
-      const dir = G.norm(G.sub(apex, mid));
-      const perp = G.perp(dir);
-      const h = G.dist(mid, apex);
-      const halfBase = 0.6 * h;
-      const left = G.add(mid, G.mul(perp, -halfBase));
-      const right = G.add(mid, G.mul(perp, halfBase));
-      addEl({ id: newId(), t: 'g', points: makeIds([left, right, apex]) });
-    } else if (id === 'tri-equilateral') {
-      // 中心 + 一个顶点, 另两个顶点按 120° 间隔
-      const c = p1, v = p2;
-      const r = G.dist(c, v);
-      const a0 = Math.atan2(v.y - c.y, v.x - c.x);
-      const v2 = { x: c.x + r * Math.cos(a0 + 2 * Math.PI / 3), y: c.y + r * Math.sin(a0 + 2 * Math.PI / 3) };
-      const v3 = { x: c.x + r * Math.cos(a0 + 4 * Math.PI / 3), y: c.y + r * Math.sin(a0 + 4 * Math.PI / 3) };
-      addEl({ id: newId(), t: 'g', points: makeIds([v, v2, v3]) });
-    } else if (id === 'quad-parallelogram') {
-      // 相邻两角 c1, c2, 邻边向量旋转 60°, 长度 0.8 * |c1c2|
-      const c1 = p1, c2 = p2;
-      const v = G.sub(c2, c1);
-      const len = G.len(v);
-      const ang = Math.PI / 3;  // 60°
-      const wLen = 0.8 * len;
-      const w = { x: Math.cos(ang) * wLen, y: Math.sin(ang) * wLen };
-      const c3 = { x: c2.x + w.x, y: c2.y + w.y };
-      const c4 = { x: c1.x + w.x, y: c1.y + w.y };
-      addEl({ id: newId(), t: 'g', points: makeIds([c1, c2, c3, c4]) });
-    } else if (id === 'quad-rectangle') {
-      // 角 1, 对角 3, 矩形轴对齐
-      const c1 = p1, c3 = p2;
-      const c2 = { x: c3.x, y: c1.y };
-      const c4 = { x: c1.x, y: c3.y };
-      addEl({ id: newId(), t: 'g', points: makeIds([c1, c2, c3, c4]) });
-    } else if (id === 'quad-rhombus') {
-      // 相邻两角, 邻边向量旋转 60° (与平行四边形同公式, 但因 w 与 v 等长所以是菱形)
-      const c1 = p1, c2 = p2;
-      const v = G.sub(c2, c1);
-      const ang = Math.PI / 3;
-      const w = { x: v.x * Math.cos(ang) - v.y * Math.sin(ang), y: v.x * Math.sin(ang) + v.y * Math.cos(ang) };
-      const c3 = { x: c2.x + w.x, y: c2.y + w.y };
-      const c4 = { x: c1.x + w.x, y: c1.y + w.y };
-      addEl({ id: newId(), t: 'g', points: makeIds([c1, c2, c3, c4]) });
-    } else if (id === 'quad-square') {
-      // 角 1, 对角 3, 正方形对角重合 -> 中心 + 4 个 90° 顶点
-      const c1 = p1, c3 = p2;
-      const center = G.midpoint(c1, c3);
-      const halfDiag = G.dist(c1, c3) / 2;
-      const ang = Math.atan2(c3.y - c1.y, c3.x - c1.x);
-      const startAng = ang + Math.PI / 4;
-      const corners = [];
-      for (let i = 0; i < 4; i++) {
-        const a = startAng + i * Math.PI / 2;
-        corners.push({ x: center.x + halfDiag * Math.cos(a), y: center.y + halfDiag * Math.sin(a) });
+  // 预设形状: 给定 2 个世界坐标点, 返回约束计算后的所有顶点 (world coords)
+  function shapeVertices(toolId, p1, p2) {
+    switch (toolId) {
+      case 'tri-isoceles': {
+        const mid = p1, apex = p2;
+        const dir = G.norm(G.sub(apex, mid));
+        const perp = G.perp(dir);
+        const h = G.dist(mid, apex);
+        const halfBase = 0.6 * h;
+        return [
+          G.add(mid, G.mul(perp, -halfBase)),
+          G.add(mid, G.mul(perp, halfBase)),
+          apex,
+        ];
       }
-      addEl({ id: newId(), t: 'g', points: makeIds(corners) });
+      case 'tri-equilateral': {
+        const c = p1, v = p2;
+        const r = G.dist(c, v);
+        const a0 = Math.atan2(v.y - c.y, v.x - c.x);
+        return [
+          v,
+          { x: c.x + r * Math.cos(a0 + 2 * Math.PI / 3), y: c.y + r * Math.sin(a0 + 2 * Math.PI / 3) },
+          { x: c.x + r * Math.cos(a0 + 4 * Math.PI / 3), y: c.y + r * Math.sin(a0 + 4 * Math.PI / 3) },
+        ];
+      }
+      case 'quad-parallelogram': {
+        const c1 = p1, c2 = p2;
+        const v = G.sub(c2, c1);
+        const len = G.len(v);
+        const ang = Math.PI / 3;
+        const wLen = 0.8 * len;
+        const w = { x: Math.cos(ang) * wLen, y: Math.sin(ang) * wLen };
+        return [c1, c2, { x: c2.x + w.x, y: c2.y + w.y }, { x: c1.x + w.x, y: c1.y + w.y }];
+      }
+      case 'quad-rectangle':
+        return [p1, { x: p2.x, y: p1.y }, p2, { x: p1.x, y: p2.y }];
+      case 'quad-rhombus': {
+        const c1 = p1, c2 = p2;
+        const v = G.sub(c2, c1);
+        const ang = Math.PI / 3;
+        const w = { x: v.x * Math.cos(ang) - v.y * Math.sin(ang), y: v.x * Math.sin(ang) + v.y * Math.cos(ang) };
+        return [c1, c2, { x: c2.x + w.x, y: c2.y + w.y }, { x: c1.x + w.x, y: c1.y + w.y }];
+      }
+      case 'quad-square': {
+        const c1 = p1, c3 = p2;
+        const center = G.midpoint(c1, c3);
+        const halfDiag = G.dist(c1, c3) / 2;
+        const ang = Math.atan2(c3.y - c1.y, c3.x - c1.x);
+        const startAng = ang + Math.PI / 4;
+        return [0, 1, 2, 3].map(i => ({
+          x: center.x + halfDiag * Math.cos(startAng + i * Math.PI / 2),
+          y: center.y + halfDiag * Math.sin(startAng + i * Math.PI / 2),
+        }));
+      }
     }
-    render();
+    return [];
+  }
+
+  // 点击但未拖动时的默认尺寸 (从 anchor 到第二点的偏移)
+  const SHAPE_DEFAULT_OFFSETS = {
+    'tri-isoceles':     { x: 0,   y: 3 },
+    'tri-equilateral':  { x: 2,   y: 0 },
+    'quad-parallelogram': { x: 2.5, y: 0 },
+    'quad-rectangle':   { x: 2,   y: -2 },
+    'quad-rhombus':     { x: 2,   y: 0 },
+    'quad-square':      { x: 2,   y: -2 },
+  };
+
+  function executePredefinedShape(id, p1, p2) {
+    // p1, p2 是世界坐标 (不再用 ID, 由调用方负责传入)
+    const vertices = shapeVertices(id, p1, p2);
+    if (vertices.length < 3) return;
+    pushHistory();
+    const ids = vertices.map(v => createPoint(v.x, v.y).id);
+    addEl({ id: newId(), t: 'g', points: ids });
   }
 
   function executeConstruction(id, picked) {
@@ -2183,6 +2261,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       state.pendingCircleCenter = null;
       state.pendingPoly = [];
       state.toolPicked = [];
+      state.shapeDrag = null;
       clearPreview();
       activateTool('select');
       render();
@@ -2190,6 +2269,11 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     }
     if (k === 'Enter' && state.currentTool === 'polygon' && state.pendingPoly.length >= 3) {
       finishPolygon();
+      return;
+    }
+    // Enter 完成预设形状拖拽 (使用默认尺寸)
+    if (k === 'Enter' && state.shapeDrag) {
+      finalizeShapeDrag();
       return;
     }
     if (k === 'g' || k === 'G') { toggleGrid(); return; }
