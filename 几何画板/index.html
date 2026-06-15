@@ -750,7 +750,10 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       } else if (el.t === 'c') {
         t = [el.t, pointIdx.get(el.center), pointIdx.get(el.radius)];
       } else if (el.t === 'g') {
-        t = [el.t, ...el.points.map(id => pointIdx.get(id))];
+        // 约束多边形用 'G' + 子类型字母 (e.g., 'Gi' = iso-tri, 'Gs' = square)
+        const cCode = { 'iso-tri': 'i', 'equilateral': 'e', 'parallelogram': 'p', 'rectangle': 'r', 'rhombus': 'h', 'square': 's' };
+        const tag = el.constraint && cCode[el.constraint] ? 'G' + cCode[el.constraint] : 'g';
+        t = [tag, ...el.points.map(id => pointIdx.get(id))];
       } else if (el.t === 'a') {
         t = [el.t, pointIdx.get(el.vertex), pointIdx.get(el.p1), pointIdx.get(el.p2)];
         if (el.text) t.push(el.text);
@@ -804,10 +807,15 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       } else if (t === 'c') {
         if (rest.length < 2 || !ids[rest[0]] || !ids[rest[1]]) continue;
         el.center = ids[rest[0]]; el.radius = ids[rest[1]];
-      } else if (t === 'g') {
+      } else if (t === 'g' || t.startsWith('G')) {
         const pts = rest.map(i => ids[i]).filter(Boolean);
         if (pts.length < 3) continue;
         el.points = pts;
+        el.t = 'g';
+        if (t.length === 2) {
+          const cDecode = { i: 'iso-tri', e: 'equilateral', p: 'parallelogram', r: 'rectangle', h: 'rhombus', s: 'square' };
+          el.constraint = cDecode[t[1]] || null;
+        }
       } else if (t === 'a') {
         if (rest.length < 3) continue;
         el.vertex = ids[rest[0]]; el.p1 = ids[rest[1]]; el.p2 = ids[rest[2]];
@@ -1444,7 +1452,20 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
         render();
       } else if (dragInfo.type === 'move-point') {
         const el = findEl(dragInfo.id);
-        if (el && el.t === 'p') { el.x = mouseWorld.x; el.y = mouseWorld.y; render(); }
+        if (el && el.t === 'p') {
+          // 查找包含此点的约束多边形, 应用约束保持形状
+          const constrained = state.elements.filter(e => e.t === 'g' && e.constraint && e.points.includes(el.id));
+          if (constrained.length > 0) {
+            const newPos = { x: mouseWorld.x, y: mouseWorld.y };
+            for (const poly of constrained) {
+              const idx = poly.points.indexOf(el.id);
+              applyConstraint(poly, idx, newPos);
+            }
+          } else {
+            el.x = mouseWorld.x; el.y = mouseWorld.y;
+          }
+          render();
+        }
       } else if (dragInfo.type === 'move-element') {
         const el = findEl(dragInfo.id);
         if (el) {
@@ -1841,7 +1862,168 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     if (vertices.length < 3) return;
     pushHistory();
     const ids = vertices.map(v => createPoint(v.x, v.y).id);
-    addEl({ id: newId(), t: 'g', points: ids });
+    const cMap = {
+      'tri-isoceles': 'iso-tri',
+      'tri-equilateral': 'equilateral',
+      'quad-parallelogram': 'parallelogram',
+      'quad-rectangle': 'rectangle',
+      'quad-rhombus': 'rhombus',
+      'quad-square': 'square',
+    };
+    addEl({ id: newId(), t: 'g', points: ids, constraint: cMap[id] || null });
+  }
+
+  // === 约束编辑: 拖动预设图形的顶点时, 保持形状类型 ===
+  // points: [{x, y}, ...]   draggedIdx: 拖动的顶点在数组中的索引   newPos: {x, y}
+  function isoTriConstraint(points, draggedIdx, newPos) {
+    // [baseLeft, baseRight, apex]
+    const [bL, bR, A] = points;
+    const M = G.midpoint(bL, bR);
+    const baseDir = G.norm(G.sub(bR, bL));
+    const perpDir = G.perp(baseDir);
+    const oldT = G.dot(G.sub(A, M), perpDir);
+    if (draggedIdx === 0 || draggedIdx === 1) {
+      // 拖动底边端点: 保持另一端点固定, 顶点重新计算到新 base 的垂直方向
+      const otherIdx = draggedIdx === 0 ? 1 : 0;
+      const other = points[otherIdx];
+      const dragged = newPos;
+      const newM = G.midpoint(dragged, other);
+      const newBaseDir = G.norm(G.sub(other, dragged));
+      const newPerpDir = G.perp(newBaseDir);
+      const newA = G.add(newM, G.mul(newPerpDir, oldT));
+      return draggedIdx === 0 ? [dragged, other, newA] : [other, dragged, newA];
+    } else {
+      // 拖动顶点: 投影到底边的垂直平分线上
+      const newA = G.add(M, G.mul(perpDir, G.dot(G.sub(newPos, M), perpDir)));
+      return [bL, bR, newA];
+    }
+  }
+
+  function equilateralConstraint(points, draggedIdx, newPos) {
+    // [v1, v2, v3] 任意顺序, 但保持中心固定
+    const C = {
+      x: (points[0].x + points[1].x + points[2].x) / 3,
+      y: (points[0].y + points[1].y + points[2].y) / 3,
+    };
+    const R = G.dist(points[0], C);
+    const newDir = G.norm(G.sub(newPos, C));
+    const newDragged = G.add(C, G.mul(newDir, R));
+    const oldAng = Math.atan2(points[draggedIdx].y - C.y, points[draggedIdx].x - C.x);
+    const newAng = Math.atan2(newDragged.y - C.y, newDragged.x - C.x);
+    const dAng = newAng - oldAng;
+    return points.map((p, i) => {
+      if (i === draggedIdx) return newDragged;
+      const r = G.dist(p, C);
+      const a = Math.atan2(p.y - C.y, p.x - C.x) + dAng;
+      return { x: C.x + r * Math.cos(a), y: C.y + r * Math.sin(a) };
+    });
+  }
+
+  function rectangleConstraint(points, draggedIdx, newPos) {
+    // [TL, TR, BR, BL] 轴对齐. 自由: TL(idx0) 和 BR(idx2)
+    const [TL, TR, BR, BL] = points;
+    if (draggedIdx === 0) {
+      return [newPos, { x: BR.x, y: newPos.y }, BR, { x: newPos.x, y: BR.y }];
+    } else if (draggedIdx === 2) {
+      return [TL, { x: newPos.x, y: TL.y }, newPos, { x: TL.x, y: newPos.y }];
+    } else if (draggedIdx === 1) {
+      return [TL, { x: BR.x, y: TL.y }, BR, BL];
+    } else {
+      return [TL, TR, BR, { x: TL.x, y: BR.y }];
+    }
+  }
+
+  function squareConstraint(points, draggedIdx, newPos) {
+    // [v0, v1, v2, v3] CCW 90°间隔. 中心+半径固定, 旋转由被拖顶点决定.
+    const C = {
+      x: (points[0].x + points[1].x + points[2].x + points[3].x) / 4,
+      y: (points[0].y + points[1].y + points[2].y + points[3].y) / 4,
+    };
+    const R = G.dist(points[0], C);
+    const offs = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+    const oldAng = Math.atan2(points[draggedIdx].y - C.y, points[draggedIdx].x - C.x);
+    const oldTheta = oldAng - offs[draggedIdx];
+    const newAng = Math.atan2(newPos.y - C.y, newPos.x - C.x);
+    const newTheta = newAng - offs[draggedIdx];
+    return offs.map(off => ({
+      x: C.x + R * Math.cos(newTheta + off),
+      y: C.y + R * Math.sin(newTheta + off),
+    }));
+  }
+
+  function parallelogramConstraint(points, draggedIdx, newPos) {
+    // [c1, c2, c3, c4] CCW. 自由: c1, vec1, vec2
+    const [c1, c2, c3, c4] = points;
+    const v1 = G.sub(c2, c1);
+    const v2 = G.sub(c4, c1);
+    if (draggedIdx === 0) {
+      return [newPos, G.add(newPos, v1), G.add(newPos, G.add(v1, v2)), G.add(newPos, v2)];
+    } else if (draggedIdx === 1) {
+      const nv1 = G.sub(newPos, c1);
+      return [c1, newPos, G.add(newPos, v2), c4];
+    } else if (draggedIdx === 2) {
+      const totalMag = G.len(G.add(v1, v2));
+      const newMag = G.dist(newPos, c1);
+      const scale = totalMag > 1e-9 ? newMag / totalMag : 1;
+      const nv1 = G.mul(v1, scale);
+      const nv2 = G.mul(v2, scale);
+      return [c1, G.add(c1, nv1), G.add(c1, G.add(nv1, nv2)), G.add(c1, nv2)];
+    } else {
+      const nv2 = G.sub(newPos, c1);
+      return [c1, c2, G.add(c2, nv2), newPos];
+    }
+  }
+
+  function rhombusConstraint(points, draggedIdx, newPos) {
+    // [c1, c2, c3, c4] CCW. |vec1| = |vec2| (菱形边等长)
+    const [c1, c2, c3, c4] = points;
+    const v1 = G.sub(c2, c1);
+    const v2 = G.sub(c4, c1);
+    const L = G.len(v1);  // 边长 (=|v2|)
+    if (draggedIdx === 0) {
+      return [newPos, G.add(newPos, v1), G.add(newPos, G.add(v1, v2)), G.add(newPos, v2)];
+    } else if (draggedIdx === 1) {
+      // 拖 c2: 保持 c1, c4. vec1 新方向, 长度保持 L
+      const dir = G.norm(G.sub(newPos, c1));
+      const nv1 = G.mul(dir, L);
+      const c2n = G.add(c1, nv1);
+      return [c1, c2n, G.add(c2n, v2), c4];
+    } else if (draggedIdx === 2) {
+      // 拖 c3 (对角 c1): 保持 c1, c2. vec2 新方向, 长度 L
+      const dir = G.norm(G.sub(newPos, c2));
+      const nv2 = G.mul(dir, L);
+      const c4n = G.sub(newPos, v1);
+      return [c1, c2, newPos, c4n];
+    } else {
+      const dir = G.norm(G.sub(newPos, c1));
+      const nv2 = G.mul(dir, L);
+      const c4n = G.add(c1, nv2);
+      return [c1, c2, G.add(c2, nv2), c4n];
+    }
+  }
+
+  function applyConstraint(poly, draggedIdx, newPos) {
+    const points = poly.points.map(id => {
+      const p = findPoint(id);
+      return p ? { x: p.x, y: p.y } : null;
+    });
+    if (points.some(p => !p)) return false;
+    let newPoints;
+    switch (poly.constraint) {
+      case 'iso-tri':       newPoints = isoTriConstraint(points, draggedIdx, newPos); break;
+      case 'equilateral':   newPoints = equilateralConstraint(points, draggedIdx, newPos); break;
+      case 'parallelogram': newPoints = parallelogramConstraint(points, draggedIdx, newPos); break;
+      case 'rectangle':     newPoints = rectangleConstraint(points, draggedIdx, newPos); break;
+      case 'rhombus':       newPoints = rhombusConstraint(points, draggedIdx, newPos); break;
+      case 'square':        newPoints = squareConstraint(points, draggedIdx, newPos); break;
+      default: return false;
+    }
+    if (!newPoints) return false;
+    poly.points.forEach((id, i) => {
+      const p = findPoint(id);
+      if (p && newPoints[i]) { p.x = newPoints[i].x; p.y = newPoints[i].y; }
+    });
+    return true;
   }
 
   function executeConstruction(id, picked) {
