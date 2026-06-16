@@ -369,6 +369,40 @@
         .param-row .key { color: #57606a; }
         .param-row .val { color: #24292f; }
         .param-row .val.hl { color: #0969da; font-weight: 500; }
+        .param-row .val.editable { padding: 0; }
+        .param-input {
+            width: 100%;
+            padding: 2px 6px;
+            border: 1px solid transparent;
+            border-radius: 3px;
+            background: transparent;
+            color: #24292f;
+            font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 12px;
+            text-align: right;
+            outline: none;
+            transition: border-color 0.1s, background 0.1s;
+        }
+        .param-input:hover {
+            border-color: #d0d7de;
+            background: #fff;
+        }
+        .param-input:focus {
+            border-color: #0969da;
+            background: #fff;
+            box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.15);
+        }
+        .param-input.invalid {
+            border-color: #cf222e;
+            background: #ffebe9;
+        }
+        .param-hint {
+            font-size: 10px;
+            color: #57606a;
+            margin-top: -2px;
+            margin-bottom: 4px;
+            padding-left: 4px;
+        }
         .param-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -964,11 +998,16 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
   }
   function loadFrom(data) {
     if (!data || !data.elements) return;
+    // 保留选择: 若 id 仍存在于新 state, 重新加入 selection
+    const prevSelection = [...state.selection];
     state.elements = data.elements.map(e => ({ id: e.id, t: e.t, ...e }));
     state.nextId = data.nextId || (Math.max(0, ...data.elements.map(e => e.id)) + 1);
     state.nextLabelIdx = data.nextLabelIdx || 0;
     state.view = data.view || { x: 0, y: 0, scale: VIEW_DEFAULT_SCALE };
     state.selection.clear();
+    for (const id of prevSelection) {
+      if (state.elements.find(e => e.id === id)) state.selection.add(id);
+    }
     state.pendingVertex = null;
     state.pendingCircleCenter = null;
     state.pendingPoly = [];
@@ -1476,10 +1515,20 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     const panel = document.getElementById('param-panel');
     const body = document.getElementById('param-body');
     const title = document.getElementById('param-title');
-    if (state.selection.size === 0) { panel.hidden = true; return; }
+    if (state.selection.size === 0) {
+      panel.hidden = true;
+      body.innerHTML = '';
+      title.textContent = '';
+      return;
+    }
     const id = [...state.selection][0];
     const el = findEl(id);
-    if (!el) { panel.hidden = true; return; }
+    if (!el) {
+      panel.hidden = true;
+      body.innerHTML = '';
+      title.textContent = '';
+      return;
+    }
     panel.hidden = false;
     title.textContent = (TYPE_NAMES[el.t] || el.t) + ' #' + el.id;
     body.innerHTML = buildParamContent(el);
@@ -1503,13 +1552,17 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
   function row(key, val, hl) {
     return `<div class="param-row"><span class="key">${escapeHTML(key)}</span><span class="val${hl ? ' hl' : ''}">${val}</span></div>`;
   }
+  function rowEdit(key, paramId, value, type = 'number', step = 'any') {
+    return `<div class="param-row"><span class="key">${escapeHTML(key)}</span><span class="val editable"><input type="${type}" class="param-input" data-param="${paramId}" value="${escapeHTML(String(value))}" step="${step}"></span></div>`;
+  }
   function section(label) {
     return `<div class="param-section">${escapeHTML(label)}</div>`;
   }
 
   function pointParams(el) {
-    return row('坐标', `${el.x.toFixed(2)}, ${el.y.toFixed(2)}`, true)
-      + row('标签', el.label || '—')
+    return rowEdit('X', 'x', el.x.toFixed(2))
+      + rowEdit('Y', 'y', el.y.toFixed(2))
+      + rowEdit('标签', 'label', el.label || '', 'text')
       + row('类型', '点');
   }
 
@@ -1520,45 +1573,54 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     const dx = b.x - a.x, dy = b.y - a.y;
     const ang = Math.atan2(dy, dx) * 180 / Math.PI;
     const slope = Math.abs(dx) < 1e-9 ? '∞' : (dy / dx).toFixed(3);
-    const m = G.midpoint(a, b);
-    return row('长度', len.toFixed(3), true)
+    return rowEdit('长度', 'length', len.toFixed(3))
       + row('斜率', slope)
-      + row('方向角', ang.toFixed(1) + '°')
-      + section('端点')
-      + row(`A (#${el.a})`, `${a.x.toFixed(2)}, ${a.y.toFixed(2)}`)
-      + row(`B (#${el.b})`, `${b.x.toFixed(2)}, ${b.y.toFixed(2)}`)
-      + row('中点', `${m.x.toFixed(2)}, ${m.y.toFixed(2)}`);
+      + rowEdit('方向角°', 'angle', ang.toFixed(2))
+      + section(`端点 A (#${el.a})`)
+      + rowEdit('X', 'ax', a.x.toFixed(2))
+      + rowEdit('Y', 'ay', a.y.toFixed(2))
+      + section(`端点 B (#${el.b})`)
+      + rowEdit('X', 'bx', b.x.toFixed(2))
+      + rowEdit('Y', 'by', b.y.toFixed(2));
   }
 
   function rayParams(el) {
     const a = pointAt(el.a), b = pointAt(el.b);
     if (!a || !b) return '';
     const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
-    return row('起点', `${a.x.toFixed(2)}, ${a.y.toFixed(2)}`)
-      + row('方向角', ang.toFixed(1) + '°')
-      + row('过点', `(${b.x.toFixed(2)}, ${b.y.toFixed(2)})`);
+    return section(`起点 (#${el.a})`)
+      + rowEdit('X', 'ax', a.x.toFixed(2))
+      + rowEdit('Y', 'ay', a.y.toFixed(2))
+      + rowEdit('方向角°', 'angle', ang.toFixed(2))
+      + section(`过点 (#${el.b})`)
+      + rowEdit('X', 'bx', b.x.toFixed(2))
+      + rowEdit('Y', 'by', b.y.toFixed(2));
   }
 
   function lineParams(el) {
     const a = pointAt(el.a), b = pointAt(el.b);
     if (!a || !b) return '';
     const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
-    return row('方向角', ang.toFixed(1) + '°')
-      + row(`过点 1 (#${el.a})`, `${a.x.toFixed(2)}, ${a.y.toFixed(2)}`)
-      + row(`过点 2 (#${el.b})`, `${b.x.toFixed(2)}, ${b.y.toFixed(2)}`);
+    return rowEdit('方向角°', 'angle', ang.toFixed(2))
+      + section(`点 1 (#${el.a})`)
+      + rowEdit('X', 'ax', a.x.toFixed(2))
+      + rowEdit('Y', 'ay', a.y.toFixed(2))
+      + section(`点 2 (#${el.b})`)
+      + rowEdit('X', 'bx', b.x.toFixed(2))
+      + rowEdit('Y', 'by', b.y.toFixed(2));
   }
 
   function circleParams(el) {
     const c = pointAt(el.center), r = pointAt(el.radius);
     if (!c || !r) return '';
     const radius = G.dist(c, r);
-    const area = Math.PI * radius * radius;
-    const circ = 2 * Math.PI * radius;
-    return row('圆心', `${c.x.toFixed(2)}, ${c.y.toFixed(2)}`)
-      + row('半径', radius.toFixed(3), true)
+    return section(`圆心 (#${el.center})`)
+      + rowEdit('X', 'cx', c.x.toFixed(2))
+      + rowEdit('Y', 'cy', c.y.toFixed(2))
+      + rowEdit('半径', 'radius', radius.toFixed(3))
       + row('直径', (radius * 2).toFixed(3))
-      + row('周长', circ.toFixed(3))
-      + row('面积', area.toFixed(3));
+      + row('周长', (2 * Math.PI * radius).toFixed(3))
+      + row('面积', (Math.PI * radius * radius).toFixed(3));
   }
 
   function polygonParams(el) {
@@ -1586,6 +1648,12 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     }
     let cons = '';
     if (pts.length === 3) cons = triConstructionsHTML(el);
+    let verts = '';
+    for (let i = 0; i < pts.length; i++) {
+      verts += section(`顶点 ${i + 1} (#${el.points[i]})`);
+      verts += rowEdit('X', `vx${i}`, pts[i].x.toFixed(2));
+      verts += rowEdit('Y', `vy${i}`, pts[i].y.toFixed(2));
+    }
     const constraintRow = el.constraint
       ? row('类型', CONSTRAINT_NAMES[el.constraint] || el.constraint)
       : '';
@@ -1594,6 +1662,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       + row('周长', perim.toFixed(3))
       + row('面积', area.toFixed(3), true)
       + row('内角和', angleSum.toFixed(1) + '°')
+      + section('顶点坐标') + verts
       + section('边长') + sides
       + section('内角') + angles
       + cons;
@@ -1612,22 +1681,27 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     const v = pointAt(el.vertex), p1 = pointAt(el.p1), p2 = pointAt(el.p2);
     if (!v || !p1 || !p2) return '';
     const deg = G.angleAt(v, p1, p2) * 180 / Math.PI;
-    const rad = deg * Math.PI / 180;
-    return row('角度', deg.toFixed(2) + '°', true)
-      + row('弧度', rad.toFixed(4))
-      + section('三边')
-      + row(`顶点 (#${el.vertex})`, `${v.x.toFixed(2)}, ${v.y.toFixed(2)}`)
-      + row(`边 1 (#${el.p1})`, `${p1.x.toFixed(2)}, ${p1.y.toFixed(2)}`)
-      + row(`边 2 (#${el.p2})`, `${p2.x.toFixed(2)}, ${p2.y.toFixed(2)}`);
+    return rowEdit('角度°', 'angle', deg.toFixed(2))
+      + row('弧度', (deg * Math.PI / 180).toFixed(4))
+      + section(`顶点 (#${el.vertex})`)
+      + rowEdit('X', 'vx', v.x.toFixed(2))
+      + rowEdit('Y', 'vy', v.y.toFixed(2))
+      + section(`边 1 (#${el.p1})`)
+      + rowEdit('X', 'p1x', p1.x.toFixed(2))
+      + rowEdit('Y', 'p1y', p1.y.toFixed(2))
+      + section(`边 2 (#${el.p2})`)
+      + rowEdit('X', 'p2x', p2.x.toFixed(2))
+      + rowEdit('Y', 'p2y', p2.y.toFixed(2));
   }
 
   function textParams(el) {
-    return row('内容', escapeHTML(el.text || ''))
-      + row('位置', `${el.x.toFixed(2)}, ${el.y.toFixed(2)}`);
+    return rowEdit('内容', 'text', el.text || '', 'text')
+      + rowEdit('X', 'x', el.x.toFixed(2))
+      + rowEdit('Y', 'y', el.y.toFixed(2));
   }
 
   function measureParams(el) {
-    return row('值', escapeHTML(el.text || ''), true);
+    return row('值', escapeHTML(el.text || ''));
   }
 
   function toggleTriConstruction(poly, consId) {
@@ -1675,6 +1749,186 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     if (!el || el.t !== 'g') return;
     toggleTriConstruction(el, btn.dataset.cons);
   });
+
+  // 参数输入 change 事件委托
+  document.getElementById('param-body').addEventListener('change', e => {
+    const input = e.target.closest('[data-param]');
+    if (!input) return;
+    const id = [...state.selection][0];
+    const el = findEl(id);
+    if (!el) return;
+    handleParamChange(el, input.dataset.param, input.value, input);
+  });
+  // Enter 键也提交
+  document.getElementById('param-body').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const input = e.target.closest('[data-param]');
+    if (!input) return;
+    input.blur();  // 触发 change
+  });
+
+  function handleParamChange(el, paramId, raw, input) {
+    const v = input.type === 'number' ? parseFloat(raw) : raw;
+    if (input.type === 'number' && !isFinite(v)) {
+      input.classList.add('invalid');
+      setTimeout(() => input.classList.remove('invalid'), 800);
+      return;
+    }
+    pushHistory();
+    let ok = false;
+    switch (el.t) {
+      case 'p': ok = setPoint(el, paramId, v); break;
+      case 's': ok = setSegment(el, paramId, v); break;
+      case 'r': ok = setRay(el, paramId, v); break;
+      case 'l': ok = setLine(el, paramId, v); break;
+      case 'c': ok = setCircle(el, paramId, v); break;
+      case 'g': ok = setPolygonVertex(el, paramId, v); break;
+      case 'a': ok = setAngle(el, paramId, v); break;
+      case 'x': ok = setText(el, paramId, v); break;
+    }
+    if (!ok) {
+      // 回滚: 不应推进 history, 重新 pop
+      state.history.pop();
+      render();
+      return;
+    }
+    render();
+  }
+
+  function setPoint(p, k, v) {
+    if (k === 'x') { p.x = +v; return true; }
+    if (k === 'y') { p.y = +v; return true; }
+    if (k === 'label') {
+      const s = String(v).slice(0, 4);
+      p.label = s || undefined;
+      return true;
+    }
+    return false;
+  }
+
+  function setSegment(seg, k, v) {
+    const a = findPoint(seg.a), b = findPoint(seg.b);
+    if (!a || !b) return false;
+    if (k === 'length') {
+      if (v < 0) return false;
+      const cur = G.dist(a, b);
+      if (cur < 1e-9) return false;
+      const t = v / cur;
+      b.x = a.x + (b.x - a.x) * t;
+      b.y = a.y + (b.y - a.y) * t;
+      return true;
+    }
+    if (k === 'angle') {
+      const rad = v * Math.PI / 180;
+      const len = G.dist(a, b);
+      b.x = a.x + Math.cos(rad) * len;
+      b.y = a.y + Math.sin(rad) * len;
+      return true;
+    }
+    if (k === 'ax') { a.x = +v; return true; }
+    if (k === 'ay') { a.y = +v; return true; }
+    if (k === 'bx') { b.x = +v; return true; }
+    if (k === 'by') { b.y = +v; return true; }
+    return false;
+  }
+
+  function setRay(ray, k, v) {
+    const a = findPoint(ray.a), b = findPoint(ray.b);
+    if (!a || !b) return false;
+    if (k === 'angle') {
+      const rad = v * Math.PI / 180;
+      const len = G.dist(a, b) || 1;
+      b.x = a.x + Math.cos(rad) * len;
+      b.y = a.y + Math.sin(rad) * len;
+      return true;
+    }
+    if (k === 'ax') { a.x = +v; return true; }
+    if (k === 'ay') { a.y = +v; return true; }
+    if (k === 'bx') { b.x = +v; return true; }
+    if (k === 'by') { b.y = +v; return true; }
+    return false;
+  }
+
+  function setLine(line, k, v) {
+    const a = findPoint(line.a), b = findPoint(line.b);
+    if (!a || !b) return false;
+    if (k === 'angle') {
+      const rad = v * Math.PI / 180;
+      const len = G.dist(a, b) || 1;
+      b.x = a.x + Math.cos(rad) * len;
+      b.y = a.y + Math.sin(rad) * len;
+      return true;
+    }
+    if (k === 'ax') { a.x = +v; return true; }
+    if (k === 'ay') { a.y = +v; return true; }
+    if (k === 'bx') { b.x = +v; return true; }
+    if (k === 'by') { b.y = +v; return true; }
+    return false;
+  }
+
+  function setCircle(c, k, v) {
+    const ctr = findPoint(c.center), r = findPoint(c.radius);
+    if (!ctr || !r) return false;
+    if (k === 'radius') {
+      if (v < 0) return false;
+      const cur = G.dist(ctr, r);
+      if (cur < 1e-9) return false;
+      const t = v / cur;
+      r.x = ctr.x + (r.x - ctr.x) * t;
+      r.y = ctr.y + (r.y - ctr.y) * t;
+      return true;
+    }
+    if (k === 'cx') { ctr.x = +v; return true; }
+    if (k === 'cy') { ctr.y = +v; return true; }
+    return false;
+  }
+
+  function setPolygonVertex(poly, k, v) {
+    const m = k.match(/^v([xy])(\d+)$/);
+    if (!m) return false;
+    const axis = m[1], idx = +m[2];
+    if (idx < 0 || idx >= poly.points.length) return false;
+    const pt = findPoint(poly.points[idx]);
+    if (!pt) return false;
+    const newPos = { x: pt.x, y: pt.y, [axis]: +v };
+    if (poly.constraint) {
+      applyConstraint(poly, idx, newPos);
+    } else {
+      pt[axis] = +v;
+    }
+    return true;
+  }
+
+  function setAngle(ang, k, v) {
+    const v0 = findPoint(ang.vertex), p1 = findPoint(ang.p1), p2 = findPoint(ang.p2);
+    if (!v0 || !p1 || !p2) return false;
+    if (k === 'angle') {
+      // 旋转 p2 调整角度 (保持 p1 不动)
+      const cur = G.angleAt(v0, p1, p2);
+      const delta = v * Math.PI / 180 - cur;
+      if (Math.abs(delta) < 1e-9) return true;
+      const r = G.sub(p2, v0);
+      const cs = Math.cos(delta), sn = Math.sin(delta);
+      const nr = { x: r.x * cs - r.y * sn, y: r.x * sn + r.y * cs };
+      p2.x = v0.x + nr.x;
+      p2.y = v0.y + nr.y;
+      return true;
+    }
+    if (k === 'vx') { v0.x = +v; return true; }
+    if (k === 'vy') { v0.y = +v; return true; }
+    if (k === 'p1x') { p1.x = +v; return true; }
+    if (k === 'p1y') { p1.y = +v; return true; }
+    if (k === 'p2x') { p2.x = +v; return true; }
+    if (k === 'p2y') { p2.y = +v; return true; }
+    return false;
+  }
+
+  function setText(t, k, v) {
+    if (k === 'text') { t.text = String(v); return true; }
+    if (k === 'x') { t.x = +v; return true; }
+    if (k === 'y') { t.y = +v; return true; }
+    return false;
+  }
 
   // ==================== 预览 ====================
   let preview = null;
