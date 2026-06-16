@@ -302,6 +302,117 @@
         #status-bar .prompt { color: var(--accent); font-weight: 500; }
         #status-bar .spacer { flex: 1; }
 
+        /* ===== 浮动参数面板 ===== */
+        #param-panel {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 260px;
+            max-height: calc(100% - 56px);
+            background: rgba(255, 255, 255, 0.97);
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            z-index: 50;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+        #param-panel[hidden] { display: none; }
+        #param-panel header {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #d0d7de;
+            background: rgba(246, 248, 250, 0.9);
+            font-weight: 500;
+            color: #24292f;
+            flex-shrink: 0;
+        }
+        #param-panel header .title { flex: 1; }
+        #param-panel header .close {
+            border: none;
+            background: transparent;
+            color: #57606a;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+            font-weight: 400;
+        }
+        #param-panel header .close:hover { color: #24292f; }
+        #param-body {
+            padding: 10px 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .param-section {
+            font-size: 10px;
+            font-weight: 600;
+            color: #57606a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 10px 0 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #eaeef2;
+        }
+        .param-section:first-child { margin-top: 0; }
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 12px;
+        }
+        .param-row .key { color: #57606a; }
+        .param-row .val { color: #24292f; }
+        .param-row .val.hl { color: #0969da; font-weight: 500; }
+        .param-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .param-buttons button {
+            padding: 5px 8px;
+            background: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #24292f;
+            font-family: inherit;
+            transition: background 0.1s;
+        }
+        .param-buttons button:hover { background: #eaeef2; }
+        .param-buttons button.active {
+            background: #0969da;
+            color: white;
+            border-color: #0969da;
+        }
+        .param-buttons button.active:hover { background: #0550ae; }
+        .param-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .param-actions button {
+            flex: 1;
+            padding: 5px 8px;
+            background: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #24292f;
+            font-family: inherit;
+        }
+        .param-actions button:hover { background: #eaeef2; }
+        .param-actions button.danger { color: #cf222e; }
+        .param-actions button.danger:hover { background: #ffebe9; }
+
         /* ===== 模态框 ===== */
         .modal-backdrop {
             position: fixed;
@@ -392,6 +503,13 @@
         <aside id="sidebar"></aside>
         <div id="canvas-area">
             <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div id="param-panel" hidden>
+                <header>
+                    <span class="title" id="param-title"></span>
+                    <button class="close" id="param-close" title="取消选择">×</button>
+                </header>
+                <div id="param-body"></div>
+            </div>
             <div id="status-bar">
                 <div class="item">工具:<b id="status-tool">选择</b></div>
                 <div class="item prompt" id="status-prompt"></div>
@@ -683,6 +801,22 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       return { x: A.x + B.x + C.x - 2 * O.x, y: A.y + B.y + C.y - 2 * O.y };
     },
     bisectorDir: (v, p1, p2) => G.norm(G.add(G.norm(G.sub(p1, v)), G.norm(G.sub(p2, v)))),
+    polygonArea: (pts) => {
+      let a = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const j = (i + 1) % pts.length;
+        a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+      }
+      return Math.abs(a) / 2;
+    },
+    polygonPerimeter: (pts) => {
+      let p = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const j = (i + 1) % pts.length;
+        p += G.dist(pts[i], pts[j]);
+      }
+      return p;
+    },
   };
 
   // ==================== ID / 标签 / 工具 ====================
@@ -1118,6 +1252,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     state.selection.forEach(id => { const e = findEl(id); if (e) renderSelectionOutline(e); });
     renderPreviews();
     document.getElementById('status-count').textContent = state.elements.length;
+    renderParamPanel();
   }
 
   function renderGrid() {
@@ -1338,6 +1473,230 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       svg.appendChild(svgEl('path', { d: dStr, class: 'selected-outline' }));
     }
   }
+
+  // ==================== 参数面板 ====================
+  const TYPE_NAMES = { p: '点', s: '线段', r: '射线', l: '直线', c: '圆', g: '多边形', a: '角度', x: '文本', m: '测度' };
+  const CONSTRAINT_NAMES = { 'iso-tri': '等腰三角形', 'equilateral': '等边三角形', 'parallelogram': '平行四边形', 'rectangle': '矩形', 'rhombus': '菱形', 'square': '正方形' };
+  const TRI_CONS = [
+    ['tri-altitude',     '高',       '3条高'],
+    ['tri-median',       '中线',     '3条中线'],
+    ['tri-bisector',     '角平分线', '3条角平分线'],
+    ['tri-midsegment',   '中位线',   '3条中位线'],
+    ['tri-circumcircle', '外接圆',   '外接圆'],
+    ['tri-incircle',     '内切圆',   '内切圆'],
+    ['tri-centroid',     '重心',     '重心'],
+    ['tri-orthocenter',  '垂心',     '垂心'],
+    ['tri-circumcenter', '外心',     '外心'],
+    ['tri-incenter',     '内心',     '内心'],
+  ];
+
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderParamPanel() {
+    const panel = document.getElementById('param-panel');
+    const body = document.getElementById('param-body');
+    const title = document.getElementById('param-title');
+    if (state.selection.size === 0) { panel.hidden = true; return; }
+    const id = [...state.selection][0];
+    const el = findEl(id);
+    if (!el) { panel.hidden = true; return; }
+    panel.hidden = false;
+    title.textContent = (TYPE_NAMES[el.t] || el.t) + ' #' + el.id;
+    body.innerHTML = buildParamContent(el);
+  }
+
+  function buildParamContent(el) {
+    switch (el.t) {
+      case 'p': return pointParams(el);
+      case 's': return segmentParams(el);
+      case 'r': return rayParams(el);
+      case 'l': return lineParams(el);
+      case 'c': return circleParams(el);
+      case 'g': return polygonParams(el);
+      case 'a': return angleParams(el);
+      case 'x': return textParams(el);
+      case 'm': return measureParams(el);
+    }
+    return '';
+  }
+
+  function row(key, val, hl) {
+    return `<div class="param-row"><span class="key">${escapeHTML(key)}</span><span class="val${hl ? ' hl' : ''}">${val}</span></div>`;
+  }
+  function section(label) {
+    return `<div class="param-section">${escapeHTML(label)}</div>`;
+  }
+
+  function pointParams(el) {
+    return row('坐标', `${el.x.toFixed(2)}, ${el.y.toFixed(2)}`, true)
+      + row('标签', el.label || '—')
+      + row('类型', '点');
+  }
+
+  function segmentParams(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return '';
+    const len = G.dist(a, b);
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+    const slope = Math.abs(dx) < 1e-9 ? '∞' : (dy / dx).toFixed(3);
+    const m = G.midpoint(a, b);
+    return row('长度', len.toFixed(3), true)
+      + row('斜率', slope)
+      + row('方向角', ang.toFixed(1) + '°')
+      + section('端点')
+      + row(`A (#${el.a})`, `${a.x.toFixed(2)}, ${a.y.toFixed(2)}`)
+      + row(`B (#${el.b})`, `${b.x.toFixed(2)}, ${b.y.toFixed(2)}`)
+      + row('中点', `${m.x.toFixed(2)}, ${m.y.toFixed(2)}`);
+  }
+
+  function rayParams(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return '';
+    const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    return row('起点', `${a.x.toFixed(2)}, ${a.y.toFixed(2)}`)
+      + row('方向角', ang.toFixed(1) + '°')
+      + row('过点', `(${b.x.toFixed(2)}, ${b.y.toFixed(2)})`);
+  }
+
+  function lineParams(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return '';
+    const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    return row('方向角', ang.toFixed(1) + '°')
+      + row(`过点 1 (#${el.a})`, `${a.x.toFixed(2)}, ${a.y.toFixed(2)}`)
+      + row(`过点 2 (#${el.b})`, `${b.x.toFixed(2)}, ${b.y.toFixed(2)}`);
+  }
+
+  function circleParams(el) {
+    const c = pointAt(el.center), r = pointAt(el.radius);
+    if (!c || !r) return '';
+    const radius = G.dist(c, r);
+    const area = Math.PI * radius * radius;
+    const circ = 2 * Math.PI * radius;
+    return row('圆心', `${c.x.toFixed(2)}, ${c.y.toFixed(2)}`)
+      + row('半径', radius.toFixed(3), true)
+      + row('直径', (radius * 2).toFixed(3))
+      + row('周长', circ.toFixed(3))
+      + row('面积', area.toFixed(3));
+  }
+
+  function polygonParams(el) {
+    const pts = el.points.map(id => pointAt(id)).filter(Boolean);
+    if (pts.length < 3) {
+      return row('顶点数', String(pts.length));
+    }
+    const area = G.polygonArea(pts);
+    const perim = G.polygonPerimeter(pts);
+    let sides = '';
+    for (let i = 0; i < pts.length; i++) {
+      const j = (i + 1) % pts.length;
+      sides += row(`边 ${i + 1}`, G.dist(pts[i], pts[j]).toFixed(3));
+    }
+    let angles = '';
+    let angleSum = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const prev = pts[(i - 1 + pts.length) % pts.length];
+      const cur = pts[i];
+      const next = pts[(i + 1) % pts.length];
+      const rad = G.angleAt(cur, prev, next);
+      const deg = rad * 180 / Math.PI;
+      angleSum += deg;
+      angles += row(`∠${i + 1}`, deg.toFixed(1) + '°');
+    }
+    let cons = '';
+    if (pts.length === 3) cons = triConstructionsHTML(el);
+    const constraintRow = el.constraint
+      ? row('类型', CONSTRAINT_NAMES[el.constraint] || el.constraint)
+      : '';
+    return constraintRow
+      + row('顶点数', String(pts.length))
+      + row('周长', perim.toFixed(3))
+      + row('面积', area.toFixed(3), true)
+      + row('内角和', angleSum.toFixed(1) + '°')
+      + section('边长') + sides
+      + section('内角') + angles
+      + cons;
+  }
+
+  function triConstructionsHTML(poly) {
+    const cons = poly.constructions || {};
+    const buttons = TRI_CONS.map(([id, label, tip]) => {
+      const active = !!cons[id];
+      return `<button data-cons="${id}" class="${active ? 'active' : ''}" title="${escapeHTML(tip)}">${label}</button>`;
+    }).join('');
+    return section('三角形构造') + `<div class="param-buttons">${buttons}</div>`;
+  }
+
+  function angleParams(el) {
+    const v = pointAt(el.vertex), p1 = pointAt(el.p1), p2 = pointAt(el.p2);
+    if (!v || !p1 || !p2) return '';
+    const deg = G.angleAt(v, p1, p2) * 180 / Math.PI;
+    const rad = deg * Math.PI / 180;
+    return row('角度', deg.toFixed(2) + '°', true)
+      + row('弧度', rad.toFixed(4))
+      + section('三边')
+      + row(`顶点 (#${el.vertex})`, `${v.x.toFixed(2)}, ${v.y.toFixed(2)}`)
+      + row(`边 1 (#${el.p1})`, `${p1.x.toFixed(2)}, ${p1.y.toFixed(2)}`)
+      + row(`边 2 (#${el.p2})`, `${p2.x.toFixed(2)}, ${p2.y.toFixed(2)}`);
+  }
+
+  function textParams(el) {
+    return row('内容', escapeHTML(el.text || ''))
+      + row('位置', `${el.x.toFixed(2)}, ${el.y.toFixed(2)}`);
+  }
+
+  function measureParams(el) {
+    return row('值', escapeHTML(el.text || ''), true);
+  }
+
+  function toggleTriConstruction(poly, consId) {
+    if (poly.constructions && poly.constructions[consId]) {
+      removeConstruction(poly, consId);
+    } else {
+      applyConstruction(poly, consId);
+    }
+  }
+
+  function applyConstruction(poly, consId) {
+    const pts = poly.points.map(id => findPoint(id));
+    if (pts.length < 3 || pts.some(p => !p)) return;
+    const before = state.elements.length;
+    executeConstruction(consId, pts);
+    const newEls = state.elements.slice(before);
+    if (!poly.constructions) poly.constructions = {};
+    poly.constructions[consId] = newEls.map(e => e.id);
+    renderParamPanel();
+  }
+
+  function removeConstruction(poly, consId) {
+    if (!poly.constructions || !poly.constructions[consId]) return;
+    pushHistory();
+    for (const id of poly.constructions[consId]) {
+      deleteEl(id);
+    }
+    delete poly.constructions[consId];
+    render();
+    renderParamPanel();
+  }
+
+  // 关闭按钮: 取消选择
+  document.getElementById('param-close').addEventListener('click', () => {
+    state.selection.clear();
+    render();
+  });
+
+  // 构造按钮事件委托
+  document.getElementById('param-body').addEventListener('click', e => {
+    const btn = e.target.closest('[data-cons]');
+    if (!btn) return;
+    const id = [...state.selection][0];
+    const el = findEl(id);
+    if (!el || el.t !== 'g') return;
+    toggleTriConstruction(el, btn.dataset.cons);
+  });
 
   // ==================== 预览 ====================
   let preview = null;
