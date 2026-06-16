@@ -1404,6 +1404,8 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
         const d = Math.abs(dist - radius) * scale;
         if (d < HIT_DIST_LINE && d < bestDist) { bestDist = d; best = el; }
       } else if (el.t === 'g') {
+        // 优先返回点, 避免 polygon path 拦截点上的鼠标事件
+        if (best && best.t === 'p') continue;
         const pts = el.points.map(id => pointAt(id)).filter(Boolean);
         if (pts.length < 3) continue;
         if (pointInPolygon(w, pts)) { best = el; bestDist = 0; }
@@ -1884,14 +1886,15 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     const oldT = G.dot(G.sub(A, M), perpDir);
     if (draggedIdx === 0 || draggedIdx === 1) {
       // 拖动底边端点: 保持另一端点固定, 顶点重新计算到新 base 的垂直方向
-      const otherIdx = draggedIdx === 0 ? 1 : 0;
-      const other = points[otherIdx];
-      const dragged = newPos;
-      const newM = G.midpoint(dragged, other);
-      const newBaseDir = G.norm(G.sub(other, dragged));
+      const other = points[draggedIdx === 0 ? 1 : 0];
+      const newP0 = draggedIdx === 0 ? newPos : other;
+      const newP1 = draggedIdx === 1 ? newPos : other;
+      const newM = G.midpoint(newP0, newP1);
+      // 保持 baseDir 方向一致 (总从 points[0] 指向 points[1]), 避免 idx 0/1 不对称
+      const newBaseDir = G.norm(G.sub(newP1, newP0));
       const newPerpDir = G.perp(newBaseDir);
       const newA = G.add(newM, G.mul(newPerpDir, oldT));
-      return draggedIdx === 0 ? [dragged, other, newA] : [other, dragged, newA];
+      return [newP0, newP1, newA];
     } else {
       // 拖动顶点: 投影到底边的垂直平分线上
       const newA = G.add(M, G.mul(perpDir, G.dot(G.sub(newPos, M), perpDir)));
