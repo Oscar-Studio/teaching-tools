@@ -1506,6 +1506,15 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     ['tri-circumcenter', '外心',     '外心'],
     ['tri-incenter',     '内心',     '内心'],
   ];
+  // 线段构造
+  const SEG_CONS = [
+    ['midpoint',   '中点',       '中点'],
+    ['perpbisect', '垂直平分线', '垂直平分线'],
+  ];
+  // 线/射线/直线构造 (需另选一点, 这里仅显示标签占位)
+  const LINE_CONS = [];  // 暂不通过面板启用, 因需要选取外部点
+  // 圆构造
+  const CIRCLE_CONS = [];  // 中心/半径点已是显式点, 无需额外构造
 
   function escapeHTML(s) {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1581,7 +1590,17 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       + rowEdit('Y', 'ay', a.y.toFixed(2))
       + section(`端点 B (#${el.b})`)
       + rowEdit('X', 'bx', b.x.toFixed(2))
-      + rowEdit('Y', 'by', b.y.toFixed(2));
+      + rowEdit('Y', 'by', b.y.toFixed(2))
+      + segmentConsHTML(el);
+  }
+
+  function segmentConsHTML(seg) {
+    const cons = seg.constructions || {};
+    const buttons = SEG_CONS.map(([id, label, tip]) => {
+      const active = !!cons[id];
+      return `<button data-cons="${id}" class="${active ? 'active' : ''}" title="${escapeHTML(tip)}">${label}</button>`;
+    }).join('');
+    return section('构造') + `<div class="param-buttons">${buttons}</div>`;
   }
 
   function rayParams(el) {
@@ -1746,9 +1765,43 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     if (!btn) return;
     const id = [...state.selection][0];
     const el = findEl(id);
-    if (!el || el.t !== 'g') return;
-    toggleTriConstruction(el, btn.dataset.cons);
+    if (!el) return;
+    const consId = btn.dataset.cons;
+    if (el.t === 'g') {
+      toggleTriConstruction(el, consId);
+    } else if (el.t === 's') {
+      toggleSegmentConstruction(el, consId);
+    }
   });
+
+  function toggleSegmentConstruction(seg, consId) {
+    if (seg.constructions && seg.constructions[consId]) {
+      removeSegmentConstruction(seg, consId);
+    } else {
+      applySegmentConstruction(seg, consId);
+    }
+  }
+
+  function applySegmentConstruction(seg, consId) {
+    const picked = [{ id: seg.a }, { id: seg.b }];
+    const before = state.elements.length;
+    executeConstruction(consId, picked);
+    const newEls = state.elements.slice(before);
+    if (!seg.constructions) seg.constructions = {};
+    seg.constructions[consId] = newEls.map(e => e.id);
+    renderParamPanel();
+  }
+
+  function removeSegmentConstruction(seg, consId) {
+    if (!seg.constructions || !seg.constructions[consId]) return;
+    pushHistory();
+    for (const id of seg.constructions[consId]) {
+      deleteEl(id);
+    }
+    delete seg.constructions[consId];
+    render();
+    renderParamPanel();
+  }
 
   // 参数输入 change 事件委托
   document.getElementById('param-body').addEventListener('change', e => {
@@ -2161,12 +2214,12 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     }
 
     if (state.currentTool === 'segment' || state.currentTool === 'ray' || state.currentTool === 'line') {
-      // 端点选取: 优先 hit, 否则找最近点 (snap 0.5 * scale 像素)
+      // 端点选取: 优先 hit, 否则找最近点 (snap 0.5 世界单位 ≈ 20px)
       let pid = null;
       const hit = hitTest(sx, sy);
       if (hit && hit.t === 'p') pid = hit.id;
       else {
-        const snap = findClosestPoint(w, state.view.scale * 0.5);
+        const snap = findClosestPoint(w, 0.5);
         if (snap) pid = snap.id;
       }
       const tt = state.currentTool;
@@ -2273,7 +2326,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       let hit = hitTest(sx, sy);
       // 如果需要点，优先找最近的点（即使有更近的线）
       if (wantType === 'p') {
-        const pHit = findClosestPoint(w, state.view.scale * 0.5);
+        const pHit = findClosestPoint(w, 0.5);
         if (pHit) hit = pHit;
         if (!hit) {
           pushHistory();
@@ -2441,7 +2494,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
 
   // 点击但未拖动时的默认尺寸 (从 anchor 到第二点的偏移)
   const SHAPE_DEFAULT_OFFSETS = {
-    'tri-isoceles':     { x: 0,   y: 3 },
+    'tri-isoceles':     { x: 0,   y: -3 },
     'tri-equilateral':  { x: 2,   y: 0 },
     'quad-parallelogram': { x: 2.5, y: 0 },
     'quad-rectangle':   { x: 2,   y: -2 },
