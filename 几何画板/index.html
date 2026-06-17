@@ -565,6 +565,7 @@
         .ai-msg .text { white-space: pre-wrap; line-height: 1.55; }
         .ai-msg .text code { background: var(--bg-3); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 12px; }
         .ai-msg .tool-list { margin-top: 6px; font-size: 11px; color: var(--text-2); }
+        .ai-msg .usage { margin-top: 6px; font-size: 10px; color: var(--text-2); opacity: 0.6; }
         .ai-msg .tool-list span { display: inline-block; background: var(--bg-3); padding: 2px 6px; border-radius: 3px; margin: 2px 2px 0 0; }
         .ai-msg.thinking { background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); color: var(--text-2); }
         .ai-msg.thinking .dot { display: inline-block; animation: aiDot 1.2s infinite; }
@@ -3409,6 +3410,7 @@ function angleParams(el) {
   let aiRecvText = '';
   let aiRecvToolCalls = [];
   let aiRecvMsgEl = null;
+  let aiRecvUsage = null;
 
   function aiTogglePanel(force) {
     aiPanelOpen = (force === undefined) ? !aiPanelOpen : force;
@@ -3577,6 +3579,7 @@ function angleParams(el) {
     aiRecvText = '';
     aiRecvToolCalls = [];
     aiRecvMsgEl = null;
+    aiRecvUsage = null;
 
     let resp;
     try {
@@ -3641,6 +3644,12 @@ function angleParams(el) {
     if (aiRecvText || aiRecvToolCalls.length) {
       const div = aiAppendMsg('assistant', aiRecvText || '');
       if (aiRecvToolCalls.length) aiAppendToolList(div, aiRecvToolCalls);
+      if (aiRecvUsage) {
+        const u = document.createElement('div');
+        u.className = 'usage';
+        u.textContent = `${aiRecvUsage.model} · ${aiRecvUsage.credits_used ?? '?'} credits · ${aiRecvUsage.tool_calls ?? aiRecvToolCalls.length} tools`;
+        div.appendChild(u);
+      }
       aiMessages.push({
         role: 'assistant',
         content: aiRecvText || '(无文本)',
@@ -3691,9 +3700,9 @@ function angleParams(el) {
         aiAppendError(`工具 ${evt.name} 失败: ${e.message}`);
       }
     } else if (evt.type === 'usage') {
-      const c = evt.credits_used;
+      aiRecvUsage = evt;
       document.getElementById('ai-status').textContent =
-        c != null ? `${evt.model} · ${c} credits` : evt.model;
+        evt.credits_used != null ? `${evt.model} · ${evt.credits_used} credits` : evt.model;
     } else if (evt.type === 'error') {
       aiAppendError(evt.message);
     } else if (evt.type === 'done') {
