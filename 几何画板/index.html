@@ -1397,6 +1397,20 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     const sV = worldToScreen(v);
     const sP1 = worldToScreen(p1);
     const sP2 = worldToScreen(p2);
+    // 画两边 (从顶点到 p1, p2), 短臂
+    const drawArm = (from, to) => {
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const len = Math.hypot(dx, dy);
+      if (len < 1e-6) return;
+      const t = Math.min(40, len) / len;
+      svg.appendChild(svgEl('line', {
+        x1: from.x, y1: from.y,
+        x2: from.x + dx * t, y2: from.y + dy * t,
+        class: 'angle-arm', 'stroke-dasharray': '4 3', opacity: '0.7',
+      }));
+    };
+    drawArm(sV, sP1);
+    drawArm(sV, sP2);
     const arcR = 30;
     const a1 = Math.atan2(sP1.y - sV.y, sP1.x - sV.x);
     const a2 = Math.atan2(sP2.y - sV.y, sP2.x - sV.x);
@@ -2346,21 +2360,31 @@ function angleParams(el) {
     }
 
     if (state.currentTool === 'angle') {
-      // 1st = p1 (边 1 上的点), 2nd = vertex (顶点), 3rd = p2 (边 2 上的点)
+      // 端点选取: 优先 hit, 否则找最近点 (snap 0.5 世界单位)
+      let pid = null;
       const hit = hitTest(sx, sy);
+      if (hit && hit.t === 'p') pid = hit.id;
+      else {
+        const snap = findClosestPoint(w, 0.5);
+        if (snap) pid = snap.id;
+      }
       if (!state.pendingVertex) {
         // 1st click: p1
-        if (hit && hit.t === 'p') state.pendingVertex = hit.id;
-        else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
+        if (pid) {
+          state.pendingVertex = pid;
+        } else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
       } else if (!state.toolPicked[0]) {
         // 2nd click: vertex
-        if (hit && hit.t === 'p') state.toolPicked.push({ id: hit.id });
-        else { pushHistory(); const p = createPoint(w.x, w.y); state.toolPicked.push({ id: p.id }); render(); }
+        if (pid) {
+          if (pid === state.pendingVertex) { toast('请选择不同的点'); return; }
+          state.toolPicked.push({ id: pid });
+        } else { pushHistory(); const p = createPoint(w.x, w.y); state.toolPicked.push({ id: p.id }); render(); }
       } else {
         // 3rd click: p2
-        let pid;
-        if (hit && hit.t === 'p') pid = hit.id;
-        else { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        if (!pid) { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        // 校验: 三个点不能相同
+        if (pid === state.pendingVertex) { toast('p1 和 p2 不能相同'); return; }
+        if (pid === state.toolPicked[0].id) { toast('顶点和 p2 不能相同'); return; }
         // 校验: 三点共线则不能构成角
         const v = pointAt(state.toolPicked[0].id);
         const p1 = pointAt(state.pendingVertex);
@@ -2893,12 +2917,13 @@ function angleParams(el) {
       pushHistory();
       addEl({ id: newId(), t: 'm', a: ref[0], b: ref[1] });
     } else if (id === 'measure-angle') {
-      const v = pointAt(ref[0]), p1 = pointAt(ref[1]), p2 = pointAt(ref[2]);
-      // 校验: 三点共线则不能构成角
+      // ref[0] = p1, ref[1] = vertex, ref[2] = p2 (与角度标工具一致)
+      const p1 = pointAt(ref[0]), v = pointAt(ref[1]), p2 = pointAt(ref[2]);
+      if (ref[0] === ref[1] || ref[1] === ref[2] || ref[0] === ref[2]) { toast('三个点必须不同'); return; }
       const cross = (p1.x - v.x) * (p2.y - v.y) - (p1.y - v.y) * (p2.x - v.x);
       if (Math.abs(cross) < 1e-9) { toast('三点共线, 无法构造角'); return; }
       pushHistory();
-      addEl({ id: newId(), t: 'a', vertex: ref[0], p1: ref[1], p2: ref[2] });
+      addEl({ id: newId(), t: 'a', vertex: ref[1], p1: ref[0], p2: ref[2] });
     }
     render();
   }
