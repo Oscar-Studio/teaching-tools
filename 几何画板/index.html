@@ -516,6 +516,117 @@
         #toast.show { opacity: 1; }
         #toast.error { border-color: var(--danger); color: var(--danger); }
 
+        /* ===== AI 浮动面板 ===== */
+        #ai-panel {
+            position: fixed;
+            top: 56px;
+            right: 12px;
+            width: 400px;
+            max-width: calc(100vw - 24px);
+            height: calc(100vh - 80px);
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            z-index: 200;
+            overflow: hidden;
+            font: 13px/1.5 inherit;
+        }
+        #ai-panel[hidden] { display: none; }
+        #ai-panel header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px;
+            background: var(--bg-3);
+            border-bottom: 1px solid var(--border);
+        }
+        #ai-panel header .title { font-weight: 600; }
+        #ai-panel header .model-name { margin-left: auto; color: var(--text-2); font-size: 12px; cursor: pointer; }
+        #ai-panel header .model-name:hover { color: var(--accent); }
+        #ai-panel header .close {
+            background: none; border: none; color: var(--text-2);
+            font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;
+        }
+        #ai-panel header .close:hover { color: var(--danger); }
+
+        #ai-messages {
+            flex: 1; overflow-y: auto; padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        #ai-messages::-webkit-scrollbar { width: 6px; }
+        #ai-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .ai-msg { padding: 8px 12px; border-radius: 8px; max-width: 100%; word-wrap: break-word; }
+        .ai-msg.user { background: var(--bg-3); align-self: flex-end; max-width: 85%; }
+        .ai-msg.assistant { background: rgba(42,92,170,0.15); border: 1px solid rgba(42,92,170,0.3); }
+        .ai-msg.system { background: rgba(210,153,34,0.1); border: 1px solid rgba(210,153,34,0.3); color: var(--text-2); font-size: 12px; }
+        .ai-msg .role { font-size: 11px; color: var(--text-2); margin-bottom: 4px; }
+        .ai-msg .text { white-space: pre-wrap; line-height: 1.55; }
+        .ai-msg .text code { background: var(--bg-3); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+        .ai-msg .tool-list { margin-top: 6px; font-size: 11px; color: var(--text-2); }
+        .ai-msg .tool-list span { display: inline-block; background: var(--bg-3); padding: 2px 6px; border-radius: 3px; margin: 2px 2px 0 0; }
+        .ai-msg.thinking { background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); color: var(--text-2); }
+        .ai-msg.thinking .dot { display: inline-block; animation: aiDot 1.2s infinite; }
+        .ai-msg.thinking .dot:nth-child(2) { animation-delay: 0.4s; }
+        .ai-msg.thinking .dot:nth-child(3) { animation-delay: 0.8s; }
+        @keyframes aiDot { 0%, 60%, 100% { opacity: 0.2; } 30% { opacity: 1; } }
+
+        #ai-input-area {
+            border-top: 1px solid var(--border);
+            padding: 10px 14px;
+            display: flex; flex-direction: column; gap: 8px;
+            background: var(--bg-2);
+        }
+        #ai-input {
+            width: 100%; min-height: 60px; max-height: 120px; resize: vertical;
+            background: var(--bg-3); color: var(--text); border: 1px solid var(--border);
+            border-radius: 6px; padding: 8px 10px; font: inherit;
+        }
+        #ai-input:focus { outline: none; border-color: var(--primary); }
+        #ai-input:disabled { opacity: 0.5; }
+        #ai-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        #ai-controls label { display: flex; align-items: center; gap: 4px; color: var(--text-2); font-size: 12px; cursor: pointer; }
+        #ai-controls input[type=checkbox] { cursor: pointer; }
+        #ai-send {
+            background: var(--primary); color: #fff; border: none; padding: 6px 14px;
+            border-radius: 5px; cursor: pointer; font-size: 13px; margin-left: auto;
+        }
+        #ai-send:hover { background: var(--primary-2); }
+        #ai-send:disabled { opacity: 0.5; cursor: not-allowed; }
+        #ai-stop {
+            background: var(--danger); color: #fff; border: none; padding: 6px 14px;
+            border-radius: 5px; cursor: pointer; font-size: 13px; margin-left: auto;
+        }
+        #ai-stop:hover { background: #d83d3d; }
+        #ai-status { color: var(--text-2); font-size: 11px; }
+
+        /* 模型选择模态 */
+        #ai-model-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #ai-model-modal[hidden] { display: none; }
+        #ai-model-modal .inner {
+            background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px;
+            width: 480px; max-width: 90vw; max-height: 70vh; overflow-y: auto; padding: 16px;
+        }
+        #ai-model-modal h3 { margin: 0 0 12px; font-size: 14px; }
+        #ai-model-modal .provider-block { margin-bottom: 14px; }
+        #ai-model-modal .provider-name { color: var(--text-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        #ai-model-modal .model-row {
+            display: flex; align-items: center; padding: 6px 10px; border-radius: 5px;
+            cursor: pointer; transition: background 0.1s;
+        }
+        #ai-model-modal .model-row:hover { background: var(--bg-3); }
+        #ai-model-modal .model-row.active { background: var(--primary-2); color: #fff; }
+        #ai-model-modal .model-row .name { font-weight: 500; }
+        #ai-model-modal .model-row .id { color: var(--text-2); font-size: 11px; margin-left: 8px; font-family: monospace; }
+        #ai-model-modal .model-row .badge { margin-left: auto; font-size: 10px; padding: 2px 6px; border-radius: 3px; background: var(--bg-3); color: var(--text-2); }
+        #ai-model-modal .model-row .badge.pro { background: rgba(42,92,170,0.3); color: var(--accent); }
+        #ai-model-modal .model-row .badge.recommended { background: rgba(0,229,255,0.25); color: var(--accent); }
+        #ai-model-modal .close-row { text-align: right; margin-top: 8px; }
+
         /* ===== 浮动帮助 ===== */
         .help-icon {
             display: inline-block;
@@ -535,6 +646,30 @@
 <body>
     <div id="app">
         <aside id="sidebar"></aside>
+        <div id="ai-panel" hidden>
+            <header>
+                <span class="title">🧠 模型解题</span>
+                <span class="model-name" id="ai-model-name" title="点击切换模型">未选择</span>
+                <button class="close" id="ai-close" title="关闭">×</button>
+            </header>
+            <div id="ai-messages"></div>
+            <div id="ai-input-area">
+                <textarea id="ai-input" placeholder="输入题目, 例如: 在△ABC中, AB=AC, ∠A=40°, 求∠B"></textarea>
+                <div id="ai-controls">
+                    <label><input type="checkbox" id="ai-include-board" checked> 附加画板</label>
+                    <span id="ai-status"></span>
+                    <button id="ai-send">发送</button>
+                    <button id="ai-stop" hidden>停止</button>
+                </div>
+            </div>
+        </div>
+        <div id="ai-model-modal" hidden>
+            <div class="inner">
+                <h3>选择模型</h3>
+                <div id="ai-model-list"></div>
+                <div class="close-row"><button class="btn secondary" id="ai-model-close">关闭</button></div>
+            </div>
+        </div>
         <div id="canvas-area">
             <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
             <div id="param-panel" hidden>
@@ -700,6 +835,9 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     { group: '视图', items: [
       { id: 'toggle-grid', name: '显示 / 隐藏栅格', icon: '#', shortcut: 'G 键' },
       { id: 'reset-view', name: '重置视图', icon: '⌖' },
+    ]},
+    { group: 'AI', items: [
+      { id: 'ai-solver', name: '模型解题', icon: '🧠' },
     ]},
   ];
 
@@ -1210,6 +1348,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     if (id === 'clear') return clearAll();
     if (id === 'toggle-grid') return toggleGrid();
     if (id === 'reset-view') return resetView();
+    if (id === 'ai-solver') return aiTogglePanel();
 
     state.currentTool = id;
     state.pendingVertex = null;
@@ -3260,6 +3399,602 @@ function angleParams(el) {
   // 点击空白处关闭所有 dropdown
   document.addEventListener('click', () => closeAllDropdowns());
 
+  // ==================== AI 模型解题 ====================
+  const AI_API_BASE = 'https://api.oscarstudio.cn';
+  let aiPanelOpen = false;
+  let aiMessages = []; // 多轮对话 (不含 board state, 服务端注入)
+  let aiAbortCtrl = null;
+  let aiCurrentModel = localStorage.getItem('geoAIModel') || 'deepseek-v4-pro';
+  let aiAvailableModels = [];
+  let aiRecvText = '';
+  let aiRecvToolCalls = [];
+  let aiRecvMsgEl = null;
+
+  function aiTogglePanel(force) {
+    aiPanelOpen = (force === undefined) ? !aiPanelOpen : force;
+    const panel = document.getElementById('ai-panel');
+    if (aiPanelOpen) {
+      panel.hidden = false;
+      const input = document.getElementById('ai-input');
+      if (input && !input.value) input.focus();
+      aiRefreshModelName();
+    } else {
+      panel.hidden = true;
+    }
+    document.querySelectorAll('.tool').forEach(b => b.classList.remove('active'));
+    if (aiPanelOpen) {
+      const btn = document.querySelector('[data-tool="ai-solver"]');
+      if (btn) btn.classList.add('active');
+    }
+  }
+  document.getElementById('ai-close').onclick = () => aiTogglePanel(false);
+
+  function aiRefreshModelName() {
+    const m = aiAvailableModels.find(x => x.id === aiCurrentModel);
+    document.getElementById('ai-model-name').textContent = m ? m.name : aiCurrentModel;
+  }
+  document.getElementById('ai-model-name').onclick = () => aiOpenModelModal();
+
+  // ---- 模型选择模态 ----
+  async function aiOpenModelModal() {
+    if (aiAvailableModels.length === 0) {
+      try {
+        const token = localStorage.getItem('userToken') || (document.cookie.match(/(?:^|; )userToken=([^;]+)/) || [])[1];
+        const resp = await fetch(`${AI_API_BASE}/api/geometry/models`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        const data = await resp.json();
+        if (data.success) aiAvailableModels = data.models;
+      } catch (e) {
+        toast('加载模型失败: ' + e.message, true);
+        return;
+      }
+    }
+    const list = document.getElementById('ai-model-list');
+    list.innerHTML = '';
+    const byProvider = {};
+    for (const m of aiAvailableModels) {
+      (byProvider[m.provider] = byProvider[m.provider] || []).push(m);
+    }
+    for (const [prov, arr] of Object.entries(byProvider)) {
+      const block = document.createElement('div');
+      block.className = 'provider-block';
+      const head = document.createElement('div');
+      head.className = 'provider-name';
+      head.textContent = prov;
+      block.appendChild(head);
+      for (const m of arr) {
+        const row = document.createElement('div');
+        row.className = 'model-row' + (m.id === aiCurrentModel ? ' active' : '');
+        const badges = [];
+        if (m.recommended) badges.push('<span class="badge recommended">推荐</span>');
+        else if (m.premium) badges.push('<span class="badge pro">PRO</span>');
+        row.innerHTML = `<span class="name">${m.name}</span><span class="id">${m.id}</span>${badges.join('')}`;
+        row.onclick = () => {
+          aiCurrentModel = m.id;
+          localStorage.setItem('geoAIModel', m.id);
+          aiRefreshModelName();
+          document.querySelectorAll('#ai-model-list .model-row').forEach(r => r.classList.remove('active'));
+          row.classList.add('active');
+        };
+        block.appendChild(row);
+      }
+      list.appendChild(block);
+    }
+    document.getElementById('ai-model-modal').hidden = false;
+  }
+  document.getElementById('ai-model-close').onclick = () => {
+    document.getElementById('ai-model-modal').hidden = true;
+  };
+
+  // ---- 消息渲染 ----
+  function aiAppendMsg(role, text) {
+    const box = document.getElementById('ai-messages');
+    const div = document.createElement('div');
+    div.className = 'ai-msg ' + role;
+    const r = document.createElement('div');
+    r.className = 'role';
+    r.textContent = role === 'user' ? '我' : (role === 'thinking' ? '思考中' : 'AI');
+    div.appendChild(r);
+    const t = document.createElement('div');
+    t.className = 'text';
+    t.textContent = text || '';
+    div.appendChild(t);
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
+  function aiAppendToolList(parentEl, toolCalls) {
+    let el = parentEl.querySelector('.tool-list');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'tool-list';
+      parentEl.appendChild(el);
+    }
+    for (const tc of toolCalls) {
+      const tag = document.createElement('span');
+      tag.textContent = tc.name;
+      el.appendChild(tag);
+    }
+    const box = document.getElementById('ai-messages');
+    box.scrollTop = box.scrollHeight;
+  }
+  function aiAppendError(text) {
+    const box = document.getElementById('ai-messages');
+    const div = document.createElement('div');
+    div.className = 'ai-msg system';
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+  function aiShowThinking() {
+    aiRecvMsgEl = aiAppendMsg('thinking', '');
+    aiRecvMsgEl.querySelector('.text').innerHTML = '<span class="dot">●</span><span class="dot">●</span><span class="dot">●</span>';
+  }
+  function aiReplaceThinking(text) {
+    if (!aiRecvMsgEl) return;
+    const t = aiRecvMsgEl.querySelector('.text');
+    t.textContent = text;
+    t.classList.remove('thinking-dots');
+    const box = document.getElementById('ai-messages');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  // ---- 发送 ----
+  document.getElementById('ai-send').onclick = () => aiSend();
+  document.getElementById('ai-stop').onclick = () => {
+    if (aiAbortCtrl) aiAbortCtrl.abort();
+  };
+  document.getElementById('ai-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      aiSend();
+    }
+  });
+
+  async function aiSend() {
+    const input = document.getElementById('ai-input');
+    const problem = input.value.trim();
+    if (!problem) return;
+    const token = localStorage.getItem('userToken') || (document.cookie.match(/(?:^|; )userToken=([^;]+)/) || [])[1];
+    if (!token) {
+      aiAppendError('请先登录后再使用模型解题');
+      return;
+    }
+
+    const includeBoard = document.getElementById('ai-include-board').checked;
+    const boardState = includeBoard ? serializeCompact() : null;
+
+    aiAppendMsg('user', problem);
+    aiMessages.push({ role: 'user', content: problem });
+    input.value = '';
+    input.disabled = true;
+    document.getElementById('ai-send').hidden = true;
+    document.getElementById('ai-stop').hidden = false;
+    document.getElementById('ai-status').textContent = '调用中…';
+    aiShowThinking();
+
+    aiRecvText = '';
+    aiRecvToolCalls = [];
+    aiRecvMsgEl = null;
+
+    let resp;
+    try {
+      aiAbortCtrl = new AbortController();
+      resp = await fetch(`${AI_API_BASE}/api/geometry/solve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          problem, model: aiCurrentModel, messages: aiMessages, boardState
+        }),
+        signal: aiAbortCtrl.signal
+      });
+    } catch (e) {
+      aiRecvMsgEl && aiRecvMsgEl.remove();
+      aiAppendError('请求失败: ' + e.message);
+      aiCleanup();
+      return;
+    }
+
+    if (!resp.ok) {
+      aiRecvMsgEl && aiRecvMsgEl.remove();
+      let msg = `HTTP ${resp.status}`;
+      try {
+        const j = await resp.json();
+        if (j.message) msg = j.message;
+        if (j.quota) aiAppendError(`配额: 已用 ${j.quota.used}/${j.quota.limit}`);
+      } catch {}
+      aiAppendError(msg);
+      aiCleanup();
+      return;
+    }
+
+    // 解析 SSE
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    let finishReply = null;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split('\n\n');
+        buf = lines.pop() || '';
+        for (const block of lines) {
+          for (const line of block.split('\n')) {
+            if (!line.startsWith('data:') && !line.startsWith('data ')) continue;
+            const jsonStr = line.slice(line.charAt(5) === ' ' ? 6 : 5).trim();
+            if (!jsonStr) continue;
+            let evt;
+            try { evt = JSON.parse(jsonStr); } catch { continue; }
+            aiHandleEvent(evt, (reply) => { finishReply = reply; });
+          }
+        }
+      }
+    } catch (e) {
+      aiAppendError('读取响应失败: ' + e.message);
+    }
+
+    // 收尾
+    if (aiRecvMsgEl) aiRecvMsgEl.remove();
+    if (aiRecvText || aiRecvToolCalls.length) {
+      const div = aiAppendMsg('assistant', aiRecvText || '');
+      if (aiRecvToolCalls.length) aiAppendToolList(div, aiRecvToolCalls);
+      aiMessages.push({
+        role: 'assistant',
+        content: aiRecvText || '(无文本)',
+        tool_calls: aiRecvToolCalls.length ? aiRecvToolCalls : undefined
+      });
+    }
+    aiCleanup();
+  }
+
+  function aiCleanup() {
+    aiAbortCtrl = null;
+    document.getElementById('ai-input').disabled = false;
+    document.getElementById('ai-send').hidden = false;
+    document.getElementById('ai-stop').hidden = true;
+    document.getElementById('ai-status').textContent = '';
+    aiRecvMsgEl = null;
+  }
+
+  function aiHandleEvent(evt, onFinish) {
+    if (evt.type === 'text') {
+      aiRecvText += evt.text;
+      if (aiRecvMsgEl) {
+        const t = aiRecvMsgEl.querySelector('.text');
+        t.textContent = aiRecvText;
+        const box = document.getElementById('ai-messages');
+        box.scrollTop = box.scrollHeight;
+      } else {
+        aiShowThinking();
+        const t = aiRecvMsgEl.querySelector('.text');
+        t.textContent = aiRecvText;
+      }
+    } else if (evt.type === 'tool_call') {
+      aiRecvToolCalls.push({ id: evt.id, name: evt.name, args: evt.args });
+      try {
+        aiApplyToolCall(evt.name, evt.args || {});
+        if (aiRecvMsgEl) {
+          let list = aiRecvMsgEl.querySelector('.tool-list');
+          if (!list) {
+            list = document.createElement('div');
+            list.className = 'tool-list';
+            aiRecvMsgEl.appendChild(list);
+          }
+          const tag = document.createElement('span');
+          tag.textContent = evt.name;
+          list.appendChild(tag);
+        }
+      } catch (e) {
+        aiAppendError(`工具 ${evt.name} 失败: ${e.message}`);
+      }
+    } else if (evt.type === 'usage') {
+      const c = evt.credits_used;
+      document.getElementById('ai-status').textContent =
+        c != null ? `${evt.model} · ${c} credits` : evt.model;
+    } else if (evt.type === 'error') {
+      aiAppendError(evt.message);
+    } else if (evt.type === 'done') {
+      // 留到 aiSend 末尾统一处理
+    }
+  }
+
+  // ==================== 工具: 标签 <-> 元素 ====================
+  // 前端内部用 id, 模型用 label; 转换层在 aiApplyToolCall 里
+  function aiFindPointByLabel(label) {
+    if (!label) return null;
+    return state.elements.find(e => e.t === 'p' && (e.label || aiAutoLabelOf(e)) === label);
+  }
+  function aiAutoLabelOf(p) {
+    // 与 addPoint 相同的标签生成规则 (字母 A, B, C...; AA, AB... after Z)
+    const n = state.nextLabelIdx;
+    return aiIndexToLabel(n);
+  }
+  function aiIndexToLabel(n) {
+    if (n < 26) return String.fromCharCode(65 + n);
+    // 简单双字母
+    return String.fromCharCode(65 + Math.floor(n / 26) - 1) + String.fromCharCode(65 + n % 26);
+  }
+  function aiNextLabel() {
+    const used = new Set();
+    for (const el of state.elements) {
+      if (el.t === 'p' && el.label) used.add(el.label);
+    }
+    let n = state.nextLabelIdx;
+    while (used.has(aiIndexToLabel(n))) n++;
+    return aiIndexToLabel(n);
+  }
+  function aiAllocateLabel(desired) {
+    // desired: 模型想用的标签. 若空, 用 nextLabelIdx; 若冲突, 后缀数字.
+    if (!desired) return aiNextLabel();
+    const used = new Set();
+    for (const el of state.elements) {
+      if (el.t === 'p' && el.label) used.add(el.label);
+    }
+    if (!used.has(desired)) return desired;
+    // 冲突: 加数字后缀
+    let i = 2;
+    while (used.has(desired + i)) i++;
+    return desired + i;
+  }
+  function aiFindLineByLabels(p1L, p2L) {
+    if (!p1L || !p2L) return null;
+    for (const el of state.elements) {
+      if (el.t !== 's' && el.t !== 'r' && el.t !== 'l') continue;
+      const aL = aiGetPointLabel(el.a);
+      const bL = aiGetPointLabel(el.b);
+      if ((aL === p1L && bL === p2L) || (aL === p2L && bL === p1L)) return el;
+    }
+    return null;
+  }
+  function aiGetPointLabel(id) {
+    const p = state.elements.find(e => e.id === id);
+    return p ? p.label : null;
+  }
+
+  // ==================== 工具: 应用 tool_call ====================
+  function aiApplyToolCall(name, args) {
+    pushHistory();
+    switch (name) {
+      case 'add_point': return aiTcAddPoint(args);
+      case 'add_segment': return aiTcAddSegment(args);
+      case 'add_ray': return aiTcAddRay(args);
+      case 'add_line': return aiTcAddLine(args);
+      case 'add_circle': return aiTcAddCircle(args);
+      case 'add_polygon': return aiTcAddPolygon(args);
+      case 'add_angle': return aiTcAddAngle(args);
+      case 'add_text': return aiTcAddText(args);
+      case 'measure_length': return aiTcMeasureLength(args);
+      case 'measure_angle': return aiTcMeasureAngle(args);
+      case 'construct_midpoint': return aiTcMidpoint(args);
+      case 'construct_perpbisect': return aiTcPerpbisect(args);
+      case 'construct_bisect': return aiTcBisect(args);
+      case 'construct_perpendicular': return aiTcPerpendicular(args);
+      case 'construct_parallel': return aiTcParallel(args);
+      case 'construct_intersection': return aiTcIntersection(args);
+      case 'delete': return aiTcDelete(args);
+      case 'clear_board': return aiTcClearBoard();
+      case 'finish': return; // 收尾由 aiSend 末尾处理
+      default: throw new Error('未知工具: ' + name);
+    }
+  }
+  function aiTcAddPoint(args) {
+    if (typeof args.x !== 'number' || typeof args.y !== 'number') throw new Error('需要 x, y');
+    const lbl = aiAllocateLabel(args.label);
+    const id = ++state.nextId;
+    const p = { id, t: 'p', x: args.x, y: args.y, label: lbl };
+    state.elements.push(p);
+    if (lbl === aiIndexToLabel(state.nextLabelIdx)) {
+      // 用掉了 nextLabelIdx, 推进
+      state.nextLabelIdx++;
+    }
+    render();
+    return lbl;
+  }
+  function aiTcAddSegment(args) { return aiTcAddLineLike(args, 's'); }
+  function aiTcAddRay(args) { return aiTcAddLineLike(args, 'r'); }
+  function aiTcAddLine(args) { return aiTcAddLineLike(args, 'l'); }
+  function aiTcAddLineLike(args, t) {
+    const a = aiFindPointByLabel(args.p1);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !b) throw new Error(`找不到点 ${args.p1} 或 ${args.p2}`);
+    // 避免重复
+    for (const el of state.elements) {
+      if (el.t !== t) continue;
+      if ((el.a === a.id && el.b === b.id) || (el.a === b.id && el.b === a.id)) {
+        return; // 重复
+      }
+    }
+    const id = ++state.nextId;
+    state.elements.push({ id, t, a: a.id, b: b.id, dashed: !!args.dashed });
+    render();
+  }
+  function aiTcAddCircle(args) {
+    const c = aiFindPointByLabel(args.center);
+    const r = aiFindPointByLabel(args.radius);
+    if (!c || !r) throw new Error('找不到圆心或半径点');
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'c', center: c.id, radius: r.id, dashed: !!args.dashed });
+    render();
+  }
+  function aiTcAddPolygon(args) {
+    if (!Array.isArray(args.points) || args.points.length < 3) throw new Error('points 至少 3 个');
+    const pts = args.points.map(l => aiFindPointByLabel(l)).filter(Boolean);
+    if (pts.length < 3) throw new Error('至少 3 个点存在');
+    const id = ++state.nextId;
+    const el = { id, t: 'g', points: pts.map(p => p.id) };
+    if (args.constraint) el.constraint = args.constraint;
+    state.elements.push(el);
+    render();
+  }
+  function aiTcAddAngle(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const v = aiFindPointByLabel(args.vertex);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !v || !b) throw new Error('角度需要 3 个点');
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'a', vertex: v.id, p1: a.id, p2: b.id });
+    render();
+  }
+  function aiTcAddText(args) {
+    if (typeof args.x !== 'number' || typeof args.y !== 'number' || !args.text) throw new Error('需要 x, y, text');
+    const id = ++state.nextId;
+    const el = { id, t: 'x', x: args.x, y: args.y, text: String(args.text) };
+    if (args.anchor) {
+      const p = aiFindPointByLabel(args.anchor);
+      if (p) el.anchor = p.id;
+    }
+    state.elements.push(el);
+    render();
+  }
+  function aiTcMeasureLength(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !b) throw new Error('找不到测度点');
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'm', a: a.id, b: b.id });
+    render();
+  }
+  function aiTcMeasureAngle(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const v = aiFindPointByLabel(args.vertex);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !v || !b) throw new Error('角度测度需要 3 个点');
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'a', vertex: v.id, p1: a.id, p2: b.id });
+    render();
+  }
+  function aiTcMidpoint(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !b) throw new Error('找不到点');
+    const mid = G.midpoint(a, b);
+    const lbl = aiAllocateLabel(args.label);
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'p', x: mid.x, y: mid.y, label: lbl, derived: true });
+    if (lbl === aiIndexToLabel(state.nextLabelIdx)) state.nextLabelIdx++;
+    render();
+    return lbl;
+  }
+  function aiTcPerpbisect(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !b) throw new Error('找不到点');
+    // 找或建 p1-p2 线段
+    let seg = state.elements.find(el => el.t === 's' &&
+      ((el.a === a.id && el.b === b.id) || (el.a === b.id && el.b === a.id)));
+    if (!seg) {
+      const sid = ++state.nextId;
+      seg = { id: sid, t: 's', a: a.id, b: b.id, dashed: true, derived: true };
+      state.elements.push(seg);
+    }
+    // 中点 (作为 vertex), 沿垂线方向两点
+    const mid = G.midpoint(a, b);
+    const dir = G.sub(b, a);
+    const perp = { x: -dir.y, y: dir.x };
+    const len = G.len(dir);
+    if (len < 1e-9) throw new Error('两点重合');
+    const u = { x: perp.x / len, y: perp.y / len };
+    const p1 = { x: mid.x + u.x * 10, y: mid.y + u.y * 10 };
+    const p2 = { x: mid.x - u.x * 10, y: mid.y - u.y * 10 };
+    const vp1Id = ++state.nextId, vp2Id = ++state.nextId;
+    state.elements.push({ id: vp1Id, t: 'p', x: p1.x, y: p1.y, derived: true });
+    state.elements.push({ id: vp2Id, t: 'p', x: p2.x, y: p2.y, derived: true });
+    const lid = ++state.nextId;
+    state.elements.push({ id: lid, t: 'l', a: vp1Id, b: vp2Id, dashed: true, derived: true });
+    render();
+  }
+  function aiTcBisect(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const v = aiFindPointByLabel(args.vertex);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !v || !b) throw new Error('角平分线需要 3 个点');
+    const dir1 = G.sub(a, v);
+    const dir2 = G.sub(b, v);
+    const u1 = G.norm(dir1);
+    const u2 = G.norm(dir2);
+    if (!u1 || !u2) throw new Error('顶点重合');
+    const bisDir = { x: u1.x + u2.x, y: u1.y + u2.y };
+    if (G.len(bisDir) < 1e-9) throw new Error('两方向相反, 角平分线未定义');
+    const u = G.norm(bisDir);
+    const p1 = { x: v.x + u.x * 10, y: v.y + u.y * 10 };
+    const pid = ++state.nextId;
+    state.elements.push({ id: pid, t: 'p', x: p1.x, y: p1.y, derived: true });
+    const rid = ++state.nextId;
+    state.elements.push({ id: rid, t: 'r', a: v.id, b: pid, dashed: true, derived: true });
+    render();
+  }
+  function aiTcPerpendicular(args) {
+    return aiTcPerpOrPara(args, true);
+  }
+  function aiTcParallel(args) {
+    return aiTcPerpOrPara(args, false);
+  }
+  function aiTcPerpOrPara(args, isPerp) {
+    const line = args.line;
+    if (!line || !line.p1 || !line.p2) throw new Error('line 需要 p1, p2');
+    const la = aiFindPointByLabel(line.p1);
+    const lb = aiFindPointByLabel(line.p2);
+    const pt = aiFindPointByLabel(args.point);
+    if (!la || !lb || !pt) throw new Error('点不存在');
+    const dir = G.sub(lb, la);
+    const u = isPerp ? { x: -dir.y, y: dir.x } : dir;
+    const len = G.len(dir) || 1;
+    const norm = { x: u.x / len, y: u.y / len };
+    const p1 = { x: pt.x + norm.x * 10, y: pt.y + norm.y * 10 };
+    const p2 = { x: pt.x - norm.x * 10, y: pt.y - norm.y * 10 };
+    const pid1 = ++state.nextId, pid2 = ++state.nextId;
+    state.elements.push({ id: pid1, t: 'p', x: p1.x, y: p1.y, derived: true });
+    state.elements.push({ id: pid2, t: 'p', x: p2.x, y: p2.y, derived: true });
+    const lid = ++state.nextId;
+    state.elements.push({ id: lid, t: 'l', a: pid1, b: pid2, dashed: true, derived: true });
+    render();
+  }
+  function aiTcIntersection(args) {
+    // 简化: 仅支持 线-线 交点. 解析 {el1, el2} 形式: {p1, p2} 表示线
+    function parseLine(o) {
+      if (o && o.p1 && o.p2) {
+        const a = aiFindPointByLabel(o.p1);
+        const b = aiFindPointByLabel(o.p2);
+        if (a && b) return { type: 'line', a, b };
+      }
+      return null;
+    }
+    const e1 = parseLine(args.el1);
+    const e2 = parseLine(args.el2);
+    if (!e1 || !e2) throw new Error('仅支持线-线交点');
+    const p = G.lineLineIntersect(e1.a, e1.b, e2.a, e2.b);
+    if (!p) throw new Error('两线平行');
+    const lbl = aiAllocateLabel(args.label);
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'p', x: p.x, y: p.y, label: lbl, derived: true });
+    if (lbl === aiIndexToLabel(state.nextLabelIdx)) state.nextLabelIdx++;
+    render();
+    return lbl;
+  }
+  function aiTcDelete(args) {
+    const p = aiFindPointByLabel(args.label);
+    if (!p) throw new Error('找不到点 ' + args.label);
+    state.elements = state.elements.filter(e => e.id !== p.id);
+    render();
+  }
+  function aiTcClearBoard() {
+    state.elements = [];
+    state.nextId = 1;
+    state.nextLabelIdx = 0;
+    state.selection.clear();
+    state.pendingVertex = null;
+    state.pendingCircleCenter = null;
+    state.pendingPoly = [];
+    state.toolStep = 0;
+    state.toolPicked = [];
+    state.shapeDrag = null;
+    state.hoverPoint = null;
+    render();
+  }
+
   // ==================== 初始化 ====================
   function init() {
     renderSidebar();
@@ -3267,6 +4002,30 @@ function angleParams(el) {
     render();
     loadFromUrl();
   }
+  // 测试钩子 (e2e 验证)
+  window.__geo = {
+    state,
+    addPoint: (x, y, l) => aiApplyToolCall('add_point', { x, y, label: l }),
+    addSegment: (p1, p2, dashed) => aiApplyToolCall('add_segment', { p1, p2, dashed }),
+    addRay: (p1, p2, dashed) => aiApplyToolCall('add_ray', { p1, p2, dashed }),
+    addLine: (p1, p2, dashed) => aiApplyToolCall('add_line', { p1, p2, dashed }),
+    addCircle: (c, r, dashed) => aiApplyToolCall('add_circle', { center: c, radius: r, dashed }),
+    addPolygon: (pts, c) => aiApplyToolCall('add_polygon', { points: pts, constraint: c }),
+    addAngle: (p1, v, p2) => aiApplyToolCall('add_angle', { p1, vertex: v, p2 }),
+    addText: (x, y, text, a) => aiApplyToolCall('add_text', { x, y, text, anchor: a }),
+    measureLength: (p1, p2) => aiApplyToolCall('measure_length', { p1, p2 }),
+    measureAngle: (p1, v, p2) => aiApplyToolCall('measure_angle', { p1, vertex: v, p2 }),
+    midpoint: (p1, p2) => aiApplyToolCall('construct_midpoint', { p1, p2 }),
+    perpbisect: (p1, p2) => aiApplyToolCall('construct_perpbisect', { p1, p2 }),
+    bisect: (p1, v, p2) => aiApplyToolCall('construct_bisect', { p1, vertex: v, p2 }),
+    perpendicular: (l1, l2, pt) => aiApplyToolCall('construct_perpendicular', { line: { p1: l1, p2: l2 }, point: pt }),
+    parallel: (l1, l2, pt) => aiApplyToolCall('construct_parallel', { line: { p1: l1, p2: l2 }, point: pt }),
+    intersection: (a, b, c, d) => aiApplyToolCall('construct_intersection', { el1: { p1: a, p2: b }, el2: { p1: c, p2: d } }),
+    delete: (l) => aiApplyToolCall('delete', { label: l }),
+    clear: () => aiApplyToolCall('clear_board', {}),
+    state: () => state,
+    applyToolCall: aiApplyToolCall
+  };
   init();
 })();
 </script>
