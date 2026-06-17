@@ -2360,32 +2360,73 @@ function angleParams(el) {
     }
 
     if (state.currentTool === 'angle') {
-      // 端点选取: 优先 hit, 否则找最近点 (snap 0.5 世界单位)
-      let pid = null;
+      // 两种模式: 选 2 条线 (推荐) 或 选 3 个点
+      // - 点中 line-like 元素 (s/r/l) -> 加入 linePicked
+      // - 点中点 -> 切到 point 模式, 走 3 点流程
       const hit = hitTest(sx, sy);
+      const isLine = hit && (hit.t === 's' || hit.t === 'r' || hit.t === 'l');
+      // 若已在点模式 (pendingVertex 已设) 但点中线, 重置为选线模式
+      if (isLine && state.pendingVertex) {
+        state.pendingVertex = null;
+        state.toolPicked = [];
+      }
+      if (isLine) {
+        // 选线模式: 第 1/2 次点击选线
+        if (!state.toolPicked[0] || (state.toolPicked[0] && !state.toolPicked[0].t)) {
+          // 还没选过任何东西
+          state.toolPicked = [{ id: hit.id, t: hit.t }];
+          toast('请选择第 2 条直线 / 射线 / 线段');
+          return;
+        } else if (state.toolPicked[0] && state.toolPicked[0].t) {
+          // 已有第 1 条线, 选第 2 条
+          if (hit.id === state.toolPicked[0].id) { toast('请选择不同的线'); return; }
+          // 计算交点
+          const L1 = findEl(state.toolPicked[0].id);
+          const L2 = findEl(hit.id);
+          const a1 = pointAt(L1.a), b1 = pointAt(L1.b);
+          const a2 = pointAt(L2.a), b2 = pointAt(L2.b);
+          if (!a1 || !b1 || !a2 || !b2) { toast('线缺少端点'); return; }
+          const inter = G.lineLineIntersect(a1, b1, a2, b2);
+          if (!inter) { toast('两线平行, 无交点'); state.toolPicked = []; return; }
+          // 在交点处建一个新点作为 vertex
+          // p1 / p2: 沿 L1 / L2 方向, 距 vertex 1 世界单位的点
+          const dir1 = G.norm(G.sub(b1, a1));
+          const dir2 = G.norm(G.sub(b2, a2));
+          const p1Pt = G.add(inter, G.mul(dir1, 1));
+          const p2Pt = G.add(inter, G.mul(dir2, 1));
+          pushHistory();
+          const vPt = createPoint(inter.x, inter.y);
+          const p1El = createPoint(p1Pt.x, p1Pt.y);
+          const p2El = createPoint(p2Pt.x, p2Pt.y);
+          addEl({ id: newId(), t: 'a', vertex: vPt.id, p1: p1El.id, p2: p2El.id });
+          state.toolPicked = [];
+          render();
+          return;
+        }
+      }
+      // 走点模式: 3 个点
+      let pid = null;
       if (hit && hit.t === 'p') pid = hit.id;
       else {
         const snap = findClosestPoint(w, 0.5);
         if (snap) pid = snap.id;
       }
       if (!state.pendingVertex) {
-        // 1st click: p1
         if (pid) {
           state.pendingVertex = pid;
         } else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
-      } else if (!state.toolPicked[0]) {
-        // 2nd click: vertex
+      } else if (!state.toolPicked[0] || !state.toolPicked[0].t) {
+        // 第 2 次点 (顶点): 可能是从选线模式切换, 先清空
+        state.toolPicked = [];
         if (pid) {
           if (pid === state.pendingVertex) { toast('请选择不同的点'); return; }
           state.toolPicked.push({ id: pid });
         } else { pushHistory(); const p = createPoint(w.x, w.y); state.toolPicked.push({ id: p.id }); render(); }
       } else {
-        // 3rd click: p2
+        // 第 3 次点 (p2)
         if (!pid) { pushHistory(); pid = createPoint(w.x, w.y).id; }
-        // 校验: 三个点不能相同
         if (pid === state.pendingVertex) { toast('p1 和 p2 不能相同'); return; }
         if (pid === state.toolPicked[0].id) { toast('顶点和 p2 不能相同'); return; }
-        // 校验: 三点共线则不能构成角
         const v = pointAt(state.toolPicked[0].id);
         const p1 = pointAt(state.pendingVertex);
         const p2 = pointAt(pid);
