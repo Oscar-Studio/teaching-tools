@@ -1425,7 +1425,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       const midA = (startA + endA) / 2;
       const tx = sV.x + Math.cos(midA) * (arcR + 18);
       const ty = sV.y + Math.sin(midA) * (arcR + 18);
-      const t = svgEl('text', { x: tx, y: ty, class: 'angle-text', 'text-anchor': 'middle' });
+      const t = svgEl('text', { x: tx, y: ty, class: 'angle-text', 'text-anchor': 'middle', 'data-id': el.id, style: 'cursor: pointer' });
       t.textContent = label;
       svg.appendChild(t);
     }
@@ -1452,7 +1452,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     const off = G.perp(d);
     const labelPos = G.add(mid, G.mul(off, 12 / state.view.scale));
     const ls = worldToScreen(labelPos);
-    const t = svgEl('text', { x: ls.x, y: ls.y - 4, class: 'measure-text', 'text-anchor': 'middle' });
+    const t = svgEl('text', { x: ls.x, y: ls.y - 4, class: 'measure-text', 'text-anchor': 'middle', 'data-id': el.id, style: 'cursor: pointer' });
     t.textContent = el.text || G.dist(a, b).toFixed(2);
     svg.appendChild(t);
   }
@@ -1696,11 +1696,13 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     return section('三角形构造') + `<div class="param-buttons">${buttons}</div>`;
   }
 
-  function angleParams(el) {
-    const v = pointAt(el.vertex), p1 = pointAt(el.p1), p2 = pointAt(el.p2);
+function angleParams(el) {
+    const v = findPoint(el.vertex), p1 = findPoint(el.p1), p2 = findPoint(el.p2);
     if (!v || !p1 || !p2) return '';
     const deg = G.angleAt(v, p1, p2) * 180 / Math.PI;
+    const dynamic = deg.toFixed(2) + '°';
     return rowEdit('角度°', 'angle', deg.toFixed(2))
+      + rowEdit('标签', 'text', el.text || dynamic, 'text')
       + row('弧度', (deg * Math.PI / 180).toFixed(4))
       + section(`顶点 (#${el.vertex})`)
       + rowEdit('X', 'vx', v.x.toFixed(2))
@@ -1720,7 +1722,16 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
   }
 
   function measureParams(el) {
-    return row('值', escapeHTML(el.text || ''));
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return '';
+    const dynamic = G.dist(a, b).toFixed(3);
+    return rowEdit('值', 'text', el.text || dynamic, 'text')
+      + section(`端点 A (#${el.a})`)
+      + rowEdit('X', 'ax', a.x.toFixed(2))
+      + rowEdit('Y', 'ay', a.y.toFixed(2))
+      + section(`端点 B (#${el.b})`)
+      + rowEdit('X', 'bx', b.x.toFixed(2))
+      + rowEdit('Y', 'by', b.y.toFixed(2));
   }
 
   function toggleTriConstruction(poly, consId) {
@@ -1837,6 +1848,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       case 'c': ok = setCircle(el, paramId, v); break;
       case 'g': ok = setPolygonVertex(el, paramId, v); break;
       case 'a': ok = setAngle(el, paramId, v); break;
+      case 'm': ok = setMeasure(el, paramId, v); break;
       case 'x': ok = setText(el, paramId, v); break;
     }
     if (!ok) {
@@ -1955,6 +1967,7 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
   function setAngle(ang, k, v) {
     const v0 = findPoint(ang.vertex), p1 = findPoint(ang.p1), p2 = findPoint(ang.p2);
     if (!v0 || !p1 || !p2) return false;
+    if (k === 'text') { ang.text = String(v); return true; }
     if (k === 'angle') {
       // 旋转 p2 调整角度 (保持 p1 不动)
       const cur = G.angleAt(v0, p1, p2);
@@ -1973,6 +1986,17 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     if (k === 'p1y') { p1.y = +v; return true; }
     if (k === 'p2x') { p2.x = +v; return true; }
     if (k === 'p2y') { p2.y = +v; return true; }
+    return false;
+  }
+
+  function setMeasure(m, k, v) {
+    if (k === 'text') { m.text = String(v); return true; }
+    const a = findPoint(m.a), b = findPoint(m.b);
+    if (!a || !b) return false;
+    if (k === 'ax') { a.x = +v; return true; }
+    if (k === 'ay') { a.y = +v; return true; }
+    if (k === 'bx') { b.x = +v; return true; }
+    if (k === 'by') { b.y = +v; return true; }
     return false;
   }
 
@@ -2031,16 +2055,45 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     const w = screenToWorld(sx, sy);
     const scale = state.view.scale;
     let best = null, bestDist = HIT_DIST;
+    // text 元素 (m/a/x) 点击测试
+    for (const el of state.elements) {
+      if (el.t === 'm') {
+        const a = pointAt(el.a), b = pointAt(el.b);
+        if (!a || !b) continue;
+        const mid = G.midpoint(a, b);
+        const d = G.norm(G.sub(b, a));
+        const off = G.perp(d);
+        const labelPos = G.add(mid, G.mul(off, 12 / state.view.scale));
+        const ls = worldToScreen(labelPos);
+        const textD = Math.hypot(ls.x - sx, ls.y - sy);
+        if (textD < 20) { best = el; bestDist = 0; }
+      } else if (el.t === 'a') {
+        const v = pointAt(el.vertex);
+        if (!v) continue;
+        const sV = worldToScreen(v);
+        const textD = Math.hypot(sV.x - sx, sV.y - sy);
+        if (textD < 30) { best = el; bestDist = 0; }
+      } else if (el.t === 'x') {
+        const p = el.anchor ? pointAt(el.anchor) : null;
+        const pos = p ? worldToScreen(p) : worldToScreen({ x: el.x, y: el.y });
+        const textD = Math.hypot(pos.x - sx, pos.y - sy);
+        if (textD < 20) { best = el; bestDist = 0; }
+      }
+    }
     for (const el of state.elements) {
       if (el.t === 'p') {
         const d = Math.hypot(el.x - w.x, el.y - w.y) * scale;
         if (d < bestDist) { bestDist = d; best = el; }
       } else if (el.t === 's' || el.t === 'r' || el.t === 'l') {
+        // 优先返回点, 避免线段拦截端点
+        if (best && best.t === 'p') continue;
         const p = lineTwoPts(el); if (!p) continue;
         const cp = el.t === 's' ? G.closestOnSegment(w, p.a, p.b) : G.closestOnLine(w, p.a, p.b);
         const d = Math.hypot(cp.x - w.x, cp.y - w.y) * scale;
         if (d < HIT_DIST_LINE && d < bestDist) { bestDist = d; best = el; }
       } else if (el.t === 'c') {
+        // 优先返回点
+        if (best && best.t === 'p') continue;
         const c = pointAt(el.center), r = pointAt(el.radius);
         if (!c || !r) continue;
         const dist = G.dist(w, c);
@@ -2176,7 +2229,12 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     }
 
     if (state.currentTool === 'select') {
-      const hit = hitTest(sx, sy);
+      let hit = hitTest(sx, sy);
+      // 点击到 text.measure-text / text.angle-text / text.text-label 时, 选中对应元素
+      if (!hit && e.target.tagName === 'text') {
+        const id = parseInt(e.target.getAttribute('data-id'));
+        if (id) hit = findEl(id);
+      }
       if (hit) {
         state.selection.clear();
         state.selection.add(hit.id);
@@ -2303,8 +2361,16 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
         let pid;
         if (hit && hit.t === 'p') pid = hit.id;
         else { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        // 校验: 三点共线则不能构成角
+        const v = pointAt(state.toolPicked[0].id);
+        const p1 = pointAt(state.pendingVertex);
+        const p2 = pointAt(pid);
+        if (v && p1 && p2) {
+          const cross = (p1.x - v.x) * (p2.y - v.y) - (p1.y - v.y) * (p2.x - v.x);
+          if (Math.abs(cross) < 1e-9) { toast('三点共线, 无法构造角'); return; }
+        }
         pushHistory();
-        addEl({ id: newId(), t: 'a', vertex: state.toolPicked[0].id, p1: state.pendingVertex, p2: pid, text: '' });
+        addEl({ id: newId(), t: 'a', vertex: state.toolPicked[0].id, p1: state.pendingVertex, p2: pid });
         state.pendingVertex = null;
         state.toolPicked = [];
         render();
@@ -2824,15 +2890,15 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       createPoint(I.x, I.y);
     } else if (id === 'measure-length') {
       const a = pointAt(ref[0]), b = pointAt(ref[1]);
-      const txt = G.dist(a, b).toFixed(2);
       pushHistory();
-      addEl({ id: newId(), t: 'm', a: ref[0], b: ref[1], text: txt });
+      addEl({ id: newId(), t: 'm', a: ref[0], b: ref[1] });
     } else if (id === 'measure-angle') {
       const v = pointAt(ref[0]), p1 = pointAt(ref[1]), p2 = pointAt(ref[2]);
-      const deg = G.angleAt(v, p1, p2) * 180 / Math.PI;
-      const txt = deg.toFixed(1) + '°';
+      // 校验: 三点共线则不能构成角
+      const cross = (p1.x - v.x) * (p2.y - v.y) - (p1.y - v.y) * (p2.x - v.x);
+      if (Math.abs(cross) < 1e-9) { toast('三点共线, 无法构造角'); return; }
       pushHistory();
-      addEl({ id: newId(), t: 'a', vertex: ref[0], p1: ref[1], p2: ref[2], text: txt });
+      addEl({ id: newId(), t: 'a', vertex: ref[0], p1: ref[1], p2: ref[2] });
     }
     render();
   }
