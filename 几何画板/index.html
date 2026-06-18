@@ -3679,24 +3679,31 @@ function angleParams(el) {
       // 没有 tool_calls → 模型已给出最终回复, 跳出
       if (tcs.length === 0) {
         // 即使没 tool_calls, 也把 assistant 消息加入 conversation (供多轮)
-        conversationMessages.push({
-          role: 'assistant',
-          content: data.text || null
-        });
+        // 用后端返回的 assistant_message 完整保留 reasoning_details, 维持 Interleaved Thinking
+        if (data.assistant_message) {
+          conversationMessages.push(data.assistant_message);
+        } else {
+          conversationMessages.push({ role: 'assistant', content: data.text || null });
+        }
         finalData = data;
         break;
       }
 
       // 把这一轮 assistant 消息 + tool 结果加入 conversation, 继续下一轮
-      conversationMessages.push({
-        role: 'assistant',
-        content: data.text || null,
-        tool_calls: tcs.map(tc => ({
-          id: tc.id,
-          type: 'function',
-          function: { name: tc.name, arguments: JSON.stringify(tc.args || {}) }
-        }))
-      });
+      // 用后端返回的 assistant_message 保留 reasoning_details
+      if (data.assistant_message) {
+        conversationMessages.push(data.assistant_message);
+      } else {
+        conversationMessages.push({
+          role: 'assistant',
+          content: data.text || null,
+          tool_calls: tcs.map(tc => ({
+            id: tc.id,
+            type: 'function',
+            function: { name: tc.name, arguments: JSON.stringify(tc.args || {}) }
+          }))
+        });
+      }
       conversationMessages.push(...toolResultMessages);
     }
 
