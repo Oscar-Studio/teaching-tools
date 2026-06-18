@@ -3623,6 +3623,7 @@ function angleParams(el) {
     const dec = new TextDecoder();
     let buf = '';
     let finishReply = null;
+    let debugEventCount = 0;
     try {
       while (true) {
         const { done, value } = await reader.read();
@@ -3636,14 +3637,23 @@ function angleParams(el) {
             const jsonStr = line.slice(line.charAt(5) === ' ' ? 6 : 5).trim();
             if (!jsonStr) continue;
             let evt;
-            try { evt = JSON.parse(jsonStr); } catch { continue; }
+            try { evt = JSON.parse(jsonStr); } catch (e) {
+              if (window.GEOMETRY_DEBUG) console.warn('[geo] bad SSE:', jsonStr.slice(0, 100));
+              continue;
+            }
+            debugEventCount++;
+            if (window.GEOMETRY_DEBUG) {
+              console.log('[geo] evt:', evt.type, evt.id || evt.text?.slice(0, 30) || '');
+            }
             aiHandleEvent(evt, (reply) => { finishReply = reply; });
           }
         }
       }
     } catch (e) {
       aiAppendError('读取响应失败: ' + e.message);
+      if (window.GEOMETRY_DEBUG) console.error('[geo] stream err:', e);
     }
+    if (window.GEOMETRY_DEBUG) console.log('[geo] stream end, events:', debugEventCount, 'text:', aiRecvText.length, 'tools:', aiRecvToolCalls.length);
 
     // 收尾
     // 1) 移除残留的 thinking 元素 (如果 text 还没来, 就在这里)
