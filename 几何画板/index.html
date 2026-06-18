@@ -3571,88 +3571,202 @@ function angleParams(el) {
     }
 
     const includeBoard = document.getElementById('ai-include-board').checked;
-    const boardState = includeBoard ? serializeCompact() : null;
 
     aiAppendMsg('user', problem);
-    aiMessages.push({ role: 'user', content: problem });
     input.value = '';
     input.disabled = true;
     document.getElementById('ai-send').hidden = true;
     document.getElementById('ai-stop').hidden = false;
     document.getElementById('ai-status').textContent = '调用中…';
-    const thinkingEl = aiShowThinking();
+    aiShowThinking();
 
     aiRecvText = '';
     aiRecvToolCalls = [];
     aiRecvMsgEl = null;
     aiRecvUsage = null;
 
-    let resp;
-    try {
-      aiAbortCtrl = new AbortController();
-      resp = await fetch(`${AI_API_BASE}/api/geometry/solve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          problem, model: aiCurrentModel, messages: aiMessages, boardState
-        }),
-        signal: aiAbortCtrl.signal
-      });
-    } catch (e) {
-      aiRecvMsgEl && aiRecvMsgEl.remove();
-      aiAppendError('请求失败: ' + e.message);
-      aiCleanup();
-      return;
-    }
+    // 完整对话 (含 tool messages) 用于多轮调用
+    const conversationMessages = [...aiMessages, { role: 'user', content: problem }];
+    let iterText = '';
+    let totalUsage = null;
+    const MAX_ITER = 8; // 最多 8 轮 tool calling
+    let lastError = null;
+    let finalData = null;
+    let didCall = false; // 是否至少成功调用了一次 (拿到响应)
 
-    if (!resp.ok) {
-      aiRecvMsgEl && aiRecvMsgEl.remove();
-      let msg = `HTTP ${resp.status}`;
+    for (let iter = 0; iter < MAX_ITER; iter++) {
+      // 每次重序列化画板 (label→id 转换由 aiApplyToolCall 内部做)
+      const boardState = includeBoard ? serializeCompact() : null;
+
+      let resp, data;
       try {
-        const j = await resp.json();
-        if (j.message) msg = j.message;
-        if (j.quota) aiAppendError(`配额: 已用 ${j.quota.used}/${j.quota.limit}`);
-      } catch {}
-      aiAppendError(msg);
-      aiCleanup();
-      return;
+        if (iter === 0) aiAbortCtrl = new AbortController();
+        const status = document.getElementById('ai-status');
+        status.textContent = iter === 0 ? '调用中…' : `第 ${iter + 1} 轮…`;
+        resp = await fetch(`${AI_API_BASE}/api/geometry/solve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            problem, model: aiCurrentModel,
+            messages: conversationMessages, boardState
+          }),
+          signal: aiAbortCtrl.signal
+        });
+      } catch (e) {
+        lastError = '请求失败: ' + e.message;
+        break;
+      }
+
+      if (!resp.ok) {
+        let msg = `HTTP ${resp.status}`;
+        try {
+          const j = await resp.json();
+          if (j.message) msg = j.message;
+        } catch {}
+        lastError = msg;
+        break;
+      }
+
+      try {
+        data = await resp.json();
+      } catch (e) {
+        lastError = '解析响应失败: ' + e.message;
+        break;
+      }
+
+      if (!data.success) {
+        lastError = data.message || '请求失败';
+        break;
+      }
+
+      didCall = true;
+
+      // reasoning → thinking 元素
+      if (data.reasoning) {
+        aiHandleEvent({ type: 'reasoning', text: data.reasoning });
+      }
+
+      // 收集 tool_calls 文本 (累积展示)
+      const tcs = data.tool_calls || [];
+      const toolResultMessages = [];
+
+      for (const tc of tcs) {
+        // 应用到画板, 收集结果文本
+        const resultText = aiApplyToolCallWithResult(tc.name, tc.args || {});
+        aiHandleEvent({ type: 'tool_call', id: tc.id, name: tc.name, args: tc.args || {} });
+        toolResultMessages.push({
+          role: 'tool',
+          tool_call_id: tc.id,
+          content: resultText
+        });
+      }
+
+      if (data.text) {
+        iterText += (iterText ? '\n\n' : '') + data.text;
+      }
+
+      // 累计 usage
+      if (data.usage) {
+        if (!totalUsage) {
+          totalUsage = { ...data.usage };
+        } else {
+          totalUsage.input_tokens = (totalUsage.input_tokens || 0) + (data.usage.input_tokens || 0);
+          totalUsage.output_tokens = (totalUsage.output_tokens || 0) + (data.usage.output_tokens || 0);
+          totalUsage.credits_used = (totalUsage.credits_used || 0) + (data.usage.credits_used || 0);
+        }
+      }
+
+      // 没有 tool_calls → 模型已给出最终回复, 跳出
+      if (tcs.length === 0) {
+        // 即使没 tool_calls, 也把 assistant 消息加入 conversation (供多轮)
+        conversationMessages.push({
+          role: 'assistant',
+          content: data.text || null
+        });
+        finalData = data;
+        break;
+      }
+
+      // 把这一轮 assistant 消息 + tool 结果加入 conversation, 继续下一轮
+      conversationMessages.push({
+        role: 'assistant',
+        content: data.text || null,
+        tool_calls: tcs.map(tc => ({
+          id: tc.id,
+          type: 'function',
+          function: { name: tc.name, arguments: JSON.stringify(tc.args || {}) }
+        }))
+      });
+      conversationMessages.push(...toolResultMessages);
     }
 
-    // 非流式: 一次拿完整 JSON
-    let data;
-    try {
-      data = await resp.json();
-    } catch (e) {
+    // 出错
+    if (lastError) {
       aiRecvMsgEl && aiRecvMsgEl.remove();
-      aiAppendError('解析响应失败: ' + e.message);
+      aiAppendError(lastError);
       aiCleanup();
       return;
     }
-
-    if (!data.success) {
+    if (!didCall) {
+      // 没有跑任何一次调用
       aiRecvMsgEl && aiRecvMsgEl.remove();
-      aiAppendError(data.message || '请求失败');
+      aiAppendError('未收到模型响应');
       aiCleanup();
       return;
     }
 
-    // 把后端的 JSON 喂给 aiHandleEvent (构造一个 SSE-style 事件序列, 复用现有 UI 逻辑)
-    if (data.reasoning) {
-      aiHandleEvent({ type: 'reasoning', text: data.reasoning });
-    }
-    for (const tc of (data.tool_calls || [])) {
-      aiHandleEvent({ type: 'tool_call', id: tc.id, name: tc.name, args: tc.args || {} });
-    }
-    if (data.text) {
-      aiHandleEvent({ type: 'text', text: data.text });
-    }
-    if (data.usage) {
-      aiHandleEvent({ type: 'usage', ...data.usage, tool_calls: data.tool_calls?.length || 0 });
-    }
-    if (window.GEOMETRY_DEBUG) console.log('[geo] json response:', data);
+    // 写入 aiMessages (持久化, 供后续多轮)
+    aiMessages = conversationMessages;
 
-    // 收尾 (与 SSE 模式共享)
+    // 把最终文本喂给 UI
+    if (iterText) {
+      aiHandleEvent({ type: 'text', text: iterText });
+    }
+    if (totalUsage) {
+      aiHandleEvent({
+        type: 'usage',
+        ...totalUsage,
+        tool_calls: aiRecvToolCalls.length
+      });
+    }
+
     aiFinalize();
+  }
+
+  // 应用 tool_call 并返回文本描述 (供 role: 'tool' 消息发回模型)
+  function aiApplyToolCallWithResult(name, args) {
+    try {
+      const result = aiApplyToolCall(name, args);
+      // 优先用工具返回值, 否则给个通用描述
+      if (typeof result === 'string' && result) return result;
+      return aiDescribeToolCall(name, args);
+    } catch (e) {
+      return `失败: ${e.message}`;
+    }
+  }
+  function aiDescribeToolCall(name, args) {
+    switch (name) {
+      case 'add_point': return `已创建点 ${args.label || '?'} (${args.x}, ${args.y})`;
+      case 'add_segment': return `已创建线段 ${args.p1}-${args.p2}`;
+      case 'add_ray': return `已创建射线 ${args.p1}→${args.p2}`;
+      case 'add_line': return `已创建直线 ${args.p1}-${args.p2}`;
+      case 'add_circle': return `已创建圆 圆心=${args.center} 半径点=${args.radius}`;
+      case 'add_polygon': return `已创建多边形 (${(args.points || []).join('-')})`;
+      case 'add_angle': return `已创建角度 ∠${args.vertex}${args.p1}${args.p2}`;
+      case 'add_text': return `已添加文本 "${args.text}" @(${args.x}, ${args.y})`;
+      case 'measure_length': return `已测长度 |${args.p1}${args.p2}|`;
+      case 'measure_angle': return `已测角度 ∠${args.vertex}${args.p1}${args.p2}`;
+      case 'construct_midpoint': return `已构造中点`;
+      case 'construct_perpbisect': return `已构造垂直平分线`;
+      case 'construct_bisect': return `已构造角平分线`;
+      case 'construct_perpendicular': return `已构造垂线`;
+      case 'construct_parallel': return `已构造平行线`;
+      case 'construct_intersection': return `已构造交点`;
+      case 'delete': return `已删除点 ${args.label}`;
+      case 'clear_board': return `已清空画板`;
+      case 'finish': return '已完成';
+      default: return `已执行 ${name}`;
+    }
   }
 
   function aiCleanup() {
@@ -3694,7 +3808,8 @@ function angleParams(el) {
     aiCleanup();
   }
 
-  function aiHandleEvent(evt, onFinish) {
+  function aiHandleEvent(evt) {
+    if (window.GEOMETRY_DEBUG) console.log('[geo] evt:', evt.type, JSON.stringify(evt).slice(0, 80));
     if (evt.type === 'text') {
       aiRecvText += evt.text;
       if (aiRecvMsgEl) {
@@ -3753,22 +3868,18 @@ function angleParams(el) {
         box.scrollTop = box.scrollHeight;
       }
     } else if (evt.type === 'tool_call') {
+      // 注意: tool 已在调用方 aiApplyToolCallWithResult 中执行过, 这里只更新 UI
       aiRecvToolCalls.push({ id: evt.id, name: evt.name, args: evt.args });
-      try {
-        aiApplyToolCall(evt.name, evt.args || {});
-        if (aiRecvMsgEl) {
-          let list = aiRecvMsgEl.querySelector('.tool-list');
-          if (!list) {
-            list = document.createElement('div');
-            list.className = 'tool-list';
-            aiRecvMsgEl.appendChild(list);
-          }
-          const tag = document.createElement('span');
-          tag.textContent = evt.name;
-          list.appendChild(tag);
+      if (aiRecvMsgEl) {
+        let list = aiRecvMsgEl.querySelector('.tool-list');
+        if (!list) {
+          list = document.createElement('div');
+          list.className = 'tool-list';
+          aiRecvMsgEl.appendChild(list);
         }
-      } catch (e) {
-        aiAppendError(`工具 ${evt.name} 失败: ${e.message}`);
+        const tag = document.createElement('span');
+        tag.textContent = evt.name;
+        list.appendChild(tag);
       }
     } else if (evt.type === 'usage') {
       aiRecvUsage = evt;
