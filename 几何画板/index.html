@@ -803,7 +803,11 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
 
   // ==================== 工具配置 ====================
   const TOOLS = [
-    { group: '基本', items: [
+    { name: '视图', items: [
+      { id: 'toggle-grid', name: '显示 / 隐藏栅格', icon: '#', shortcut: 'G 键' },
+      { id: 'reset-view', name: '重置视图', icon: '⌖' },
+    ]},
+    { name: '基本', items: [
       { id: 'select', name: '选择 / 移动', icon: '↖', shortcut: 'V' },
       { id: 'pan', name: '平移视图', icon: '✋', shortcut: 'H' },
       { id: 'point', name: '点', icon: '·', shortcut: 'P' },
@@ -816,10 +820,10 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       { id: 'text', name: '文本', icon: 'T', shortcut: 'X' },
       { id: 'delete', name: '删除', icon: '✕', shortcut: 'D' },
     ]},
-    { group: 'AI', items: [
+    { name: 'AI', items: [
       { id: 'ai-solver', name: '模型解题', icon: '🧠' },
     ]},
-    { group: '构造', items: [
+    { name: '构造', items: [
       { id: 'midpoint', name: '中点', icon: '◐', prompt: '请依次选择 2 个点' },
       { id: 'bisect', name: '角平分线', icon: '⌿', prompt: '请依次选择 3 个点（角顶点和两边各一点）' },
       { id: 'perpendicular', name: '垂线', icon: '⊥', prompt: '请先选一条线（线段/射线/直线），再选 1 个点' },
@@ -828,20 +832,16 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
       { id: 'intersection', name: '交点', icon: '✕', prompt: '请选择 2 个对象（线/圆），取第一组交点' },
       { id: 'divide', name: '等分点', icon: '⋯', prompt: '请依次选择 2 个点，然后输入等分数' },
     ]},
-    { group: '测量', items: [
+    { name: '测量', items: [
       { id: 'measure-length', name: '长度', icon: '|x|', prompt: '请选择 2 个点' },
       { id: 'measure-angle', name: '角度', icon: '∠°', prompt: '请依次选择 3 个点（角顶点和两边各一点）' },
     ]},
-    { group: '文件', items: [
+    { name: '文件', items: [
       { id: 'export-png', name: '导出 PNG', icon: '🖼' },
       { id: 'export-json', name: '导出 JSON', icon: '{ }' },
       { id: 'share-link', name: '分享链接', icon: '🔗' },
       { id: 'import-json', name: '导入 JSON', icon: '↓' },
       { id: 'clear', name: '清空画板', icon: '🗑' },
-    ]},
-    { group: '视图', items: [
-      { id: 'toggle-grid', name: '显示 / 隐藏栅格', icon: '#', shortcut: 'G 键' },
-      { id: 'reset-view', name: '重置视图', icon: '⌖' },
     ]},
   ];
 
