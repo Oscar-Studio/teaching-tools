@@ -3721,6 +3721,9 @@ function angleParams(el) {
     // 把最终文本喂给 UI
     if (iterText) {
       aiHandleEvent({ type: 'text', text: iterText });
+    } else if (aiRecvToolCalls.length) {
+      // 模型只返回 tool_calls 没最终文本, 给个占位
+      aiHandleEvent({ type: 'text', text: `(完成 ${aiRecvToolCalls.length} 个操作)` });
     }
     if (totalUsage) {
       aiHandleEvent({
@@ -3782,6 +3785,8 @@ function angleParams(el) {
   function aiFinalize() {
     if (aiThinkingEl && aiThinkingEl.parentNode) aiThinkingEl.remove();
     let finalEl = aiRecvMsgEl;
+    // finalEl 若已被 remove (e.g., 一直是 thinking 元素), 需重建
+    if (finalEl && !finalEl.parentNode) finalEl = null;
     if (!finalEl && (aiRecvText || aiRecvToolCalls.length)) {
       finalEl = aiRecvText
         ? aiAppendMsg('assistant', aiRecvText)
@@ -3870,6 +3875,13 @@ function angleParams(el) {
     } else if (evt.type === 'tool_call') {
       // 注意: tool 已在调用方 aiApplyToolCallWithResult 中执行过, 这里只更新 UI
       aiRecvToolCalls.push({ id: evt.id, name: evt.name, args: evt.args });
+      // 收到 tool_call 时, 替换 thinking 元素内的 dots 为 "画图中..." 状态
+      if (aiThinkingEl) {
+        const t = aiThinkingEl.querySelector('.text');
+        t.textContent = `画图中 (${aiRecvToolCalls.length} 个操作)`;
+        const box = document.getElementById('ai-messages');
+        box.scrollTop = box.scrollHeight;
+      }
       if (aiRecvMsgEl) {
         let list = aiRecvMsgEl.querySelector('.tool-list');
         if (!list) {
