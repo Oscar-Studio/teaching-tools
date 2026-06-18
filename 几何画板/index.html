@@ -3618,56 +3618,60 @@ function angleParams(el) {
       return;
     }
 
-    // 解析 SSE
-    const reader = resp.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
-    let finishReply = null;
-    let debugEventCount = 0;
+    // 非流式: 一次拿完整 JSON
+    let data;
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split('\n\n');
-        buf = lines.pop() || '';
-        for (const block of lines) {
-          for (const line of block.split('\n')) {
-            if (!line.startsWith('data:') && !line.startsWith('data ')) continue;
-            const jsonStr = line.slice(line.charAt(5) === ' ' ? 6 : 5).trim();
-            if (!jsonStr) continue;
-            let evt;
-            try { evt = JSON.parse(jsonStr); } catch (e) {
-              if (window.GEOMETRY_DEBUG) console.warn('[geo] bad SSE:', jsonStr.slice(0, 100));
-              continue;
-            }
-            debugEventCount++;
-            if (window.GEOMETRY_DEBUG) {
-              console.log('[geo] evt:', evt.type, evt.id || evt.text?.slice(0, 30) || '');
-            }
-            aiHandleEvent(evt, (reply) => { finishReply = reply; });
-          }
-        }
-      }
+      data = await resp.json();
     } catch (e) {
-      aiAppendError('读取响应失败: ' + e.message);
-      if (window.GEOMETRY_DEBUG) console.error('[geo] stream err:', e);
+      aiRecvMsgEl && aiRecvMsgEl.remove();
+      aiAppendError('解析响应失败: ' + e.message);
+      aiCleanup();
+      return;
     }
-    if (window.GEOMETRY_DEBUG) console.log('[geo] stream end, events:', debugEventCount, 'text:', aiRecvText.length, 'tools:', aiRecvToolCalls.length);
 
-    // 收尾
-    // 1) 移除残留的 thinking 元素 (如果 text 还没来, 就在这里)
+    if (!data.success) {
+      aiRecvMsgEl && aiRecvMsgEl.remove();
+      aiAppendError(data.message || '请求失败');
+      aiCleanup();
+      return;
+    }
+
+    // 把后端的 JSON 喂给 aiHandleEvent (构造一个 SSE-style 事件序列, 复用现有 UI 逻辑)
+    if (data.reasoning) {
+      aiHandleEvent({ type: 'reasoning', text: data.reasoning });
+    }
+    for (const tc of (data.tool_calls || [])) {
+      aiHandleEvent({ type: 'tool_call', id: tc.id, name: tc.name, args: tc.args || {} });
+    }
+    if (data.text) {
+      aiHandleEvent({ type: 'text', text: data.text });
+    }
+    if (data.usage) {
+      aiHandleEvent({ type: 'usage', ...data.usage, tool_calls: data.tool_calls?.length || 0 });
+    }
+    if (window.GEOMETRY_DEBUG) console.log('[geo] json response:', data);
+
+    // 收尾 (与 SSE 模式共享)
+    aiFinalize();
+  }
+
+  function aiCleanup() {
+    aiAbortCtrl = null;
+    document.getElementById('ai-input').disabled = false;
+    document.getElementById('ai-send').hidden = false;
+    document.getElementById('ai-stop').hidden = true;
+    document.getElementById('ai-status').textContent = '';
+    aiRecvMsgEl = null;
+    aiThinkingEl = null;
+  }
+
+  function aiFinalize() {
     if (aiThinkingEl && aiThinkingEl.parentNode) aiThinkingEl.remove();
-    // 2) aiRecvMsgEl 已经是最终 assistant 元素 (text 到达时创建过), 直接补充 tool list / usage
     let finalEl = aiRecvMsgEl;
     if (!finalEl && (aiRecvText || aiRecvToolCalls.length)) {
-      // 极少情况: 只有 reasoning 没 text 也没 tool_call → 折叠 thinking 进 details, 单独 assistant
-      if (aiRecvText) {
-        finalEl = aiAppendMsg('assistant', aiRecvText);
-      } else {
-        // 只有 tool_calls 没 text
-        finalEl = aiAppendMsg('assistant', '');
-      }
+      finalEl = aiRecvText
+        ? aiAppendMsg('assistant', aiRecvText)
+        : aiAppendMsg('assistant', '');
     }
     if (finalEl) {
       if (aiRecvToolCalls.length) aiAppendToolList(finalEl, aiRecvToolCalls);
@@ -3685,20 +3689,9 @@ function angleParams(el) {
         tool_calls: aiRecvToolCalls.length ? aiRecvToolCalls : undefined
       });
     } else {
-      // 完全没内容
       aiAppendError('模型未返回任何内容 (可能不支持 tool_calling, 请换模型)');
     }
     aiCleanup();
-  }
-
-  function aiCleanup() {
-    aiAbortCtrl = null;
-    document.getElementById('ai-input').disabled = false;
-    document.getElementById('ai-send').hidden = false;
-    document.getElementById('ai-stop').hidden = true;
-    document.getElementById('ai-status').textContent = '';
-    aiRecvMsgEl = null;
-    aiThinkingEl = null;
   }
 
   function aiHandleEvent(evt, onFinish) {
