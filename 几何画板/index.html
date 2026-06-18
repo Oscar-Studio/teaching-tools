@@ -566,6 +566,9 @@
         .ai-msg .text code { background: var(--bg-3); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 12px; }
         .ai-msg .tool-list { margin-top: 6px; font-size: 11px; color: var(--text-2); }
         .ai-msg .usage { margin-top: 6px; font-size: 10px; color: var(--text-2); opacity: 0.6; }
+        .ai-msg .reasoning { margin-bottom: 8px; font-size: 11px; color: var(--text-2); }
+        .ai-msg .reasoning summary { cursor: pointer; user-select: none; }
+        .ai-msg .reasoning pre { margin: 6px 0 0; padding: 8px 10px; background: var(--bg-3); border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; max-height: 200px; overflow-y: auto; font-family: inherit; }
         .ai-msg .tool-list span { display: inline-block; background: var(--bg-3); padding: 2px 6px; border-radius: 3px; margin: 2px 2px 0 0; }
         .ai-msg.thinking { background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); color: var(--text-2); }
         .ai-msg.thinking .dot { display: inline-block; animation: aiDot 1.2s infinite; }
@@ -3411,6 +3414,7 @@ function angleParams(el) {
   let aiRecvToolCalls = [];
   let aiRecvMsgEl = null;
   let aiRecvUsage = null;
+  let aiThinkingEl = null;
 
   function aiTogglePanel(force) {
     aiPanelOpen = (force === undefined) ? !aiPanelOpen : force;
@@ -3532,6 +3536,8 @@ function angleParams(el) {
   function aiShowThinking() {
     aiRecvMsgEl = aiAppendMsg('thinking', '');
     aiRecvMsgEl.querySelector('.text').innerHTML = '<span class="dot">●</span><span class="dot">●</span><span class="dot">●</span>';
+    aiThinkingEl = aiRecvMsgEl;
+    return aiRecvMsgEl;
   }
   function aiReplaceThinking(text) {
     if (!aiRecvMsgEl) return;
@@ -3574,7 +3580,7 @@ function angleParams(el) {
     document.getElementById('ai-send').hidden = true;
     document.getElementById('ai-stop').hidden = false;
     document.getElementById('ai-status').textContent = '调用中…';
-    aiShowThinking();
+    const thinkingEl = aiShowThinking();
 
     aiRecvText = '';
     aiRecvToolCalls = [];
@@ -3640,21 +3646,37 @@ function angleParams(el) {
     }
 
     // 收尾
-    if (aiRecvMsgEl) aiRecvMsgEl.remove();
-    if (aiRecvText || aiRecvToolCalls.length) {
-      const div = aiAppendMsg('assistant', aiRecvText || '');
-      if (aiRecvToolCalls.length) aiAppendToolList(div, aiRecvToolCalls);
+    // 1) 移除残留的 thinking 元素 (如果 text 还没来, 就在这里)
+    if (aiThinkingEl && aiThinkingEl.parentNode) aiThinkingEl.remove();
+    // 2) aiRecvMsgEl 已经是最终 assistant 元素 (text 到达时创建过), 直接补充 tool list / usage
+    let finalEl = aiRecvMsgEl;
+    if (!finalEl && (aiRecvText || aiRecvToolCalls.length)) {
+      // 极少情况: 只有 reasoning 没 text 也没 tool_call → 折叠 thinking 进 details, 单独 assistant
+      if (aiRecvText) {
+        finalEl = aiAppendMsg('assistant', aiRecvText);
+      } else {
+        // 只有 tool_calls 没 text
+        finalEl = aiAppendMsg('assistant', '');
+      }
+    }
+    if (finalEl) {
+      if (aiRecvToolCalls.length) aiAppendToolList(finalEl, aiRecvToolCalls);
       if (aiRecvUsage) {
         const u = document.createElement('div');
         u.className = 'usage';
         u.textContent = `${aiRecvUsage.model} · ${aiRecvUsage.credits_used ?? '?'} credits · ${aiRecvUsage.tool_calls ?? aiRecvToolCalls.length} tools`;
-        div.appendChild(u);
+        finalEl.appendChild(u);
       }
+    }
+    if (finalEl || aiRecvToolCalls.length) {
       aiMessages.push({
         role: 'assistant',
-        content: aiRecvText || '(无文本)',
+        content: aiRecvText || (aiRecvToolCalls.length ? '(执行了 ' + aiRecvToolCalls.length + ' 个工具)' : '(无回复)'),
         tool_calls: aiRecvToolCalls.length ? aiRecvToolCalls : undefined
       });
+    } else {
+      // 完全没内容
+      aiAppendError('模型未返回任何内容 (可能不支持 tool_calling, 请换模型)');
     }
     aiCleanup();
   }
@@ -3666,6 +3688,7 @@ function angleParams(el) {
     document.getElementById('ai-stop').hidden = true;
     document.getElementById('ai-status').textContent = '';
     aiRecvMsgEl = null;
+    aiThinkingEl = null;
   }
 
   function aiHandleEvent(evt, onFinish) {
@@ -3673,13 +3696,58 @@ function angleParams(el) {
       aiRecvText += evt.text;
       if (aiRecvMsgEl) {
         const t = aiRecvMsgEl.querySelector('.text');
-        t.textContent = aiRecvText;
+        if (t) t.textContent = aiRecvText;
         const box = document.getElementById('ai-messages');
         box.scrollTop = box.scrollHeight;
       } else {
-        aiShowThinking();
-        const t = aiRecvMsgEl.querySelector('.text');
-        t.textContent = aiRecvText;
+        // 第一条 text 时: 把 thinking 折叠进 details, 然后创建 assistant div
+        if (aiThinkingEl) {
+          const thinkingText = aiThinkingEl.querySelector('.text').textContent;
+          aiThinkingEl.remove();
+          aiThinkingEl = null;
+          // 手动创建 div (不要用 aiAppendMsg, 避免重复 .text)
+          const box = document.getElementById('ai-messages');
+          const div = document.createElement('div');
+          div.className = 'ai-msg assistant';
+          const r = document.createElement('div');
+          r.className = 'role';
+          r.textContent = 'AI';
+          div.appendChild(r);
+          if (thinkingText && thinkingText !== '●' && !/^[●\s.]+$/.test(thinkingText)) {
+            const det = document.createElement('details');
+            det.className = 'reasoning';
+            const sum = document.createElement('summary');
+            sum.textContent = '💭 思考过程';
+            det.appendChild(sum);
+            const pre = document.createElement('pre');
+            pre.textContent = thinkingText;
+            det.appendChild(pre);
+            div.appendChild(det);
+          }
+          const t = document.createElement('div');
+          t.className = 'text';
+          t.textContent = aiRecvText;
+          div.appendChild(t);
+          box.appendChild(div);
+          box.scrollTop = box.scrollHeight;
+          aiRecvMsgEl = div;
+        } else {
+          aiRecvMsgEl = aiAppendMsg('assistant', aiRecvText);
+        }
+      }
+    } else if (evt.type === 'reasoning') {
+      // 推理内容: 显示在 thinking 元素内 (替换初始 dots)
+      if (aiThinkingEl) {
+        const t = aiThinkingEl.querySelector('.text');
+        if (t.dataset.gotReal === undefined) {
+          // 第一次: 清掉 dots, 替换为真实推理
+          t.textContent = evt.text;
+          t.dataset.gotReal = '1';
+        } else {
+          t.textContent += evt.text;
+        }
+        const box = document.getElementById('ai-messages');
+        box.scrollTop = box.scrollHeight;
       }
     } else if (evt.type === 'tool_call') {
       aiRecvToolCalls.push({ id: evt.id, name: evt.name, args: evt.args });
