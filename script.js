@@ -105,7 +105,7 @@
 
                 grouped[subject].forEach(tool => {
                     const card = document.createElement('div');
-                    card.className = 'card';
+                    card.className = 'card glass-element';
                     card.dataset.tool = tool.name;
                     card.innerHTML = `
                         <div class="card-header">

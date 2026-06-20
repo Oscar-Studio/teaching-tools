@@ -37,13 +37,32 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 40px;
-            /* 液态玻璃导航 - 更透亮 */
-            background: rgba(1, 4, 9, 0.6);
-            backdrop-filter: blur(10px) saturate(150%);
-            -webkit-backdrop-filter: blur(10px) saturate(150%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            /* 液态玻璃 - WebGL shader 渲染折射 */
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
             z-index: 100;
             transition: all 0.3s ease;
+            isolation: isolate;
+        }
+
+        /* 顶栏高光渐变 */
+        .top-bar::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.06) 0%,
+                transparent 40%,
+                transparent 60%,
+                rgba(255, 255, 255, 0.02) 100%
+            );
+            filter: saturate(200%);
+            -webkit-filter: saturate(200%);
         }
 
         .breadcrumb {
