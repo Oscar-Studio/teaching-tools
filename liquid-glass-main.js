@@ -430,6 +430,18 @@
 
             window.addEventListener('resize', () => this.refresh());
 
+            // hover 玻璃元素（CSS transform 不会触发 MutationObserver，需主动 refresh）
+            // mouseover/mouseout 用事件委托，在 .glass-element 上 mouseenter/mouseleave 触发 refresh
+            if (!this.scope) {
+                const handler = (e) => {
+                    if (e.target.closest && e.target.closest('.glass-element')) {
+                        this.refresh();
+                    }
+                };
+                document.body.addEventListener('mouseover', handler);
+                document.body.addEventListener('mouseout', handler);
+            }
+
             if (!this.scope) {
                 const domObserver = new MutationObserver(() => this.refresh());
                 domObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
