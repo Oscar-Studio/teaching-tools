@@ -277,6 +277,31 @@
             padding: 40px;
             max-width: 80vw;
             margin: 0 auto;
+            position: relative;
+            isolation: isolate;
+        }
+
+        /* ==================== WebGL 液态玻璃 Canvas（scoped 模式） ==================== */
+        #cardContainer > #liquid-glass-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* 低画质 / WebGL 不可用：隐藏 canvas，走 CSS 兜底 */
+        body.quality-low #cardContainer > #liquid-glass-canvas,
+        .no-webgl #cardContainer > #liquid-glass-canvas {
+            display: none;
+        }
+
+        /* Card 内容层在 canvas 之上 */
+        #cardContainer .card {
+            position: relative;
+            z-index: 1;
         }
 
         /* Category Header */
@@ -285,6 +310,8 @@
             margin: 30px 0 15px 0;
             padding-bottom: 10px;
             border-bottom: 2px solid var(--card-border);
+            position: relative;
+            z-index: 1;
         }
 
         .category-section:first-child {
@@ -310,10 +337,10 @@
 
         /* Card */
         .card {
-            /* 液态玻璃效果 - 更透亮 */
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(8px) saturate(150%);
-            -webkit-backdrop-filter: blur(8px) saturate(150%);
+            /* 液态玻璃效果 - WebGL shader 提供折射，元素本体透明 */
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
             min-height: 90px;
@@ -345,17 +372,34 @@
                 transparent
             );
             transition: left 0.6s ease;
+            pointer-events: none;
+            z-index: 2;
         }
 
         .card:hover::before {
             left: 100%;
         }
 
+        /* WebGL 不可用 / 低画质：CSS 兜底（backdrop-blur） */
+        .no-webgl .card,
+        body.low-quality .card,
+        body.quality-low .card {
+            background: rgba(255, 255, 255, 0.04) !important;
+            backdrop-filter: blur(8px) saturate(150%) !important;
+            -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+        }
+
         .card:hover {
             transform: translateY(-4px) scale(1.02);
-            background: rgba(255, 255, 255, 0.08);
             border-color: rgba(255, 255, 255, 0.2);
             box-shadow: 0 15px 35px rgba(99, 102, 241, 0.15), 0 0 15px rgba(255, 255, 255, 0.05);
+        }
+
+        /* 降级模式 hover 时显示背景 */
+        .no-webgl .card:hover,
+        body.low-quality .card:hover,
+        body.quality-low .card:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
         }
 
         .card-icon {
