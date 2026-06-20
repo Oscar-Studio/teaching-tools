@@ -298,6 +298,13 @@
             display: none;
         }
 
+        /* Scoped 模式 + canvas 被 .lg-hidden 标记（无用户背景）：CSS 兜底 */
+        #cardContainer > #liquid-glass-canvas.lg-hidden ~ .card {
+            background: rgba(255, 255, 255, 0.04) !important;
+            backdrop-filter: blur(8px) saturate(150%) !important;
+            -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+        }
+
         /* Card 内容层在 canvas 之上 */
         #cardContainer .card {
             position: relative;

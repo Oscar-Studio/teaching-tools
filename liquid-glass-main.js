@@ -51,8 +51,8 @@
             const cachedBg = localStorage.getItem('lg-bg');
             if (cachedQ) inst.setQuality(cachedQ);
             if (cached) inst.setParams(JSON.parse(cached));
-            // 本地缓存的背景 URL（来自上一次访问时的后端配置）
-            if (cachedBg && !inst.scope) {
+            // 本地缓存的背景 URL（scoped 模式：直接给 shader 当纹理）
+            if (cachedBg) {
                 inst.setBg(cachedBg);
             }
         } catch {}
@@ -77,13 +77,14 @@
                 } catch {}
             }
 
-            // 直接应用背景图（防御 user-button.js 失败/延迟的情况）
-            if (ui.backgroundImage && !inst.scope) {
+            // 应用用户上传的背景图
+            if (ui.backgroundImage) {
                 const fullUrl = (window.UPLOAD_BASE || 'https://api.oscarstudio.cn') + ui.backgroundImage;
                 inst.setBg(fullUrl);
                 try { localStorage.setItem('lg-bg', fullUrl); } catch {}
-                // 同步 body style（确保 user-button.js 后续也能看到）
-                if (!document.body.style.backgroundImage.includes(ui.backgroundImage)) {
+                // 全屏模式：额外同步 body style（确保 user-button.js 后续也能看到）
+                // scoped 模式：body 已被 cardContainer 隔离，不动 body 背景
+                if (!inst.scope && !document.body.style.backgroundImage.includes(ui.backgroundImage)) {
                     document.body.style.backgroundImage = `url(${fullUrl})`;
                     document.body.style.backgroundSize = 'cover';
                     document.body.style.backgroundPosition = 'center';
@@ -122,26 +123,16 @@
             }
             this.gl = gl;
             this._initGL();
-            // 默认渐变 + bgBlobs：必须在 _initBg 之前设置（_initBg 会读 _bgBlobs）
+            // 默认渐变（scoped 模式无用户背景时也用作 fallback 渲染）
             if (options._gradientTop) {
                 this._gradientTop = options._gradientTop;
                 this._gradientBot = options._gradientBot || [0.06, 0.09, 0.16];
-                this._bgBlobs = [];
             } else if (this.scope) {
-                // Scoped 默认：暗紫底 + 多色径向光斑（shader 折射它们产生彩色边缘扭曲）
-                this._gradientTop = [0.05, 0.04, 0.10];
-                this._gradientBot = [0.10, 0.05, 0.18];
-                this._bgBlobs = [
-                    { x: 0.15, y: 0.20, r: 0.50, color: [0.30, 0.12, 0.55] }, // 紫色光斑
-                    { x: 0.85, y: 0.30, r: 0.45, color: [0.05, 0.30, 0.65] }, // 蓝色光斑
-                    { x: 0.50, y: 0.85, r: 0.55, color: [0.55, 0.10, 0.40] }, // 玫红光斑
-                    { x: 0.25, y: 0.75, r: 0.40, color: [0.05, 0.40, 0.50] }, // 青色光斑
-                    { x: 0.75, y: 0.65, r: 0.35, color: [0.20, 0.15, 0.55] }, // 深紫光斑
-                ];
+                this._gradientTop = [0.18, 0.10, 0.22];
+                this._gradientBot = [0.04, 0.06, 0.10];
             } else {
                 this._gradientTop = [0.10, 0.05, 0.15];
                 this._gradientBot = [0.06, 0.09, 0.16];
-                this._bgBlobs = [];
             }
             this._initBg(options.bgImageUrl);
             this._bindEvents();
@@ -381,45 +372,12 @@
                 bgObserver.observe(document.body, { attributes: true, attributeFilter: ['style'] });
                 this._bgObserver = bgObserver;
                 this._syncBodyBg();
-            }
-            // Scoped 模式 + 有 bgBlobs：程序化生成 blob 纹理作为默认背景
-            if (this.scope && this._bgBlobs && this._bgBlobs.length > 0) {
-                this._generateBlobTexture();
+            } else {
+                // Scoped 模式：默认隐藏 canvas（没用户背景时走 CSS 兜底）
+                this.canvas.style.display = 'none';
+                this.canvas.classList.add('lg-hidden');
             }
             if (initialUrl) this.setBg(initialUrl);
-        }
-
-        // 程序化生成 blob 纹理（scoped 模式默认背景）
-        _generateBlobTexture() {
-            const W = 1024, H = 1024;
-            const cv = document.createElement('canvas');
-            cv.width = W; cv.height = H;
-            const ctx = cv.getContext('2d');
-            // 基础渐变（与 _gradientTop/_gradientBot 一致）
-            const baseGrad = ctx.createLinearGradient(0, 0, 0, H);
-            const gt = this._gradientTop, gb = this._gradientBot;
-            baseGrad.addColorStop(0, `rgb(${Math.round(gt[0]*255)},${Math.round(gt[1]*255)},${Math.round(gt[2]*255)})`);
-            baseGrad.addColorStop(1, `rgb(${Math.round(gb[0]*255)},${Math.round(gb[1]*255)},${Math.round(gb[2]*255)})`);
-            ctx.fillStyle = baseGrad;
-            ctx.fillRect(0, 0, W, H);
-            // 叠加径向 blob
-            for (const b of this._bgBlobs) {
-                const cx = b.x * W, cy = b.y * H, r = b.r * W;
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-                const [r2, g2, bl2] = b.color;
-                grad.addColorStop(0, `rgba(${Math.round(r2*255)},${Math.round(g2*255)},${Math.round(bl2*255)},0.85)`);
-                grad.addColorStop(0.5, `rgba(${Math.round(r2*255)},${Math.round(g2*255)},${Math.round(bl2*255)},0.35)`);
-                grad.addColorStop(1, `rgba(${Math.round(r2*255)},${Math.round(g2*255)},${Math.round(bl2*255)},0)`);
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, W, H);
-            }
-            const gl = this.gl;
-            gl.bindTexture(gl.TEXTURE_2D, this.tex);
-            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
-            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-            this.hasUserBg = true;
-            gl.uniform1f(this.U.hasBg, 1.0);
         }
 
         _syncBodyBg() {
@@ -442,6 +400,11 @@
             if (!url) {
                 this.hasUserBg = false;
                 gl.uniform1f(this.U.hasBg, 0.0);
+                // Scoped 模式：无用户图时隐藏 canvas，走 CSS 兜底
+                if (this.scope) {
+                    this.canvas.style.display = 'none';
+                    this.canvas.classList.add('lg-hidden');
+                }
                 this.refresh();
                 return;
             }
@@ -458,12 +421,22 @@
                 this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
                 this.hasUserBg = true;
                 this.gl.uniform1f(this.U.hasBg, 1.0);
+                // 有用户图：显示 canvas（scoped 模式之前默认隐藏）
+                if (this.scope) {
+                    this.canvas.style.display = '';
+                    this.canvas.classList.remove('lg-hidden');
+                }
                 this.refresh();
             };
             img.onerror = (e) => {
                 console.warn('[LiquidGlass] 背景图加载失败:', url, e && e.message);
                 this.hasUserBg = false;
                 if (this.gl) this.gl.uniform1f(this.U.hasBg, 0.0);
+                // 加载失败：scoped 模式隐藏 canvas 走 CSS 兜底
+                if (this.scope) {
+                    this.canvas.style.display = 'none';
+                    this.canvas.classList.add('lg-hidden');
+                }
                 this.refresh();
             };
             img.src = url;
