@@ -281,34 +281,28 @@
             isolation: isolate;
         }
 
-        /* ==================== WebGL 液态玻璃 Canvas（scoped 模式） ==================== */
-        #cardContainer > #liquid-glass-canvas {
-            position: absolute;
+        /* ==================== WebGL 液态玻璃 Canvas（全屏模式） ==================== */
+        #liquid-glass-canvas {
+            position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 6;
             pointer-events: none;
         }
 
-        /* 低画质 / WebGL 不可用：隐藏 canvas，走 CSS 兜底 */
-        body.quality-low #cardContainer > #liquid-glass-canvas,
-        .no-webgl #cardContainer > #liquid-glass-canvas {
-            display: none;
-        }
-
-        /* Scoped 模式 + canvas 被 .lg-hidden 标记（无用户背景）：CSS 兜底 */
-        #cardContainer > #liquid-glass-canvas.lg-hidden ~ .card {
-            background: rgba(255, 255, 255, 0.04) !important;
-            backdrop-filter: blur(8px) saturate(150%) !important;
-            -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
-        }
-
-        /* Card 内容层在 canvas 之上 */
-        #cardContainer .card {
+        /* Hero / cards / footer 等内容必须在 canvas 之上 */
+        .hero,
+        .card-container {
             position: relative;
-            z-index: 1;
+            z-index: 7;
+        }
+
+        /* 低画质 / WebGL 不可用：隐藏 canvas，走 CSS 兜底 */
+        body.quality-low #liquid-glass-canvas,
+        .no-webgl #liquid-glass-canvas {
+            display: none;
         }
 
         /* Category Header */

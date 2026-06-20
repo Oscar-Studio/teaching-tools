@@ -123,13 +123,10 @@
             }
             this.gl = gl;
             this._initGL();
-            // 默认渐变（scoped 模式无用户背景时也用作 fallback 渲染）
+            // 默认渐变
             if (options._gradientTop) {
                 this._gradientTop = options._gradientTop;
                 this._gradientBot = options._gradientBot || [0.06, 0.09, 0.16];
-            } else if (this.scope) {
-                this._gradientTop = [0.18, 0.10, 0.22];
-                this._gradientBot = [0.04, 0.06, 0.10];
             } else {
                 this._gradientTop = [0.10, 0.05, 0.15];
                 this._gradientBot = [0.06, 0.09, 0.16];
@@ -282,7 +279,8 @@
                             painted = true;
                         }
                     }
-                    gl_FragColor = vec4(outColor.rgb, 1.0);
+                    // 无用户背景时输出 alpha=0（canvas 透明，body 颜色直接显示）
+                    gl_FragColor = vec4(outColor.rgb, u_hasUserBg);
                 }
             `;
 
@@ -372,10 +370,6 @@
                 bgObserver.observe(document.body, { attributes: true, attributeFilter: ['style'] });
                 this._bgObserver = bgObserver;
                 this._syncBodyBg();
-            } else {
-                // Scoped 模式：默认隐藏 canvas（没用户背景时走 CSS 兜底）
-                this.canvas.style.display = 'none';
-                this.canvas.classList.add('lg-hidden');
             }
             if (initialUrl) this.setBg(initialUrl);
         }
@@ -400,11 +394,6 @@
             if (!url) {
                 this.hasUserBg = false;
                 gl.uniform1f(this.U.hasBg, 0.0);
-                // Scoped 模式：无用户图时隐藏 canvas，走 CSS 兜底
-                if (this.scope) {
-                    this.canvas.style.display = 'none';
-                    this.canvas.classList.add('lg-hidden');
-                }
                 this.refresh();
                 return;
             }
@@ -421,22 +410,12 @@
                 this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
                 this.hasUserBg = true;
                 this.gl.uniform1f(this.U.hasBg, 1.0);
-                // 有用户图：显示 canvas（scoped 模式之前默认隐藏）
-                if (this.scope) {
-                    this.canvas.style.display = '';
-                    this.canvas.classList.remove('lg-hidden');
-                }
                 this.refresh();
             };
             img.onerror = (e) => {
                 console.warn('[LiquidGlass] 背景图加载失败:', url, e && e.message);
                 this.hasUserBg = false;
                 if (this.gl) this.gl.uniform1f(this.U.hasBg, 0.0);
-                // 加载失败：scoped 模式隐藏 canvas 走 CSS 兜底
-                if (this.scope) {
-                    this.canvas.style.display = 'none';
-                    this.canvas.classList.add('lg-hidden');
-                }
                 this.refresh();
             };
             img.src = url;

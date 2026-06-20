@@ -56,9 +56,7 @@
                 renderCards(tools);
             })
             .catch(error => {
-                const glassCanvas = cardContainer.querySelector('#liquid-glass-canvas');
                 cardContainer.innerHTML = '';
-                if (glassCanvas) cardContainer.appendChild(glassCanvas);
                 const p = document.createElement('p');
                 p.className = 'no-results';
                 p.textContent = '加载工具失败';
@@ -80,10 +78,7 @@
         }
 
         function renderCards(toolsToRender) {
-            // 保留 liquid-glass-canvas（如果存在）
-            const glassCanvas = cardContainer.querySelector('#liquid-glass-canvas');
             cardContainer.innerHTML = '';
-            if (glassCanvas) cardContainer.appendChild(glassCanvas);
             if (toolsToRender.length === 0) {
                 const p = document.createElement('p');
                 p.className = 'no-results';
