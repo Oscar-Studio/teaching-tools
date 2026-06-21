@@ -11,7 +11,7 @@
 (function () {
     'use strict';
 
-    const MAX_RECTS = 16;
+    const MAX_RECTS = 32;
 
     const QUALITY_PRESETS = {
         high: { edge: 80, refr: 80, curve: 2.0, frost: 0.0, ca: 18, alpha: 0.18 },
