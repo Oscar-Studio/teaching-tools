@@ -351,38 +351,17 @@ searchInput.addEventListener('blur', () => {
     document.querySelector('.search-box').classList.remove('searching');
 });
 
+// 搜索结果由 Opilot 在搜索框下拉面板中展示；下方工具列表始终保持全量
 if (window.Opilot) {
     Opilot.enhance(searchInput, {
         // 用 getter 让 Opilot 始终拿到最新的 tools 引用
         get tools() { return tools; },
         site: 'tools',
-        onKeyword: (term) => {
-            const lower = (term || '').toLowerCase().trim();
-            if (!lower) { renderCards(tools); return; }
-            renderCards(tools.filter(t =>
-                t.name.toLowerCase().includes(lower) ||
-                (t.tags && t.tags.some(tag => tag.toLowerCase().includes(lower))) ||
-                (t.subject && t.subject.some(s => s.toLowerCase().includes(lower))) ||
-                t.description.toLowerCase().includes(lower)
-            ));
-        }
+        onKeyword: () => {} // 占位：不再联动过滤下方卡片
     });
     // 顶部 Opilot 按钮 → 打开面板
     const panelBtn = document.getElementById('opilotPanelTrigger');
     if (panelBtn) panelBtn.addEventListener('click', () => Opilot.openPanel());
 } else {
-    // Opilot 加载失败的兜底：保留原行为
-    searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase().trim();
-        if (term) {
-            renderCards(tools.filter(t =>
-                t.name.toLowerCase().includes(term) ||
-                (t.tags && t.tags.some(tag => tag.toLowerCase().includes(term))) ||
-                (t.subject && t.subject.some(s => s.toLowerCase().includes(term))) ||
-                t.description.toLowerCase().includes(term)
-            ));
-        } else {
-            renderCards(tools);
-        }
-    });
+    // Opilot 加载失败时仅保留搜索框的视觉态，无下拉面板
 }
