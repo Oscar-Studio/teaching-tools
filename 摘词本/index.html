@@ -463,8 +463,7 @@
             return null;
         }
 
-        let token = localStorage.getItem('userToken');
-        if (!token) token = getCookie('userToken');
+        let token = getCookie('userToken') || localStorage.getItem('ai_token') || localStorage.getItem('userToken');
         let words = [];
         let settings = JSON.parse(localStorage.getItem('wordbook_settings') || '{"dailyCount":10}');
         let reciteQueue = [], reciteIndex = 0;
@@ -481,7 +480,7 @@
             const res = await fetch(API_BASE + '/api/wordbook', { headers: getHeaders() });
             const data = await res.json();
             if (data.success) words = data.words;
-            else if (res.status === 401) { token = null; localStorage.removeItem('userToken'); }
+            else if (res.status === 401) { token = null; localStorage.removeItem('userToken'); localStorage.removeItem('ai_token'); }
         }
 
         async function addWordAPI(word, translation) {

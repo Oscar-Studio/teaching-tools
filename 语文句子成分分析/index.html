@@ -320,7 +320,7 @@
             return null;
         }
         function getToken() {
-            return localStorage.getItem('userToken') || getCookie('userToken');
+            return getCookie('userToken') || localStorage.getItem('ai_token') || localStorage.getItem('userToken');
         }
         function isLoggedIn() {
             return !!getToken();
@@ -340,7 +340,7 @@
 
         // 跳转登录
         loginLink.addEventListener('click', () => {
-            window.open('https://api.oscarstudio.cn/auth', '_blank');
+            window.open('https://api.oscarstudio.cn/auth.html?return=' + encodeURIComponent(location.href), '_blank');
         });
 
         // 分析句子

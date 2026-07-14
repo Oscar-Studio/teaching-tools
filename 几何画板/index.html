@@ -3449,8 +3449,9 @@ function angleParams(el) {
   async function aiOpenModelModal() {
     if (aiAvailableModels.length === 0) {
       try {
-        const token = localStorage.getItem('userToken') || (document.cookie.match(/(?:^|; )userToken=([^;]+)/) || [])[1];
+        const token = (document.cookie.match(/(?:^|; )userToken=([^;]+)/) || [])[1] || localStorage.getItem('ai_token') || localStorage.getItem('userToken');
         const resp = await fetch(`${AI_API_BASE}/api/geometry/models`, {
+          credentials: 'include',
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
         const data = await resp.json();
@@ -3568,7 +3569,7 @@ function angleParams(el) {
     const input = document.getElementById('ai-input');
     const problem = input.value.trim();
     if (!problem) return;
-    const token = localStorage.getItem('userToken') || (document.cookie.match(/(?:^|; )userToken=([^;]+)/) || [])[1];
+    const token = (document.cookie.match(/(?:^|; )userToken=([^;]+)/) || [])[1] || localStorage.getItem('ai_token') || localStorage.getItem('userToken');
     if (!token) {
       aiAppendError('请先登录后再使用模型解题');
       return;
