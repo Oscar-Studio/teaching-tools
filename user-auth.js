@@ -553,6 +553,14 @@ function logout() {
     // 清除 localStorage
     localStorage.removeItem('userToken');
     localStorage.removeItem('userData');
+    try { localStorage.removeItem('lg-bg'); } catch (e) {}
+    if (document.body && document.body.style) {
+        document.body.style.backgroundImage = '';
+        document.body.style.backgroundSize = '';
+        document.body.style.backgroundPosition = '';
+        document.body.style.backgroundRepeat = '';
+        document.body.style.backgroundAttachment = '';
+    }
 
     updateUserUI();
     if (userDropdown) userDropdown.classList.remove('active');
