@@ -37,7 +37,7 @@
     var bar = document.createElement('div');
     bar.id = 'tt-shared-header';
     bar.innerHTML =
-      '<a class="tt-sh-back" href="https://tools.oscarstudio.cn/">← 教学工具</a>';
+      '<a class="tt-sh-back" href="https://edu.oscarstudio.cn/">← 教学工具</a>';
     document.body.appendChild(bar);
     document.body.classList.add('tt-sh-has-bar');
   }

@@ -3,7 +3,7 @@
 > 老师的百宝箱，课堂上好用的 HTML 教学工具集。
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-OSCAR--Studio%2Fteaching--tools-blue?logo=github)](https://github.com/Oscar-Studio/teaching-tools)
-[![Netlify](https://img.shields.io/badge/在线访问-tools.oscarstudio.cn-brightgreen?logo=netlify)](https://tools.oscarstudio.cn)
+[![Netlify](https://img.shields.io/badge/在线访问-edu.oscarstudio.cn-brightgreen?logo=netlify)](https://edu.oscarstudio.cn)
 
 ---
 
@@ -89,7 +89,7 @@ teaching-tools/
 
 ## 🌐 在线访问
 
-**https://tools.oscarstudio.cn**
+**https://edu.oscarstudio.cn**
 
 ---
 
