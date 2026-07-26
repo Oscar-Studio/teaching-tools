@@ -11,20 +11,10 @@ const GLASS_OPTICS = {
   brightness: 0.04,
 };
 
-function isChromium(): boolean {
-  const ua = navigator.userAgent;
-  return /Chrome|Chromium|Edg\//.test(ua) && !/CriOS|EdgiOS/.test(ua);
-}
-
 export function useGlassBackground() {
-  const useWebGL = !isChromium();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    if (!useWebGL) {
-      document.body.classList.add('no-lg-refraction');
-      return;
-    }
     document.body.classList.add('no-lg-refraction');
     const inst = initWebGLGlass(GLASS_OPTICS);
     if (!inst) {
@@ -34,10 +24,10 @@ export function useGlassBackground() {
     return () => {
       destroyWebGLGlass();
     };
-  }, [useWebGL]);
+  }, []);
 
-  if (useWebGL && canvasRef.current === null) {
-    canvasRef.current = document.getElementById('liquid-glass-canvas') as HTMLCanvasElement | null;
+  if (canvasRef.current === null) {
+    canvasRef.current = document.getElementById('lg-webgl-canvas') as HTMLCanvasElement | null;
   }
 }
 
