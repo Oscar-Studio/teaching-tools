@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Tool } from '../types';
-import { GlassWrap } from './GlassProvider';
 
 interface Props {
   tools: Tool[];
@@ -67,32 +66,17 @@ export function CardGrid({ tools, loading, error, onSelect }: Props) {
                   }}
                   whileHover={{ y: -4, scale: 1.02 }}
                 >
-                  <GlassWrap
-                    borderRadius={16}
-                    style={{
-                      width: '100%',
-                      minHeight: 90,
-                      padding: '15px 20px',
-                      background: 'transparent',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      justifyContent: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <div className="card-header">
-                      <span className="card-icon">{tool.icon || '📄'}</span>
-                      <span className="card-name">{tool.name}</span>
+                  <div className="card-header">
+                    <span className="card-icon">{tool.icon || '📄'}</span>
+                    <span className="card-name">{tool.name}</span>
+                  </div>
+                  {tool.tags && tool.tags.length > 0 && (
+                    <div className="card-tags">
+                      {tool.tags.slice(0, 3).map(tag => (
+                        <span key={tag} className="card-tag">{tag}</span>
+                      ))}
                     </div>
-                    {tool.tags && tool.tags.length > 0 && (
-                      <div className="card-tags">
-                        {tool.tags.slice(0, 3).map(tag => (
-                          <span key={tag} className="card-tag">{tag}</span>
-                        ))}
-                      </div>
-                    )}
-                  </GlassWrap>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
