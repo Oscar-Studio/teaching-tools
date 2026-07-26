@@ -4,55 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <title>教学工具 - Oscar Studio</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/user-auth.css">
 </head>
 
 <body>
-    <!-- Top Bar -->
-    <header class="top-bar glass-element">
-        <div class="breadcrumb"><img src="logo.png" alt="" style="height:24px;vertical-align:middle;margin-right:8px;"><a href="https://oscarstudio.cn">Oscar Studio</a> > <span>教学工具</span></div>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Chat with Opilot">
-        </div>
-        <button class="settings-btn" id="settingsBtn">⚙</button>
-        <div id="userButtonContainer"></div>
-        <div class="settings-dropdown" id="settingsDropdown">
-            <h4>画质设置</h4>
-            <label class="settings-option">
-                <input type="radio" name="quality" value="low">
-                <span class="radio"></span>
-                <span>低（去除动画）</span>
-            </label>
-            <label class="settings-option">
-                <input type="radio" name="quality" value="normal" checked>
-                <span class="radio"></span>
-                <span>正常</span>
-            </label>
-        </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-icon">📚</div>
-        <h1>教学工具</h1>
-        <p>丰富的 HTML 演示工具，专为教师和学生设计。包含函数图像绘制、几何图形演示、化学方程式配平、计时器、抽签器等多种实用工具，让抽象的知识变得直观可见，使课堂教学更加生动有趣，提升学习效率。</p>
-    </section>
-
-    <!-- Card Container -->
-    <main class="card-container" id="cardContainer"></main>
-
-    <!-- WebGL 液态玻璃 canvas（全屏模式，与 main-station 一致） -->
+    <div id="root"></div>
+    <!-- WebGL 液态玻璃 canvas（由 React 组件按需初始化） -->
     <canvas id="liquid-glass-canvas" data-lg-auto aria-hidden="true"></canvas>
-
-    <!-- Backdrop -->
-    <div class="backdrop" id="backdrop"></div>
-
-    <script src="https://ai.oscarstudio.cn/opilot.js?v=f5a49cc"></script>
-    <link rel="stylesheet" href="https://ai.oscarstudio.cn/opilot.css">
-    <script src="liquid-glass-main.js"></script>
-    <script src="script.js"></script>
-    <script src="https://ai.oscarstudio.cn/user-button.js"></script>
+    <!-- 共享头部/侧栏挂载点（保留给 user-button.js / opilot.js） -->
+    <div id="userButtonContainer" style="display:none"></div>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
+
 </html>
