@@ -11,6 +11,7 @@ export default defineConfig({
         { src: 'tools-config.json', dest: '.' },
         { src: 'plotly-2.27.0.min.js', dest: '.' },
         { src: 'legacy-tools/*', dest: '.' },
+        { src: 'CNAME', dest: '.' },
       ],
     }),
   ],
