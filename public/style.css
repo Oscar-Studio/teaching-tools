@@ -294,10 +294,12 @@
             flex-direction: column;
             gap: 30px;
             padding: 40px;
+            width: 100%;
             max-width: 1200px;
             margin: 0 auto;
             position: relative;
             isolation: isolate;
+            box-sizing: border-box;
         }
 
         /* ==================== WebGL 液态玻璃 Canvas（全屏模式） ==================== */
