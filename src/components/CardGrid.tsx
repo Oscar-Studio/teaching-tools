@@ -1,6 +1,8 @@
 import { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Glass } from '@samasante/liquid-glass';
 import type { Tool } from '../types';
+import { CARD_OPTICS } from './GlassProvider';
 
 interface Props {
   tools: Tool[];
@@ -20,6 +22,21 @@ const SUBJECT_NAMES: Record<string, string> = {
   '历史': '历史',
   '道法': '道法',
   '通用': '通用工具',
+};
+
+const CARD_STYLE: React.CSSProperties = {
+  width: '100%',
+  minHeight: 160,
+  padding: '28px 34px',
+  borderRadius: 18,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  justifyContent: 'center',
+  gap: 12,
+  cursor: 'pointer',
+  background: 'rgba(255, 255, 255, 0.06)',
+  border: '0.5px solid rgba(255, 255, 255, 0.18)',
 };
 
 export function CardGrid({ tools, loading, error, onSelect }: Props) {
@@ -56,7 +73,6 @@ export function CardGrid({ tools, loading, error, onSelect }: Props) {
               {grouped[subject].map((tool, idx) => (
                 <motion.div
                   key={tool.id}
-                  className="card glass-element"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.03 }}
@@ -66,17 +82,23 @@ export function CardGrid({ tools, loading, error, onSelect }: Props) {
                   }}
                   whileHover={{ y: -4, scale: 1.02 }}
                 >
-                  <div className="card-header">
-                    <span className="card-icon">{tool.icon || '📄'}</span>
-                    <span className="card-name">{tool.name}</span>
-                  </div>
-                  {tool.tags && tool.tags.length > 0 && (
-                    <div className="card-tags">
-                      {tool.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="card-tag">{tag}</span>
-                      ))}
+                  <Glass
+                    className="glass-element card-glass"
+                    style={CARD_STYLE}
+                    optics={CARD_OPTICS}
+                  >
+                    <div className="card-header">
+                      <span className="card-icon">{tool.icon || '📄'}</span>
+                      <span className="card-name">{tool.name}</span>
                     </div>
-                  )}
+                    {tool.tags && tool.tags.length > 0 && (
+                      <div className="card-tags">
+                        {tool.tags.slice(0, 3).map(tag => (
+                          <span key={tag} className="card-tag">{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                  </Glass>
                 </motion.div>
               ))}
             </AnimatePresence>
