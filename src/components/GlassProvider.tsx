@@ -12,10 +12,19 @@ const GLASS_OPTICS = {
   depth: 0.7,
 };
 
+const DEFAULT_BG = 'https://api.oscarstudio.cn/default-bg.jpeg';
+
 export function useGlassBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
+    if (!document.body.style.backgroundImage) {
+      document.body.style.backgroundImage = `url(${DEFAULT_BG})`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      document.body.style.backgroundRepeat = 'no-repeat';
+      document.body.style.backgroundAttachment = 'fixed';
+    }
     document.body.classList.add('no-lg-refraction');
     const inst = initWebGLGlass(GLASS_OPTICS);
     if (!inst) {
