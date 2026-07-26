@@ -26,14 +26,14 @@ const SUBJECT_NAMES: Record<string, string> = {
 
 const CARD_STYLE: React.CSSProperties = {
   width: '100%',
-  minHeight: 96,
-  padding: '14px 22px',
-  borderRadius: 14,
+  minHeight: 140,
+  padding: '24px 28px',
+  borderRadius: 16,
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'flex-start',
   justifyContent: 'center',
-  gap: 8,
+  gap: 12,
   cursor: 'pointer',
   background: 'rgba(255, 255, 255, 0.06)',
   border: '0.5px solid rgba(255, 255, 255, 0.18)',
