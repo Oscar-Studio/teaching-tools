@@ -12,26 +12,66 @@ const GLASS_OPTICS = {
   depth: 0.7,
 };
 
-const DEFAULT_BG = 'https://api.oscarstudio.cn/default-bg.jpeg';
+const API_BASE = 'https://api.oscarstudio.cn';
+const DEFAULT_BG = `${API_BASE}/default-bg.jpeg`;
+
+function readCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+function applyBackground(url: string) {
+  const body = document.body;
+  body.style.backgroundImage = `url(${url})`;
+  body.style.backgroundSize = 'cover';
+  body.style.backgroundPosition = 'center';
+  body.style.backgroundRepeat = 'no-repeat';
+  body.style.backgroundAttachment = 'fixed';
+}
+
+async function resolveBgUrl(): Promise<string> {
+  const token = readCookie('userToken');
+  if (!token) return DEFAULT_BG;
+  try {
+    const resp = await fetch(`${API_BASE}/api/ui`, { credentials: 'include' });
+    if (!resp.ok) return DEFAULT_BG;
+    const data = await resp.json().catch(() => null);
+    if (data?.success && data?.ui?.backgroundImage) {
+      return `${API_BASE}${data.ui.backgroundImage}`;
+    }
+  } catch { /* ignore */ }
+  return DEFAULT_BG;
+}
 
 export function useGlassBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    if (!document.body.style.backgroundImage) {
-      document.body.style.backgroundImage = `url(${DEFAULT_BG})`;
-      document.body.style.backgroundSize = 'cover';
-      document.body.style.backgroundPosition = 'center';
-      document.body.style.backgroundRepeat = 'no-repeat';
-      document.body.style.backgroundAttachment = 'fixed';
-    }
     document.body.classList.add('no-lg-refraction');
+
+    const observer = new MutationObserver(() => {
+      const bg = document.body.style.backgroundImage;
+      if (!bg || bg === 'none') {
+        resolveBgUrl().then(url => {
+          if (!document.body.style.backgroundImage || document.body.style.backgroundImage === 'none') {
+            applyBackground(url);
+          }
+        });
+      }
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+
+    resolveBgUrl().then(applyBackground);
+
     const inst = initWebGLGlass(GLASS_OPTICS);
     if (!inst) {
+      observer.disconnect();
       console.warn('WebGL fallback unavailable');
       return;
     }
     return () => {
+      observer.disconnect();
       destroyWebGLGlass();
     };
   }, []);
