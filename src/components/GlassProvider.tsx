@@ -3,13 +3,12 @@ import { Glass } from '@samasante/liquid-glass';
 import { initWebGLGlass, destroyWebGLGlass } from '../lib/webglGlass';
 
 const GLASS_OPTICS = {
-  sheenWidth: 60,
-  strength: 0.4,
-  curvature: 0.2,
-  frost: 6,
-  dispersion: 0.25,
-  brightness: 0.18,
-  depth: 0.7,
+  sheenWidth: 30,
+  strength: 0.15,
+  curvature: 0.15,
+  frost: 3,
+  dispersion: 0.10,
+  brightness: 0.04,
 };
 
 const API_BASE = 'https://api.oscarstudio.cn';
