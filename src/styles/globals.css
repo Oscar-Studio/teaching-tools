@@ -21,7 +21,7 @@
   pointer-events: none;
 }
 
-#root > * {
+#root > *:not(.top-bar) {
   position: relative;
   z-index: 7;
 }
