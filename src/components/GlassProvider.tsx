@@ -35,27 +35,80 @@ function readCookie(name: string): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-function applyBackground(url: string) {
+type BgCfg = { url: string; overlay?: number; blur?: number };
+
+// 把背景图放到 fixed 层而不是 body.style.backgroundImage，
+// 这样 filter: blur 只影响背景，不会模糊前景内容。
+// 遮罩是另一个 fixed 层（半透明黑色叠加）。
+function applyBackgroundFx(cfg: BgCfg | null) {
   const body = document.body;
-  body.style.backgroundImage = `url(${url})`;
-  body.style.backgroundSize = 'cover';
-  body.style.backgroundPosition = 'center';
-  body.style.backgroundRepeat = 'no-repeat';
-  body.style.backgroundAttachment = 'fixed';
+  const oldLayer = document.getElementById('userBgLayer');
+  const oldMask = document.getElementById('userBgMask');
+  if (oldLayer) oldLayer.remove();
+  if (oldMask) oldMask.remove();
+  body.style.backgroundImage = '';
+  body.style.backgroundSize = '';
+  body.style.backgroundPosition = '';
+  body.style.backgroundRepeat = '';
+  body.style.backgroundAttachment = '';
+
+  if (!cfg) return;
+
+  const overlay = typeof cfg.overlay === 'number' && Number.isFinite(cfg.overlay) ? cfg.overlay : 0;
+  const blur = typeof cfg.blur === 'number' && Number.isFinite(cfg.blur) ? cfg.blur : 0;
+
+  const layer = document.createElement('div');
+  layer.id = 'userBgLayer';
+  layer.style.cssText = [
+    'position:fixed',
+    'inset:0',
+    'z-index:-1',
+    'pointer-events:none',
+    `background-image:url(${cfg.url})`,
+    'background-size:cover',
+    'background-position:center',
+    'background-repeat:no-repeat',
+    'background-attachment:fixed',
+    blur > 0 ? `filter:blur(${blur}px)` : '',
+  ].filter(Boolean).join(';');
+  document.body.appendChild(layer);
+
+  if (overlay > 0) {
+    const mask = document.createElement('div');
+    mask.id = 'userBgMask';
+    mask.style.cssText = [
+      'position:fixed',
+      'inset:0',
+      'z-index:-1',
+      'pointer-events:none',
+      'background:#000',
+      `opacity:${overlay}`,
+    ].join(';');
+    document.body.appendChild(mask);
+  }
+
+  body.style.position = 'relative';
+  body.style.isolation = 'isolate';
+  body.style.background = 'transparent';
 }
 
-async function resolveBgUrl(): Promise<string> {
+async function resolveBg(): Promise<BgCfg> {
+  const fallback: BgCfg = { url: DEFAULT_BG };
   const token = readCookie('userToken');
-  if (!token) return DEFAULT_BG;
+  if (!token) return fallback;
   try {
     const resp = await fetch(`${API_BASE}/api/ui`, { credentials: 'include' });
-    if (!resp.ok) return DEFAULT_BG;
+    if (!resp.ok) return fallback;
     const data = await resp.json().catch(() => null);
     if (data?.success && data?.ui?.backgroundImage) {
-      return `${API_BASE}${data.ui.backgroundImage}`;
+      return {
+        url: `${API_BASE}${data.ui.backgroundImage}`,
+        overlay: data.ui.backgroundOverlay,
+        blur: data.ui.backgroundBlur,
+      };
     }
   } catch { /* ignore */ }
-  return DEFAULT_BG;
+  return fallback;
 }
 
 function isChromium(): boolean {
@@ -72,16 +125,16 @@ export function useGlassBackground() {
     const observer = new MutationObserver(() => {
       const bg = document.body.style.backgroundImage;
       if (!bg || bg === 'none') {
-        resolveBgUrl().then(url => {
+        resolveBg().then(cfg => {
           if (!document.body.style.backgroundImage || document.body.style.backgroundImage === 'none') {
-            applyBackground(url);
+            applyBackgroundFx(cfg);
           }
         });
       }
     });
     observer.observe(document.body, { attributes: true, attributeFilter: ['style'] });
 
-    resolveBgUrl().then(applyBackground);
+    resolveBg().then(applyBackgroundFx);
 
     if (!isChromium()) {
       const inst = initWebGLGlass(GLASS_OPTICS);
