@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQualitySetting } from '../hooks/useQualitySetting';
 
 export function TopBar() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
-  const { quality, setQuality } = useQualitySetting();
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -62,31 +60,6 @@ export function TopBar() {
         >
           ⚙
         </button>
-        <div className={`settings-dropdown ${settingsOpen ? 'open' : ''}`} id="settingsDropdown">
-          <h4>画质设置</h4>
-          <label className="settings-option">
-            <input
-              type="radio"
-              name="quality"
-              value="low"
-              checked={quality === 'low'}
-              onChange={() => setQuality('low')}
-            />
-            <span className="radio" />
-            <span>低（去除动画）</span>
-          </label>
-          <label className="settings-option">
-            <input
-              type="radio"
-              name="quality"
-              value="normal"
-              checked={quality === 'normal'}
-              onChange={() => setQuality('normal')}
-            />
-            <span className="radio" />
-            <span>正常</span>
-          </label>
-        </div>
       </div>
       <div id="userButtonContainer" />
     </header>

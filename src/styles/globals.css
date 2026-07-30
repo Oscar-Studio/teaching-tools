@@ -11,19 +11,28 @@
   align-items: center;
 }
 
+/* ===================== 背景层与页面内容分层 ===================== */
+/* userBgLayer(z=0) / userBgMask(z=1) 由 user-button.js / GlassProvider 创建。
+ * 所有页面内容必须高于 z=1，否则会被遮罩盖住。 */
+#root {
+  position: relative;
+  z-index: 2;
+}
+
 /* Make sure LiquidGlass canvas sits behind content */
-#liquid-glass-canvas {
+#liquid-glass-canvas,
+#lg-webgl-canvas {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 6;
+  z-index: 3;
   pointer-events: none;
 }
 
 #root > *:not(.top-bar) {
   position: relative;
-  z-index: 7;
+  z-index: 4;
 }
 
 /* Morph card & backdrop belong to document body, not #root */
@@ -59,18 +68,15 @@ body.no-lg-refraction .top-bar {
   -webkit-backdrop-filter: blur(10px) saturate(150%) !important;
 }
 
-body.low-quality * {
-  animation: none !important;
-  transition: none !important;
-}
-
-body.low-quality #liquid-glass-canvas {
+/* low 档（用户 UI 设置里的「低」画质）：完全不用 WebGL */
+body.liquid-glass-low #liquid-glass-canvas,
+body.liquid-glass-low #lg-webgl-canvas {
   display: none;
 }
 
-body.low-quality .card,
-body.low-quality .top-bar,
-body.low-quality .morph-card {
+body.liquid-glass-low .card,
+body.liquid-glass-low .top-bar,
+body.liquid-glass-low .morph-card {
   background: rgba(255, 255, 255, 0.04) !important;
   backdrop-filter: blur(8px) saturate(150%) !important;
   -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
