@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保护色实验 - Oscar Studio</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0d1117; color: #fff;
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; padding: 20px;
+        }
+        h1 {
+            font-size: 1.8rem; margin-bottom: 8px;
+            background: linear-gradient(135deg, #2A5CAA, #00E5FF);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: #8b949e; font-size: 0.9rem; margin-bottom: 20px;
+            text-align: center; max-width: 600px; line-height: 1.5;
+        }
+        .settings {
+            display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+            margin-bottom: 20px; background: #161b22; border: 1px solid #30363d;
+            border-radius: 12px; padding: 20px; align-items: flex-end;
+        }
+        .setting-item { display: flex; flex-direction: column; gap: 6px; }
+        .setting-item label { font-size: 0.85rem; color: #8b949e; }
+        .setting-item input[type="number"] {
+            padding: 8px 12px; border-radius: 8px; border: 1px solid #30363d;
+            background: #0d1117; color: #fff; font-size: 1rem; outline: none; width: 100px;
+        }
+        .setting-item input[type="number"]:focus { border-color: #00E5FF; }
+        .bg-color-select { display: flex; flex-direction: column; gap: 6px; }
+        .bg-color-select > label { font-size: 0.85rem; color: #8b949e; }
+        .bg-options { display: flex; gap: 6px; flex-wrap: wrap; max-width: 300px; }
+        .bg-option {
+            width: 28px; height: 28px; border-radius: 6px;
+            border: 2px solid transparent; cursor: pointer;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .bg-option:hover { transform: scale(1.15); }
+        .bg-option.selected { border-color: #fff; }
+        .btn-start {
+            padding: 10px 30px; background: linear-gradient(135deg, #2A5CAA, #6A00FF);
+            color: #fff; border: none; border-radius: 20px; font-size: 1rem;
+            font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(106,0,255,0.3); }
+        #gameArea {
+            position: relative; width: min(90vw, 700px); height: min(70vh, 500px);
+            border-radius: 12px; overflow: hidden; border: 2px solid #30363d;
+            margin-bottom: 15px; cursor: crosshair;
+        }
+        .paper { position: absolute; border-radius: 4px; cursor: pointer; transition: transform 0.1s; user-select: none; }
+        .paper:hover { transform: scale(1.1); }
+        #timerBar {
+            width: min(90vw, 700px); height: 6px;
+            background: #21262d; border-radius: 3px; overflow: hidden; margin-bottom: 10px;
+        }
+        #timerFill {
+            height: 100%; background: linear-gradient(90deg, #00E5FF, #6A00FF);
+            width: 100%; transition: width 0.05s linear;
+        }
+        #roundInfo { color: #8b949e; font-size: 0.95rem; margin-bottom: 10px; text-align: center; min-height: 24px; }
+        #thresholdHint {
+            color: #FFE66D; font-size: 0.85rem; margin-bottom: 8px; text-align: center;
+            min-height: 20px;
+        }
+        #chartContainer {
+            width: min(90vw, 700px); background: #161b22;
+            border: 1px solid #30363d; border-radius: 12px; padding: 20px; display: none;
+        }
+        #chartContainer h2 { font-size: 1.2rem; margin-bottom: 15px; color: #00E5FF; }
+        #chartCanvas { width: 100%; height: 300px; display: block; }
+        .stats-summary { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-top: 15px; }
+        .stat-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #8b949e; }
+        .stat-dot { width: 12px; height: 12px; border-radius: 3px; }
+        @keyframes replicateFlash {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .paper.replicating { animation: replicateFlash 0.6s ease; }
+        .back-link { margin-top: 15px; color: #00E5FF; text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>🦎 生物保护色实验</h1>
+    <p class="subtitle">
+        纯色背景下不同颜色的纸片代表不同生物。<br>
+        每轮持续点击——剩到25%时触发繁殖（×4），否则继续选。<br>
+        直到完成全部轮数，查看数量变化折线图。
+    </p>
+
+    <div class="settings" id="settingsPanel">
+        <div class="setting-item">
+            <label>颜色种类</label>
+            <input type="number" id="numColors" value="5" min="2" max="10">
+        </div>
+        <div class="setting-item">
+            <label>纸片总数（4的倍数）</label>
+            <input type="number" id="totalPieces" value="20" min="4" step="4">
+        </div>
+        <div class="setting-item">
+            <label>实验轮数</label>
+            <input type="number" id="numRounds" value="3" min="3" max="20">
+        </div>
+        <div class="bg-color-select">
+            <label>背景颜色（点击选择）</label>
+            <div class="bg-options" id="bgOptions"></div>
+        </div>
+        <button class="btn-start" id="btnStart">开始实验</button>
+    </div>
+
+    <div id="thresholdHint"></div>
+    <div id="timerBar"><div id="timerFill"></div></div>
+    <div id="roundInfo"></div>
+    <div id="gameArea"></div>
+
+    <div id="chartContainer">
+        <h2>📊 各颜色纸片数量变化</h2>
+        <canvas id="chartCanvas"></canvas>
+        <div class="stats-summary" id="statsSummary"></div>
+    </div>
+
+    <a class="back-link" href="../index.html">← 返回工具集</a>
+
+<script>
+// ─── Color Utilities ──────────────────────────────────────────────────────────
+const PALETTE = [
+    '#FF6B6B','#4ECDC4','#FFE66D','#95E1D3','#F38181',
+    '#AA96DA','#FCBAD3','#A8D8EA','#FF9F43','#6C5CE7',
+    '#00CEC9','#FD79A8','#A29BFE','#FAB1A0','#74B9FF'
+];
+
+function shuffle(a) { return [...a].sort(() => Math.random() - 0.5); }
+function parseHex(hex) { return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)]; }
+function toHex(r,g,b) { return '#' + [r,g,b].map(v => Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join(''); }
+function colorDist(c1,c2) { const [r1,g1,b1]=parseHex(c1),[r2,g2,b2]=parseHex(c2); return Math.sqrt((r1-r2)**2+(g1-g2)**2+(b1-b2)**2); }
+function lighter(hex,amt) { const [r,g,b]=parseHex(hex); return toHex(r+amt,g+amt,b+amt); }
+function darker(hex,amt)  { const [r,g,b]=parseHex(hex); return toHex(r-amt,g-amt,b-amt); }
+function shiftColor(hex,range) { const [r,g,b]=parseHex(hex); return toHex(r+(Math.random()-0.5)*range*2,g+(Math.random()-0.5)*range*2,b+(Math.random()-0.5)*range*2); }
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let state = {};
+let timerInterval = null;
+let timerActive = false;
+let pieces = [];
+let paperId = 0;
+let candidateCardColors = [];
+let selectedBgColor = null;
+
+const gameArea      = document.getElementById('gameArea');
+const timerFill    = document.getElementById('timerFill');
+const roundInfo    = document.getElementById('roundInfo');
+const thresholdHint= document.getElementById('thresholdHint');
+const chartContainer = document.getElementById('chartContainer');
+const statsSummary   = document.getElementById('statsSummary');
+const settingsPanel  = document.getElementById('settingsPanel');
+const bgOptionsEl    = document.getElementById('bgOptions');
+
+// ─── Background options ────────────────────────────────────────────────────────
+function buildBgOptions() {
+    const n = Math.max(2, parseInt(document.getElementById('numColors').value) || 5);
+    candidateCardColors = shuffle(PALETTE).slice(0, n);
+    const opts = new Set();
+    candidateCardColors.forEach(c => {
+        opts.add(lighter(c,50)); opts.add(darker(c,50));
+        opts.add(lighter(c,30)); opts.add(darker(c,30));
+        opts.add(shiftColor(c,50)); opts.add(shiftColor(c,30));
+    });
+    const list = shuffle([...opts]);
+    selectedBgColor = list[0];
+    bgOptionsEl.innerHTML = '';
+    list.forEach(color => {
+        const btn = document.createElement('div');
+        btn.className = 'bg-option' + (color===selectedBgColor?' selected':'');
+        btn.style.background = color;
+        btn.title = color;
+        btn.addEventListener('click', () => {
+            bgOptionsEl.querySelectorAll('.bg-option').forEach(o=>o.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedBgColor = color;
+        });
+        bgOptionsEl.appendChild(btn);
+    });
+}
+
+buildBgOptions();
+document.getElementById('numColors').addEventListener('input', buildBgOptions);
+
+// ─── Init Game ───────────────────────────────────────────────────────────────
+function initGame() {
+    const bgColor   = selectedBgColor;
+    const numColors = parseInt(document.getElementById('numColors').value);
+    const total     = parseInt(document.getElementById('totalPieces').value);
+    const numRounds = parseInt(document.getElementById('numRounds').value);
+    const threshold = Math.floor(total * 0.25);
+
+    // Card colors: ensure min distance from background
+    let cardColors = shuffle([...candidateCardColors]).map(c => {
+        if (colorDist(c, bgColor) < 40) {
+            const [r,g,b]=parseHex(c), [br,bg,bb]=parseHex(bgColor);
+            const push = (v, bv) => v < 128 ? Math.min(255, v+90) : Math.max(0, v-90);
+            return toHex(push(r,br), push(g,bg), push(b,bb));
+        }
+        return c;
+    });
+
+    state = { bgColor, cardColors, numRounds, threshold, currentRound: 0, history: [] };
+
+    // Distribute pieces evenly
+    const base = Math.floor(total / numColors);
+    let dist = cardColors.map(() => base);
+    const rem = total % numColors;
+    for (let i=0; i<rem; i++) dist[Math.floor(Math.random()*numColors)]++;
+
+    pieces = []; paperId = 0;
+    cardColors.forEach((color,ci) => {
+        for (let i=0; i<dist[ci]; i++)
+            pieces.push({ id:paperId++, color, x:0, y:0, w:0, h:0, alive:true });
+    });
+
+    chartContainer.style.display = 'none';
+    settingsPanel.style.display  = 'none';
+    document.getElementById('timerBar').style.display = 'block';
+    gameArea.style.background = bgColor;
+    thresholdHint.textContent = `淘汰阈值：剩余 ≤ ${threshold} 张（≤25%）`;
+
+    recordSnapshot('初始');
+    startRound();
+}
+
+function recordSnapshot(label) {
+    const counts = {};
+    state.cardColors.forEach(c => counts[c] = pieces.filter(p => p.alive && p.color === c).length);
+    state.history.push({ label, counts });
+}
+
+// ─── Place & Render ───────────────────────────────────────────────────────────
+function clearCanvas() { gameArea.innerHTML = ''; }
+
+function placePieces() {
+    const W=gameArea.clientWidth, H=gameArea.clientHeight;
+    const size = Math.max(22, Math.min(34, W*H/2500));
+    pieces.forEach(p => {
+        if (!p.alive) return;
+        let x,y,tries=0;
+        do {
+            x=Math.random()*(W-size); y=Math.random()*(H-size); tries++;
+        } while (tries<40 && pieces.some(o=>o.alive&&o.id!==p.id&&Math.abs(o.x-x)<size*0.8&&Math.abs(o.y-y)<size*0.8));
+        p.x=x; p.y=y; p.w=size; p.h=size;
+    });
+}
+
+function renderPieces() {
+    gameArea.innerHTML = '';
+    pieces.forEach(p => {
+        if (!p.alive) return;
+        const el = document.createElement('div');
+        el.className='paper';
+        // Validate color to prevent XSS
+        const validatedColor = /^#[0-9A-Fa-f]{6}$/.test(p.color) ? p.color : '#888888';
+        el.style.cssText=`left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;background:${validatedColor};opacity:0.9;`;
+        el.dataset.id=p.id;
+        el.addEventListener('click', ()=>onPaperClick(p.id));
+        gameArea.appendChild(el);
+    });
+}
+
+// ─── Round Logic ──────────────────────────────────────────────────────────────
+// A round = keep clicking until remaining ≤ 25%, then replicate and next round
+
+function startRound() {
+    const alive = pieces.filter(p => p.alive);
+    if (alive.length === 0) { endGame(); return; }
+    if (state.currentRound >= state.numRounds) { endGame(); return; }
+
+    state.currentRound++;
+    const n = alive.length;
+    roundInfo.textContent = `第 ${state.currentRound} 轮 | ${n} 张`;
+    placePieces();
+    renderPieces();
+    startTimer();
+}
+
+function startTimer() {
+    timerActive = true;
+    let timeLeft = 1.5;
+    timerFill.style.width = '100%';
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timeLeft -= 0.05;
+        timerFill.style.width = Math.max(0, (timeLeft/1.5*100)) + '%';
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            if (timerActive) { timerActive = false; onTimeout(); }
+        }
+    }, 50);
+}
+
+// Each click removes one piece
+function onPaperClick(id) {
+    if (!timerActive) return;  // ignore clicks while animating/replicating
+    clearInterval(timerInterval);
+    timerActive = false;
+
+    const p = pieces.find(x => x.id === id);
+    if (p && p.alive) { p.alive = false; renderPieces(); }
+    checkThreshold();
+}
+
+function onTimeout() {
+    const alive = pieces.filter(p => p.alive);
+    if (alive.length > 0) {
+        alive[Math.floor(Math.random()*alive.length)].alive = false;
+        renderPieces();
+    }
+    checkThreshold();
+}
+
+// After each removal, check if we've hit the threshold
+function checkThreshold() {
+    const alive = pieces.filter(p => p.alive);
+    const n = alive.length;
+    const thr = state.threshold;
+
+    if (n <= thr && n > 0) {
+        // ── Threshold triggered: end this round ──────────────────────────────
+        recordSnapshot(`R${state.currentRound}结束`);
+        document.querySelectorAll('.paper').forEach(el => el.classList.add('replicating'));
+        roundInfo.textContent = `🎉 第${state.currentRound}轮结束！触发繁殖！`;
+
+        setTimeout(() => doReplicate(alive), 500);
+    } else if (n === 0) {
+        // All pieces gone
+        roundInfo.textContent = `全部淘汰！`;
+        setTimeout(() => endGame(), 800);
+    } else {
+        // Continue this round: clear, wait, re-place, restart timer
+        roundInfo.textContent = `第 ${state.currentRound} 轮 | ${n} 张（还需淘汰到≤${thr}）`;
+        clearCanvas();
+        setTimeout(() => { placePieces(); renderPieces(); startTimer(); }, 500);
+    }
+}
+
+function doReplicate(alive) {
+    const W=gameArea.clientWidth, H=gameArea.clientHeight;
+    const size = Math.max(22, Math.min(34, W*H/2500));
+    const newPieces = [];
+
+    // Pre-group alive pieces by color for O(n) instead of O(n*m)
+    const byColor = {};
+    alive.forEach(p => {
+        if (!byColor[p.color]) byColor[p.color] = [];
+        byColor[p.color].push(p);
+    });
+
+    state.cardColors.forEach(color => {
+        (byColor[color] || []).forEach(s => {
+            for (let i=0; i<3; i++) {
+                let x,y,tries=0;
+                do { x=Math.random()*(W-size); y=Math.random()*(H-size); tries++; }
+                while (tries<25 && newPieces.some(np=>Math.abs(np.x-x)<size&&Math.abs(np.y-y)<size));
+                newPieces.push({ id:paperId++, color, x, y, w:size, h:size, alive:true });
+            }
+        });
+    });
+
+    pieces = [...alive, ...newPieces];
+    placePieces();
+    renderPieces();
+
+    const count = pieces.filter(p=>p.alive).length;
+    recordSnapshot(`R${state.currentRound}复制后`);
+    roundInfo.textContent = `复制完成！${count}张 | 第${state.currentRound+1}轮`;
+
+    setTimeout(() => startRound(), 1500);
+}
+
+function endGame() {
+    roundInfo.textContent = '实验结束！';
+    document.getElementById('timerBar').style.display = 'none';
+    gameArea.innerHTML = '';
+
+    drawChart();
+    chartContainer.style.display = 'block';
+
+    const last = state.history[state.history.length-1];
+    statsSummary.innerHTML = state.cardColors.map((c,i) => {
+        const count = last ? last.counts[c] : 0;
+        return `<div class="stat-item"><div class="stat-dot" style="background:${c}"></div>${i+1}号色: ${count}张</div>`;
+    }).join('');
+
+    settingsPanel.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(drawChart)));
+}
+
+// ─── Chart ───────────────────────────────────────────────────────────────────
+function drawChart() {
+    const canvas = document.getElementById('chartCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0) return;
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    const W=rect.width, H=rect.height;
+    ctx.clearRect(0,0,W,H);
+
+    const history=state.history, cardColors=state.cardColors;
+    if (!history.length||!cardColors.length) return;
+
+    const n = history.length;
+    const allCounts = history.flatMap(h=>Object.values(h.counts));
+    const maxVal = Math.max(...allCounts, 1);
+
+    const padL=42, padR=80, padT=30, padB=42;
+    const chartW=W-padL-padR, chartH=H-padT-padB;
+
+    // Grid
+    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    for (let i=0; i<=4; i++) {
+        const y=padT+(chartH/4)*i;
+        ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+chartW,y); ctx.stroke();
+        ctx.fillStyle='#8b949e'; ctx.font='11px Segoe UI'; ctx.textAlign='right';
+        ctx.fillText(Math.round(maxVal*(1-i/4)), padL-5, y+4);
+    }
+
+    // X labels
+    ctx.textAlign='center';
+    history.forEach((h,i) => {
+        const x=padL+(chartW/(n-1))*i;
+        ctx.fillText(h.label, x, H-padB+16);
+    });
+
+    // Lines & dots
+    cardColors.forEach(color => {
+        ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.lineJoin='round';
+        ctx.beginPath();
+        history.forEach((h,i) => {
+            const x=padL+(chartW/(n-1))*i;
+            const y=padT+chartH-(h.counts[color]/maxVal)*chartH;
+            i===0? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+        history.forEach((h,i) => {
+            const x=padL+(chartW/(n-1))*i;
+            const y=padT+chartH-(h.counts[color]/maxVal)*chartH;
+            ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
+            ctx.fillStyle=color; ctx.fill();
+        });
+    });
+
+    // Legend
+    const lx=padL+chartW+12;
+    ctx.font='12px Segoe UI';
+    cardColors.forEach((color,i) => {
+        const ly=padT+14+i*18;
+        ctx.fillStyle=color; ctx.fillRect(lx,ly-9,10,10);
+        ctx.fillStyle='#ccc'; ctx.textAlign='left';
+        ctx.fillText(`${i+1}号`, lx+14, ly);
+    });
+}
+
+// ─── Start ───────────────────────────────────────────────────────────────────
+document.getElementById('btnStart').addEventListener('click', () => {
+    const numColors = parseInt(document.getElementById('numColors').value);
+    const total = parseInt(document.getElementById('totalPieces').value);
+    const numRounds = parseInt(document.getElementById('numRounds').value);
+    if (numColors < 2)       { alert('颜色种类至少2种'); return; }
+    if (total < 4)           { alert('纸片总数至少4张'); return; }
+    if (total % 4 !== 0)     { alert('纸片总数必须是4的倍数'); return; }
+    if (!selectedBgColor)    { alert('请先选择背景颜色'); return; }
+    initGame();
+});
+</script>
+    <script src="../_shared/tool-header.js" defer></script>
+</body>
+</html>

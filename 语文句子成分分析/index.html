@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中文句子成分分析工具</title>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+            --success-color: #28a745;
+            --error-color: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+
+        .description {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            border: var(--card-border);
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 5px;
+            color: var(--dark-color);
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 25px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        #analyze-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        #analyze-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        #clear-btn {
+            background: #30363d;
+            color: var(--text-secondary);
+        }
+
+        #clear-btn:hover {
+            background: #484f58;
+            color: white;
+        }
+
+        .rate-limit-info {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            text-align: center;
+            border-top: 1px solid #30363d;
+            padding-top: 15px;
+        }
+
+        .highlight {
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--secondary-color);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 229, 255, 0.1);
+            border-left-color: var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result-section {
+            display: none;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            border: var(--card-border);
+            margin-bottom: 30px;
+        }
+
+        .result-title {
+            color: var(--secondary-color);
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+        }
+
+        .analysis-result {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: var(--dark-color);
+        }
+
+        .error-section {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            background: rgba(231, 76, 60, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .example-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .example-title {
+            color: var(--text-secondary);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .example-text {
+            color: #d0d7de;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: auto;
+            padding-top: 40px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .login-prompt {
+            display: none;
+            text-align: center;
+            margin-top: 16px;
+            padding: 14px;
+            background: rgba(0, 229, 255, 0.06);
+            border: 1px dashed rgba(0, 229, 255, 0.4);
+            border-radius: 8px;
+            color: var(--text-secondary);
+        }
+
+        .login-prompt a {
+            color: var(--secondary-color);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+
+<body>
+    <div class="container">
+        <header>
+            <h1>中文句子成分分析工具</h1>
+            <p class="description">输入中文句子，AI将分析其句子成分（主语、谓语、宾语等），并以直观的方式展示结果。</p>
+        </header>
+
+        <div class="input-section">
+            <label for="sentence-input">请输入要分析的中文句子：</label>
+            <textarea id="sentence-input" placeholder="例如：我喜欢在阳光明媚的下午读书。"></textarea>
+
+            <div class="button-group">
+                <button id="analyze-btn">分析句子</button>
+                <button id="clear-btn">清空</button>
+            </div>
+
+            <div class="rate-limit-info">
+                <p>使用说明：登录后调用 DeepSeek V4-flash 分析句子成分</p>
+            </div>
+
+            <div id="login-prompt" class="login-prompt">
+                请先 <a id="login-link">登录</a> 后再使用句子成分分析功能。
+            </div>
+        </div>
+
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>正在分析句子成分，请稍候...</p>
+        </div>
+
+        <div class="result-section" id="result-section">
+            <div class="result-title">分析结果：</div>
+            <div class="analysis-result" id="analysis-result"></div>
+        </div>
+
+        <div class="error-section" id="error-section">
+            <div class="error-message" id="error-message"></div>
+        </div>
+
+        <div class="example-section">
+            <div class="example-title">使用示例：</div>
+            <div class="example-text">输入：小明昨天在公园里开心地踢足球。</div>
+            <div class="example-text">输出：小明（主语）昨天（状语）在公园里（状语）开心地（状语）踢（谓语）足球（宾语）。</div>
+        </div>
+
+        <footer>
+            <p>中文句子成分分析工具 | 基于 DeepSeek V4-flash（需登录）</p>
+            <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // 登录后调 /api/chat，使用 DeepSeek V4-flash
+
+        const API_BASE = 'https://api.oscarstudio.cn';
+        const MODEL = 'deepseek-v4-flash';
+
+        // ====== 登录态管理 ======
+        function getCookie(name) {
+            const v = `; ${document.cookie}`;
+            const parts = v.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        function getToken() {
+            return getCookie('userToken') || localStorage.getItem('ai_token') || localStorage.getItem('userToken');
+        }
+        function isLoggedIn() {
+            return !!getToken();
+        }
+
+        // DOM元素
+        const sentenceInput = document.getElementById('sentence-input');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const resultSection = document.getElementById('result-section');
+        const analysisResult = document.getElementById('analysis-result');
+        const errorSection = document.getElementById('error-section');
+        const errorMessage = document.getElementById('error-message');
+        const loading = document.querySelector('.loading');
+        const loginPrompt = document.getElementById('login-prompt');
+        const loginLink = document.getElementById('login-link');
+
+        // 跳转登录
+        loginLink.addEventListener('click', () => {
+            window.open('https://api.oscarstudio.cn/auth.html?return=' + encodeURIComponent(location.href), '_blank');
+        });
+
+        // 分析句子
+        analyzeBtn.addEventListener('click', async () => {
+            if (!isLoggedIn()) {
+                showLoginPrompt();
+                return;
+            }
+
+            const sentence = sentenceInput.value.trim();
+            if (!sentence) {
+                showError('请输入要分析的中文句子。');
+                return;
+            }
+
+            // 显示加载状态
+            loading.style.display = 'block';
+            resultSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            loginPrompt.style.display = 'none';
+            analyzeBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        model: MODEL,
+                        messages: [
+                            {
+                                role: 'system',
+                                content: "你是一个中文语法分析专家。请严格按照以下格式分析句子成分：\n主语[主语]谓语[谓语]宾语[宾语]状语[状语]补语[补语]定语[定语]\n示例：昨天下午[状语]我[主语]开心地[状语]吃[谓语]一个红彤彤的[定语]苹果[宾语]，吃得津津有味[补语]。\n只返回分析结果，不添加解释。"
+                            },
+                            {
+                                role: 'user',
+                                content: `请分析这个句子的句子成分："${sentence}"`
+                            }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 200
+                    })
+                });
+
+                if (!response.ok) {
+                    let msg = `API请求失败: ${response.status}`;
+                    try {
+                        const err = await response.json();
+                        if (err && err.message) msg = err.message;
+                    } catch (_) { /* ignore */ }
+                    throw new Error(msg);
+                }
+
+                const data = await response.json();
+                const analysis = data.choices?.[0]?.message?.content?.trim();
+                if (!analysis) throw new Error(data.message || 'API返回的数据格式不正确');
+
+                analysisResult.textContent = analysis;
+                resultSection.style.display = 'block';
+            } catch (error) {
+                console.error('分析句子时出错:', error);
+                showError(`分析失败: ${error.message}`);
+            } finally {
+                loading.style.display = 'none';
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        // 清空输入
+        clearBtn.addEventListener('click', () => {
+            sentenceInput.value = '';
+            resultSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            loginPrompt.style.display = 'none';
+        });
+
+        // 显示错误信息
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorSection.style.display = 'block';
+            resultSection.style.display = 'none';
+            loginPrompt.style.display = 'none';
+        }
+
+        // 显示登录提示
+        function showLoginPrompt() {
+            loginPrompt.style.display = 'block';
+            errorSection.style.display = 'none';
+            resultSection.style.display = 'none';
+            loading.style.display = 'none';
+        }
+
+        // 示例：输入框获得焦点时清空示例文本
+        sentenceInput.addEventListener('focus', function () {
+            if (this.value === '例如：我喜欢在阳光明媚的下午读书。') {
+                this.value = '';
+            }
+        });
+    </script>
+    <script src="../_shared/tool-header.js" defer></script>
+</body>
+
+</html>

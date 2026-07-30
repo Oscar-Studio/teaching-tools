@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级数据统计分析工具</title>
+    <script src="../plotly-2.27.0.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --danger-color: #e74c3c;
+            --bg-color: #010409;
+            --card-bg: #0d1117;
+            --border-color: #30363d;
+            --text-color: #ffffff;
+            --secondary-color: #00E5FF;
+            --text-secondary: #8b949e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--secondary-color);
+        }
+
+        /* 输入区域样式 */
+        .input-section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .input-group-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            flex: 1 1 250px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            box-sizing: border-box;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 16px;
+            background: #161b22;
+            color: var(--text-color);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        .group-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* 关闭/删除按钮 */
+        .close-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            text-align: center;
+            line-height: 22px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            transition: transform 0.2s;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* 按钮样式 */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .btn-add {
+            background-color: #238636;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background-color: #2ea043;
+        }
+
+        .btn-calc {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-calc:hover {
+            background-color: #1a4a9a;
+        }
+
+        /* 结果区域样式 */
+        .results-section {
+            display: none;
+            /* 初始隐藏 */
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            color: var(--secondary-color);
+        }
+
+        /* 排序后数据 */
+        .sorted-data-row {
+            margin-bottom: 10px;
+            word-wrap: break-word;
+            font-family: monospace;
+            background: #161b22;
+            padding: 8px;
+            border-radius: 4px;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .group-name {
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin-right: 10px;
+        }
+
+        /* 表格布局 */
+        .tables-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .tables-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: center;
+            color: var(--text-color);
+        }
+
+        th {
+            background-color: #161b22;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        tr:nth-child(even) {
+            background-color: #161b22;
+        }
+
+        /* 图表容器 */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 450px;
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+
+        .chart-box {
+            height: 400px;
+        }
+    </style>
+
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+
+<body>
+
+    <div class="container">
+        <h1>数据统计分析</h1>
+
+        <div class="input-section">
+            <div id="inputsContainer" class="input-group-container">
+            </div>
+
+            <div class="controls">
+                <button class="btn-add" onclick="addNewGroup()">+ 添加新数据组</button>
+                <button class="btn-calc" onclick="startStatistics()">开始统计</button>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="results-section">
+
+            <div class="card">
+                <h2>排序后的数据 (从小到大)</h2>
+                <div id="sortedDataContainer"></div>
+            </div>
+
+            <div class="tables-container">
+                <div class="card">
+                    <h2>分位数统计</h2>
+                    <div style="overflow-x: auto;">
+                        <table id="quantileTable">
+                            <thead>
+                                <tr>
+                                    <th>组别</th>
+                                    <th>Min</th>
+                                    <th>3%</th>
+                                    <th>5%</th>
+                                    <th>10%</th>
+                                    <th>25%</th>
+                                    <th>50%</th>
+                                    <th>75%</th>
+                                    <th>90%</th>
+                                    <th>95%</th>
+                                    <th>97%</th>
+                                    <th>Max</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>核心统计量</h2>
+                    <div style="overflow-x: auto;">
+                        <table id="statsTable">
+                            <thead>
+                                <tr>
+                                    <th>组别</th>
+                                    <th>平均数</th>
+                                    <th>众数</th>
+                                    <th>离差平方和</th>
+                                    <th>方差(/n)</th>
+                                    <th>标准差(/n)</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="card">
+                    <h2>箱线图 (Box Plot)</h2>
+                    <div id="boxPlot" class="chart-box"></div>
+                </div>
+                <div class="card">
+                    <h2>频数直方图 (各组分布对比)</h2>
+                    <div id="barChart" class="chart-box"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let groupCount = 0;
+
+        // 初始化：添加第一个输入框
+        document.addEventListener('DOMContentLoaded', () => {
+            addNewGroup();
+        });
+
+        // 添加新的输入组
+        function addNewGroup() {
+            groupCount++;
+            const container = document.getElementById('inputsContainer');
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-wrapper';
+            wrapper.id = `group-wrapper-${groupCount}`;
+
+            const label = document.createElement('span');
+            label.className = 'group-label';
+            label.innerText = `数据组 ${groupCount}`;
+
+            const textarea = document.createElement('textarea');
+            textarea.placeholder = "输入数据 (空格/逗号/换行分隔)";
+            textarea.dataset.groupId = groupCount;
+
+            const closeBtn = document.createElement('div');
+            closeBtn.className = 'close-btn';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.title = "移除此组";
+            closeBtn.onclick = function () { removeGroup(wrapper.id); };
+
+            wrapper.appendChild(closeBtn);
+            wrapper.appendChild(label);
+            wrapper.appendChild(textarea);
+            container.appendChild(wrapper);
+        }
+
+        // 移除输入组
+        function removeGroup(wrapperId) {
+            const wrapper = document.getElementById(wrapperId);
+            if (wrapper) {
+                wrapper.remove();
+            }
+        }
+
+        // ---------------------- 核心计算逻辑 ----------------------
+
+        function startStatistics() {
+            const inputs = document.querySelectorAll('textarea');
+            const dataGroups = [];
+            let validGroupsFound = false;
+
+            // 1. 解析数据
+            inputs.forEach((input, index) => {
+                const rawText = input.value;
+                // 使用正则分割：逗号、空格、换行
+                const splitData = rawText.split(/[,\s\n]+/);
+
+                // 过滤无效字符，转为数字
+                const numData = splitData
+                    .map(item => parseFloat(item))
+                    .filter(item => !isNaN(item));
+
+                if (numData.length > 0) {
+                    // 排序 (从小到大)
+                    numData.sort((a, b) => a - b);
+                    dataGroups.push({
+                        id: index + 1,
+                        name: `组 ${input.dataset.groupId}`,
+                        data: numData
+                    });
+                    validGroupsFound = true;
+                }
+            });
+
+            if (!validGroupsFound) {
+                alert("请至少在一个输入框中输入有效的数字数据！");
+                return;
+            }
+
+            // 显示结果区域
+            document.getElementById('resultsSection').style.display = 'flex';
+
+            // 2. 渲染排序后的数据
+            renderSortedData(dataGroups);
+
+            // 3. 计算并渲染表格
+            renderTables(dataGroups);
+
+            // 4. 渲染图表
+            renderCharts(dataGroups);
+        }
+
+        function renderSortedData(groups) {
+            const container = document.getElementById('sortedDataContainer');
+            container.innerHTML = '';
+            groups.forEach(g => {
+                const div = document.createElement('div');
+                div.className = 'sorted-data-row';
+                div.innerHTML = `<span class="group-name">${g.name}:</span> ${g.data.join(', ')}`;
+                container.appendChild(div);
+            });
+        }
+
+        function renderTables(groups) {
+            const qTbody = document.querySelector('#quantileTable tbody');
+            const sTbody = document.querySelector('#statsTable tbody');
+            qTbody.innerHTML = '';
+            sTbody.innerHTML = '';
+
+            groups.forEach(g => {
+                const d = g.data;
+                const n = d.length;
+
+                // --- 计算核心统计量 ---
+
+                // 平均数
+                const sum = d.reduce((acc, val) => acc + val, 0);
+                const mean = sum / n;
+
+                // 离差平方和 (SS) = sum((x - mean)^2)
+                const ss = d.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0);
+
+                // 方差 (除以 n)
+                const variance = ss / n;
+
+                // 标准差 (除以 n)
+                const stdDev = Math.sqrt(variance);
+
+                // 众数
+                const mode = calculateMode(d);
+
+                // --- 计算分位数 ---
+                const min = d[0];
+                const max = d[n - 1];
+                // 定义分位点
+                const percentiles = [0.03, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.97];
+                const pValues = percentiles.map(p => calculateQuantile(d, p));
+
+                // --- 填充表格 1 (分位数) ---
+                const trQ = document.createElement('tr');
+                let qHtml = `<td>${g.name}</td><td>${min}</td>`;
+                pValues.forEach(val => qHtml += `<td>${formatNum(val)}</td>`);
+                qHtml += `<td>${max}</td>`;
+                trQ.innerHTML = qHtml;
+                qTbody.appendChild(trQ);
+
+                // --- 填充表格 2 (统计量) ---
+                const trS = document.createElement('tr');
+                trS.innerHTML = `
+                <td>${g.name}</td>
+                <td>${formatNum(mean)}</td>
+                <td>${mode}</td>
+                <td>${formatNum(ss)}</td>
+                <td>${formatNum(variance)}</td>
+                <td>${formatNum(stdDev)}</td>
+            `;
+                sTbody.appendChild(trS);
+            });
+        }
+
+        // 辅助函数：线性插值法计算分位数
+        // 算法：P_index = (N-1) * p
+        function calculateQuantile(sortedData, p) {
+            if (sortedData.length === 0) return 0;
+            if (sortedData.length === 1) return sortedData[0];
+
+            const pos = (sortedData.length - 1) * p;
+            const base = Math.floor(pos);
+            const rest = pos - base;
+
+            if (sortedData[base + 1] !== undefined) {
+                return sortedData[base] + rest * (sortedData[base + 1] - sortedData[base]);
+            } else {
+                return sortedData[base];
+            }
+        }
+
+        // 辅助函数：计算众数
+        function calculateMode(arr) {
+            const freq = {};
+            let maxFreq = 0;
+
+            arr.forEach(val => {
+                freq[val] = (freq[val] || 0) + 1;
+                if (freq[val] > maxFreq) maxFreq = freq[val];
+            });
+
+            if (maxFreq === 1) return "无众数";
+
+            const modes = [];
+            for (const k in freq) {
+                if (freq[k] === maxFreq) {
+                    modes.push(Number(k));
+                }
+            }
+            return modes.sort((a, b) => a - b).join(', ');
+        }
+
+        // 辅助函数：格式化数字 (保留4位小数，如果是整数则显示整数)
+        function formatNum(num) {
+            return parseFloat(num.toFixed(4));
+        }
+
+        function renderCharts(groups) {
+            if (typeof Plotly === 'undefined') {
+                console.warn('Plotly not loaded, falling back to Canvas.');
+                renderCanvasCharts(groups);
+                return;
+            }
+
+            const layoutDefaults = {
+                paper_bgcolor: '#0d1117',
+                plot_bgcolor: '#0d1117',
+                font: { color: '#8b949e' },
+                xaxis: { gridcolor: '#30363d', zerolinecolor: '#30363d' },
+                yaxis: { gridcolor: '#30363d', zerolinecolor: '#30363d' }
+            };
+
+            // 1. 箱线图配置
+            const boxData = groups.map(g => ({
+                y: g.data,
+                type: 'box',
+                name: g.name,
+                boxpoints: 'all', // 显示所有点
+                jitter: 0.3,
+                pointpos: -1.8,
+                marker: { color: '#2A5CAA' },
+                line: { color: '#00E5FF' }
+            }));
+
+            const boxLayout = {
+                ...layoutDefaults,
+                margin: { t: 30, b: 40, l: 50, r: 20 },
+                yaxis: { ...layoutDefaults.yaxis, title: '数值' },
+                showlegend: false
+            };
+
+            try {
+                Plotly.newPlot('boxPlot', boxData, boxLayout, { responsive: true });
+            } catch (e) {
+                console.error("Plotly BoxPlot failed", e);
+            }
+
+            // 2. 频数直方图配置
+            const allData = groups.flatMap(g => g.data);
+            const globalMin = Math.min(...allData);
+            const globalMax = Math.max(...allData);
+            const range = globalMax - globalMin;
+            const binCount = Math.min(15, Math.max(5, Math.ceil(Math.sqrt(allData.length))));
+            const binSize = range > 0 ? range / binCount : 1;
+
+            const palette = ['#2A5CAA', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#ecf0f1'];
+
+            const histData = groups.map((g, i) => ({
+                x: g.data,
+                type: 'histogram',
+                name: g.name,
+                marker: {
+                    color: palette[i % palette.length],
+                    line: { color: '#0d1117', width: 1 }
+                },
+                opacity: 0.7,
+                xbins: {
+                    start: globalMin,
+                    end: globalMax + binSize,
+                    size: binSize
+                }
+            }));
+
+            const histLayout = {
+                ...layoutDefaults,
+                barmode: 'overlay',
+                margin: { t: 30, b: 40, l: 50, r: 20 },
+                xaxis: { ...layoutDefaults.xaxis, title: '数值' },
+                yaxis: { ...layoutDefaults.yaxis, title: '频数' },
+                legend: { x: 1, y: 1, xanchor: 'right', yanchor: 'top', bgcolor: 'rgba(13,17,23,0.6)', bordercolor: '#30363d', borderwidth: 1 }
+            };
+
+            try {
+                Plotly.newPlot('barChart', histData, histLayout, { responsive: true });
+            } catch (e) {
+                console.error("Plotly Histogram failed", e);
+                renderCanvasCharts(groups);
+            }
+        }
+
+        // --- Canvas Fallback Logic ---
+
+        function renderCanvasCharts(groups) {
+            drawCanvasBoxPlot('boxPlot', groups);
+            drawCanvasBarChart('barChart', groups);
+        }
+
+        function setupCanvas(containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const canvas = document.createElement('canvas');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = container.getBoundingClientRect();
+
+            // Set display size
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+
+            // Set actual size in memory
+            canvas.width = (rect.width || 500) * dpr;
+            canvas.height = (rect.height || 400) * dpr;
+
+            container.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            return { ctx, width: rect.width || 500, height: rect.height || 400 };
+        }
+
+        function drawCanvasBoxPlot(containerId, groups) {
+            const { ctx, width, height } = setupCanvas(containerId);
+            const padding = { t: 40, b: 60, l: 60, r: 20 };
+            const chartW = width - padding.l - padding.r;
+            const chartH = height - padding.t - padding.b;
+
+            // Find global min and max
+            let allData = groups.flatMap(g => g.data);
+            let min = Math.min(...allData);
+            let max = Math.max(...allData);
+            let range = max - min || 1;
+
+            // Adjust range slightly for padding
+            min -= range * 0.1;
+            max += range * 0.1;
+            range = max - min;
+
+            const getY = (val) => padding.t + chartH - ((val - min) / range) * chartH;
+
+            // Draw axes
+            ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding.l, padding.t);
+            ctx.lineTo(padding.l, padding.t + chartH);
+            ctx.lineTo(padding.l + chartW, padding.t + chartH);
+            ctx.stroke();
+
+            // Draw Y axis labels
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '12px Segoe UI';
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const val = min + (range * i) / 5;
+                const y = getY(val);
+                ctx.fillText(formatNum(val), padding.l - 10, y + 4);
+
+                // Grid lines
+                ctx.beginPath();
+                ctx.moveTo(padding.l, y);
+                ctx.lineTo(padding.l + chartW, y);
+                ctx.stroke();
+            }
+
+            // Draw boxes
+            const groupW = chartW / groups.length;
+            groups.forEach((g, i) => {
+                const centerX = padding.l + (i + 0.5) * groupW;
+                const boxW = Math.min(groupW * 0.6, 40);
+
+                const d = g.data;
+                const q1 = calculateQuantile(d, 0.25);
+                const median = calculateQuantile(d, 0.50);
+                const q3 = calculateQuantile(d, 0.75);
+                const gMin = d[0];
+                const gMax = d[d.length - 1];
+
+                const yMin = getY(gMin);
+                const yMax = getY(gMax);
+                const yQ1 = getY(q1);
+                const yMed = getY(median);
+                const yQ3 = getY(q3);
+
+                // Stem
+                ctx.strokeStyle = '#00E5FF';
+                ctx.beginPath();
+                ctx.moveTo(centerX, yMin);
+                ctx.lineTo(centerX, yMax);
+                ctx.stroke();
+
+                // Box
+                ctx.fillStyle = '#2A5CAA';
+                ctx.globalAlpha = 0.7;
+                ctx.fillRect(centerX - boxW / 2, yQ3, boxW, yQ1 - yQ3);
+                ctx.globalAlpha = 1.0;
+                ctx.strokeRect(centerX - boxW / 2, yQ3, boxW, yQ1 - yQ3);
+
+                // Median line
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX - boxW / 2, yMed);
+                ctx.lineTo(centerX + boxW / 2, yMed);
+                ctx.stroke();
+                ctx.lineWidth = 1;
+
+                // Labels
+                ctx.fillStyle = '#8b949e';
+                ctx.textAlign = 'center';
+                ctx.fillText(g.name, centerX, padding.t + chartH + 20);
+            });
+
+            // Title
+            ctx.fillStyle = '#00E5FF';
+            ctx.font = 'bold 14px Segoe UI';
+            ctx.fillText('箱线图 (Canvas Fallback)', width / 2, 25);
+        }
+
+        function drawCanvasBarChart(containerId, groups) {
+            const { ctx, width, height } = setupCanvas(containerId);
+            const padding = { t: 40, b: 60, l: 60, r: 20 };
+            const chartW = width - padding.l - padding.r;
+            const chartH = height - padding.t - padding.b;
+
+            const allData = groups.flatMap(g => g.data);
+            if (allData.length === 0) return;
+            const globalMin = Math.min(...allData);
+            const globalMax = Math.max(...allData);
+            const range = globalMax - globalMin || 1;
+            const binCount = Math.min(15, Math.max(5, Math.ceil(Math.sqrt(allData.length))));
+            const binSize = range / binCount;
+
+            // 分箱
+            const binned = groups.map(g => {
+                const bins = new Array(binCount).fill(0);
+                g.data.forEach(val => {
+                    let idx = Math.floor((val - globalMin) / binSize);
+                    if (idx >= binCount) idx = binCount - 1;
+                    if (idx < 0) idx = 0;
+                    bins[idx]++;
+                });
+                return bins;
+            });
+
+            const maxFreq = Math.max(...binned.flat(), 1);
+            const yMax = maxFreq * 1.2;
+
+            const getX = (binIdx) => padding.l + (binIdx / binCount) * chartW;
+            const getY = (val) => padding.t + chartH - (val / yMax) * chartH;
+
+            const palette = ['#2A5CAA', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#ecf0f1'];
+
+            // 坐标轴
+            ctx.strokeStyle = '#30363d';
+            ctx.beginPath();
+            ctx.moveTo(padding.l, padding.t);
+            ctx.lineTo(padding.l, padding.t + chartH);
+            ctx.lineTo(padding.l + chartW, padding.t + chartH);
+            ctx.stroke();
+
+            // Y 标签
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '12px Segoe UI';
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const val = (yMax * i) / 5;
+                const y = getY(val);
+                ctx.fillText(Math.round(val), padding.l - 10, y + 4);
+                ctx.beginPath();
+                ctx.moveTo(padding.l, y);
+                ctx.lineTo(padding.l + chartW, y);
+                ctx.stroke();
+            }
+
+            // X 标签
+            ctx.textAlign = 'center';
+            ctx.fillText(formatNum(globalMin), getX(0), padding.t + chartH + 20);
+            if (binCount > 2) {
+                ctx.fillText(formatNum(globalMin + range / 2), getX(binCount / 2), padding.t + chartH + 20);
+            }
+            ctx.fillText(formatNum(globalMax), getX(binCount), padding.t + chartH + 20);
+
+            // 直方图柱
+            const barW = chartW / binCount;
+            ctx.globalAlpha = 0.6;
+            binned.forEach((bins, gIdx) => {
+                ctx.fillStyle = palette[gIdx % palette.length];
+                bins.forEach((freq, bIdx) => {
+                    if (freq > 0) {
+                        const x = getX(bIdx);
+                        const y = getY(freq);
+                        ctx.fillRect(x, y, barW, padding.t + chartH - y);
+                    }
+                });
+            });
+            ctx.globalAlpha = 1.0;
+
+            // 图例
+            ctx.font = '12px Segoe UI';
+            ctx.textAlign = 'left';
+            const legendX = padding.l + 10;
+            const legendY = padding.t + 10;
+            groups.forEach((g, i) => {
+                const y = legendY + i * 18;
+                ctx.fillStyle = palette[i % palette.length];
+                ctx.fillRect(legendX, y, 12, 12);
+                ctx.fillStyle = '#8b949e';
+                ctx.fillText(g.name, legendX + 18, y + 10);
+            });
+
+            // 标题
+            ctx.fillStyle = '#00E5FF';
+            ctx.font = 'bold 14px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('频数直方图 (Canvas Fallback)', width / 2, 25);
+        }
+    </script>
+    <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
+
+    <script src="../_shared/tool-header.js" defer></script>
+</body>
+
+</html>

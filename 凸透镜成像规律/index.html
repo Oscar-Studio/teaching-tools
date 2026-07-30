@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>凸透镜成像原理演示</title>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #00E5FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        .demo-area {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: var(--card-border);
+        }
+
+        canvas {
+            display: block;
+            background-color: #050505;
+        }
+
+        .lens-svg {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .control-panel {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 30px;
+            border: var(--card-border);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+            justify-content: space-between;
+        }
+
+        .control-item {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+            font-weight: bold;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type=range] {
+            flex-grow: 1;
+            accent-color: var(--secondary-color);
+        }
+
+        input[type=number] {
+            width: 70px;
+            padding: 5px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: var(--dark-color);
+            border-radius: 4px;
+        }
+
+        .info-panel {
+            background: rgba(42, 92, 170, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .explanation {
+            max-width: 1000px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            border: var(--card-border);
+            color: #d0d7de;
+        }
+
+        .explanation h3 {
+            color: var(--secondary-color);
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+
+        .explanation p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .explanation ul,
+        .explanation ol {
+            margin-left: 25px;
+            margin-bottom: 20px;
+        }
+
+        .explanation li {
+            margin-bottom: 8px;
+        }
+
+        .formula {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            margin: 20px 0;
+            border: 1px solid #30363d;
+            color: var(--accent-color);
+        }
+    </style>
+
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+
+<body>
+    <header>
+        <h1>凸透镜成像原理演示</h1>
+        <p class="subtitle">交互式模拟凸透镜成像规律与光线传播路径</p>
+    </header>
+
+    <div class="demo-area">
+        <canvas id="lensCanvas" width="1000" height="400"></canvas>
+        <svg class="lens-svg" width="60" height="200" viewBox="0 0 60 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="lensGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#4da6ff" stop-opacity="0.45" />
+                    <stop offset="50%" stop-color="#c8e6ff" stop-opacity="0.25" />
+                    <stop offset="100%" stop-color="#4da6ff" stop-opacity="0.45" />
+                </linearGradient>
+            </defs>
+            <path d="M 30,2 A 200,200 0 0 1 30,198 A 200,200 0 0 1 30,2 Z"
+                  fill="url(#lensGradient)"
+                  stroke="#4da6ff"
+                  stroke-width="2"
+                  stroke-linejoin="round" />
+            <circle cx="30" cy="100" r="5" fill="#ffcc00" />
+        </svg>
+    </div>
+
+    <div class="control-panel">
+        <h2>参数调节</h2>
+        <div class="control-group">
+            <div class="control-item">
+                <label for="focalLength">焦距 (f)</label>
+                <div class="slider-container">
+                    <input type="range" id="focalLength" min="50" max="200" value="100">
+                    <input type="number" id="focalLengthValue" min="50" max="200" value="100">
+                </div>
+            </div>
+
+            <div class="control-item">
+                <label for="objectDistance">物距 (u)</label>
+                <div class="slider-container">
+                    <input type="range" id="objectDistance" min="30" max="400" value="200">
+                    <input type="number" id="objectDistanceValue" min="30" max="400" value="200">
+                </div>
+            </div>
+
+            <div class="control-item">
+                <label for="objectHeight">物高 (h)</label>
+                <div class="slider-container">
+                    <input type="range" id="objectHeight" min="20" max="100" value="50">
+                    <input type="number" id="objectHeightValue" min="20" max="100" value="50">
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">像距 (v)</div>
+                    <div class="info-value" id="imageDistance">200.00</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">像高 (h')</div>
+                    <div class="info-value" id="imageHeight">50.00</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">放大率 (m)</div>
+                    <div class="info-value" id="magnification">1.00</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">成像性质</div>
+                    <div class="info-value" id="imageType">倒立实像</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="explanation">
+        <h3>凸透镜成像原理</h3>
+        <p>凸透镜成像遵循光的折射定律。当物体位于凸透镜的焦点以外时，会在透镜的另一侧形成倒立的实像；当物体位于焦点以内时，会在物体同侧形成正立的虚像。</p>
+
+        <div class="formula">
+            1/f = 1/u + 1/v
+        </div>
+
+        <p>其中：</p>
+        <ul>
+            <li><strong>f</strong> - 焦距，凸透镜中心到焦点的距离</li>
+            <li><strong>u</strong> - 物距，物体到凸透镜中心的距离</li>
+            <li><strong>v</strong> - 像距，像到凸透镜中心的距离</li>
+        </ul>
+
+        <p>放大率公式：m = v/u = h'/h</p>
+
+        <h3>光线追踪原理</h3>
+        <p>在演示中，我们追踪三条特殊光线：</p>
+        <ol>
+            <li>平行于主光轴的光线，经过凸透镜后通过焦点</li>
+            <li>通过光心的光线，传播方向不变</li>
+            <li>经过焦点的光线，折射后平行于主光轴</li>
+        </ol>
+        <p>这三条光线的交点即为物体顶点的像点。</p>
+    </div>
+
+    <script>
+        // 获取Canvas元素和上下文
+        const canvas = document.getElementById('lensCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 获取控制元素
+        const focalLengthSlider = document.getElementById('focalLength');
+        const focalLengthValue = document.getElementById('focalLengthValue');
+        const objectDistanceSlider = document.getElementById('objectDistance');
+        const objectDistanceValue = document.getElementById('objectDistanceValue');
+        const objectHeightSlider = document.getElementById('objectHeight');
+        const objectHeightValue = document.getElementById('objectHeightValue');
+
+        // 获取信息显示元素
+        const imageDistanceDisplay = document.getElementById('imageDistance');
+        const imageHeightDisplay = document.getElementById('imageHeight');
+        const magnificationDisplay = document.getElementById('magnification');
+        const imageTypeDisplay = document.getElementById('imageType');
+
+        // 初始化参数
+        let focalLength = parseInt(focalLengthSlider.value);
+        let objectDistance = parseInt(objectDistanceSlider.value);
+        let objectHeight = parseInt(objectHeightSlider.value);
+
+        // 同步滑块和输入框的值
+        focalLengthSlider.addEventListener('input', function () {
+            focalLength = parseInt(this.value);
+            focalLengthValue.value = focalLength;
+            updateMinObjectDistance();
+            draw();
+        });
+
+        focalLengthValue.addEventListener('input', function () {
+            let value = parseInt(this.value);
+            if (value < 50) value = 50;
+            if (value > 200) value = 200;
+            focalLength = value;
+            focalLengthSlider.value = focalLength;
+            this.value = focalLength;
+            updateMinObjectDistance();
+            draw();
+        });
+
+        objectDistanceSlider.addEventListener('input', function () {
+            objectDistance = parseInt(this.value);
+            objectDistanceValue.value = objectDistance;
+            draw();
+        });
+
+        objectDistanceValue.addEventListener('input', function () {
+            let value = parseInt(this.value);
+            const minValue = parseInt(objectDistanceSlider.min);
+            const maxValue = parseInt(objectDistanceSlider.max);
+            if (value < minValue) value = minValue;
+            if (value > maxValue) value = maxValue;
+            objectDistance = value;
+            objectDistanceSlider.value = objectDistance;
+            this.value = objectDistance;
+            draw();
+        });
+
+        objectHeightSlider.addEventListener('input', function () {
+            objectHeight = parseInt(this.value);
+            objectHeightValue.value = objectHeight;
+            draw();
+        });
+
+        objectHeightValue.addEventListener('input', function () {
+            let value = parseInt(this.value);
+            if (value < 20) value = 20;
+            if (value > 100) value = 100;
+            objectHeight = value;
+            objectHeightSlider.value = objectHeight;
+            this.value = objectHeight;
+            draw();
+        });
+
+        // 固定最小物距 30（支持 u<f 虚像情况）
+        function updateMinObjectDistance() {
+            objectDistanceSlider.min = 30;
+            objectDistanceValue.min = 30;
+        }
+
+        // 计算像距和像高
+        function calculateImageProperties() {
+            // 使用透镜公式计算像距
+            const imageDistance = 1 / (1 / focalLength - 1 / objectDistance);
+
+            // 计算放大率
+            const magnification = -imageDistance / objectDistance;
+
+            // 计算像高
+            const imageHeight = objectHeight * magnification;
+
+            // 确定成像性质
+            let imageType = "";
+            if (objectDistance < focalLength) {
+                imageType = "正立放大虚像";
+            } else if (objectDistance > 2 * focalLength) {
+                imageType = "倒立缩小实像";
+            } else if (objectDistance === 2 * focalLength) {
+                imageType = "倒立等大实像";
+            } else {
+                imageType = "倒立放大实像";
+            }
+
+            return {
+                imageDistance,
+                imageHeight,
+                magnification: Math.abs(magnification),
+                imageType,
+                isVirtual: imageDistance < 0
+            };
+        }
+
+        // 绘制场景
+        function draw() {
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 计算像的性质
+            const { imageDistance, imageHeight, magnification, imageType, isVirtual } = calculateImageProperties();
+
+            // 更新信息显示
+            imageDistanceDisplay.textContent = imageDistance.toFixed(2);
+            imageHeightDisplay.textContent = Math.abs(imageHeight).toFixed(2);
+            magnificationDisplay.textContent = magnification.toFixed(2);
+            imageTypeDisplay.textContent = imageType;
+
+            // 设置坐标系原点在画布中心
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            // 绘制主光轴
+            ctx.beginPath();
+            ctx.moveTo(50, centerY);
+            ctx.lineTo(canvas.width - 50, centerY);
+            ctx.strokeStyle = '#aaa';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // 绘制焦点 F 和 2F
+            const f = focalLength;
+            const scale = 2; // 缩放因子，使演示更清晰
+
+            // 左侧焦点和2倍焦点
+            ctx.beginPath();
+            ctx.arc(centerX - f * scale, centerY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff3333';
+            ctx.fill();
+            ctx.fillText('F', centerX - f * scale - 15, centerY - 10);
+
+            ctx.beginPath();
+            ctx.arc(centerX - 2 * f * scale, centerY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#33cc33';
+            ctx.fill();
+            ctx.fillText('2F', centerX - 2 * f * scale - 20, centerY - 10);
+
+            // 右侧焦点和2倍焦点
+            ctx.beginPath();
+            ctx.arc(centerX + f * scale, centerY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff3333';
+            ctx.fill();
+            ctx.fillText('F', centerX + f * scale + 10, centerY - 10);
+
+            ctx.beginPath();
+            ctx.arc(centerX + 2 * f * scale, centerY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#33cc33';
+            ctx.fill();
+            ctx.fillText('2F', centerX + 2 * f * scale + 10, centerY - 10);
+
+            // 绘制物体（向上的箭头）
+            const objectX = centerX - objectDistance * scale;
+            const objectTopY = centerY - objectHeight;
+            const objectBottomY = centerY;
+
+            ctx.beginPath();
+            ctx.moveTo(objectX, objectBottomY);
+            ctx.lineTo(objectX, objectTopY);
+            ctx.lineTo(objectX - 10, objectTopY + 15);
+            ctx.moveTo(objectX, objectTopY);
+            ctx.lineTo(objectX + 10, objectTopY + 15);
+            ctx.strokeStyle = '#4cd964';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 绘制像（虚像用虚线 + 正立箭头；u=f 时标记为无穷远）
+            const finiteImage = isFinite(imageDistance) && isFinite(imageHeight);
+            const imageTopY = centerY;
+            let imageX, imageBottomY;
+            if (finiteImage) {
+                imageX = centerX + imageDistance * scale;
+                imageX = Math.max(60, Math.min(canvas.width - 60, imageX));
+                imageBottomY = centerY - imageHeight;
+                ctx.setLineDash(isVirtual ? [5, 5] : []);
+                ctx.beginPath();
+                ctx.moveTo(imageX, imageTopY);
+                ctx.lineTo(imageX, imageBottomY);
+                if (isVirtual) {
+                    // 正立箭头（向下）
+                    ctx.lineTo(imageX - 10, imageBottomY + 15);
+                    ctx.moveTo(imageX, imageBottomY);
+                    ctx.lineTo(imageX + 10, imageBottomY + 15);
+                } else {
+                    // 倒立箭头（向上）
+                    ctx.lineTo(imageX - 10, imageBottomY - 15);
+                    ctx.moveTo(imageX, imageBottomY);
+                    ctx.lineTo(imageX + 10, imageBottomY - 15);
+                }
+                ctx.strokeStyle = '#ff9500';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.setLineDash([]);
+            } else {
+                // u ≈ f：不成像
+                imageX = canvas.width - 60;
+                imageBottomY = centerY;
+                ctx.fillStyle = '#ff9500';
+                ctx.font = '14px Arial';
+                ctx.fillText('像在无穷远', canvas.width - 130, 70);
+            }
+
+            // 绘制三条光线：凸透镜前实线；虚像时凸透镜后虚线；u=f 时凸透镜后画到画布边缘
+            ctx.lineWidth = 2;
+            const backDash = isVirtual ? [5, 5] : [];
+            const infDash = [8, 4];
+            const rightEdge = canvas.width - 50;
+
+            // 光线1：平行于主光轴
+            ctx.strokeStyle = 'rgba(255, 50, 50, 0.7)';
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(objectX, objectTopY);
+            ctx.lineTo(centerX, objectTopY);
+            ctx.stroke();
+            if (finiteImage) {
+                if (isVirtual) {
+                    // 实际发散光路（实线）：指向右焦点方向
+                    const t1 = (rightEdge - centerX) / (f * scale);
+                    const actualEndY1 = objectTopY + t1 * (centerY - objectTopY);
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, objectTopY);
+                    ctx.lineTo(rightEdge, actualEndY1);
+                    ctx.stroke();
+                }
+                // 反向延长线/像点连线（虚像虚线，实像实线）
+                ctx.setLineDash(backDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, objectTopY);
+                ctx.lineTo(imageX, imageBottomY);
+                ctx.stroke();
+            } else {
+                ctx.setLineDash(infDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, objectTopY);
+                ctx.lineTo(rightEdge, objectTopY);
+                ctx.stroke();
+            }
+
+            // 光线2：经过光心
+            ctx.strokeStyle = 'rgba(50, 150, 255, 0.7)';
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(objectX, objectTopY);
+            ctx.lineTo(centerX, centerY);
+            ctx.stroke();
+            if (finiteImage) {
+                if (isVirtual) {
+                    // 实际光路（实线）：沿原方向延伸到画布右边缘
+                    const t2 = (rightEdge - centerX) / (objectDistance * scale);
+                    const actualEndY2 = centerY + t2 * (centerY - objectTopY);
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(rightEdge, actualEndY2);
+                    ctx.stroke();
+                }
+                // 反向延长线/像点连线
+                ctx.setLineDash(backDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(imageX, imageBottomY);
+                ctx.stroke();
+            } else {
+                // 沿原方向延伸到画布右边缘
+                const slope = (centerY - objectTopY) / (centerX - objectX);
+                const endY = centerY + slope * (rightEdge - centerX);
+                ctx.setLineDash(infDash);
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(rightEdge, endY);
+                ctx.stroke();
+            }
+
+            // 光线3：经过左侧焦点（虚像时不画此光线）
+            if (!isVirtual) {
+                ctx.strokeStyle = 'rgba(200, 100, 255, 0.75)';
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.moveTo(objectX, objectTopY);
+                ctx.lineTo(centerX, imageBottomY);
+                ctx.stroke();
+                if (finiteImage) {
+                    ctx.setLineDash(backDash);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, imageBottomY);
+                    ctx.lineTo(imageX, imageBottomY);
+                    ctx.stroke();
+                } else {
+                    ctx.setLineDash(infDash);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, imageBottomY);
+                    ctx.lineTo(rightEdge, imageBottomY);
+                    ctx.stroke();
+                }
+            }
+            ctx.setLineDash([]);
+
+            // 绘制虚线辅助线
+            ctx.beginPath();
+            ctx.moveTo(objectX, objectTopY);
+            ctx.lineTo(imageX, objectTopY);
+            ctx.lineTo(imageX, imageBottomY);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+
+            // 添加图例
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px Arial';
+            ctx.fillText('物体', objectX - 25, centerY + 30);
+            ctx.fillText('像', imageX - 10, centerY + 30);
+            ctx.fillText('光线1: 平行光→过焦点', 50, 30);
+            ctx.fillText('光线2: 过光心→方向不变', 50, 50);
+            ctx.fillText('光线3: 过焦点→平行射出', 50, 70);
+
+            ctx.beginPath();
+            ctx.moveTo(40, 25);
+            ctx.lineTo(80, 25);
+            ctx.strokeStyle = 'rgba(255, 50, 50, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(40, 45);
+            ctx.lineTo(80, 45);
+            ctx.strokeStyle = 'rgba(50, 150, 255, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(40, 65);
+            ctx.lineTo(80, 65);
+            ctx.strokeStyle = 'rgba(200, 100, 255, 0.75)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // 初始化绘制
+        updateMinObjectDistance();
+        draw();
+    </script>
+    <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
+    <script src="../_shared/tool-header.js" defer></script>
+</body>
+
+</html>

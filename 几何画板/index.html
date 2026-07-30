@@ -1,0 +1,4251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>几何画板</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg-2: #161b22;
+            --bg-3: #1f262e;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-2: #8b949e;
+            --primary: #2a5caa;
+            --primary-2: #1f4787;
+            --accent: #00e5ff;
+            --danger: #f85149;
+            --warn: #d29922;
+            --success: #3fb950;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            font-size: 13px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ===== 布局 ===== */
+        #app {
+            display: flex;
+            height: 100vh;
+            padding-top: 44px;
+        }
+
+        /* ===== 侧边栏 ===== */
+        #sidebar {
+            width: 190px;
+            background: var(--bg-2);
+            border-right: 1px solid var(--border);
+            overflow-y: scroll;
+            overflow-x: hidden;
+            padding: 2px 0;
+            flex-shrink: 0;
+        }
+        #sidebar::-webkit-scrollbar { width: 8px; }
+        #sidebar::-webkit-scrollbar-track { background: transparent; }
+        #sidebar::-webkit-scrollbar-thumb { background: var(--text-2); border-radius: 4px; }
+        #sidebar { scrollbar-width: thin; scrollbar-color: var(--text-2) transparent; }
+
+        .group {
+            margin-bottom: 2px;
+        }
+        .group-title {
+            font-size: 10px;
+            color: var(--text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 12px 0;
+            margin-bottom: 0;
+        }
+        .tool {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 2px 12px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            text-align: left;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+            border-left: 3px solid transparent;
+            transition: background 0.1s;
+            min-height: 22px;
+        }
+        .tool:hover { background: var(--bg-3); }
+        .tool.active {
+            background: var(--bg-3);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+        .tool .icon {
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .tool .shortcut {
+            margin-left: auto;
+            color: var(--text-2);
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 12px;
+        }
+
+        /* ===== 工具下拉菜单 (多边形 等) ===== */
+        .tool-wrapper {
+            position: relative;
+            display: flex;
+            width: 100%;
+        }
+        .tool-wrapper .tool {
+            flex: 1;
+            border-left: 3px solid transparent;
+        }
+        .tool-wrapper.active > .tool {
+            background: var(--bg-3);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+        .tool-wrapper .dropdown-arrow {
+            width: 26px;
+            flex-shrink: 0;
+            background: transparent;
+            border: none;
+            color: var(--text-2);
+            cursor: pointer;
+            font-size: 9px;
+            transition: background 0.1s, color 0.1s;
+        }
+        .tool-wrapper .dropdown-arrow:hover {
+            background: var(--bg-3);
+            color: var(--text);
+        }
+        .dropdown-popup {
+            position: absolute;
+            left: 100%;
+            top: 0;
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 0;
+            min-width: 140px;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+        .dropdown-popup.dropdown-popup-fixed {
+            position: fixed;
+            left: auto;
+            top: auto;
+        }
+        .dropdown-popup.open { display: block; }
+        .dropdown-popup .item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text);
+            white-space: nowrap;
+            user-select: none;
+        }
+        .dropdown-popup .item:hover { background: var(--bg-3); }
+        .dropdown-popup .item.has-submenu::after {
+            content: '▶';
+            margin-left: 16px;
+            color: var(--text-2);
+            font-size: 9px;
+        }
+        .dropdown-popup .submenu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: -5px;
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 0;
+            min-width: 130px;
+            z-index: 201;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+        .dropdown-popup .item.has-submenu:hover > .submenu,
+        .dropdown-popup .item.has-submenu.expanded > .submenu { display: block; }
+
+        /* ===== 画布区 ===== */
+        #canvas-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        #board {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #ffffff;
+            cursor: crosshair;
+        }
+        #board.tool-select { cursor: default; }
+        #board.tool-pan { cursor: grab; }
+        #board.tool-pan.dragging { cursor: grabbing; }
+        #board.tool-text { cursor: text; }
+        #board.tool-delete { cursor: not-allowed; }
+
+        /* 画布中的图形样式 */
+        .point { fill: #1a1a1a; }
+        .point.highlight { fill: #ff6b35; }
+        .point.selected { fill: #0066ff; }
+        .point-label {
+            font-size: 14px;
+            font-family: "Times New Roman", serif;
+            font-style: italic;
+            fill: #1a1a1a;
+            pointer-events: none;
+        }
+        .segment, .ray, .line {
+            stroke: #1a1a1a;
+            stroke-width: 1.6;
+            fill: none;
+            stroke-linecap: round;
+        }
+        .segment.dashed, .ray.dashed, .line.dashed {
+            stroke-dasharray: 6 4;
+        }
+        .polygon {
+            stroke: #1a1a1a;
+            stroke-width: 1.6;
+            fill: rgba(173, 216, 230, 0.18);
+        }
+        .circle {
+            stroke: #1a1a1a;
+            stroke-width: 1.6;
+            fill: none;
+        }
+        .angle-arc {
+            stroke: #cc5500;
+            stroke-width: 1.4;
+            fill: none;
+        }
+        .angle-text {
+            font-size: 13px;
+            fill: #cc5500;
+            pointer-events: none;
+            font-family: "Times New Roman", serif;
+        }
+        .measure-text {
+            font-size: 12px;
+            fill: #0066ff;
+            pointer-events: none;
+            font-family: "Times New Roman", serif;
+        }
+        .text-label {
+            font-size: 14px;
+            fill: #1a1a1a;
+            pointer-events: none;
+            font-family: "Times New Roman", serif;
+        }
+        .text-label.large { font-size: 18px; }
+
+        .grid-line { stroke: #e8eaed; stroke-width: 0.5; }
+        .grid-line.major { stroke: #d0d7de; stroke-width: 0.8; }
+        .grid-axis { stroke: #5a5a5a; stroke-width: 1; }
+
+        .hit-target {
+            fill: transparent;
+            stroke: transparent;
+            stroke-width: 12;
+            pointer-events: stroke;
+        }
+        .hit-target.fill { fill: transparent; stroke: transparent; }
+        .selected-outline {
+            fill: none;
+            stroke: #0066ff;
+            stroke-width: 2;
+            stroke-dasharray: 4 3;
+            pointer-events: none;
+        }
+
+        /* ===== 状态栏 ===== */
+        #status-bar {
+            height: 32px;
+            background: var(--bg-2);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-2);
+            flex-shrink: 0;
+        }
+        #status-bar .item { display: flex; align-items: center; gap: 6px; }
+        #status-bar .item b { color: var(--text); font-weight: 500; }
+        #status-bar .prompt { color: var(--accent); font-weight: 500; }
+        #status-bar .spacer { flex: 1; }
+
+        /* ===== 浮动参数面板 ===== */
+        #param-panel {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 260px;
+            max-height: calc(100% - 56px);
+            background: rgba(255, 255, 255, 0.97);
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            z-index: 50;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+        #param-panel[hidden] { display: none; }
+        #param-panel header {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #d0d7de;
+            background: rgba(246, 248, 250, 0.9);
+            font-weight: 500;
+            color: #24292f;
+            flex-shrink: 0;
+        }
+        #param-panel header .title { flex: 1; }
+        #param-panel header .close {
+            border: none;
+            background: transparent;
+            color: #57606a;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+            font-weight: 400;
+        }
+        #param-panel header .close:hover { color: #24292f; }
+        #param-body {
+            padding: 10px 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .param-section {
+            font-size: 10px;
+            font-weight: 600;
+            color: #57606a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 10px 0 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #eaeef2;
+        }
+        .param-section:first-child { margin-top: 0; }
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 12px;
+        }
+        .param-row .key { color: #57606a; }
+        .param-row .val { color: #24292f; }
+        .param-row .val.hl { color: #0969da; font-weight: 500; }
+        .param-row .val.editable { padding: 0; }
+        .param-input {
+            width: 100%;
+            padding: 2px 6px;
+            border: 1px solid transparent;
+            border-radius: 3px;
+            background: transparent;
+            color: #24292f;
+            font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 12px;
+            text-align: right;
+            outline: none;
+            transition: border-color 0.1s, background 0.1s;
+        }
+        .param-input:hover {
+            border-color: #d0d7de;
+            background: #fff;
+        }
+        .param-input:focus {
+            border-color: #0969da;
+            background: #fff;
+            box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.15);
+        }
+        .param-input.invalid {
+            border-color: #cf222e;
+            background: #ffebe9;
+        }
+        .param-hint {
+            font-size: 10px;
+            color: #57606a;
+            margin-top: -2px;
+            margin-bottom: 4px;
+            padding-left: 4px;
+        }
+        .param-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .param-buttons button {
+            padding: 5px 8px;
+            background: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #24292f;
+            font-family: inherit;
+            transition: background 0.1s;
+        }
+        .param-buttons button:hover { background: #eaeef2; }
+        .param-buttons button.active {
+            background: #0969da;
+            color: white;
+            border-color: #0969da;
+        }
+        .param-buttons button.active:hover { background: #0550ae; }
+        .param-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .param-actions button {
+            flex: 1;
+            padding: 5px 8px;
+            background: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #24292f;
+            font-family: inherit;
+        }
+        .param-actions button:hover { background: #eaeef2; }
+        .param-actions button.danger { color: #cf222e; }
+        .param-actions button.danger:hover { background: #ffebe9; }
+
+        /* ===== 模态框 ===== */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal {
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 380px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: auto;
+        }
+        .modal h3 { margin-bottom: 12px; color: var(--text); }
+        .modal label { display: block; margin: 10px 0 4px; color: var(--text-2); font-size: 12px; }
+        .modal input, .modal textarea {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font: inherit;
+            font-family: monospace;
+        }
+        .modal textarea { min-height: 120px; resize: vertical; }
+        .modal .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+        .btn {
+            padding: 6px 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn:hover { background: var(--primary-2); }
+        .btn.secondary { background: var(--bg-3); color: var(--text); }
+        .btn.secondary:hover { background: var(--border); }
+        .btn.danger { background: var(--danger); }
+
+        /* ===== 浮动提示 ===== */
+        #toast {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-3);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        #toast.show { opacity: 1; }
+        #toast.error { border-color: var(--danger); color: var(--danger); }
+
+        /* ===== AI 浮动面板 ===== */
+        #ai-panel {
+            position: fixed;
+            top: 56px;
+            right: 12px;
+            width: 400px;
+            max-width: calc(100vw - 24px);
+            height: calc(100vh - 80px);
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            z-index: 200;
+            overflow: hidden;
+            font: 13px/1.5 inherit;
+        }
+        #ai-panel[hidden] { display: none; }
+        #ai-panel header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px;
+            background: var(--bg-3);
+            border-bottom: 1px solid var(--border);
+        }
+        #ai-panel header .title { font-weight: 600; }
+        #ai-panel header .model-name { margin-left: auto; color: var(--text-2); font-size: 12px; cursor: pointer; }
+        #ai-panel header .model-name:hover { color: var(--accent); }
+        #ai-panel header .close {
+            background: none; border: none; color: var(--text-2);
+            font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;
+        }
+        #ai-panel header .close:hover { color: var(--danger); }
+
+        #ai-messages {
+            flex: 1; overflow-y: auto; padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        #ai-messages::-webkit-scrollbar { width: 6px; }
+        #ai-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .ai-msg { padding: 8px 12px; border-radius: 8px; max-width: 100%; word-wrap: break-word; }
+        .ai-msg.user { background: var(--bg-3); align-self: flex-end; max-width: 85%; }
+        .ai-msg.assistant { background: rgba(42,92,170,0.15); border: 1px solid rgba(42,92,170,0.3); }
+        .ai-msg.system { background: rgba(210,153,34,0.1); border: 1px solid rgba(210,153,34,0.3); color: var(--text-2); font-size: 12px; }
+        .ai-msg .role { font-size: 11px; color: var(--text-2); margin-bottom: 4px; }
+        .ai-msg .text { white-space: pre-wrap; line-height: 1.55; }
+        .ai-msg .text code { background: var(--bg-3); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+        .ai-msg .tool-list { margin-top: 6px; font-size: 11px; color: var(--text-2); }
+        .ai-msg .usage { margin-top: 6px; font-size: 10px; color: var(--text-2); opacity: 0.6; }
+        .ai-msg .reasoning { margin-bottom: 8px; font-size: 11px; color: var(--text-2); }
+        .ai-msg .reasoning summary { cursor: pointer; user-select: none; }
+        .ai-msg .reasoning pre { margin: 6px 0 0; padding: 8px 10px; background: var(--bg-3); border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; max-height: 200px; overflow-y: auto; font-family: inherit; }
+        .ai-msg .tool-list span { display: inline-block; background: var(--bg-3); padding: 2px 6px; border-radius: 3px; margin: 2px 2px 0 0; }
+        .ai-msg.thinking { background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); color: var(--text-2); }
+        .ai-msg.thinking .dot { display: inline-block; animation: aiDot 1.2s infinite; }
+        .ai-msg.thinking .dot:nth-child(2) { animation-delay: 0.4s; }
+        .ai-msg.thinking .dot:nth-child(3) { animation-delay: 0.8s; }
+        @keyframes aiDot { 0%, 60%, 100% { opacity: 0.2; } 30% { opacity: 1; } }
+
+        #ai-input-area {
+            border-top: 1px solid var(--border);
+            padding: 10px 14px;
+            display: flex; flex-direction: column; gap: 8px;
+            background: var(--bg-2);
+        }
+        #ai-input {
+            width: 100%; min-height: 60px; max-height: 120px; resize: vertical;
+            background: var(--bg-3); color: var(--text); border: 1px solid var(--border);
+            border-radius: 6px; padding: 8px 10px; font: inherit;
+        }
+        #ai-input:focus { outline: none; border-color: var(--primary); }
+        #ai-input:disabled { opacity: 0.5; }
+        #ai-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        #ai-controls label { display: flex; align-items: center; gap: 4px; color: var(--text-2); font-size: 12px; cursor: pointer; }
+        #ai-controls input[type=checkbox] { cursor: pointer; }
+        #ai-send {
+            background: var(--primary); color: #fff; border: none; padding: 6px 14px;
+            border-radius: 5px; cursor: pointer; font-size: 13px; margin-left: auto;
+        }
+        #ai-send:hover { background: var(--primary-2); }
+        #ai-send:disabled { opacity: 0.5; cursor: not-allowed; }
+        #ai-stop {
+            background: var(--danger); color: #fff; border: none; padding: 6px 14px;
+            border-radius: 5px; cursor: pointer; font-size: 13px; margin-left: auto;
+        }
+        #ai-stop:hover { background: #d83d3d; }
+        #ai-status { color: var(--text-2); font-size: 11px; }
+
+        /* 模型选择模态 */
+        #ai-model-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #ai-model-modal[hidden] { display: none; }
+        #ai-model-modal .inner {
+            background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px;
+            width: 480px; max-width: 90vw; max-height: 70vh; overflow-y: auto; padding: 16px;
+        }
+        #ai-model-modal h3 { margin: 0 0 12px; font-size: 14px; }
+        #ai-model-modal .provider-block { margin-bottom: 14px; }
+        #ai-model-modal .provider-name { color: var(--text-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        #ai-model-modal .model-row {
+            display: flex; align-items: center; padding: 6px 10px; border-radius: 5px;
+            cursor: pointer; transition: background 0.1s;
+        }
+        #ai-model-modal .model-row:hover { background: var(--bg-3); }
+        #ai-model-modal .model-row.active { background: var(--primary-2); color: #fff; }
+        #ai-model-modal .model-row .name { font-weight: 500; }
+        #ai-model-modal .model-row .id { color: var(--text-2); font-size: 11px; margin-left: 8px; font-family: monospace; }
+        #ai-model-modal .model-row .badge { margin-left: auto; font-size: 10px; padding: 2px 6px; border-radius: 3px; background: var(--bg-3); color: var(--text-2); }
+        #ai-model-modal .model-row .badge.pro { background: rgba(42,92,170,0.3); color: var(--accent); }
+        #ai-model-modal .model-row .badge.recommended { background: rgba(0,229,255,0.25); color: var(--accent); }
+        #ai-model-modal .close-row { text-align: right; margin-top: 8px; }
+
+        /* ===== 浮动帮助 ===== */
+        .help-icon {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            line-height: 14px;
+            text-align: center;
+            font-size: 10px;
+            background: var(--border);
+            color: var(--text-2);
+            border-radius: 50%;
+            margin-left: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <aside id="sidebar"></aside>
+        <div id="ai-panel" hidden>
+            <header>
+                <span class="title">🧠 模型解题</span>
+                <span class="model-name" id="ai-model-name" title="点击切换模型">未选择</span>
+                <button class="close" id="ai-close" title="关闭">×</button>
+            </header>
+            <div id="ai-messages"></div>
+            <div id="ai-input-area">
+                <textarea id="ai-input" placeholder="输入题目, 例如: 在△ABC中, AB=AC, ∠A=40°, 求∠B"></textarea>
+                <div id="ai-controls">
+                    <label><input type="checkbox" id="ai-include-board" checked> 附加画板</label>
+                    <span id="ai-status"></span>
+                    <button id="ai-send">发送</button>
+                    <button id="ai-stop" hidden>停止</button>
+                </div>
+            </div>
+        </div>
+        <div id="ai-model-modal" hidden>
+            <div class="inner">
+                <h3>选择模型</h3>
+                <div id="ai-model-list"></div>
+                <div class="close-row"><button class="btn secondary" id="ai-model-close">关闭</button></div>
+            </div>
+        </div>
+        <div id="canvas-area">
+            <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div id="param-panel" hidden>
+                <header>
+                    <span class="title" id="param-title"></span>
+                    <button class="close" id="param-close" title="取消选择">×</button>
+                </header>
+                <div id="param-body"></div>
+            </div>
+            <div id="status-bar">
+                <div class="item">工具:<b id="status-tool">选择</b></div>
+                <div class="item prompt" id="status-prompt"></div>
+                <div class="spacer"></div>
+                <div class="item">元素:<b id="status-count">0</b></div>
+                <div class="item">坐标:<b id="status-pos">—</b></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文本输入模态 -->
+    <div class="modal-backdrop" id="modal-text">
+        <div class="modal">
+            <h3>输入文本</h3>
+            <input type="text" id="text-input" maxlength="60" placeholder="如: A、△ABC 等等">
+            <div class="row">
+                <button class="btn secondary" id="text-cancel">取消</button>
+                <button class="btn" id="text-ok">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 等分点输入模态 -->
+    <div class="modal-backdrop" id="modal-divide">
+        <div class="modal">
+            <h3>等分线段</h3>
+            <label>等分数 (n ≥ 2):</label>
+            <input type="number" id="divide-n" min="2" max="20" value="2">
+            <div class="row">
+                <button class="btn secondary" id="divide-cancel">取消</button>
+                <button class="btn" id="divide-ok">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分享 / 导入 模态 -->
+    <div class="modal-backdrop" id="modal-share">
+        <div class="modal" style="min-width: 520px;">
+            <h3 id="share-title">分享链接</h3>
+            <p style="color: var(--text-2); font-size: 12px; margin-bottom: 8px;">
+                复制下面的链接,任何人都可以打开并看到你的图形。
+            </p>
+            <textarea id="share-url" readonly style="min-height: 80px; word-break: break-all;"></textarea>
+            <div class="row">
+                <button class="btn secondary" id="share-close">关闭</button>
+                <button class="btn" id="share-copy">复制链接</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入 JSON 模态 -->
+    <div class="modal-backdrop" id="modal-import">
+        <div class="modal">
+            <h3>导入 JSON</h3>
+            <p style="color: var(--text-2); font-size: 12px; margin-bottom: 8px;">
+                粘贴之前导出的 JSON 内容:
+            </p>
+            <textarea id="import-json" placeholder="{ &quot;v&quot;: 1, &quot;elements&quot;: [...] }"></textarea>
+            <div class="row">
+                <button class="btn secondary" id="import-cancel">取消</button>
+                <button class="btn danger" id="import-replace">替换当前画板</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 标签编辑模态 -->
+    <div class="modal-backdrop" id="modal-label">
+        <div class="modal">
+            <h3>编辑点标签</h3>
+            <input type="text" id="label-input" maxlength="10">
+            <div class="row">
+                <button class="btn secondary" id="label-cancel">取消</button>
+                <button class="btn" id="label-ok">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <!-- LZString 1.5.0 (MIT, https://github.com/pieroxy/lz-string) -->
+    <script>
+var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",e={};function t(r,o){if(!e[r]){e[r]={};for(var n=0;n<r.length;n++)e[r][r.charAt(n)]=n}return e[r][o]}var i={compressToBase64:function(r){if(null==r)return"";var n=i._compress(r,6,function(r){return o.charAt(r)});switch(n.length%4){default:case 0:return n;case 1:return n+"===";case 2:return n+"==";case 3:return n+"="}},decompressFromBase64:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(n){return t(o,r.charAt(n))})},compressToUTF16:function(o){return null==o?"":i._compress(o,15,function(o){return r(o+32)})+" "},decompressFromUTF16:function(r){return null==r?"":""==r?null:i._decompress(r.length,16384,function(o){return r.charCodeAt(o)-32})},compressToUint8Array:function(r){for(var o=i.compress(r),n=new Uint8Array(2*o.length),e=0,t=o.length;e<t;e++){var s=o.charCodeAt(e);n[2*e]=s>>>8,n[2*e+1]=s%256}return n},decompressFromUint8Array:function(o){if(null==o)return i.decompress(o);for(var n=new Array(o.length/2),e=0,t=n.length;e<t;e++)n[e]=256*o[2*e]+o[2*e+1];var s=[];return n.forEach(function(o){s.push(r(o))}),i.decompress(s.join(""))},compressToEncodedURIComponent:function(r){return null==r?"":i._compress(r,6,function(r){return n.charAt(r)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:(r=r.replace(/ /g,"+"),i._decompress(r.length,32,function(o){return t(n,r.charAt(o))}))},compress:function(o){return i._compress(o,16,function(o){return r(o)})},_compress:function(r,o,n){if(null==r)return"";var e,t,i,s={},u={},a="",p="",c="",l=2,f=3,h=2,d=[],m=0,v=0;for(i=0;i<r.length;i+=1)if(a=r.charAt(i),Object.prototype.hasOwnProperty.call(s,a)||(s[a]=f++,u[a]=!0),p=c+a,Object.prototype.hasOwnProperty.call(s,p))c=p;else{if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++),s[p]=f++,c=String(a)}if(""!==c){if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++)}for(t=2,e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;for(;;){if(m<<=1,v==o-1){d.push(n(m));break}v++}return d.join("")},decompress:function(r){return null==r?"":""==r?null:i._decompress(r.length,32768,function(o){return r.charCodeAt(o)})},_decompress:function(o,n,e){var t,i,s,u,a,p,c,l=[],f=4,h=4,d=3,m="",v=[],g={val:e(0),position:n,index:1};for(t=0;t<3;t+=1)l[t]=t;for(s=0,a=Math.pow(2,2),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 2:return""}for(l[3]=c,i=c,v.push(c);;){if(g.index>o)return"";for(s=0,a=Math.pow(2,d),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(c=s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 2:return v.join("")}if(0==f&&(f=Math.pow(2,d),d++),l[c])m=l[c];else{if(c!==h)return null;m=i+i.charAt(0)}v.push(m),l[h++]=i+m.charAt(0),i=m,0==--f&&(f=Math.pow(2,d),d++)}}};return i}();"function"==typeof define&&define.amd?define(function(){return LZString}):"undefined"!=typeof module&&null!=module?module.exports=LZString:"undefined"!=typeof angular&&null!=angular&&angular.module("LZString",[]).factory("LZString",function(){return LZString});
+    </script>
+
+<script>
+// 几何画板 - 主应用
+(function() {
+  'use strict';
+
+  // ==================== 常量 ====================
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const HIT_DIST = 10;
+  const HIT_DIST_LINE = 7;
+  const VIEW_DEFAULT_SCALE = 40;
+
+  // ==================== 状态 ====================
+  const state = {
+    elements: [],
+    view: { x: 0, y: 0, scale: VIEW_DEFAULT_SCALE },
+    selection: new Set(),
+    currentTool: 'select',
+    pendingVertex: null,    // 多步工具的第一个点
+    toolStep: 0,            // 多步工具的当前步
+    toolPicked: [],         // 多步工具已选
+    pendingPoly: [],        // 多边形已选点的 ID 数组
+    pendingCircleCenter: null,
+    showGrid: false,
+    nextId: 1,
+    nextLabelIdx: 0,
+    history: [],
+    redoStack: [],
+    pendingTextPos: null,
+    pendingDivide: null,
+    editingLabel: null,
+    shapeDrag: null,
+    hoverPoint: null,
+  };
+
+  // ==================== 工具配置 ====================
+  const TOOLS = [
+    { name: '视图', items: [
+      { id: 'toggle-grid', name: '显示 / 隐藏栅格', icon: '#', shortcut: 'G 键' },
+      { id: 'reset-view', name: '重置视图', icon: '⌖' },
+    ]},
+    { name: '基本', items: [
+      { id: 'select', name: '选择 / 移动', icon: '↖', shortcut: 'V' },
+      { id: 'pan', name: '平移视图', icon: '✋', shortcut: 'H' },
+      { id: 'point', name: '点', icon: '·', shortcut: 'P' },
+      { id: 'segment', name: '线段', icon: '──', shortcut: 'L' },
+      { id: 'ray', name: '射线', icon: '──▶', shortcut: 'R' },
+      { id: 'line', name: '直线', icon: '────', shortcut: 'T' },
+      { id: 'polygon', name: '多边形', icon: '⬠', dropdown: true },
+      { id: 'circle', name: '圆', icon: '○', shortcut: 'C' },
+      { id: 'angle', name: '角度标', icon: '∠', shortcut: 'A', prompt: '请依次选择 3 个点（中间一个为角的顶点）' },
+      { id: 'text', name: '文本', icon: 'T', shortcut: 'X' },
+      { id: 'delete', name: '删除', icon: '✕', shortcut: 'D' },
+    ]},
+    { name: 'AI', items: [
+      { id: 'ai-solver', name: '模型解题', icon: '🧠' },
+    ]},
+    { name: '构造', items: [
+      { id: 'midpoint', name: '中点', icon: '◐', prompt: '请依次选择 2 个点' },
+      { id: 'bisect', name: '角平分线', icon: '⌿', prompt: '请依次选择 3 个点（角顶点和两边各一点）' },
+      { id: 'perpendicular', name: '垂线', icon: '⊥', prompt: '请先选一条线（线段/射线/直线），再选 1 个点' },
+      { id: 'parallel', name: '平行线', icon: '∥', prompt: '请先选一条线，再选 1 个点' },
+      { id: 'perpbisect', name: '垂直平分线', icon: '⊕', prompt: '请依次选择 2 个点' },
+      { id: 'intersection', name: '交点', icon: '✕', prompt: '请选择 2 个对象（线/圆），取第一组交点' },
+      { id: 'divide', name: '等分点', icon: '⋯', prompt: '请依次选择 2 个点，然后输入等分数' },
+    ]},
+    { name: '测量', items: [
+      { id: 'measure-length', name: '长度', icon: '|x|', prompt: '请选择 2 个点' },
+      { id: 'measure-angle', name: '角度', icon: '∠°', prompt: '请依次选择 3 个点（角顶点和两边各一点）' },
+    ]},
+    { name: '文件', items: [
+      { id: 'export-png', name: '导出 PNG', icon: '🖼' },
+      { id: 'export-json', name: '导出 JSON', icon: '{ }' },
+      { id: 'share-link', name: '分享链接', icon: '🔗' },
+      { id: 'import-json', name: '导入 JSON', icon: '↓' },
+      { id: 'clear', name: '清空画板', icon: '🗑' },
+    ]},
+  ];
+
+  // 预设多边形: 2 次点击生成（除特别说明）
+  const PREDIFINED_SHAPES = {
+    'tri-isoceles':       { name: '等腰三角形',   icon: '△',  p1: '底边中点', p2: '顶点' },
+    'tri-equilateral':    { name: '等边三角形',   icon: '△',  p1: '中心',     p2: '一个顶点' },
+    'quad-parallelogram': { name: '平行四边形',   icon: '▱',  p1: '一个角',   p2: '相邻角' },
+    'quad-rectangle':     { name: '矩形',         icon: '▭',  p1: '一个角',   p2: '对角' },
+    'quad-rhombus':       { name: '菱形',         icon: '◇',  p1: '一个角',   p2: '相邻角' },
+    'quad-square':        { name: '正方形',       icon: '□',  p1: '一个角',   p2: '对角' },
+  };
+  function shapePrompt(id) {
+    const s = PREDIFINED_SHAPES[id];
+    return s ? `请依次选择 2 个点: ${s.p1}, ${s.p2}` : '';
+  }
+
+  const CONSTRUCTION_DEFS = {
+    'midpoint':         { n: 2, types: ['p', 'p'] },
+    'bisect':           { n: 3, types: ['p', 'p', 'p'] },
+    'perpendicular':    { n: 2, types: ['line-like', 'p'] },
+    'parallel':         { n: 2, types: ['line-like', 'p'] },
+    'perpbisect':       { n: 2, types: ['p', 'p'] },
+    'intersection':     { n: 2, types: ['line-or-circle', 'line-or-circle'] },
+    'divide':           { n: 2, types: ['p', 'p'] },
+    'measure-length':   { n: 2, types: ['p', 'p'] },
+    'measure-angle':    { n: 3, types: ['p', 'p', 'p'] },
+  };
+
+  // ==================== 几何工具 ====================
+  const G = {
+    add: (a, b) => ({ x: a.x + b.x, y: a.y + b.y }),
+    sub: (a, b) => ({ x: a.x - b.x, y: a.y - b.y }),
+    mul: (a, s) => ({ x: a.x * s, y: a.y * s }),
+    dot: (a, b) => a.x * b.x + a.y * b.y,
+    cross: (a, b) => a.x * b.y - a.y * b.x,
+    len: (a) => Math.hypot(a.x, a.y),
+    dist: (a, b) => Math.hypot(a.x - b.x, a.y - b.y),
+    norm: (a) => { const l = Math.hypot(a.x, a.y); return l === 0 ? {x:0,y:0} : { x: a.x/l, y: a.y/l }; },
+    perp: (a) => ({ x: -a.y, y: a.x }),
+    midpoint: (a, b) => ({ x: (a.x + b.x)/2, y: (a.y + b.y)/2 }),
+    closestOnSegment: (p, a, b) => {
+      const ab = G.sub(b, a);
+      const len2 = G.dot(ab, ab);
+      if (len2 === 0) return a;
+      const t = Math.max(0, Math.min(1, G.dot(G.sub(p, a), ab) / len2));
+      return G.add(a, G.mul(ab, t));
+    },
+    closestOnLine: (p, a, b) => {
+      const ab = G.sub(b, a);
+      const len2 = G.dot(ab, ab);
+      if (len2 === 0) return a;
+      return G.add(a, G.mul(ab, G.dot(G.sub(p, a), ab) / len2));
+    },
+    angleAt: (v, p1, p2) => {
+      const u1 = G.sub(p1, v), u2 = G.sub(p2, v);
+      const c = G.dot(u1, u2) / (G.len(u1) * G.len(u2));
+      return Math.acos(Math.max(-1, Math.min(1, c)));
+    },
+    lineLineIntersect: (a, b, c, d) => {
+      const d1 = G.sub(b, a), d2 = G.sub(d, c);
+      const det = G.cross(d1, d2);
+      if (Math.abs(det) < 1e-9) return null;
+      const t = G.cross(G.sub(c, a), d2) / det;
+      return G.add(a, G.mul(d1, t));
+    },
+    lineCircleIntersect: (a, b, O, r) => {
+      const d = G.sub(b, a);
+      const f = G.sub(a, O);
+      const A = G.dot(d, d);
+      const B = 2 * G.dot(f, d);
+      const C = G.dot(f, f) - r * r;
+      const disc = B * B - 4 * A * C;
+      if (disc < 0) return [];
+      const sq = Math.sqrt(Math.max(0, disc));
+      const t1 = (-B - sq) / (2 * A);
+      const t2 = (-B + sq) / (2 * A);
+      return [G.add(a, G.mul(d, t1)), G.add(a, G.mul(d, t2))];
+    },
+    circleCircleIntersect: (O1, r1, O2, r2) => {
+      const d = G.dist(O1, O2);
+      if (d < 1e-9 || d > r1 + r2 + 1e-9 || d < Math.abs(r1 - r2) - 1e-9) return [];
+      const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+      const h2 = Math.max(0, r1 * r1 - a * a);
+      const h = Math.sqrt(h2);
+      const dir = G.norm(G.sub(O2, O1));
+      const P = G.add(O1, G.mul(dir, a));
+      const perp = G.perp(dir);
+      return [G.add(P, G.mul(perp, h)), G.sub(P, G.mul(perp, h))];
+    },
+    triangleArea: (A, B, C) => Math.abs(G.cross(G.sub(B, A), G.sub(C, A))) / 2,
+    circumcenter: (A, B, C) => {
+      const a2 = G.dot(A, A), b2 = G.dot(B, B), c2 = G.dot(C, C);
+      const D = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
+      if (Math.abs(D) < 1e-9) return null;
+      return {
+        x: (a2 * (B.y - C.y) + b2 * (C.y - A.y) + c2 * (A.y - B.y)) / D,
+        y: (a2 * (C.x - B.x) + b2 * (A.x - C.x) + c2 * (B.x - A.x)) / D,
+      };
+    },
+    incenter: (A, B, C) => {
+      const a = G.dist(B, C), b = G.dist(A, C), c = G.dist(A, B);
+      const s = a + b + c;
+      if (s < 1e-9) return null;
+      return { x: (a * A.x + b * B.x + c * C.x) / s, y: (a * A.y + b * B.y + c * C.y) / s };
+    },
+    centroid: (A, B, C) => ({ x: (A.x + B.x + C.x) / 3, y: (A.y + B.y + C.y) / 3 }),
+    orthocenter: (A, B, C) => {
+      const O = G.circumcenter(A, B, C);
+      if (!O) return null;
+      return { x: A.x + B.x + C.x - 2 * O.x, y: A.y + B.y + C.y - 2 * O.y };
+    },
+    bisectorDir: (v, p1, p2) => G.norm(G.add(G.norm(G.sub(p1, v)), G.norm(G.sub(p2, v)))),
+    polygonArea: (pts) => {
+      let a = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const j = (i + 1) % pts.length;
+        a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+      }
+      return Math.abs(a) / 2;
+    },
+    polygonPerimeter: (pts) => {
+      let p = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const j = (i + 1) % pts.length;
+        p += G.dist(pts[i], pts[j]);
+      }
+      return p;
+    },
+  };
+
+  // ==================== ID / 标签 / 工具 ====================
+  function newId() { return state.nextId++; }
+  function nextLabel() {
+    if (state.nextLabelIdx < 26) return String.fromCharCode(65 + state.nextLabelIdx++);
+    return 'P' + (state.nextLabelIdx++ - 25);
+  }
+  function findEl(id) { return state.elements.find(e => e.id === id); }
+  function findPoint(id) { const e = findEl(id); return e && e.t === 'p' ? e : null; }
+  function pointAt(id) { const p = findPoint(id); return p ? { x: p.x, y: p.y } : null; }
+  function isLineLike(el) { return el && (el.t === 'l' || el.t === 'r' || el.t === 's' || el.t === 'g'); }
+  function isCircleLike(el) { return el && (el.t === 'c' || el.t === 'g'); }
+  function isLineOrCircle(el) { return el && (el.t === 'l' || el.t === 'r' || el.t === 's' || el.t === 'c' || el.t === 'g'); }
+  function typeMatches(el, type) {
+    if (type === 'p') return el.t === 'p';
+    if (type === 'line-like') return isLineLike(el);
+    if (type === 'line-or-circle') return isLineOrCircle(el);
+    return false;
+  }
+
+  // ==================== 序列化 / 历史 ====================
+  function serialize() {
+    return {
+      v: 1,
+      view: { ...state.view },
+      nextId: state.nextId,
+      nextLabelIdx: state.nextLabelIdx,
+      elements: state.elements.map(e => {
+        const o = { id: e.id, t: e.t };
+        for (const k in e) if (k !== 'id' && k !== 't') o[k] = e[k];
+        return o;
+      }),
+    };
+  }
+
+  // 紧凑格式: [version, meta, points, elements]
+  //   version: 1
+  //   meta: [nextLabelIdx, viewX, viewY, viewScale]
+  //   points: [[x, y, label?], ...]  label 可省略
+  //   elements: 每项 [type, ...args, flags?]
+  //     s/r/l: [type, pi, pj]
+  //     c:     [type, centerPi, radiusPi]
+  //     g:     [type, p0, p1, p2, ...]
+  //     a:     [type, vertexPi, p1Pi, p2Pi, text?]
+  //     x:     [type, x, y, text, anchorPi?]
+  //     m:     [type, p1Pi, p2Pi, text?]
+  //   flags: 'D' 派生 / 'd' 虚线(可组合,如 'Dd')
+  function serializeCompact() {
+    const pointIdx = new Map();
+    const points = [];
+    for (const el of state.elements) {
+      if (el.t === 'p' && !pointIdx.has(el.id)) {
+        pointIdx.set(el.id, points.length);
+        points.push(el.label ? [el.x, el.y, el.label] : [el.x, el.y]);
+      }
+    }
+    const elements = [];
+    for (const el of state.elements) {
+      if (el.t === 'p') continue;
+      const flags = (el.derived ? 'D' : '') + (el.dashed ? 'd' : '');
+      let t;
+      if (el.t === 's' || el.t === 'r' || el.t === 'l') {
+        t = [el.t, pointIdx.get(el.a), pointIdx.get(el.b)];
+      } else if (el.t === 'c') {
+        t = [el.t, pointIdx.get(el.center), pointIdx.get(el.radius)];
+      } else if (el.t === 'g') {
+        // 约束多边形用 'G' + 子类型字母 (e.g., 'Gi' = iso-tri, 'Gs' = square)
+        const cCode = { 'iso-tri': 'i', 'equilateral': 'e', 'parallelogram': 'p', 'rectangle': 'r', 'rhombus': 'h', 'square': 's' };
+        const tag = el.constraint && cCode[el.constraint] ? 'G' + cCode[el.constraint] : 'g';
+        t = [tag, ...el.points.map(id => pointIdx.get(id))];
+      } else if (el.t === 'a') {
+        t = [el.t, pointIdx.get(el.vertex), pointIdx.get(el.p1), pointIdx.get(el.p2)];
+        if (el.text) t.push(el.text);
+      } else if (el.t === 'x') {
+        t = [el.t, el.x, el.y, el.text];
+        if (el.anchor) t.push(pointIdx.get(el.anchor));
+      } else if (el.t === 'm') {
+        t = [el.t, pointIdx.get(el.a), pointIdx.get(el.b)];
+        if (el.text) t.push(el.text);
+      }
+      if (flags) t.push(flags);
+      elements.push(t);
+    }
+    return [1, [state.nextLabelIdx, state.view.x, state.view.y, state.view.scale], points, elements];
+  }
+
+  function deserializeCompact(data) {
+    if (!Array.isArray(data) || data.length !== 4 || data[0] !== 1) return null;
+    const [, meta, points, elements] = data;
+    if (!Array.isArray(meta) || meta.length < 4) return null;
+    if (!Array.isArray(points) || !Array.isArray(elements)) return null;
+    const [nextLabelIdx, vx, vy, vs] = meta;
+    const ids = [];
+    const out = [];
+    let nextId = 1;
+    for (const p of points) {
+      if (!Array.isArray(p) || p.length < 2) continue;
+      const x = +p[0], y = +p[1];
+      if (!isFinite(x) || !isFinite(y)) continue;
+      const id = nextId++;
+      ids.push(id);
+      const el = { id, t: 'p', x, y };
+      if (p[2] != null) el.label = String(p[2]);
+      out.push(el);
+    }
+    for (const e of elements) {
+      if (!Array.isArray(e) || e.length < 1) continue;
+      const t = e[0];
+      let rest = e.slice(1);
+      let flags = '';
+      if (rest.length > 0 && typeof rest[rest.length - 1] === 'string') {
+        flags = rest.pop();
+      }
+      const id = nextId++;
+      const el = { id, t };
+      if (flags.includes('D')) el.derived = true;
+      if (flags.includes('d')) el.dashed = true;
+      if (t === 's' || t === 'r' || t === 'l') {
+        if (rest.length < 2 || !ids[rest[0]] || !ids[rest[1]]) continue;
+        el.a = ids[rest[0]]; el.b = ids[rest[1]];
+      } else if (t === 'c') {
+        if (rest.length < 2 || !ids[rest[0]] || !ids[rest[1]]) continue;
+        el.center = ids[rest[0]]; el.radius = ids[rest[1]];
+      } else if (t === 'g' || t.startsWith('G')) {
+        const pts = rest.map(i => ids[i]).filter(Boolean);
+        if (pts.length < 3) continue;
+        el.points = pts;
+        el.t = 'g';
+        if (t.length === 2) {
+          const cDecode = { i: 'iso-tri', e: 'equilateral', p: 'parallelogram', r: 'rectangle', h: 'rhombus', s: 'square' };
+          el.constraint = cDecode[t[1]] || null;
+        }
+      } else if (t === 'a') {
+        if (rest.length < 3) continue;
+        el.vertex = ids[rest[0]]; el.p1 = ids[rest[1]]; el.p2 = ids[rest[2]];
+        if (rest[3] != null) el.text = String(rest[3]);
+      } else if (t === 'x') {
+        if (rest.length < 3) continue;
+        el.x = +rest[0]; el.y = +rest[1]; el.text = String(rest[2]);
+        if (rest[3] != null && ids[rest[3]]) el.anchor = ids[rest[3]];
+      } else if (t === 'm') {
+        if (rest.length < 2) continue;
+        el.a = ids[rest[0]]; el.b = ids[rest[1]];
+        if (rest[2] != null) el.text = String(rest[2]);
+      } else {
+        continue;
+      }
+      out.push(el);
+    }
+    return {
+      v: 1,
+      view: { x: +vx || 0, y: +vy || 0, scale: +vs || VIEW_DEFAULT_SCALE },
+      nextId,
+      nextLabelIdx: +nextLabelIdx || 0,
+      elements: out,
+    };
+  }
+
+  // 尝试解析:老格式(对象) 或 紧凑格式(数组)
+  function tryLoadData(input) {
+    if (input && Array.isArray(input.elements)) return input;  // 老格式
+    if (Array.isArray(input) && input.length === 4) {          // 紧凑格式
+      return deserializeCompact(input);
+    }
+    return null;
+  }
+  function loadFrom(data) {
+    if (!data || !data.elements) return;
+    // 保留选择: 若 id 仍存在于新 state, 重新加入 selection
+    const prevSelection = [...state.selection];
+    state.elements = data.elements.map(e => ({ id: e.id, t: e.t, ...e }));
+    state.nextId = data.nextId || (Math.max(0, ...data.elements.map(e => e.id)) + 1);
+    state.nextLabelIdx = data.nextLabelIdx || 0;
+    state.view = data.view || { x: 0, y: 0, scale: VIEW_DEFAULT_SCALE };
+    state.selection.clear();
+    for (const id of prevSelection) {
+      if (state.elements.find(e => e.id === id)) state.selection.add(id);
+    }
+    state.pendingVertex = null;
+    state.pendingCircleCenter = null;
+    state.pendingPoly = [];
+    state.toolStep = 0;
+    state.toolPicked = [];
+    state.shapeDrag = null;
+    state.hoverPoint = null;
+    render();
+  }
+  function pushHistory() {
+    state.history.push(serialize());
+    if (state.history.length > 100) state.history.shift();
+    state.redoStack.length = 0;
+  }
+  function undo() {
+    if (state.history.length === 0) { toast('已是最早'); return; }
+    state.redoStack.push(serialize());
+    loadFrom(state.history.pop());
+    toast('撤销');
+  }
+  function redo() {
+    if (state.redoStack.length === 0) { toast('已是最晚'); return; }
+    state.history.push(serialize());
+    loadFrom(state.redoStack.pop());
+    toast('重做');
+  }
+
+  // ==================== 元素创建 / 删除 ====================
+  function addEl(el) { state.elements.push(el); return el; }
+  function createPoint(x, y, label) { return addEl({ id: newId(), t: 'p', x, y, label: label || nextLabel() }); }
+  function findOrCreatePointAt(x, y) {
+    for (const e of state.elements) {
+      if (e.t === 'p' && Math.abs(e.x - x) < 0.5 && Math.abs(e.y - y) < 0.5) return e;
+    }
+    return createPoint(x, y);
+  }
+  function deleteEl(id) {
+    state.elements = state.elements.filter(e => e.id !== id);
+    // 清除引用
+    state.elements.forEach(e => {
+      if (e.t === 's' || e.t === 'r' || e.t === 'l') {
+        if (e.a === id) e.a = null; if (e.b === id) e.b = null;
+      } else if (e.t === 'c') {
+        if (e.center === id) e.center = null; if (e.radius === id) e.radius = null;
+      } else if (e.t === 'g') e.points = e.points.filter(p => p !== id);
+      else if (e.t === 'a') {
+        if (e.vertex === id) e.vertex = null;
+        if (e.p1 === id) e.p1 = null;
+        if (e.p2 === id) e.p2 = null;
+      } else if (e.t === 'm') {
+        if (e.a === id) e.a = null; if (e.b === id) e.b = null;
+      } else if (e.t === 'x' && e.anchor === id) e.anchor = null;
+    });
+    // 清理孤儿元素
+    state.elements = state.elements.filter(e => {
+      if (e.t === 'p') return true;
+      if (e.t === 's' || e.t === 'r' || e.t === 'l') return e.a && e.b;
+      if (e.t === 'c') return e.center && e.radius;
+      if (e.t === 'g') return e.points.length >= 3;
+      if (e.t === 'a') return e.vertex && e.p1 && e.p2;
+      if (e.t === 'm') return e.a && e.b;
+      if (e.t === 'x') return !e.anchor || e.anchor;
+      return true;
+    });
+    // 清理无引用的点
+    cleanupPoints();
+    state.selection.delete(id);
+  }
+  function cleanupPoints() {
+    const used = new Set();
+    state.elements.forEach(e => {
+      if (e.t === 'p') return;
+      if (e.t === 's' || e.t === 'r' || e.t === 'l') { used.add(e.a); used.add(e.b); }
+      else if (e.t === 'c') { used.add(e.center); used.add(e.radius); }
+      else if (e.t === 'g') e.points.forEach(p => used.add(p));
+      else if (e.t === 'a') { used.add(e.vertex); used.add(e.p1); used.add(e.p2); }
+      else if (e.t === 'm') { used.add(e.a); used.add(e.b); }
+      else if (e.t === 'x' && e.anchor) used.add(e.anchor);
+    });
+    state.elements = state.elements.filter(e => {
+      if (e.t !== 'p') return true;
+      return used.has(e.id);
+    });
+  }
+
+  // ==================== 坐标转换 ====================
+  const svg = document.getElementById('board');
+  function getRect() { return svg.getBoundingClientRect(); }
+  function screenToWorld(sx, sy) {
+    const r = getRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    return { x: (sx - cx) / state.view.scale + state.view.x, y: (sy - cy) / state.view.scale + state.view.y };
+  }
+  function worldToScreen(p) {
+    const r = getRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    return { x: (p.x - state.view.x) * state.view.scale + cx, y: (p.y - state.view.y) * state.view.scale + cy };
+  }
+
+  // ==================== 侧边栏 ====================
+  const sidebar = document.getElementById('sidebar');
+  function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-popup.open').forEach(p => p.classList.remove('open'));
+  }
+
+  function renderSidebar() {
+    sidebar.innerHTML = '';
+    TOOLS.forEach(group => {
+      const g = document.createElement('div');
+      g.className = 'group';
+      const title = document.createElement('div');
+      title.className = 'group-title';
+      title.textContent = group.name;
+      g.appendChild(title);
+      group.items.forEach(item => {
+        if (item.dropdown) {
+          g.appendChild(buildDropdownButton(item));
+        } else {
+          const btn = document.createElement('button');
+          btn.className = 'tool';
+          btn.dataset.tool = item.id;
+          btn.innerHTML = `<span class="icon">${item.icon}</span><span>${item.name}</span>` +
+            (item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : '');
+          btn.addEventListener('click', () => activateTool(item.id));
+          g.appendChild(btn);
+        }
+      });
+      sidebar.appendChild(g);
+    });
+  }
+
+  function buildDropdownButton(item) {
+    const wrap = document.createElement('div');
+    wrap.className = 'tool-wrapper';
+    wrap.dataset.tool = item.id;
+    const main = document.createElement('button');
+    main.className = 'tool';
+    main.innerHTML = `<span class="icon">${item.icon}</span><span>${item.name}</span>`;
+    main.addEventListener('click', () => { closeAllDropdowns(); activateTool(item.id); });
+    const arrow = document.createElement('button');
+    arrow.className = 'dropdown-arrow';
+    arrow.innerHTML = '▼';
+    arrow.addEventListener('click', e => {
+      e.stopPropagation();
+      const popup = wrap.querySelector('.dropdown-popup');
+      const wasOpen = popup.classList.contains('open');
+      closeAllDropdowns();
+      if (!wasOpen) {
+        const r = wrap.getBoundingClientRect();
+        popup.style.left = (r.right + 4) + 'px';
+        popup.style.top = r.top + 'px';
+        popup.classList.add('open');
+      }
+    });
+    const popup = document.createElement('div');
+    popup.className = 'dropdown-popup dropdown-popup-fixed';
+    popup.innerHTML = `
+      <div class="item" data-action="polygon">任意多边形</div>
+      <div class="item has-submenu" data-action="toggle-tri">
+        <span>三角形</span>
+        <div class="submenu">
+          <div class="item" data-action="tri-isoceles">等腰三角形</div>
+          <div class="item" data-action="tri-equilateral">等边三角形</div>
+        </div>
+      </div>
+      <div class="item has-submenu" data-action="toggle-quad">
+        <span>四边形</span>
+        <div class="submenu">
+          <div class="item" data-action="quad-parallelogram">平行四边形</div>
+          <div class="item" data-action="quad-rectangle">矩形</div>
+          <div class="item" data-action="quad-rhombus">菱形</div>
+          <div class="item" data-action="quad-square">正方形</div>
+        </div>
+      </div>
+    `;
+    popup.querySelectorAll('.item').forEach(it => {
+      it.addEventListener('click', e => {
+        e.stopPropagation();
+        const action = it.dataset.action;
+        if (action === 'toggle-tri' || action === 'toggle-quad') {
+          it.classList.toggle('expanded');
+        } else {
+          closeAllDropdowns();
+          activateTool(action);
+        }
+      });
+    });
+    wrap.appendChild(main);
+    wrap.appendChild(arrow);
+    wrap.appendChild(popup);
+    return wrap;
+  }
+
+  function toolDef(id) { return TOOLS.flatMap(g => g.items).find(i => i.id === id); }
+  function activateTool(id) {
+    if (id === 'export-png') return exportPng();
+    if (id === 'export-json') return exportJson();
+    if (id === 'share-link') return shareLink();
+    if (id === 'import-json') return openImportModal();
+    if (id === 'clear') return clearAll();
+    if (id === 'toggle-grid') return toggleGrid();
+    if (id === 'reset-view') return resetView();
+    if (id === 'ai-solver') return aiTogglePanel();
+
+    state.currentTool = id;
+    state.pendingVertex = null;
+    state.pendingCircleCenter = null;
+    state.pendingPoly = [];
+    state.toolStep = 0;
+    state.toolPicked = [];
+    state.shapeDrag = null;
+    state.hoverPoint = null;
+    state.selection.clear();
+    clearPreview();
+
+    document.querySelectorAll('.tool-wrapper, .tool').forEach(b => {
+      b.classList.toggle('active', b.dataset.tool === id);
+    });
+
+    svg.classList.remove('tool-select', 'tool-pan', 'tool-text', 'tool-delete');
+    if (id === 'select') svg.classList.add('tool-select');
+    else if (id === 'pan') svg.classList.add('tool-pan');
+    else if (id === 'text') svg.classList.add('tool-text');
+    else if (id === 'delete') svg.classList.add('tool-delete');
+
+    let def = toolDef(id);
+    let name = def ? def.name : (PREDIFINED_SHAPES[id] ? PREDIFINED_SHAPES[id].name : id);
+    let prompt = '';
+    if (CONSTRUCTION_DEFS[id]) {
+      state.toolPicked = [];
+      state.toolStep = 0;
+      prompt = def.prompt || '';
+    } else if (PREDIFINED_SHAPES[id]) {
+      prompt = shapePrompt(id);
+    } else if (def) {
+      prompt = def.prompt || '';
+    }
+    document.getElementById('status-tool').textContent = name;
+    document.getElementById('status-prompt').textContent = prompt;
+    closeAllDropdowns();
+  }
+
+  // ==================== 渲染 ====================
+  function svgEl(name, attrs) {
+    const el = document.createElementNS(SVG_NS, name);
+    if (attrs) for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function clearChildren(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+
+  function render() {
+    const rect = getRect();
+    svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+    svg.setAttribute('width', rect.width);
+    svg.setAttribute('height', rect.height);
+    clearChildren(svg);
+    svg.appendChild(svgEl('rect', { x: 0, y: 0, width: '100%', height: '100%', fill: '#ffffff' }));
+    if (state.showGrid) renderGrid();  // (renderGrid appends <g id="grid"> to svg)
+    state.elements.forEach(renderElement);
+    state.selection.forEach(id => { const e = findEl(id); if (e) renderSelectionOutline(e); });
+    renderPreviews();
+    document.getElementById('status-count').textContent = state.elements.length;
+    renderParamPanel();
+  }
+
+  function renderGrid() {
+    const rect = getRect();
+    const tl = screenToWorld(0, 0);
+    const br = screenToWorld(rect.width, rect.height);
+    const g = svgEl('g', { id: 'grid' });
+    const step = 1, major = 5;
+    const startX = Math.floor(tl.x / step) * step;
+    const endX = Math.ceil(br.x / step) * step;
+    const startY = Math.floor(tl.y / step) * step;
+    const endY = Math.ceil(br.y / step) * step;
+    for (let x = startX; x <= endX; x += step) {
+      const sx = worldToScreen({ x, y: 0 }).x;
+      const isMajor = Math.abs(x % major) < 1e-6;
+      g.appendChild(svgEl('line', { x1: sx, y1: 0, x2: sx, y2: rect.height,
+        class: isMajor ? 'grid-line major' : 'grid-line' }));
+    }
+    for (let y = startY; y <= endY; y += step) {
+      const sy = worldToScreen({ x: 0, y }).y;
+      const isMajor = Math.abs(y % major) < 1e-6;
+      g.appendChild(svgEl('line', { x1: 0, y1: sy, x2: rect.width, y2: sy,
+        class: isMajor ? 'grid-line major' : 'grid-line' }));
+    }
+    const o = worldToScreen({ x: 0, y: 0 });
+    g.appendChild(svgEl('line', { x1: o.x, y1: 0, x2: o.x, y2: rect.height, class: 'grid-axis' }));
+    g.appendChild(svgEl('line', { x1: 0, y1: o.y, x2: rect.width, y2: o.y, class: 'grid-axis' }));
+    svg.appendChild(g);
+  }
+
+  function renderElement(el) {
+    if (el.t === 'p') renderPoint(el);
+    else if (el.t === 's') renderSegment(el);
+    else if (el.t === 'r') renderRay(el);
+    else if (el.t === 'l') renderLine(el);
+    else if (el.t === 'g') renderPolygon(el);
+    else if (el.t === 'c') renderCircle(el);
+    else if (el.t === 'a') renderAngle(el);
+    else if (el.t === 'x') renderText(el);
+    else if (el.t === 'm') renderMeasure(el);
+  }
+
+  function isPointSnapped(id) {
+    // 在 segment/ray/line 工具下, 选中的端点也要高亮
+    if (state.currentTool === 'segment' || state.currentTool === 'ray' || state.currentTool === 'line') {
+      if (state.pendingVertex === id) return true;
+    }
+    return false;
+  }
+
+  function renderPoint(p) {
+    const s = worldToScreen(p);
+    const highlight = state.toolPicked.some(x => x.id === p.id)
+      || state.hoverPoint === p.id
+      || isPointSnapped(p.id);
+    const selected = state.selection.has(p.id);
+    const cls = 'point' + (highlight ? ' highlight' : '') + (selected ? ' selected' : '');
+    svg.appendChild(svgEl('circle', { cx: s.x, cy: s.y, r: 4, class: cls, 'data-id': p.id }));
+    if (p.label) {
+      const t = svgEl('text', { x: s.x + 8, y: s.y - 7, class: 'point-label', 'data-id': p.id });
+      t.textContent = p.label;
+      svg.appendChild(t);
+    }
+  }
+
+  function lineTwoPts(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    return (a && b) ? { a, b } : null;
+  }
+
+  function renderSegment(el) {
+    const p = lineTwoPts(el); if (!p) return;
+    const a = worldToScreen(p.a), b = worldToScreen(p.b);
+    const cls = 'segment' + (el.dashed ? ' dashed' : '');
+    const l = svgEl('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: cls, 'data-id': el.id });
+    if (el.derived) l.style.opacity = '0.55';
+    svg.appendChild(l);
+  }
+
+  function renderRay(el) {
+    const p = lineTwoPts(el); if (!p) return;
+    const a = worldToScreen(p.a);
+    const FAR = 5000;
+    const far = worldToScreen({ x: p.a.x + (p.b.x - p.a.x) / G.dist(p.a, p.b) * FAR, y: p.a.y + (p.b.y - p.a.y) / G.dist(p.a, p.b) * FAR });
+    const cls = 'ray' + (el.dashed ? ' dashed' : '');
+    const l = svgEl('line', { x1: a.x, y1: a.y, x2: far.x, y2: far.y, class: cls, 'data-id': el.id });
+    if (el.derived) l.style.opacity = '0.55';
+    svg.appendChild(l);
+  }
+
+  function renderLine(el) {
+    const p = lineTwoPts(el); if (!p) return;
+    const FAR = 5000;
+    const d = G.norm(G.sub(p.b, p.a));
+    const fa = worldToScreen({ x: p.a.x - d.x * FAR, y: p.a.y - d.y * FAR });
+    const fb = worldToScreen({ x: p.a.x + d.x * FAR, y: p.a.y + d.y * FAR });
+    const cls = 'line' + (el.dashed ? ' dashed' : '');
+    const l = svgEl('line', { x1: fa.x, y1: fa.y, x2: fb.x, y2: fb.y, class: cls, 'data-id': el.id });
+    if (el.derived) l.style.opacity = '0.55';
+    svg.appendChild(l);
+  }
+
+  function renderPolygon(el) {
+    const pts = el.points.map(id => pointAt(id)).filter(Boolean);
+    if (pts.length < 2) return;
+    const sp = pts.map(worldToScreen);
+    const dStr = 'M ' + sp.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' L ') + ' Z';
+    svg.appendChild(svgEl('path', { d: dStr, class: 'polygon', 'data-id': el.id }));
+  }
+
+  function renderCircle(el) {
+    const c = pointAt(el.center), r = pointAt(el.radius);
+    if (!c || !r) return;
+    const cs = worldToScreen(c);
+    const radius = G.dist(c, r) * state.view.scale;
+    const cls = 'circle' + (el.dashed ? ' dashed' : '');
+    const l = svgEl('circle', { cx: cs.x, cy: cs.y, r: radius, class: cls, 'data-id': el.id });
+    if (el.derived) l.style.opacity = '0.55';
+    svg.appendChild(l);
+  }
+
+  function renderAngle(el) {
+    const v = pointAt(el.vertex), p1 = pointAt(el.p1), p2 = pointAt(el.p2);
+    if (!v || !p1 || !p2) return;
+    const sV = worldToScreen(v);
+    const sP1 = worldToScreen(p1);
+    const sP2 = worldToScreen(p2);
+    // 画两边 (从顶点到 p1, p2), 短臂
+    const drawArm = (from, to) => {
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const len = Math.hypot(dx, dy);
+      if (len < 1e-6) return;
+      const t = Math.min(40, len) / len;
+      svg.appendChild(svgEl('line', {
+        x1: from.x, y1: from.y,
+        x2: from.x + dx * t, y2: from.y + dy * t,
+        class: 'angle-arm', 'stroke-dasharray': '4 3', opacity: '0.7',
+      }));
+    };
+    drawArm(sV, sP1);
+    drawArm(sV, sP2);
+    const arcR = 30;
+    const a1 = Math.atan2(sP1.y - sV.y, sP1.x - sV.x);
+    const a2 = Math.atan2(sP2.y - sV.y, sP2.x - sV.x);
+    // 调整到 [-pi, pi] 范围
+    let da = a2 - a1;
+    while (da < -Math.PI) da += 2 * Math.PI;
+    while (da > Math.PI) da -= 2 * Math.PI;
+    let startA = a1, endA = a2;
+    const angDiff = Math.abs(da);
+    let largeArc = 0, sweep;
+    if (da < 0) { startA = a2; endA = a1; }
+    // 短弧(≤180°)走屏幕顺时针 (sweep=1), 长弧(>180°)走逆时针 (sweep=0)
+    if (angDiff > Math.PI) { largeArc = 1; sweep = 0; }
+    else { sweep = 1; }
+    const sx = sV.x + Math.cos(startA) * arcR;
+    const sy = sV.y + Math.sin(startA) * arcR;
+    const ex = sV.x + Math.cos(endA) * arcR;
+    const ey = sV.y + Math.sin(endA) * arcR;
+    svg.appendChild(svgEl('path', {
+      d: `M ${sx} ${sy} A ${arcR} ${arcR} 0 ${largeArc} ${sweep} ${ex} ${ey}`,
+      class: 'angle-arc', fill: 'none',
+    }));
+    const deg = G.angleAt(v, p1, p2) * 180 / Math.PI;
+    const label = el.text || (deg.toFixed(1) + '°');
+    if (label) {
+      const midA = (startA + endA) / 2;
+      const tx = sV.x + Math.cos(midA) * (arcR + 18);
+      const ty = sV.y + Math.sin(midA) * (arcR + 18);
+      const t = svgEl('text', { x: tx, y: ty, class: 'angle-text', 'text-anchor': 'middle', 'data-id': el.id, style: 'cursor: pointer' });
+      t.textContent = label;
+      svg.appendChild(t);
+    }
+  }
+
+  function renderText(el) {
+    let pos;
+    if (el.anchor) {
+      const p = findPoint(el.anchor);
+      pos = p ? worldToScreen(p) : worldToScreen({ x: el.x, y: el.y });
+    } else {
+      pos = worldToScreen({ x: el.x, y: el.y });
+    }
+    const t = svgEl('text', { x: pos.x + 6, y: pos.y - 6, class: 'text-label' });
+    t.textContent = el.text;
+    svg.appendChild(t);
+  }
+
+  function renderMeasure(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return;
+    const mid = G.midpoint(a, b);
+    const d = G.norm(G.sub(b, a));
+    const off = G.perp(d);
+    const labelPos = G.add(mid, G.mul(off, 12 / state.view.scale));
+    const ls = worldToScreen(labelPos);
+    const t = svgEl('text', { x: ls.x, y: ls.y - 4, class: 'measure-text', 'text-anchor': 'middle', 'data-id': el.id, style: 'cursor: pointer' });
+    t.textContent = el.text || G.dist(a, b).toFixed(2);
+    svg.appendChild(t);
+  }
+
+  function renderSelectionOutline(el) {
+    if (el.t === 'p') {
+      const s = worldToScreen(el);
+      svg.appendChild(svgEl('circle', { cx: s.x, cy: s.y, r: 8, class: 'selected-outline' }));
+    } else if (el.t === 's' || el.t === 'r' || el.t === 'l') {
+      const p = lineTwoPts(el); if (!p) return;
+      const a = worldToScreen(p.a), b = worldToScreen(p.b);
+      if (el.t === 'l') {
+        const FAR = 5000, d = G.norm(G.sub(p.b, p.a));
+        const f1 = worldToScreen({ x: p.a.x - d.x * FAR, y: p.a.y - d.y * FAR });
+        const f2 = worldToScreen({ x: p.a.x + d.x * FAR, y: p.a.y + d.y * FAR });
+        svg.appendChild(svgEl('line', { x1: f1.x, y1: f1.y, x2: f2.x, y2: f2.y, class: 'selected-outline' }));
+      } else if (el.t === 'r') {
+        const FAR = 5000, d = G.norm(G.sub(p.b, p.a));
+        const f = worldToScreen({ x: p.a.x + d.x * FAR, y: p.a.y + d.y * FAR });
+        svg.appendChild(svgEl('line', { x1: a.x, y1: a.y, x2: f.x, y2: f.y, class: 'selected-outline' }));
+      } else {
+        svg.appendChild(svgEl('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'selected-outline' }));
+      }
+    } else if (el.t === 'c') {
+      const c = pointAt(el.center), r = pointAt(el.radius);
+      if (!c || !r) return;
+      const cs = worldToScreen(c);
+      const radius = G.dist(c, r) * state.view.scale;
+      svg.appendChild(svgEl('circle', { cx: cs.x, cy: cs.y, r: radius, class: 'selected-outline' }));
+    } else if (el.t === 'g') {
+      const pts = el.points.map(id => pointAt(id)).filter(Boolean);
+      if (pts.length < 2) return;
+      const sp = pts.map(worldToScreen);
+      const dStr = 'M ' + sp.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' L ') + ' Z';
+      svg.appendChild(svgEl('path', { d: dStr, class: 'selected-outline' }));
+    }
+  }
+
+  // ==================== 参数面板 ====================
+  const TYPE_NAMES = { p: '点', s: '线段', r: '射线', l: '直线', c: '圆', g: '多边形', a: '角度', x: '文本', m: '测度' };
+  const CONSTRAINT_NAMES = { 'iso-tri': '等腰三角形', 'equilateral': '等边三角形', 'parallelogram': '平行四边形', 'rectangle': '矩形', 'rhombus': '菱形', 'square': '正方形' };
+  const TRI_CONS = [
+    ['tri-altitude',     '高',       '3条高'],
+    ['tri-median',       '中线',     '3条中线'],
+    ['tri-bisector',     '角平分线', '3条角平分线'],
+    ['tri-midsegment',   '中位线',   '3条中位线'],
+    ['tri-circumcircle', '外接圆',   '外接圆'],
+    ['tri-incircle',     '内切圆',   '内切圆'],
+    ['tri-centroid',     '重心',     '重心'],
+    ['tri-orthocenter',  '垂心',     '垂心'],
+    ['tri-circumcenter', '外心',     '外心'],
+    ['tri-incenter',     '内心',     '内心'],
+  ];
+  // 线段构造
+  const SEG_CONS = [
+    ['midpoint',   '中点',       '中点'],
+    ['perpbisect', '垂直平分线', '垂直平分线'],
+  ];
+  // 线/射线/直线构造 (需另选一点, 这里仅显示标签占位)
+  const LINE_CONS = [];  // 暂不通过面板启用, 因需要选取外部点
+  // 圆构造
+  const CIRCLE_CONS = [];  // 中心/半径点已是显式点, 无需额外构造
+
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderParamPanel() {
+    const panel = document.getElementById('param-panel');
+    const body = document.getElementById('param-body');
+    const title = document.getElementById('param-title');
+    if (state.selection.size === 0) {
+      panel.hidden = true;
+      body.innerHTML = '';
+      title.textContent = '';
+      return;
+    }
+    const id = [...state.selection][0];
+    const el = findEl(id);
+    if (!el) {
+      panel.hidden = true;
+      body.innerHTML = '';
+      title.textContent = '';
+      return;
+    }
+    panel.hidden = false;
+    title.textContent = (TYPE_NAMES[el.t] || el.t) + ' #' + el.id;
+    body.innerHTML = buildParamContent(el);
+  }
+
+  function buildParamContent(el) {
+    switch (el.t) {
+      case 'p': return pointParams(el);
+      case 's': return segmentParams(el);
+      case 'r': return rayParams(el);
+      case 'l': return lineParams(el);
+      case 'c': return circleParams(el);
+      case 'g': return polygonParams(el);
+      case 'a': return angleParams(el);
+      case 'x': return textParams(el);
+      case 'm': return measureParams(el);
+    }
+    return '';
+  }
+
+  function row(key, val, hl) {
+    return `<div class="param-row"><span class="key">${escapeHTML(key)}</span><span class="val${hl ? ' hl' : ''}">${val}</span></div>`;
+  }
+  function rowEdit(key, paramId, value, type = 'number', step = 'any') {
+    return `<div class="param-row"><span class="key">${escapeHTML(key)}</span><span class="val editable"><input type="${type}" class="param-input" data-param="${paramId}" value="${escapeHTML(String(value))}" step="${step}"></span></div>`;
+  }
+  function section(label) {
+    return `<div class="param-section">${escapeHTML(label)}</div>`;
+  }
+
+  function pointParams(el) {
+    return rowEdit('X', 'x', el.x.toFixed(2))
+      + rowEdit('Y', 'y', el.y.toFixed(2))
+      + rowEdit('标签', 'label', el.label || '', 'text')
+      + row('类型', '点');
+  }
+
+  function segmentParams(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return '';
+    const len = G.dist(a, b);
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+    const slope = Math.abs(dx) < 1e-9 ? '∞' : (dy / dx).toFixed(3);
+    return rowEdit('长度', 'length', len.toFixed(3))
+      + row('斜率', slope)
+      + rowEdit('方向角°', 'angle', ang.toFixed(2))
+      + section(`端点 A (#${el.a})`)
+      + rowEdit('X', 'ax', a.x.toFixed(2))
+      + rowEdit('Y', 'ay', a.y.toFixed(2))
+      + section(`端点 B (#${el.b})`)
+      + rowEdit('X', 'bx', b.x.toFixed(2))
+      + rowEdit('Y', 'by', b.y.toFixed(2))
+      + segmentConsHTML(el);
+  }
+
+  function segmentConsHTML(seg) {
+    const cons = seg.constructions || {};
+    const buttons = SEG_CONS.map(([id, label, tip]) => {
+      const active = !!cons[id];
+      return `<button data-cons="${id}" class="${active ? 'active' : ''}" title="${escapeHTML(tip)}">${label}</button>`;
+    }).join('');
+    return section('构造') + `<div class="param-buttons">${buttons}</div>`;
+  }
+
+  function rayParams(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return '';
+    const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    return section(`起点 (#${el.a})`)
+      + rowEdit('X', 'ax', a.x.toFixed(2))
+      + rowEdit('Y', 'ay', a.y.toFixed(2))
+      + rowEdit('方向角°', 'angle', ang.toFixed(2))
+      + section(`过点 (#${el.b})`)
+      + rowEdit('X', 'bx', b.x.toFixed(2))
+      + rowEdit('Y', 'by', b.y.toFixed(2));
+  }
+
+  function lineParams(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return '';
+    const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    return rowEdit('方向角°', 'angle', ang.toFixed(2))
+      + section(`点 1 (#${el.a})`)
+      + rowEdit('X', 'ax', a.x.toFixed(2))
+      + rowEdit('Y', 'ay', a.y.toFixed(2))
+      + section(`点 2 (#${el.b})`)
+      + rowEdit('X', 'bx', b.x.toFixed(2))
+      + rowEdit('Y', 'by', b.y.toFixed(2));
+  }
+
+  function circleParams(el) {
+    const c = pointAt(el.center), r = pointAt(el.radius);
+    if (!c || !r) return '';
+    const radius = G.dist(c, r);
+    return section(`圆心 (#${el.center})`)
+      + rowEdit('X', 'cx', c.x.toFixed(2))
+      + rowEdit('Y', 'cy', c.y.toFixed(2))
+      + rowEdit('半径', 'radius', radius.toFixed(3))
+      + row('直径', (radius * 2).toFixed(3))
+      + row('周长', (2 * Math.PI * radius).toFixed(3))
+      + row('面积', (Math.PI * radius * radius).toFixed(3));
+  }
+
+  function polygonParams(el) {
+    const pts = el.points.map(id => pointAt(id)).filter(Boolean);
+    if (pts.length < 3) {
+      return row('顶点数', String(pts.length));
+    }
+    const area = G.polygonArea(pts);
+    const perim = G.polygonPerimeter(pts);
+    let sides = '';
+    for (let i = 0; i < pts.length; i++) {
+      const j = (i + 1) % pts.length;
+      sides += row(`边 ${i + 1}`, G.dist(pts[i], pts[j]).toFixed(3));
+    }
+    let angles = '';
+    let angleSum = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const prev = pts[(i - 1 + pts.length) % pts.length];
+      const cur = pts[i];
+      const next = pts[(i + 1) % pts.length];
+      const rad = G.angleAt(cur, prev, next);
+      const deg = rad * 180 / Math.PI;
+      angleSum += deg;
+      angles += row(`∠${i + 1}`, deg.toFixed(1) + '°');
+    }
+    let cons = '';
+    if (pts.length === 3) cons = triConstructionsHTML(el);
+    let verts = '';
+    for (let i = 0; i < pts.length; i++) {
+      verts += section(`顶点 ${i + 1} (#${el.points[i]})`);
+      verts += rowEdit('X', `vx${i}`, pts[i].x.toFixed(2));
+      verts += rowEdit('Y', `vy${i}`, pts[i].y.toFixed(2));
+    }
+    const constraintRow = el.constraint
+      ? row('类型', CONSTRAINT_NAMES[el.constraint] || el.constraint)
+      : '';
+    return constraintRow
+      + row('顶点数', String(pts.length))
+      + row('周长', perim.toFixed(3))
+      + row('面积', area.toFixed(3), true)
+      + row('内角和', angleSum.toFixed(1) + '°')
+      + section('顶点坐标') + verts
+      + section('边长') + sides
+      + section('内角') + angles
+      + cons;
+  }
+
+  function triConstructionsHTML(poly) {
+    const cons = poly.constructions || {};
+    const buttons = TRI_CONS.map(([id, label, tip]) => {
+      const active = !!cons[id];
+      return `<button data-cons="${id}" class="${active ? 'active' : ''}" title="${escapeHTML(tip)}">${label}</button>`;
+    }).join('');
+    return section('三角形构造') + `<div class="param-buttons">${buttons}</div>`;
+  }
+
+function angleParams(el) {
+    const v = findPoint(el.vertex), p1 = findPoint(el.p1), p2 = findPoint(el.p2);
+    if (!v || !p1 || !p2) return '';
+    const deg = G.angleAt(v, p1, p2) * 180 / Math.PI;
+    const dynamic = deg.toFixed(2) + '°';
+    return rowEdit('角度°', 'angle', deg.toFixed(2))
+      + rowEdit('标签', 'text', el.text || dynamic, 'text')
+      + row('弧度', (deg * Math.PI / 180).toFixed(4))
+      + section(`顶点 (#${el.vertex})`)
+      + rowEdit('X', 'vx', v.x.toFixed(2))
+      + rowEdit('Y', 'vy', v.y.toFixed(2))
+      + section(`边 1 (#${el.p1})`)
+      + rowEdit('X', 'p1x', p1.x.toFixed(2))
+      + rowEdit('Y', 'p1y', p1.y.toFixed(2))
+      + section(`边 2 (#${el.p2})`)
+      + rowEdit('X', 'p2x', p2.x.toFixed(2))
+      + rowEdit('Y', 'p2y', p2.y.toFixed(2));
+  }
+
+  function textParams(el) {
+    return rowEdit('内容', 'text', el.text || '', 'text')
+      + rowEdit('X', 'x', el.x.toFixed(2))
+      + rowEdit('Y', 'y', el.y.toFixed(2));
+  }
+
+  function measureParams(el) {
+    const a = pointAt(el.a), b = pointAt(el.b);
+    if (!a || !b) return '';
+    const dynamic = G.dist(a, b).toFixed(3);
+    return rowEdit('值', 'text', el.text || dynamic, 'text')
+      + section(`端点 A (#${el.a})`)
+      + rowEdit('X', 'ax', a.x.toFixed(2))
+      + rowEdit('Y', 'ay', a.y.toFixed(2))
+      + section(`端点 B (#${el.b})`)
+      + rowEdit('X', 'bx', b.x.toFixed(2))
+      + rowEdit('Y', 'by', b.y.toFixed(2));
+  }
+
+  function toggleTriConstruction(poly, consId) {
+    if (poly.constructions && poly.constructions[consId]) {
+      removeConstruction(poly, consId);
+    } else {
+      applyConstruction(poly, consId);
+    }
+  }
+
+  function applyConstruction(poly, consId) {
+    const pts = poly.points.map(id => findPoint(id));
+    if (pts.length < 3 || pts.some(p => !p)) return;
+    const before = state.elements.length;
+    executeConstruction(consId, pts);
+    const newEls = state.elements.slice(before);
+    if (!poly.constructions) poly.constructions = {};
+    poly.constructions[consId] = newEls.map(e => e.id);
+    renderParamPanel();
+  }
+
+  function removeConstruction(poly, consId) {
+    if (!poly.constructions || !poly.constructions[consId]) return;
+    pushHistory();
+    for (const id of poly.constructions[consId]) {
+      deleteEl(id);
+    }
+    delete poly.constructions[consId];
+    render();
+    renderParamPanel();
+  }
+
+  // 关闭按钮: 取消选择
+  document.getElementById('param-close').addEventListener('click', () => {
+    state.selection.clear();
+    render();
+  });
+
+  // 构造按钮事件委托
+  document.getElementById('param-body').addEventListener('click', e => {
+    const btn = e.target.closest('[data-cons]');
+    if (!btn) return;
+    const id = [...state.selection][0];
+    const el = findEl(id);
+    if (!el) return;
+    const consId = btn.dataset.cons;
+    if (el.t === 'g') {
+      toggleTriConstruction(el, consId);
+    } else if (el.t === 's') {
+      toggleSegmentConstruction(el, consId);
+    }
+  });
+
+  function toggleSegmentConstruction(seg, consId) {
+    if (seg.constructions && seg.constructions[consId]) {
+      removeSegmentConstruction(seg, consId);
+    } else {
+      applySegmentConstruction(seg, consId);
+    }
+  }
+
+  function applySegmentConstruction(seg, consId) {
+    const picked = [{ id: seg.a }, { id: seg.b }];
+    const before = state.elements.length;
+    executeConstruction(consId, picked);
+    const newEls = state.elements.slice(before);
+    if (!seg.constructions) seg.constructions = {};
+    seg.constructions[consId] = newEls.map(e => e.id);
+    renderParamPanel();
+  }
+
+  function removeSegmentConstruction(seg, consId) {
+    if (!seg.constructions || !seg.constructions[consId]) return;
+    pushHistory();
+    for (const id of seg.constructions[consId]) {
+      deleteEl(id);
+    }
+    delete seg.constructions[consId];
+    render();
+    renderParamPanel();
+  }
+
+  // 参数输入 change 事件委托
+  document.getElementById('param-body').addEventListener('change', e => {
+    const input = e.target.closest('[data-param]');
+    if (!input) return;
+    const id = [...state.selection][0];
+    const el = findEl(id);
+    if (!el) return;
+    handleParamChange(el, input.dataset.param, input.value, input);
+  });
+  // Enter 键也提交
+  document.getElementById('param-body').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const input = e.target.closest('[data-param]');
+    if (!input) return;
+    input.blur();  // 触发 change
+  });
+
+  function handleParamChange(el, paramId, raw, input) {
+    const v = input.type === 'number' ? parseFloat(raw) : raw;
+    if (input.type === 'number' && !isFinite(v)) {
+      input.classList.add('invalid');
+      setTimeout(() => input.classList.remove('invalid'), 800);
+      return;
+    }
+    pushHistory();
+    let ok = false;
+    switch (el.t) {
+      case 'p': ok = setPoint(el, paramId, v); break;
+      case 's': ok = setSegment(el, paramId, v); break;
+      case 'r': ok = setRay(el, paramId, v); break;
+      case 'l': ok = setLine(el, paramId, v); break;
+      case 'c': ok = setCircle(el, paramId, v); break;
+      case 'g': ok = setPolygonVertex(el, paramId, v); break;
+      case 'a': ok = setAngle(el, paramId, v); break;
+      case 'm': ok = setMeasure(el, paramId, v); break;
+      case 'x': ok = setText(el, paramId, v); break;
+    }
+    if (!ok) {
+      // 回滚: 不应推进 history, 重新 pop
+      state.history.pop();
+      render();
+      return;
+    }
+    render();
+  }
+
+  function setPoint(p, k, v) {
+    if (k === 'x') { p.x = +v; return true; }
+    if (k === 'y') { p.y = +v; return true; }
+    if (k === 'label') {
+      const s = String(v).slice(0, 4);
+      p.label = s || undefined;
+      return true;
+    }
+    return false;
+  }
+
+  function setSegment(seg, k, v) {
+    const a = findPoint(seg.a), b = findPoint(seg.b);
+    if (!a || !b) return false;
+    if (k === 'length') {
+      if (v < 0) return false;
+      const cur = G.dist(a, b);
+      if (cur < 1e-9) return false;
+      const t = v / cur;
+      b.x = a.x + (b.x - a.x) * t;
+      b.y = a.y + (b.y - a.y) * t;
+      return true;
+    }
+    if (k === 'angle') {
+      const rad = v * Math.PI / 180;
+      const len = G.dist(a, b);
+      b.x = a.x + Math.cos(rad) * len;
+      b.y = a.y + Math.sin(rad) * len;
+      return true;
+    }
+    if (k === 'ax') { a.x = +v; return true; }
+    if (k === 'ay') { a.y = +v; return true; }
+    if (k === 'bx') { b.x = +v; return true; }
+    if (k === 'by') { b.y = +v; return true; }
+    return false;
+  }
+
+  function setRay(ray, k, v) {
+    const a = findPoint(ray.a), b = findPoint(ray.b);
+    if (!a || !b) return false;
+    if (k === 'angle') {
+      const rad = v * Math.PI / 180;
+      const len = G.dist(a, b) || 1;
+      b.x = a.x + Math.cos(rad) * len;
+      b.y = a.y + Math.sin(rad) * len;
+      return true;
+    }
+    if (k === 'ax') { a.x = +v; return true; }
+    if (k === 'ay') { a.y = +v; return true; }
+    if (k === 'bx') { b.x = +v; return true; }
+    if (k === 'by') { b.y = +v; return true; }
+    return false;
+  }
+
+  function setLine(line, k, v) {
+    const a = findPoint(line.a), b = findPoint(line.b);
+    if (!a || !b) return false;
+    if (k === 'angle') {
+      const rad = v * Math.PI / 180;
+      const len = G.dist(a, b) || 1;
+      b.x = a.x + Math.cos(rad) * len;
+      b.y = a.y + Math.sin(rad) * len;
+      return true;
+    }
+    if (k === 'ax') { a.x = +v; return true; }
+    if (k === 'ay') { a.y = +v; return true; }
+    if (k === 'bx') { b.x = +v; return true; }
+    if (k === 'by') { b.y = +v; return true; }
+    return false;
+  }
+
+  function setCircle(c, k, v) {
+    const ctr = findPoint(c.center), r = findPoint(c.radius);
+    if (!ctr || !r) return false;
+    if (k === 'radius') {
+      if (v < 0) return false;
+      const cur = G.dist(ctr, r);
+      if (cur < 1e-9) return false;
+      const t = v / cur;
+      r.x = ctr.x + (r.x - ctr.x) * t;
+      r.y = ctr.y + (r.y - ctr.y) * t;
+      return true;
+    }
+    if (k === 'cx') { ctr.x = +v; return true; }
+    if (k === 'cy') { ctr.y = +v; return true; }
+    return false;
+  }
+
+  function setPolygonVertex(poly, k, v) {
+    const m = k.match(/^v([xy])(\d+)$/);
+    if (!m) return false;
+    const axis = m[1], idx = +m[2];
+    if (idx < 0 || idx >= poly.points.length) return false;
+    const pt = findPoint(poly.points[idx]);
+    if (!pt) return false;
+    const newPos = { x: pt.x, y: pt.y, [axis]: +v };
+    if (poly.constraint) {
+      applyConstraint(poly, idx, newPos);
+    } else {
+      pt[axis] = +v;
+    }
+    return true;
+  }
+
+  function setAngle(ang, k, v) {
+    const v0 = findPoint(ang.vertex), p1 = findPoint(ang.p1), p2 = findPoint(ang.p2);
+    if (!v0 || !p1 || !p2) return false;
+    if (k === 'text') { ang.text = String(v); return true; }
+    if (k === 'angle') {
+      // 旋转 p2 调整角度 (保持 p1 不动)
+      const cur = G.angleAt(v0, p1, p2);
+      const delta = v * Math.PI / 180 - cur;
+      if (Math.abs(delta) < 1e-9) return true;
+      const r = G.sub(p2, v0);
+      const cs = Math.cos(delta), sn = Math.sin(delta);
+      const nr = { x: r.x * cs - r.y * sn, y: r.x * sn + r.y * cs };
+      p2.x = v0.x + nr.x;
+      p2.y = v0.y + nr.y;
+      return true;
+    }
+    if (k === 'vx') { v0.x = +v; return true; }
+    if (k === 'vy') { v0.y = +v; return true; }
+    if (k === 'p1x') { p1.x = +v; return true; }
+    if (k === 'p1y') { p1.y = +v; return true; }
+    if (k === 'p2x') { p2.x = +v; return true; }
+    if (k === 'p2y') { p2.y = +v; return true; }
+    return false;
+  }
+
+  function setMeasure(m, k, v) {
+    if (k === 'text') { m.text = String(v); return true; }
+    const a = findPoint(m.a), b = findPoint(m.b);
+    if (!a || !b) return false;
+    if (k === 'ax') { a.x = +v; return true; }
+    if (k === 'ay') { a.y = +v; return true; }
+    if (k === 'bx') { b.x = +v; return true; }
+    if (k === 'by') { b.y = +v; return true; }
+    return false;
+  }
+
+  function setText(t, k, v) {
+    if (k === 'text') { t.text = String(v); return true; }
+    if (k === 'x') { t.x = +v; return true; }
+    if (k === 'y') { t.y = +v; return true; }
+    return false;
+  }
+
+  // ==================== 预览 ====================
+  let preview = null;
+  function setPreview(p) { preview = p; }
+  function clearPreview() { preview = null; }
+
+  function renderPreviews() {
+    if (!preview) return;
+    if (preview.type === 'line' || preview.type === 'segment' || preview.type === 'ray') {
+      const a = worldToScreen(preview.a), b = worldToScreen(preview.b);
+      let x1 = a.x, y1 = a.y, x2 = b.x, y2 = b.y;
+      if (preview.type === 'ray') {
+        const FAR = 5000, d = G.norm(G.sub(preview.b, preview.a));
+        x2 = a.x + d.x * FAR; y2 = a.y + d.y * FAR;
+      } else if (preview.type === 'line') {
+        const FAR = 5000, d = G.norm(G.sub(preview.b, preview.a));
+        x1 = a.x - d.x * FAR; y1 = a.y - d.y * FAR;
+        x2 = a.x + d.x * FAR; y2 = a.y + d.y * FAR;
+      }
+      svg.appendChild(svgEl('line', { x1, y1, x2, y2, class: 'segment',
+        'stroke-dasharray': '4 3', opacity: '0.6' }));
+    } else if (preview.type === 'circle') {
+      const sa = worldToScreen(preview.center);
+      const r = G.dist(preview.center, preview.point) * state.view.scale;
+      svg.appendChild(svgEl('circle', { cx: sa.x, cy: sa.y, r, class: 'circle',
+        'stroke-dasharray': '4 3', opacity: '0.6' }));
+    } else if (preview.type === 'polygon') {
+      if (preview.points.length < 1) return;
+      const sp = preview.points.map(worldToScreen);
+      const dStr = 'M ' + sp.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' L ');
+      svg.appendChild(svgEl('path', { d: dStr, class: 'segment', 'stroke-dasharray': '4 3', opacity: '0.6', fill: 'none' }));
+    } else if (preview.type === 'shape') {
+      const verts = shapeVertices(preview.toolId, preview.anchor, preview.current);
+      if (verts.length >= 3) {
+        const sp = verts.map(worldToScreen);
+        const dStr = 'M ' + sp.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' L ') + ' Z';
+        svg.appendChild(svgEl('path', { d: dStr, class: 'segment', 'stroke-dasharray': '5 4', 'stroke-width': '2', opacity: '0.75', fill: 'rgba(0, 200, 255, 0.08)' }));
+      }
+      // Anchor indicator
+      const sa = worldToScreen(preview.anchor);
+      svg.appendChild(svgEl('circle', { cx: sa.x, cy: sa.y, r: 6, fill: 'none', stroke: '#0066ff', 'stroke-width': 2 }));
+    }
+  }
+
+  // ==================== 命中测试 ====================
+  function hitTest(sx, sy) {
+    const w = screenToWorld(sx, sy);
+    const scale = state.view.scale;
+    let best = null, bestDist = HIT_DIST;
+    // text 元素 (m/a/x) 点击测试
+    for (const el of state.elements) {
+      if (el.t === 'm') {
+        const a = pointAt(el.a), b = pointAt(el.b);
+        if (!a || !b) continue;
+        const mid = G.midpoint(a, b);
+        const d = G.norm(G.sub(b, a));
+        const off = G.perp(d);
+        const labelPos = G.add(mid, G.mul(off, 12 / state.view.scale));
+        const ls = worldToScreen(labelPos);
+        const textD = Math.hypot(ls.x - sx, ls.y - sy);
+        if (textD < 20) { best = el; bestDist = 0; }
+      } else if (el.t === 'a') {
+        const v = pointAt(el.vertex);
+        if (!v) continue;
+        const sV = worldToScreen(v);
+        const textD = Math.hypot(sV.x - sx, sV.y - sy);
+        if (textD < 30) { best = el; bestDist = 0; }
+      } else if (el.t === 'x') {
+        const p = el.anchor ? pointAt(el.anchor) : null;
+        const pos = p ? worldToScreen(p) : worldToScreen({ x: el.x, y: el.y });
+        const textD = Math.hypot(pos.x - sx, pos.y - sy);
+        if (textD < 20) { best = el; bestDist = 0; }
+      }
+    }
+    for (const el of state.elements) {
+      if (el.t === 'p') {
+        const d = Math.hypot(el.x - w.x, el.y - w.y) * scale;
+        if (d < bestDist) { bestDist = d; best = el; }
+      } else if (el.t === 's' || el.t === 'r' || el.t === 'l') {
+        // 优先返回点, 避免线段拦截端点
+        if (best && best.t === 'p') continue;
+        const p = lineTwoPts(el); if (!p) continue;
+        const cp = el.t === 's' ? G.closestOnSegment(w, p.a, p.b) : G.closestOnLine(w, p.a, p.b);
+        const d = Math.hypot(cp.x - w.x, cp.y - w.y) * scale;
+        if (d < HIT_DIST_LINE && d < bestDist) { bestDist = d; best = el; }
+      } else if (el.t === 'c') {
+        // 优先返回点
+        if (best && best.t === 'p') continue;
+        const c = pointAt(el.center), r = pointAt(el.radius);
+        if (!c || !r) continue;
+        const dist = G.dist(w, c);
+        const radius = G.dist(c, r);
+        const d = Math.abs(dist - radius) * scale;
+        if (d < HIT_DIST_LINE && d < bestDist) { bestDist = d; best = el; }
+      } else if (el.t === 'g') {
+        // 优先返回点, 避免 polygon path 拦截点上的鼠标事件
+        if (best && best.t === 'p') continue;
+        const pts = el.points.map(id => pointAt(id)).filter(Boolean);
+        if (pts.length < 3) continue;
+        if (pointInPolygon(w, pts)) { best = el; bestDist = 0; }
+      }
+    }
+    return best;
+  }
+  function pointInPolygon(p, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i].x, yi = poly[i].y;
+      const xj = poly[j].x, yj = poly[j].y;
+      const intersect = ((yi > p.y) !== (yj > p.y)) &&
+        (p.x < (xj - xi) * (p.y - yi) / (yj - yi + 1e-12) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // 在世界坐标 w 周围 0.5*scale (px) 内找最近的点
+  function findClosestPoint(w, maxDistWorld) {
+    let best = null, bestD = maxDistWorld;
+    for (const el of state.elements) {
+      if (el.t !== 'p') continue;
+      const d = Math.hypot(el.x - w.x, el.y - w.y);
+      if (d < bestD) { bestD = d; best = el; }
+    }
+    return best;
+  }
+
+  // ==================== 鼠标事件 ====================
+  let dragInfo = null;
+  let mouseWorld = { x: 0, y: 0 };
+
+  svg.addEventListener('mousemove', e => {
+    const r = getRect();
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    mouseWorld = screenToWorld(sx, sy);
+    document.getElementById('status-pos').textContent = `${mouseWorld.x.toFixed(1)}, ${mouseWorld.y.toFixed(1)}`;
+
+    if (dragInfo) {
+      if (dragInfo.type === 'pan') {
+        state.view.x -= (e.clientX - dragInfo.lastX) / state.view.scale;
+        state.view.y -= (e.clientY - dragInfo.lastY) / state.view.scale;
+        dragInfo.lastX = e.clientX; dragInfo.lastY = e.clientY;
+        render();
+      } else if (dragInfo.type === 'move-point') {
+        const el = findEl(dragInfo.id);
+        if (el && el.t === 'p') {
+          // 查找包含此点的约束多边形, 应用约束保持形状
+          const constrained = state.elements.filter(e => e.t === 'g' && e.constraint && e.points.includes(el.id));
+          if (constrained.length > 0) {
+            const newPos = { x: mouseWorld.x, y: mouseWorld.y };
+            for (const poly of constrained) {
+              const idx = poly.points.indexOf(el.id);
+              applyConstraint(poly, idx, newPos);
+            }
+          } else {
+            el.x = mouseWorld.x; el.y = mouseWorld.y;
+          }
+          render();
+        }
+      } else if (dragInfo.type === 'move-element') {
+        const el = findEl(dragInfo.id);
+        if (el) {
+          const dx = mouseWorld.x - dragInfo.lastWX;
+          const dy = mouseWorld.y - dragInfo.lastWY;
+          moveElementBy(el, dx, dy);
+          dragInfo.lastWX = mouseWorld.x;
+          dragInfo.lastWY = mouseWorld.y;
+          render();
+        }
+      }
+      return;
+    }
+
+    // 预览 + 端点吸附提示
+    const tool = state.currentTool;
+    if (tool === 'segment' || tool === 'ray' || tool === 'line') {
+      // hover 端点提示
+      if (!state.shapeDrag) {
+        const hit = hitTest(sx, sy);
+        const newHover = (hit && hit.t === 'p') ? hit.id : null;
+        if (newHover !== state.hoverPoint) {
+          state.hoverPoint = newHover;
+          render();
+        }
+      }
+      if (state.pendingVertex) {
+        setPreview({ type: tool, a: pointAt(state.pendingVertex), b: mouseWorld });
+        render();
+      }
+    } else if (tool === 'circle') {
+      if (state.pendingCircleCenter) {
+        setPreview({ type: 'circle', center: pointAt(state.pendingCircleCenter), point: mouseWorld });
+        render();
+      }
+    } else if (tool === 'polygon') {
+      if (state.pendingPoly.length > 0) {
+        const pts = state.pendingPoly.map(id => pointAt(id)).filter(Boolean);
+        if (pts.length > 0) {
+          setPreview({ type: 'polygon', points: [...pts, mouseWorld] });
+          render();
+        }
+      }
+    } else if (state.shapeDrag) {
+      // 预设形状拖拽中: 更新预览
+      state.shapeDrag.moved = true;
+      setPreview({ type: 'shape', toolId: state.shapeDrag.toolId, anchor: state.shapeDrag.anchor, current: mouseWorld });
+      render();
+    }
+  });
+
+  svg.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    const r = getRect();
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const w = screenToWorld(sx, sy);
+
+    if (state.currentTool === 'pan') {
+      dragInfo = { type: 'pan', lastX: e.clientX, lastY: e.clientY };
+      svg.classList.add('dragging');
+      return;
+    }
+
+    if (state.currentTool === 'select') {
+      let hit = hitTest(sx, sy);
+      // 点击到 text.measure-text / text.angle-text / text.text-label 时, 选中对应元素
+      if (!hit && e.target.tagName === 'text') {
+        const id = parseInt(e.target.getAttribute('data-id'));
+        if (id) hit = findEl(id);
+      }
+      if (hit) {
+        state.selection.clear();
+        state.selection.add(hit.id);
+        if (hit.t === 'p') {
+          dragInfo = { type: 'move-point', id: hit.id };
+        } else {
+          dragInfo = { type: 'move-element', id: hit.id, lastWX: w.x, lastWY: w.y };
+        }
+        pushHistory();
+        render();
+      } else {
+        state.selection.clear();
+        dragInfo = { type: 'pan', lastX: e.clientX, lastY: e.clientY };
+        render();
+      }
+      return;
+    }
+
+    if (state.currentTool === 'delete') {
+      const hit = hitTest(sx, sy);
+      if (hit) { pushHistory(); deleteEl(hit.id); render(); }
+      return;
+    }
+
+    if (state.currentTool === 'point') {
+      pushHistory();
+      createPoint(w.x, w.y);
+      render();
+      return;
+    }
+
+    if (state.currentTool === 'text') {
+      openTextModal(w.x, w.y);
+      return;
+    }
+
+    if (state.currentTool === 'segment' || state.currentTool === 'ray' || state.currentTool === 'line') {
+      // 端点选取: 优先 hit, 否则找最近点 (snap 0.5 世界单位 ≈ 20px)
+      let pid = null;
+      const hit = hitTest(sx, sy);
+      if (hit && hit.t === 'p') pid = hit.id;
+      else {
+        const snap = findClosestPoint(w, 0.5);
+        if (snap) pid = snap.id;
+      }
+      const tt = state.currentTool;
+      if (!state.pendingVertex) {
+        // 第一个点
+        if (pid) {
+          state.pendingVertex = pid;
+          render();
+        } else {
+          pushHistory();
+          const p = createPoint(w.x, w.y);
+          state.pendingVertex = p.id;
+          render();
+        }
+      } else {
+        // 第二个点
+        if (!pid) {
+          pushHistory();
+          pid = createPoint(w.x, w.y).id;
+        }
+        if (pid === state.pendingVertex) { toast('请选择不同的点'); return; }
+        pushHistory();
+        addEl({ id: newId(), t: tt === 'segment' ? 's' : (tt === 'ray' ? 'r' : 'l'), a: state.pendingVertex, b: pid });
+        state.pendingVertex = null;
+        state.hoverPoint = null;
+        clearPreview();
+        render();
+      }
+      return;
+    }
+
+    if (state.currentTool === 'circle') {
+      const hit = hitTest(sx, sy);
+      if (!state.pendingCircleCenter) {
+        if (hit && hit.t === 'p') state.pendingCircleCenter = hit.id;
+        else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingCircleCenter = p.id; render(); }
+      } else {
+        let pid;
+        if (hit && hit.t === 'p') pid = hit.id;
+        else { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        if (pid === state.pendingCircleCenter) { toast('请选择不同的点'); return; }
+        pushHistory();
+        addEl({ id: newId(), t: 'c', center: state.pendingCircleCenter, radius: pid });
+        state.pendingCircleCenter = null;
+        clearPreview();
+        render();
+      }
+      return;
+    }
+
+    if (state.currentTool === 'polygon') {
+      const hit = hitTest(sx, sy);
+      // 已有 3+ 个点时, 点击首点则完成
+      if (state.pendingPoly.length >= 3 && hit && hit.t === 'p' && hit.id === state.pendingPoly[0]) {
+        finishPolygon();
+        return;
+      }
+      let pid;
+      if (hit && hit.t === 'p') pid = hit.id;
+      else { pushHistory(); pid = createPoint(w.x, w.y).id; render(); }
+      // 避免连续重复同一 ID
+      if (state.pendingPoly[state.pendingPoly.length - 1] !== pid) {
+        state.pendingPoly.push(pid);
+      }
+      return;
+    }
+
+    if (state.currentTool === 'angle') {
+      // 两种模式: 选 2 条线 (推荐) 或 选 3 个点
+      // - 点中 line-like 元素 (s/r/l) -> 加入 linePicked
+      // - 点中点 -> 切到 point 模式, 走 3 点流程
+      const hit = hitTest(sx, sy);
+      const isLine = hit && (hit.t === 's' || hit.t === 'r' || hit.t === 'l');
+      // 若已在点模式 (pendingVertex 已设) 但点中线, 重置为选线模式
+      if (isLine && state.pendingVertex) {
+        state.pendingVertex = null;
+        state.toolPicked = [];
+      }
+      if (isLine) {
+        // 选线模式: 第 1/2 次点击选线
+        if (!state.toolPicked[0] || (state.toolPicked[0] && !state.toolPicked[0].t)) {
+          // 还没选过任何东西
+          state.toolPicked = [{ id: hit.id, t: hit.t }];
+          toast('请选择第 2 条直线 / 射线 / 线段');
+          return;
+        } else if (state.toolPicked[0] && state.toolPicked[0].t) {
+          // 已有第 1 条线, 选第 2 条
+          if (hit.id === state.toolPicked[0].id) { toast('请选择不同的线'); return; }
+          // 计算交点
+          const L1 = findEl(state.toolPicked[0].id);
+          const L2 = findEl(hit.id);
+          const a1 = pointAt(L1.a), b1 = pointAt(L1.b);
+          const a2 = pointAt(L2.a), b2 = pointAt(L2.b);
+          if (!a1 || !b1 || !a2 || !b2) { toast('线缺少端点'); return; }
+          const inter = G.lineLineIntersect(a1, b1, a2, b2);
+          if (!inter) { toast('两线平行, 无交点'); state.toolPicked = []; return; }
+          // 在交点处建一个新点作为 vertex
+          // p1 / p2: 沿 L1 / L2 方向, 距 vertex 1 世界单位的点
+          const dir1 = G.norm(G.sub(b1, a1));
+          const dir2 = G.norm(G.sub(b2, a2));
+          const p1Pt = G.add(inter, G.mul(dir1, 1));
+          const p2Pt = G.add(inter, G.mul(dir2, 1));
+          pushHistory();
+          const vPt = createPoint(inter.x, inter.y);
+          const p1El = createPoint(p1Pt.x, p1Pt.y);
+          const p2El = createPoint(p2Pt.x, p2Pt.y);
+          addEl({ id: newId(), t: 'a', vertex: vPt.id, p1: p1El.id, p2: p2El.id });
+          state.toolPicked = [];
+          render();
+          return;
+        }
+      }
+      // 走点模式: 3 个点
+      let pid = null;
+      if (hit && hit.t === 'p') pid = hit.id;
+      else {
+        const snap = findClosestPoint(w, 0.5);
+        if (snap) pid = snap.id;
+      }
+      if (!state.pendingVertex) {
+        if (pid) {
+          state.pendingVertex = pid;
+        } else { pushHistory(); const p = createPoint(w.x, w.y); state.pendingVertex = p.id; render(); }
+      } else if (!state.toolPicked[0] || !state.toolPicked[0].t) {
+        // 第 2 次点 (顶点): 可能是从选线模式切换, 先清空
+        state.toolPicked = [];
+        if (pid) {
+          if (pid === state.pendingVertex) { toast('请选择不同的点'); return; }
+          state.toolPicked.push({ id: pid });
+        } else { pushHistory(); const p = createPoint(w.x, w.y); state.toolPicked.push({ id: p.id }); render(); }
+      } else {
+        // 第 3 次点 (p2)
+        if (!pid) { pushHistory(); pid = createPoint(w.x, w.y).id; }
+        if (pid === state.pendingVertex) { toast('p1 和 p2 不能相同'); return; }
+        if (pid === state.toolPicked[0].id) { toast('顶点和 p2 不能相同'); return; }
+        const v = pointAt(state.toolPicked[0].id);
+        const p1 = pointAt(state.pendingVertex);
+        const p2 = pointAt(pid);
+        if (v && p1 && p2) {
+          const cross = (p1.x - v.x) * (p2.y - v.y) - (p1.y - v.y) * (p2.x - v.x);
+          if (Math.abs(cross) < 1e-9) { toast('三点共线, 无法构造角'); return; }
+        }
+        pushHistory();
+        addEl({ id: newId(), t: 'a', vertex: state.toolPicked[0].id, p1: state.pendingVertex, p2: pid });
+        state.pendingVertex = null;
+        state.toolPicked = [];
+        render();
+      }
+      return;
+    }
+
+    if (PREDIFINED_SHAPES[state.currentTool]) {
+      // 点击 + 拖拽: mousedown 记录 anchor, mouseup 时按拖动距离或默认尺寸创建
+      state.shapeDrag = { toolId: state.currentTool, anchor: w, moved: false };
+      setPreview({ type: 'shape', toolId: state.currentTool, anchor: w, current: w });
+      render();
+      return;
+    }
+
+    if (CONSTRUCTION_DEFS[state.currentTool]) {
+      const def = CONSTRUCTION_DEFS[state.currentTool];
+      const wantType = def.types[state.toolPicked.length];
+      let hit = hitTest(sx, sy);
+      // 如果需要点，优先找最近的点（即使有更近的线）
+      if (wantType === 'p') {
+        const pHit = findClosestPoint(w, 0.5);
+        if (pHit) hit = pHit;
+        if (!hit) {
+          pushHistory();
+          hit = createPoint(w.x, w.y);
+        }
+      } else {
+        if (!hit) {
+          toast('请点击一个' + (wantType === 'line-like' ? '线' : '对象'));
+          return;
+        }
+        if (!typeMatches(hit, wantType)) {
+          toast('类型不匹配: 需要 ' + wantType);
+          return;
+        }
+      }
+      state.toolPicked.push(hit);
+      if (state.toolPicked.length >= def.n) {
+        executeConstruction(state.currentTool, state.toolPicked);
+        state.toolPicked = [];
+      }
+      render();
+      return;
+    }
+  });
+
+  function finalizeShapeDrag() {
+    if (!state.shapeDrag) return;
+    const { toolId, anchor, moved } = state.shapeDrag;
+    let current = mouseWorld;
+    if (!moved) {
+      // 未拖动: 使用默认尺寸
+      const d = SHAPE_DEFAULT_OFFSETS[toolId] || { x: 2, y: 0 };
+      current = { x: anchor.x + d.x, y: anchor.y + d.y };
+    }
+    executePredefinedShape(toolId, anchor, current);
+    state.shapeDrag = null;
+    clearPreview();
+    render();
+  }
+
+  function onGlobalMouseUp() {
+    if (dragInfo) {
+      svg.classList.remove('dragging');
+      dragInfo = null;
+    }
+    if (state.shapeDrag) finalizeShapeDrag();
+  }
+  // 监听 window 而不是 svg, 这样在 svg 外释放也能完成拖动
+  window.addEventListener('mouseup', onGlobalMouseUp);
+  svg.addEventListener('mouseup', onGlobalMouseUp);
+
+  svg.addEventListener('dblclick', e => {
+    if (state.currentTool === 'polygon' && state.pendingPoly.length >= 3) {
+      finishPolygon();
+    } else {
+      const r = getRect();
+      const sx = e.clientX - r.left, sy = e.clientY - r.top;
+      const hit = hitTest(sx, sy);
+      if (hit && hit.t === 'p') openLabelModal(hit);
+    }
+  });
+
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = getRect();
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const before = screenToWorld(sx, sy);
+    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    state.view.scale = Math.max(2, Math.min(800, state.view.scale * factor));
+    const after = screenToWorld(sx, sy);
+    state.view.x += before.x - after.x;
+    state.view.y += before.y - after.y;
+    render();
+  }, { passive: false });
+
+  // ==================== 元素操作 ====================
+  function moveElementBy(el, dx, dy) {
+    if (el.t === 'p') { el.x += dx; el.y += dy; return; }
+    if (el.t === 's' || el.t === 'r' || el.t === 'l') {
+      [el.a, el.b].forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'c') {
+      [el.center, el.radius].forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'g') {
+      el.points.forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'a') {
+      [el.vertex, el.p1, el.p2].forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'm') {
+      [el.a, el.b].forEach(id => { const p = findPoint(id); if (p) { p.x += dx; p.y += dy; } });
+    } else if (el.t === 'x') {
+      el.x += dx; el.y += dy;
+      if (el.anchor) { const p = findPoint(el.anchor); if (p) { p.x += dx; p.y += dy; } }
+    }
+  }
+
+  // ==================== 构造执行 ====================
+  function finishPolygon() {
+    if (state.pendingPoly.length < 3) return;
+    // 过滤掉被删除/无效的点
+    const validIds = state.pendingPoly.filter(id => findPoint(id));
+    if (validIds.length < 3) { state.pendingPoly = []; clearPreview(); return; }
+    pushHistory();
+    addEl({ id: newId(), t: 'g', points: validIds });
+    state.pendingPoly = [];
+    clearPreview();
+    render();
+  }
+
+  // 预设形状: 给定 2 个世界坐标点, 返回约束计算后的所有顶点 (world coords)
+  function shapeVertices(toolId, p1, p2) {
+    switch (toolId) {
+      case 'tri-isoceles': {
+        const mid = p1, apex = p2;
+        const dir = G.norm(G.sub(apex, mid));
+        const perp = G.perp(dir);
+        const h = G.dist(mid, apex);
+        const halfBase = 0.6 * h;
+        return [
+          G.add(mid, G.mul(perp, -halfBase)),
+          G.add(mid, G.mul(perp, halfBase)),
+          apex,
+        ];
+      }
+      case 'tri-equilateral': {
+        const c = p1, v = p2;
+        const r = G.dist(c, v);
+        const a0 = Math.atan2(v.y - c.y, v.x - c.x);
+        return [
+          v,
+          { x: c.x + r * Math.cos(a0 + 2 * Math.PI / 3), y: c.y + r * Math.sin(a0 + 2 * Math.PI / 3) },
+          { x: c.x + r * Math.cos(a0 + 4 * Math.PI / 3), y: c.y + r * Math.sin(a0 + 4 * Math.PI / 3) },
+        ];
+      }
+      case 'quad-parallelogram': {
+        const c1 = p1, c2 = p2;
+        const v = G.sub(c2, c1);
+        const len = G.len(v);
+        const ang = Math.PI / 3;
+        const wLen = 0.8 * len;
+        const w = { x: Math.cos(ang) * wLen, y: Math.sin(ang) * wLen };
+        return [c1, c2, { x: c2.x + w.x, y: c2.y + w.y }, { x: c1.x + w.x, y: c1.y + w.y }];
+      }
+      case 'quad-rectangle':
+        return [p1, { x: p2.x, y: p1.y }, p2, { x: p1.x, y: p2.y }];
+      case 'quad-rhombus': {
+        const c1 = p1, c2 = p2;
+        const v = G.sub(c2, c1);
+        const ang = Math.PI / 3;
+        const w = { x: v.x * Math.cos(ang) - v.y * Math.sin(ang), y: v.x * Math.sin(ang) + v.y * Math.cos(ang) };
+        return [c1, c2, { x: c2.x + w.x, y: c2.y + w.y }, { x: c1.x + w.x, y: c1.y + w.y }];
+      }
+      case 'quad-square': {
+        const c1 = p1, c3 = p2;
+        const center = G.midpoint(c1, c3);
+        const halfDiag = G.dist(c1, c3) / 2;
+        const ang = Math.atan2(c3.y - c1.y, c3.x - c1.x);
+        const startAng = ang + Math.PI / 4;
+        return [0, 1, 2, 3].map(i => ({
+          x: center.x + halfDiag * Math.cos(startAng + i * Math.PI / 2),
+          y: center.y + halfDiag * Math.sin(startAng + i * Math.PI / 2),
+        }));
+      }
+    }
+    return [];
+  }
+
+  // 点击但未拖动时的默认尺寸 (从 anchor 到第二点的偏移)
+  const SHAPE_DEFAULT_OFFSETS = {
+    'tri-isoceles':     { x: 0,   y: -3 },
+    'tri-equilateral':  { x: 2,   y: 0 },
+    'quad-parallelogram': { x: 2.5, y: 0 },
+    'quad-rectangle':   { x: 2,   y: -2 },
+    'quad-rhombus':     { x: 2,   y: 0 },
+    'quad-square':      { x: 2,   y: -2 },
+  };
+
+  function executePredefinedShape(id, p1, p2) {
+    // p1, p2 是世界坐标 (不再用 ID, 由调用方负责传入)
+    const vertices = shapeVertices(id, p1, p2);
+    if (vertices.length < 3) return;
+    pushHistory();
+    const ids = vertices.map(v => createPoint(v.x, v.y).id);
+    const cMap = {
+      'tri-isoceles': 'iso-tri',
+      'tri-equilateral': 'equilateral',
+      'quad-parallelogram': 'parallelogram',
+      'quad-rectangle': 'rectangle',
+      'quad-rhombus': 'rhombus',
+      'quad-square': 'square',
+    };
+    addEl({ id: newId(), t: 'g', points: ids, constraint: cMap[id] || null });
+  }
+
+  // === 约束编辑: 拖动预设图形的顶点时, 保持形状类型 ===
+  // points: [{x, y}, ...]   draggedIdx: 拖动的顶点在数组中的索引   newPos: {x, y}
+  function isoTriConstraint(points, draggedIdx, newPos) {
+    // [baseLeft, baseRight, apex]
+    const [bL, bR, A] = points;
+    const M = G.midpoint(bL, bR);
+    const baseDir = G.norm(G.sub(bR, bL));
+    const perpDir = G.perp(baseDir);
+    const oldT = G.dot(G.sub(A, M), perpDir);
+    if (draggedIdx === 0 || draggedIdx === 1) {
+      // 拖动底边端点: 保持另一端点固定, 顶点重新计算到新 base 的垂直方向
+      const other = points[draggedIdx === 0 ? 1 : 0];
+      const newP0 = draggedIdx === 0 ? newPos : other;
+      const newP1 = draggedIdx === 1 ? newPos : other;
+      const newM = G.midpoint(newP0, newP1);
+      // 保持 baseDir 方向一致 (总从 points[0] 指向 points[1]), 避免 idx 0/1 不对称
+      const newBaseDir = G.norm(G.sub(newP1, newP0));
+      const newPerpDir = G.perp(newBaseDir);
+      const newA = G.add(newM, G.mul(newPerpDir, oldT));
+      return [newP0, newP1, newA];
+    } else {
+      // 拖动顶点: 投影到底边的垂直平分线上
+      const newA = G.add(M, G.mul(perpDir, G.dot(G.sub(newPos, M), perpDir)));
+      return [bL, bR, newA];
+    }
+  }
+
+  function equilateralConstraint(points, draggedIdx, newPos) {
+    // [v1, v2, v3] 任意顺序, 但保持中心固定
+    const C = {
+      x: (points[0].x + points[1].x + points[2].x) / 3,
+      y: (points[0].y + points[1].y + points[2].y) / 3,
+    };
+    const R = G.dist(points[0], C);
+    const newDir = G.norm(G.sub(newPos, C));
+    const newDragged = G.add(C, G.mul(newDir, R));
+    const oldAng = Math.atan2(points[draggedIdx].y - C.y, points[draggedIdx].x - C.x);
+    const newAng = Math.atan2(newDragged.y - C.y, newDragged.x - C.x);
+    const dAng = newAng - oldAng;
+    return points.map((p, i) => {
+      if (i === draggedIdx) return newDragged;
+      const r = G.dist(p, C);
+      const a = Math.atan2(p.y - C.y, p.x - C.x) + dAng;
+      return { x: C.x + r * Math.cos(a), y: C.y + r * Math.sin(a) };
+    });
+  }
+
+  function rectangleConstraint(points, draggedIdx, newPos) {
+    // [TL, TR, BR, BL] 轴对齐. 自由: TL(idx0) 和 BR(idx2)
+    const [TL, TR, BR, BL] = points;
+    if (draggedIdx === 0) {
+      return [newPos, { x: BR.x, y: newPos.y }, BR, { x: newPos.x, y: BR.y }];
+    } else if (draggedIdx === 2) {
+      return [TL, { x: newPos.x, y: TL.y }, newPos, { x: TL.x, y: newPos.y }];
+    } else if (draggedIdx === 1) {
+      return [TL, { x: BR.x, y: TL.y }, BR, BL];
+    } else {
+      return [TL, TR, BR, { x: TL.x, y: BR.y }];
+    }
+  }
+
+  function squareConstraint(points, draggedIdx, newPos) {
+    // [v0, v1, v2, v3] CCW 90°间隔. 中心+半径固定, 旋转由被拖顶点决定.
+    const C = {
+      x: (points[0].x + points[1].x + points[2].x + points[3].x) / 4,
+      y: (points[0].y + points[1].y + points[2].y + points[3].y) / 4,
+    };
+    const R = G.dist(points[0], C);
+    const offs = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+    const oldAng = Math.atan2(points[draggedIdx].y - C.y, points[draggedIdx].x - C.x);
+    const oldTheta = oldAng - offs[draggedIdx];
+    const newAng = Math.atan2(newPos.y - C.y, newPos.x - C.x);
+    const newTheta = newAng - offs[draggedIdx];
+    return offs.map(off => ({
+      x: C.x + R * Math.cos(newTheta + off),
+      y: C.y + R * Math.sin(newTheta + off),
+    }));
+  }
+
+  function parallelogramConstraint(points, draggedIdx, newPos) {
+    // [c1, c2, c3, c4] CCW. 自由: c1, vec1, vec2
+    const [c1, c2, c3, c4] = points;
+    const v1 = G.sub(c2, c1);
+    const v2 = G.sub(c4, c1);
+    if (draggedIdx === 0) {
+      return [newPos, G.add(newPos, v1), G.add(newPos, G.add(v1, v2)), G.add(newPos, v2)];
+    } else if (draggedIdx === 1) {
+      const nv1 = G.sub(newPos, c1);
+      return [c1, newPos, G.add(newPos, v2), c4];
+    } else if (draggedIdx === 2) {
+      const totalMag = G.len(G.add(v1, v2));
+      const newMag = G.dist(newPos, c1);
+      const scale = totalMag > 1e-9 ? newMag / totalMag : 1;
+      const nv1 = G.mul(v1, scale);
+      const nv2 = G.mul(v2, scale);
+      return [c1, G.add(c1, nv1), G.add(c1, G.add(nv1, nv2)), G.add(c1, nv2)];
+    } else {
+      const nv2 = G.sub(newPos, c1);
+      return [c1, c2, G.add(c2, nv2), newPos];
+    }
+  }
+
+  function rhombusConstraint(points, draggedIdx, newPos) {
+    // [c1, c2, c3, c4] CCW. |vec1| = |vec2| (菱形边等长)
+    const [c1, c2, c3, c4] = points;
+    const v1 = G.sub(c2, c1);
+    const v2 = G.sub(c4, c1);
+    const L = G.len(v1);  // 边长 (=|v2|)
+    if (draggedIdx === 0) {
+      return [newPos, G.add(newPos, v1), G.add(newPos, G.add(v1, v2)), G.add(newPos, v2)];
+    } else if (draggedIdx === 1) {
+      // 拖 c2: 保持 c1, c4. vec1 新方向, 长度保持 L
+      const dir = G.norm(G.sub(newPos, c1));
+      const nv1 = G.mul(dir, L);
+      const c2n = G.add(c1, nv1);
+      return [c1, c2n, G.add(c2n, v2), c4];
+    } else if (draggedIdx === 2) {
+      // 拖 c3 (对角 c1): 保持 c1, c2. vec2 新方向, 长度 L
+      const dir = G.norm(G.sub(newPos, c2));
+      const nv2 = G.mul(dir, L);
+      const c4n = G.sub(newPos, v1);
+      return [c1, c2, newPos, c4n];
+    } else {
+      const dir = G.norm(G.sub(newPos, c1));
+      const nv2 = G.mul(dir, L);
+      const c4n = G.add(c1, nv2);
+      return [c1, c2, G.add(c2, nv2), c4n];
+    }
+  }
+
+  function applyConstraint(poly, draggedIdx, newPos) {
+    const points = poly.points.map(id => {
+      const p = findPoint(id);
+      return p ? { x: p.x, y: p.y } : null;
+    });
+    if (points.some(p => !p)) return false;
+    let newPoints;
+    switch (poly.constraint) {
+      case 'iso-tri':       newPoints = isoTriConstraint(points, draggedIdx, newPos); break;
+      case 'equilateral':   newPoints = equilateralConstraint(points, draggedIdx, newPos); break;
+      case 'parallelogram': newPoints = parallelogramConstraint(points, draggedIdx, newPos); break;
+      case 'rectangle':     newPoints = rectangleConstraint(points, draggedIdx, newPos); break;
+      case 'rhombus':       newPoints = rhombusConstraint(points, draggedIdx, newPos); break;
+      case 'square':        newPoints = squareConstraint(points, draggedIdx, newPos); break;
+      default: return false;
+    }
+    if (!newPoints) return false;
+    poly.points.forEach((id, i) => {
+      const p = findPoint(id);
+      if (p && newPoints[i]) { p.x = newPoints[i].x; p.y = newPoints[i].y; }
+    });
+    return true;
+  }
+
+  function executeConstruction(id, picked) {
+    const ref = picked.map(p => p.id);
+    if (id === 'midpoint') {
+      const a = pointAt(ref[0]), b = pointAt(ref[1]);
+      pushHistory();
+      createPoint(G.midpoint(a, b).x, G.midpoint(a, b).y);
+    } else if (id === 'bisect') {
+      const v = pointAt(ref[0]), p1 = pointAt(ref[1]), p2 = pointAt(ref[2]);
+      const dir = G.bisectorDir(v, p1, p2);
+      if (G.len(dir) < 1e-9) { toast('无法构造角平分线'); return; }
+      const far = G.add(v, G.mul(dir, 200));
+      pushHistory();
+      const farPoint = createPoint(far.x, far.y);
+      addEl({ id: newId(), t: 'r', a: ref[0], b: farPoint.id, derived: true, dashed: true });
+    } else if (id === 'perpendicular') {
+      const line = picked[0], pt = picked[1];
+      const a = pointAt(line.a), b = pointAt(line.b);
+      const P = pointAt(pt.id);
+      const d = G.norm(G.sub(b, a));
+      const Pfoot = G.closestOnLine(P, a, b);
+      const na = G.add(Pfoot, G.mul(G.perp(d), 100));
+      const nb = G.add(Pfoot, G.mul(G.perp(d), -100));
+      pushHistory();
+      const p1 = createPoint(na.x, na.y);
+      const p2 = createPoint(nb.x, nb.y);
+      addEl({ id: newId(), t: 'l', a: p1.id, b: p2.id, derived: true, dashed: true });
+    } else if (id === 'parallel') {
+      const line = picked[0], pt = picked[1];
+      const a = pointAt(line.a), b = pointAt(line.b);
+      const P = pointAt(pt.id);
+      const d = G.norm(G.sub(b, a));
+      const na = G.add(P, G.mul(d, 100));
+      const nb = G.sub(P, G.mul(d, 100));
+      pushHistory();
+      const p1 = createPoint(na.x, na.y);
+      const p2 = createPoint(nb.x, nb.y);
+      addEl({ id: newId(), t: 'l', a: p1.id, b: p2.id, derived: true, dashed: true });
+    } else if (id === 'perpbisect') {
+      const a = pointAt(ref[0]), b = pointAt(ref[1]);
+      const m = G.midpoint(a, b);
+      const d = G.norm(G.sub(b, a));
+      const p1 = G.add(m, G.mul(G.perp(d), 100));
+      const p2 = G.add(m, G.mul(G.perp(d), -100));
+      pushHistory();
+      const pa = createPoint(p1.x, p1.y);
+      const pb = createPoint(p2.x, p2.y);
+      createPoint(m.x, m.y);
+      addEl({ id: newId(), t: 'l', a: pa.id, b: pb.id, derived: true, dashed: true });
+    } else if (id === 'intersection') {
+      const pts = computeIntersection(picked[0], picked[1]);
+      if (pts.length === 0) { toast('无交点'); return; }
+      pushHistory();
+      pts.forEach(p => createPoint(p.x, p.y));
+    } else if (id === 'divide') {
+      const a = pointAt(ref[0]), b = pointAt(ref[1]);
+      openDivideModal(a, b);
+    } else if (id === 'tri-altitude') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const verts = [A, B, C];
+      const opps = [[B, C], [C, A], [A, B]];
+      pushHistory();
+      for (let i = 0; i < 3; i++) {
+        const V = verts[i], P = opps[i][0], Q = opps[i][1];
+        const foot = G.closestOnLine(V, P, Q);
+        const d = G.sub(Q, P);
+        const t = G.dot(G.sub(foot, P), d) / G.dot(d, d);
+        const tt = Math.max(0, Math.min(1, t));
+        const F = G.add(P, G.mul(d, tt));
+        const fId = createPoint(F.x, F.y);
+        addEl({ id: newId(), t: 's', a: ref[i], b: fId.id, derived: true, dashed: true });
+      }
+    } else if (id === 'tri-median') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const opps = [[B, C], [C, A], [A, B]];
+      pushHistory();
+      for (let i = 0; i < 3; i++) {
+        const m = G.midpoint(opps[i][0], opps[i][1]);
+        const mId = createPoint(m.x, m.y);
+        addEl({ id: newId(), t: 's', a: ref[i], b: mId.id, derived: true, dashed: true });
+      }
+    } else if (id === 'tri-bisector') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const verts = [A, B, C];
+      const opps = [[B, C], [C, A], [A, B]];
+      pushHistory();
+      for (let i = 0; i < 3; i++) {
+        const V = verts[i], P = opps[i][0], Q = opps[i][1];
+        const dir = G.bisectorDir(V, P, Q);
+        if (G.len(dir) < 1e-9) continue;
+        const int = G.lineLineIntersect(V, G.add(V, dir), P, Q);
+        if (!int) continue;
+        const fId = createPoint(int.x, int.y);
+        addEl({ id: newId(), t: 's', a: ref[i], b: fId.id, derived: true, dashed: true });
+      }
+    } else if (id === 'tri-midsegment') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const mBC = G.midpoint(B, C), mCA = G.midpoint(C, A), mAB = G.midpoint(A, B);
+      pushHistory();
+      const p1 = createPoint(mBC.x, mBC.y);
+      const p2 = createPoint(mCA.x, mCA.y);
+      const p3 = createPoint(mAB.x, mAB.y);
+      addEl({ id: newId(), t: 's', a: p1.id, b: p2.id, derived: true, dashed: true });
+      addEl({ id: newId(), t: 's', a: p2.id, b: p3.id, derived: true, dashed: true });
+      addEl({ id: newId(), t: 's', a: p3.id, b: p1.id, derived: true, dashed: true });
+    } else if (id === 'tri-circumcircle') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const O = G.circumcenter(A, B, C);
+      if (!O) { toast('三点共线'); return; }
+      pushHistory();
+      const oId = createPoint(O.x, O.y);
+      const rId = createPoint(A.x, A.y);
+      addEl({ id: newId(), t: 'c', center: oId.id, radius: rId.id, derived: true, dashed: true });
+    } else if (id === 'tri-incircle') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const I = G.incenter(A, B, C);
+      if (!I) { toast('无法构造'); return; }
+      const a = G.dist(B, C), b = G.dist(A, C), c = G.dist(A, B);
+      const s = (a + b + c) / 2;
+      const area = G.triangleArea(A, B, C);
+      const r = s > 0 ? area / s : 0;
+      const dir = G.norm(G.sub(B, A));
+      const onC = G.add(I, G.mul(G.perp(dir), r));
+      pushHistory();
+      const iId = createPoint(I.x, I.y);
+      const rId = createPoint(onC.x, onC.y);
+      addEl({ id: newId(), t: 'c', center: iId.id, radius: rId.id, derived: true, dashed: true });
+    } else if (id === 'tri-centroid') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const Cp = G.centroid(A, B, C);
+      pushHistory();
+      createPoint(Cp.x, Cp.y);
+    } else if (id === 'tri-orthocenter') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const H = G.orthocenter(A, B, C);
+      if (!H) { toast('三点共线'); return; }
+      pushHistory();
+      createPoint(H.x, H.y);
+    } else if (id === 'tri-circumcenter') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const O = G.circumcenter(A, B, C);
+      if (!O) { toast('三点共线'); return; }
+      pushHistory();
+      createPoint(O.x, O.y);
+    } else if (id === 'tri-incenter') {
+      const A = pointAt(ref[0]), B = pointAt(ref[1]), C = pointAt(ref[2]);
+      const I = G.incenter(A, B, C);
+      if (!I) return;
+      pushHistory();
+      createPoint(I.x, I.y);
+    } else if (id === 'measure-length') {
+      const a = pointAt(ref[0]), b = pointAt(ref[1]);
+      pushHistory();
+      addEl({ id: newId(), t: 'm', a: ref[0], b: ref[1] });
+    } else if (id === 'measure-angle') {
+      // ref[0] = p1, ref[1] = vertex, ref[2] = p2 (与角度标工具一致)
+      const p1 = pointAt(ref[0]), v = pointAt(ref[1]), p2 = pointAt(ref[2]);
+      if (ref[0] === ref[1] || ref[1] === ref[2] || ref[0] === ref[2]) { toast('三个点必须不同'); return; }
+      const cross = (p1.x - v.x) * (p2.y - v.y) - (p1.y - v.y) * (p2.x - v.x);
+      if (Math.abs(cross) < 1e-9) { toast('三点共线, 无法构造角'); return; }
+      pushHistory();
+      addEl({ id: newId(), t: 'a', vertex: ref[1], p1: ref[0], p2: ref[2] });
+    }
+    render();
+  }
+
+  function computeIntersection(e1, e2) {
+    const e1Line = isLineLike(e1);
+    const e2Line = isLineLike(e2);
+    if (e1Line && e2Line) {
+      const a1 = pointAt(e1.a), b1 = pointAt(e1.b);
+      const a2 = pointAt(e2.a), b2 = pointAt(e2.b);
+      const p = G.lineLineIntersect(a1, b1, a2, b2);
+      return p ? [p] : [];
+    }
+    if ((e1Line && e2.t === 'c') || (e2Line && e1.t === 'c')) {
+      const line = e1Line ? e1 : e2;
+      const circ = e1Line ? e2 : e1;
+      const a = pointAt(line.a), b = pointAt(line.b);
+      const O = pointAt(circ.center);
+      const r = G.dist(pointAt(circ.center), pointAt(circ.radius));
+      return G.lineCircleIntersect(a, b, O, r);
+    }
+    if (e1.t === 'c' && e2.t === 'c') {
+      const O1 = pointAt(e1.center), r1 = G.dist(pointAt(e1.center), pointAt(e1.radius));
+      const O2 = pointAt(e2.center), r2 = G.dist(pointAt(e2.center), pointAt(e2.radius));
+      return G.circleCircleIntersect(O1, r1, O2, r2);
+    }
+    return [];
+  }
+
+  // ==================== 等分点 ====================
+  function openDivideModal(a, b) {
+    state.pendingDivide = { a, b };
+    document.getElementById('divide-n').value = 2;
+    document.getElementById('modal-divide').classList.add('open');
+    setTimeout(() => document.getElementById('divide-n').focus(), 50);
+  }
+  document.getElementById('divide-cancel').onclick = () => {
+    document.getElementById('modal-divide').classList.remove('open');
+    state.pendingDivide = null;
+  };
+  document.getElementById('divide-ok').onclick = () => {
+    const n = parseInt(document.getElementById('divide-n').value, 10);
+    if (!n || n < 2 || n > 20) { toast('等分数应为 2-20'); return; }
+    if (state.pendingDivide) {
+      const { a, b } = state.pendingDivide;
+      pushHistory();
+      for (let i = 1; i < n; i++) {
+        const t = i / n;
+        const p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+        createPoint(p.x, p.y);
+      }
+      render();
+    }
+    document.getElementById('modal-divide').classList.remove('open');
+    state.pendingDivide = null;
+  };
+
+  // ==================== 文本输入 ====================
+  function openTextModal(x, y) {
+    state.pendingTextPos = { x, y };
+    const input = document.getElementById('text-input');
+    input.value = '';
+    document.getElementById('modal-text').classList.add('open');
+    setTimeout(() => input.focus(), 50);
+  }
+  document.getElementById('text-cancel').onclick = () => {
+    document.getElementById('modal-text').classList.remove('open');
+  };
+  document.getElementById('text-ok').onclick = () => {
+    const v = document.getElementById('text-input').value.trim();
+    if (v && state.pendingTextPos) {
+      pushHistory();
+      addEl({ id: newId(), t: 'x', x: state.pendingTextPos.x, y: state.pendingTextPos.y, text: v });
+      render();
+    }
+    document.getElementById('modal-text').classList.remove('open');
+  };
+  document.getElementById('text-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('text-ok').click();
+  });
+
+  // ==================== 标签编辑 ====================
+  function openLabelModal(p) {
+    state.editingLabel = p;
+    const input = document.getElementById('label-input');
+    input.value = p.label || '';
+    document.getElementById('modal-label').classList.add('open');
+    setTimeout(() => input.focus(), 50);
+  }
+  document.getElementById('label-cancel').onclick = () => {
+    document.getElementById('modal-label').classList.remove('open');
+  };
+  document.getElementById('label-ok').onclick = () => {
+    const v = document.getElementById('label-input').value.trim();
+    if (state.editingLabel) {
+      pushHistory();
+      state.editingLabel.label = v || undefined;
+      render();
+    }
+    document.getElementById('modal-label').classList.remove('open');
+  };
+  document.getElementById('label-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('label-ok').click();
+  });
+
+  // ==================== 分享 / 导入 / 导出 ====================
+  function shareLink() {
+    // 使用紧凑格式以缩短 URL
+    const compact = JSON.stringify(serializeCompact());
+    const compressed = LZString.compressToEncodedURIComponent(compact);
+    const url = location.origin + location.pathname + '?d=' + compressed;
+    document.getElementById('share-url').value = url;
+    document.getElementById('share-title').textContent = '分享链接';
+    document.getElementById('modal-share').classList.add('open');
+  }
+  document.getElementById('share-close').onclick = () => {
+    document.getElementById('modal-share').classList.remove('open');
+  };
+  document.getElementById('share-copy').onclick = () => {
+    const ta = document.getElementById('share-url');
+    ta.select();
+    try {
+      document.execCommand('copy');
+      toast('已复制到剪贴板');
+    } catch (e) { toast('复制失败,请手动复制'); }
+  };
+
+  function openImportModal() {
+    document.getElementById('import-json').value = '';
+    document.getElementById('modal-import').classList.add('open');
+  }
+  document.getElementById('import-cancel').onclick = () => {
+    document.getElementById('modal-import').classList.remove('open');
+  };
+  document.getElementById('import-replace').onclick = () => {
+    const txt = document.getElementById('import-json').value.trim();
+    if (!txt) return;
+    try {
+      const raw = JSON.parse(txt);
+      const data = tryLoadData(raw);
+      if (!data || !data.elements) { toast('JSON 格式错误'); return; }
+      pushHistory();
+      loadFrom(data);
+      document.getElementById('modal-import').classList.remove('open');
+      toast('已导入');
+    } catch (err) {
+      toast('JSON 解析失败');
+    }
+  };
+
+  function loadFromUrl() {
+    const d = new URLSearchParams(location.search).get('d');
+    if (!d) return;
+    try {
+      const json = LZString.decompressFromEncodedURIComponent(d);
+      if (!json) return;
+      const data = tryLoadData(JSON.parse(json));
+      if (data) { loadFrom(data); toast('已加载分享内容'); }
+    } catch (err) { /* ignore */ }
+  }
+
+  function exportPng() {
+    const rect = getRect();
+    const clone = svg.cloneNode(true);
+    clone.querySelectorAll('.selected-outline').forEach(n => n.remove());
+    clone.setAttribute('xmlns', SVG_NS);
+    const xml = new XMLSerializer().serializeToString(clone);
+    const blob = new Blob([xml], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = rect.width; c.height = rect.height;
+      c.getContext('2d').drawImage(img, 0, 0);
+      c.toBlob(b => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b);
+        a.download = 'geometry-' + Date.now() + '.png';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      }, 'image/png');
+      URL.revokeObjectURL(url);
+      toast('已导出 PNG');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); toast('导出失败'); };
+    img.src = url;
+  }
+
+  function exportJson() {
+    const json = JSON.stringify(serialize(), null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'geometry-' + Date.now() + '.json';
+    a.click();
+    toast('已导出 JSON');
+  }
+
+  function clearAll() {
+    if (state.elements.length === 0) return;
+    if (!confirm('确定要清空画板吗?')) return;
+    pushHistory();
+    state.elements = [];
+    state.nextId = 1;
+    state.nextLabelIdx = 0;
+    state.selection.clear();
+    state.pendingVertex = null;
+    state.pendingCircleCenter = null;
+    state.pendingPoly = [];
+    state.toolPicked = [];
+    clearPreview();
+    render();
+  }
+
+  function toggleGrid() {
+    state.showGrid = !state.showGrid;
+    render();
+    toast(state.showGrid ? '已显示栅格' : '已隐藏栅格');
+  }
+
+  function resetView() {
+    state.view = { x: 0, y: 0, scale: VIEW_DEFAULT_SCALE };
+    render();
+  }
+
+  // ==================== Toast ====================
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+  function toast(msg, isError) {
+    toastEl.textContent = msg;
+    toastEl.classList.toggle('error', !!isError);
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+  }
+
+  // ==================== 键盘 ====================
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const k = e.key;
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (ctrl && k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
+    if (ctrl && (k === 'y' || (k === 'z' && e.shiftKey))) { e.preventDefault(); redo(); return; }
+    if (k === 'Delete' || k === 'Backspace') {
+      if (state.selection.size > 0) {
+        pushHistory();
+        [...state.selection].forEach(deleteEl);
+        render();
+        e.preventDefault();
+      }
+      return;
+    }
+    if (k === 'Escape') {
+      state.pendingVertex = null;
+      state.pendingCircleCenter = null;
+      state.pendingPoly = [];
+      state.toolPicked = [];
+      state.shapeDrag = null;
+      clearPreview();
+      activateTool('select');
+      render();
+      return;
+    }
+    if (k === 'Enter' && state.currentTool === 'polygon' && state.pendingPoly.length >= 3) {
+      finishPolygon();
+      return;
+    }
+    // Enter 完成预设形状拖拽 (使用默认尺寸)
+    if (k === 'Enter' && state.shapeDrag) {
+      finalizeShapeDrag();
+      return;
+    }
+    if (k === 'g' || k === 'G') { toggleGrid(); return; }
+    if (k === 'v' || k === 'V') activateTool('select');
+    else if (k === 'h' || k === 'H') activateTool('pan');
+    else if (k === 'p' || k === 'P') activateTool('point');
+    else if (k === 'l' || k === 'L') activateTool('segment');
+    else if (k === 'r' || k === 'R') activateTool('ray');
+    else if (k === 't' || k === 'T') activateTool('line');
+    else if (k === 'c' || k === 'C') activateTool('circle');
+    else if (k === 'a' || k === 'A') activateTool('angle');
+    else if (k === 'x' || k === 'X') activateTool('text');
+    else if (k === 'd' || k === 'D') activateTool('delete');
+  });
+
+  // ==================== 窗口大小 ====================
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(render, 100);
+  });
+
+  // 点击空白处关闭所有 dropdown
+  document.addEventListener('click', () => closeAllDropdowns());
+
+  // ==================== AI 模型解题 ====================
+  const AI_API_BASE = 'https://api.oscarstudio.cn';
+  let aiPanelOpen = false;
+  let aiMessages = []; // 多轮对话 (不含 board state, 服务端注入)
+  let aiAbortCtrl = null;
+  let aiCurrentModel = localStorage.getItem('geoAIModel') || 'deepseek-v4-pro';
+  let aiAvailableModels = [];
+  let aiRecvText = '';
+  let aiRecvToolCalls = [];
+  let aiRecvMsgEl = null;
+  let aiRecvUsage = null;
+  let aiThinkingEl = null;
+
+  function aiTogglePanel(force) {
+    aiPanelOpen = (force === undefined) ? !aiPanelOpen : force;
+    const panel = document.getElementById('ai-panel');
+    if (aiPanelOpen) {
+      panel.hidden = false;
+      const input = document.getElementById('ai-input');
+      if (input && !input.value) input.focus();
+      aiRefreshModelName();
+    } else {
+      panel.hidden = true;
+    }
+    document.querySelectorAll('.tool').forEach(b => b.classList.remove('active'));
+    if (aiPanelOpen) {
+      const btn = document.querySelector('[data-tool="ai-solver"]');
+      if (btn) btn.classList.add('active');
+    }
+  }
+  document.getElementById('ai-close').onclick = () => aiTogglePanel(false);
+
+  function aiRefreshModelName() {
+    const m = aiAvailableModels.find(x => x.id === aiCurrentModel);
+    document.getElementById('ai-model-name').textContent = m ? m.name : aiCurrentModel;
+  }
+  document.getElementById('ai-model-name').onclick = () => aiOpenModelModal();
+
+  // ---- 模型选择模态 ----
+  async function aiOpenModelModal() {
+    if (aiAvailableModels.length === 0) {
+      try {
+        const token = (document.cookie.match(/(?:^|; )userToken=([^;]+)/) || [])[1] || localStorage.getItem('ai_token') || localStorage.getItem('userToken');
+        const resp = await fetch(`${AI_API_BASE}/api/geometry/models`, {
+          credentials: 'include',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        const data = await resp.json();
+        if (data.success) aiAvailableModels = data.models;
+      } catch (e) {
+        toast('加载模型失败: ' + e.message, true);
+        return;
+      }
+    }
+    const list = document.getElementById('ai-model-list');
+    list.innerHTML = '';
+    const byProvider = {};
+    for (const m of aiAvailableModels) {
+      (byProvider[m.provider] = byProvider[m.provider] || []).push(m);
+    }
+    for (const [prov, arr] of Object.entries(byProvider)) {
+      const block = document.createElement('div');
+      block.className = 'provider-block';
+      const head = document.createElement('div');
+      head.className = 'provider-name';
+      head.textContent = prov;
+      block.appendChild(head);
+      for (const m of arr) {
+        const row = document.createElement('div');
+        row.className = 'model-row' + (m.id === aiCurrentModel ? ' active' : '');
+        const badges = [];
+        if (m.recommended) badges.push('<span class="badge recommended">推荐</span>');
+        else if (m.premium) badges.push('<span class="badge pro">PRO</span>');
+        row.innerHTML = `<span class="name">${m.name}</span><span class="id">${m.id}</span>${badges.join('')}`;
+        row.onclick = () => {
+          aiCurrentModel = m.id;
+          localStorage.setItem('geoAIModel', m.id);
+          aiRefreshModelName();
+          document.querySelectorAll('#ai-model-list .model-row').forEach(r => r.classList.remove('active'));
+          row.classList.add('active');
+        };
+        block.appendChild(row);
+      }
+      list.appendChild(block);
+    }
+    document.getElementById('ai-model-modal').hidden = false;
+  }
+  document.getElementById('ai-model-close').onclick = () => {
+    document.getElementById('ai-model-modal').hidden = true;
+  };
+
+  // ---- 消息渲染 ----
+  function aiAppendMsg(role, text) {
+    const box = document.getElementById('ai-messages');
+    const div = document.createElement('div');
+    div.className = 'ai-msg ' + role;
+    const r = document.createElement('div');
+    r.className = 'role';
+    r.textContent = role === 'user' ? '我' : (role === 'thinking' ? '思考中' : 'AI');
+    div.appendChild(r);
+    const t = document.createElement('div');
+    t.className = 'text';
+    t.textContent = text || '';
+    div.appendChild(t);
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
+  function aiAppendToolList(parentEl, toolCalls) {
+    let el = parentEl.querySelector('.tool-list');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'tool-list';
+      parentEl.appendChild(el);
+    }
+    for (const tc of toolCalls) {
+      const tag = document.createElement('span');
+      tag.textContent = tc.name;
+      el.appendChild(tag);
+    }
+    const box = document.getElementById('ai-messages');
+    box.scrollTop = box.scrollHeight;
+  }
+  function aiAppendError(text) {
+    const box = document.getElementById('ai-messages');
+    const div = document.createElement('div');
+    div.className = 'ai-msg system';
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+  function aiShowThinking() {
+    aiRecvMsgEl = aiAppendMsg('thinking', '');
+    aiRecvMsgEl.querySelector('.text').innerHTML = '<span class="dot">●</span><span class="dot">●</span><span class="dot">●</span>';
+    aiThinkingEl = aiRecvMsgEl;
+    return aiRecvMsgEl;
+  }
+  function aiReplaceThinking(text) {
+    if (!aiRecvMsgEl) return;
+    const t = aiRecvMsgEl.querySelector('.text');
+    t.textContent = text;
+    t.classList.remove('thinking-dots');
+    const box = document.getElementById('ai-messages');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  // ---- 发送 ----
+  document.getElementById('ai-send').onclick = () => aiSend();
+  document.getElementById('ai-stop').onclick = () => {
+    if (aiAbortCtrl) aiAbortCtrl.abort();
+  };
+  document.getElementById('ai-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      aiSend();
+    }
+  });
+
+  async function aiSend() {
+    const input = document.getElementById('ai-input');
+    const problem = input.value.trim();
+    if (!problem) return;
+    const token = (document.cookie.match(/(?:^|; )userToken=([^;]+)/) || [])[1] || localStorage.getItem('ai_token') || localStorage.getItem('userToken');
+    if (!token) {
+      aiAppendError('请先登录后再使用模型解题');
+      return;
+    }
+
+    const includeBoard = document.getElementById('ai-include-board').checked;
+
+    aiAppendMsg('user', problem);
+    input.value = '';
+    input.disabled = true;
+    document.getElementById('ai-send').hidden = true;
+    document.getElementById('ai-stop').hidden = false;
+    document.getElementById('ai-status').textContent = '调用中…';
+    aiShowThinking();
+
+    aiRecvText = '';
+    aiRecvToolCalls = [];
+    aiRecvMsgEl = null;
+    aiRecvUsage = null;
+
+    // 完整对话 (含 tool messages) 用于多轮调用
+    const conversationMessages = [...aiMessages, { role: 'user', content: problem }];
+    let iterText = '';
+    let totalUsage = null;
+    const MAX_ITER = 8; // 最多 8 轮 tool calling
+    let lastError = null;
+    let finalData = null;
+    let didCall = false; // 是否至少成功调用了一次 (拿到响应)
+
+    for (let iter = 0; iter < MAX_ITER; iter++) {
+      // 每次重序列化画板 (label→id 转换由 aiApplyToolCall 内部做)
+      const boardState = includeBoard ? serializeCompact() : null;
+
+      let resp, data;
+      try {
+        if (iter === 0) aiAbortCtrl = new AbortController();
+        const status = document.getElementById('ai-status');
+        status.textContent = iter === 0 ? '调用中…' : `第 ${iter + 1} 轮…`;
+        resp = await fetch(`${AI_API_BASE}/api/geometry/solve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            problem, model: aiCurrentModel,
+            messages: conversationMessages, boardState
+          }),
+          signal: aiAbortCtrl.signal
+        });
+      } catch (e) {
+        lastError = '请求失败: ' + e.message;
+        break;
+      }
+
+      if (!resp.ok) {
+        let msg = `HTTP ${resp.status}`;
+        try {
+          const j = await resp.json();
+          if (j.message) msg = j.message;
+        } catch {}
+        lastError = msg;
+        break;
+      }
+
+      try {
+        data = await resp.json();
+      } catch (e) {
+        lastError = '解析响应失败: ' + e.message;
+        break;
+      }
+
+      if (!data.success) {
+        lastError = data.message || '请求失败';
+        break;
+      }
+
+      didCall = true;
+
+      // reasoning → thinking 元素
+      if (data.reasoning) {
+        aiHandleEvent({ type: 'reasoning', text: data.reasoning });
+      }
+
+      // 收集 tool_calls 文本 (累积展示)
+      const tcs = data.tool_calls || [];
+      const toolResultMessages = [];
+
+      for (const tc of tcs) {
+        // 应用到画板, 收集结果文本
+        const resultText = aiApplyToolCallWithResult(tc.name, tc.args || {});
+        aiHandleEvent({ type: 'tool_call', id: tc.id, name: tc.name, args: tc.args || {} });
+        toolResultMessages.push({
+          role: 'tool',
+          tool_call_id: tc.id,
+          content: resultText
+        });
+      }
+
+      if (data.text) {
+        iterText += (iterText ? '\n\n' : '') + data.text;
+      }
+
+      // 累计 usage
+      if (data.usage) {
+        if (!totalUsage) {
+          totalUsage = { ...data.usage };
+        } else {
+          totalUsage.input_tokens = (totalUsage.input_tokens || 0) + (data.usage.input_tokens || 0);
+          totalUsage.output_tokens = (totalUsage.output_tokens || 0) + (data.usage.output_tokens || 0);
+          totalUsage.credits_used = (totalUsage.credits_used || 0) + (data.usage.credits_used || 0);
+        }
+      }
+
+      // 没有 tool_calls → 模型已给出最终回复, 跳出
+      if (tcs.length === 0) {
+        // 即使没 tool_calls, 也把 assistant 消息加入 conversation (供多轮)
+        // 用后端返回的 assistant_message 完整保留 reasoning_details, 维持 Interleaved Thinking
+        if (data.assistant_message) {
+          conversationMessages.push(data.assistant_message);
+        } else {
+          conversationMessages.push({ role: 'assistant', content: data.text || null });
+        }
+        finalData = data;
+        break;
+      }
+
+      // 把这一轮 assistant 消息 + tool 结果加入 conversation, 继续下一轮
+      // 用后端返回的 assistant_message 保留 reasoning_details
+      if (data.assistant_message) {
+        conversationMessages.push(data.assistant_message);
+      } else {
+        conversationMessages.push({
+          role: 'assistant',
+          content: data.text || null,
+          tool_calls: tcs.map(tc => ({
+            id: tc.id,
+            type: 'function',
+            function: { name: tc.name, arguments: JSON.stringify(tc.args || {}) }
+          }))
+        });
+      }
+      conversationMessages.push(...toolResultMessages);
+    }
+
+    // 出错
+    if (lastError) {
+      aiRecvMsgEl && aiRecvMsgEl.remove();
+      aiAppendError(lastError);
+      aiCleanup();
+      return;
+    }
+    if (!didCall) {
+      // 没有跑任何一次调用
+      aiRecvMsgEl && aiRecvMsgEl.remove();
+      aiAppendError('未收到模型响应');
+      aiCleanup();
+      return;
+    }
+
+    // 写入 aiMessages (持久化, 供后续多轮)
+    aiMessages = conversationMessages;
+
+    // 把最终文本喂给 UI
+    if (iterText) {
+      aiHandleEvent({ type: 'text', text: iterText });
+    } else if (aiRecvToolCalls.length) {
+      // 模型只返回 tool_calls 没最终文本, 给个占位
+      aiHandleEvent({ type: 'text', text: `(完成 ${aiRecvToolCalls.length} 个操作)` });
+    }
+    if (totalUsage) {
+      aiHandleEvent({
+        type: 'usage',
+        ...totalUsage,
+        tool_calls: aiRecvToolCalls.length
+      });
+    }
+
+    aiFinalize();
+  }
+
+  // 应用 tool_call 并返回文本描述 (供 role: 'tool' 消息发回模型)
+  function aiApplyToolCallWithResult(name, args) {
+    try {
+      const result = aiApplyToolCall(name, args);
+      // 优先用工具返回值, 否则给个通用描述
+      if (typeof result === 'string' && result) return result;
+      return aiDescribeToolCall(name, args);
+    } catch (e) {
+      return `失败: ${e.message}`;
+    }
+  }
+  function aiDescribeToolCall(name, args) {
+    switch (name) {
+      case 'add_point': return `已创建点 ${args.label || '?'} (${args.x}, ${args.y})`;
+      case 'add_segment': return `已创建线段 ${args.p1}-${args.p2}`;
+      case 'add_ray': return `已创建射线 ${args.p1}→${args.p2}`;
+      case 'add_line': return `已创建直线 ${args.p1}-${args.p2}`;
+      case 'add_circle': return `已创建圆 圆心=${args.center} 半径点=${args.radius}`;
+      case 'add_polygon': return `已创建多边形 (${(args.points || []).join('-')})`;
+      case 'add_angle': return `已创建角度 ∠${args.vertex}${args.p1}${args.p2}`;
+      case 'add_text': return `已添加文本 "${args.text}" @(${args.x}, ${args.y})`;
+      case 'measure_length': return `已测长度 |${args.p1}${args.p2}|`;
+      case 'measure_angle': return `已测角度 ∠${args.vertex}${args.p1}${args.p2}`;
+      case 'construct_midpoint': return `已构造中点`;
+      case 'construct_perpbisect': return `已构造垂直平分线`;
+      case 'construct_bisect': return `已构造角平分线`;
+      case 'construct_perpendicular': return `已构造垂线`;
+      case 'construct_parallel': return `已构造平行线`;
+      case 'construct_intersection': return `已构造交点`;
+      case 'delete': return `已删除点 ${args.label}`;
+      case 'clear_board': return `已清空画板`;
+      case 'finish': return '已完成';
+      default: return `已执行 ${name}`;
+    }
+  }
+
+  function aiCleanup() {
+    aiAbortCtrl = null;
+    document.getElementById('ai-input').disabled = false;
+    document.getElementById('ai-send').hidden = false;
+    document.getElementById('ai-stop').hidden = true;
+    document.getElementById('ai-status').textContent = '';
+    aiRecvMsgEl = null;
+    aiThinkingEl = null;
+  }
+
+  function aiFinalize() {
+    if (aiThinkingEl && aiThinkingEl.parentNode) aiThinkingEl.remove();
+    let finalEl = aiRecvMsgEl;
+    // finalEl 若已被 remove (e.g., 一直是 thinking 元素), 需重建
+    if (finalEl && !finalEl.parentNode) finalEl = null;
+    if (!finalEl && (aiRecvText || aiRecvToolCalls.length)) {
+      finalEl = aiRecvText
+        ? aiAppendMsg('assistant', aiRecvText)
+        : aiAppendMsg('assistant', '');
+    }
+    if (finalEl) {
+      if (aiRecvToolCalls.length) aiAppendToolList(finalEl, aiRecvToolCalls);
+      if (aiRecvUsage) {
+        const u = document.createElement('div');
+        u.className = 'usage';
+        u.textContent = `${aiRecvUsage.model} · ${aiRecvUsage.credits_used ?? '?'} credits · ${aiRecvUsage.tool_calls ?? aiRecvToolCalls.length} tools`;
+        finalEl.appendChild(u);
+      }
+    }
+    if (finalEl || aiRecvToolCalls.length) {
+      aiMessages.push({
+        role: 'assistant',
+        content: aiRecvText || (aiRecvToolCalls.length ? '(执行了 ' + aiRecvToolCalls.length + ' 个工具)' : '(无回复)'),
+        tool_calls: aiRecvToolCalls.length ? aiRecvToolCalls : undefined
+      });
+    } else {
+      aiAppendError('模型未返回任何内容 (可能不支持 tool_calling, 请换模型)');
+    }
+    aiCleanup();
+  }
+
+  function aiHandleEvent(evt) {
+    if (window.GEOMETRY_DEBUG) console.log('[geo] evt:', evt.type, JSON.stringify(evt).slice(0, 80));
+    if (evt.type === 'text') {
+      aiRecvText += evt.text;
+      if (aiRecvMsgEl) {
+        const t = aiRecvMsgEl.querySelector('.text');
+        if (t) t.textContent = aiRecvText;
+        const box = document.getElementById('ai-messages');
+        box.scrollTop = box.scrollHeight;
+      } else {
+        // 第一条 text 时: 把 thinking 折叠进 details, 然后创建 assistant div
+        if (aiThinkingEl) {
+          const thinkingText = aiThinkingEl.querySelector('.text').textContent;
+          aiThinkingEl.remove();
+          aiThinkingEl = null;
+          // 手动创建 div (不要用 aiAppendMsg, 避免重复 .text)
+          const box = document.getElementById('ai-messages');
+          const div = document.createElement('div');
+          div.className = 'ai-msg assistant';
+          const r = document.createElement('div');
+          r.className = 'role';
+          r.textContent = 'AI';
+          div.appendChild(r);
+          if (thinkingText && thinkingText !== '●' && !/^[●\s.]+$/.test(thinkingText)) {
+            const det = document.createElement('details');
+            det.className = 'reasoning';
+            const sum = document.createElement('summary');
+            sum.textContent = '💭 思考过程';
+            det.appendChild(sum);
+            const pre = document.createElement('pre');
+            pre.textContent = thinkingText;
+            det.appendChild(pre);
+            div.appendChild(det);
+          }
+          const t = document.createElement('div');
+          t.className = 'text';
+          t.textContent = aiRecvText;
+          div.appendChild(t);
+          box.appendChild(div);
+          box.scrollTop = box.scrollHeight;
+          aiRecvMsgEl = div;
+        } else {
+          aiRecvMsgEl = aiAppendMsg('assistant', aiRecvText);
+        }
+      }
+    } else if (evt.type === 'reasoning') {
+      // 推理内容: 显示在 thinking 元素内 (替换初始 dots)
+      if (aiThinkingEl) {
+        const t = aiThinkingEl.querySelector('.text');
+        if (t.dataset.gotReal === undefined) {
+          // 第一次: 清掉 dots, 替换为真实推理
+          t.textContent = evt.text;
+          t.dataset.gotReal = '1';
+        } else {
+          t.textContent += evt.text;
+        }
+        const box = document.getElementById('ai-messages');
+        box.scrollTop = box.scrollHeight;
+      }
+    } else if (evt.type === 'tool_call') {
+      // 注意: tool 已在调用方 aiApplyToolCallWithResult 中执行过, 这里只更新 UI
+      aiRecvToolCalls.push({ id: evt.id, name: evt.name, args: evt.args });
+      // 收到 tool_call 时, 替换 thinking 元素内的 dots 为 "画图中..." 状态
+      if (aiThinkingEl) {
+        const t = aiThinkingEl.querySelector('.text');
+        t.textContent = `画图中 (${aiRecvToolCalls.length} 个操作)`;
+        const box = document.getElementById('ai-messages');
+        box.scrollTop = box.scrollHeight;
+      }
+      if (aiRecvMsgEl) {
+        let list = aiRecvMsgEl.querySelector('.tool-list');
+        if (!list) {
+          list = document.createElement('div');
+          list.className = 'tool-list';
+          aiRecvMsgEl.appendChild(list);
+        }
+        const tag = document.createElement('span');
+        tag.textContent = evt.name;
+        list.appendChild(tag);
+      }
+    } else if (evt.type === 'usage') {
+      aiRecvUsage = evt;
+      document.getElementById('ai-status').textContent =
+        evt.credits_used != null ? `${evt.model} · ${evt.credits_used} credits` : evt.model;
+    } else if (evt.type === 'error') {
+      aiAppendError(evt.message);
+    } else if (evt.type === 'done') {
+      // 留到 aiSend 末尾统一处理
+    }
+  }
+
+  // ==================== 工具: 标签 <-> 元素 ====================
+  // 前端内部用 id, 模型用 label; 转换层在 aiApplyToolCall 里
+  function aiFindPointByLabel(label) {
+    if (!label) return null;
+    return state.elements.find(e => e.t === 'p' && (e.label || aiAutoLabelOf(e)) === label);
+  }
+  function aiAutoLabelOf(p) {
+    // 与 addPoint 相同的标签生成规则 (字母 A, B, C...; AA, AB... after Z)
+    const n = state.nextLabelIdx;
+    return aiIndexToLabel(n);
+  }
+  function aiIndexToLabel(n) {
+    if (n < 26) return String.fromCharCode(65 + n);
+    // 简单双字母
+    return String.fromCharCode(65 + Math.floor(n / 26) - 1) + String.fromCharCode(65 + n % 26);
+  }
+  function aiNextLabel() {
+    const used = new Set();
+    for (const el of state.elements) {
+      if (el.t === 'p' && el.label) used.add(el.label);
+    }
+    let n = state.nextLabelIdx;
+    while (used.has(aiIndexToLabel(n))) n++;
+    return aiIndexToLabel(n);
+  }
+  function aiAllocateLabel(desired) {
+    // desired: 模型想用的标签. 若空, 用 nextLabelIdx; 若冲突, 后缀数字.
+    if (!desired) return aiNextLabel();
+    const used = new Set();
+    for (const el of state.elements) {
+      if (el.t === 'p' && el.label) used.add(el.label);
+    }
+    if (!used.has(desired)) return desired;
+    // 冲突: 加数字后缀
+    let i = 2;
+    while (used.has(desired + i)) i++;
+    return desired + i;
+  }
+  function aiFindLineByLabels(p1L, p2L) {
+    if (!p1L || !p2L) return null;
+    for (const el of state.elements) {
+      if (el.t !== 's' && el.t !== 'r' && el.t !== 'l') continue;
+      const aL = aiGetPointLabel(el.a);
+      const bL = aiGetPointLabel(el.b);
+      if ((aL === p1L && bL === p2L) || (aL === p2L && bL === p1L)) return el;
+    }
+    return null;
+  }
+  function aiGetPointLabel(id) {
+    const p = state.elements.find(e => e.id === id);
+    return p ? p.label : null;
+  }
+
+  // ==================== 工具: 应用 tool_call ====================
+  function aiApplyToolCall(name, args) {
+    pushHistory();
+    switch (name) {
+      case 'add_point': return aiTcAddPoint(args);
+      case 'add_segment': return aiTcAddSegment(args);
+      case 'add_ray': return aiTcAddRay(args);
+      case 'add_line': return aiTcAddLine(args);
+      case 'add_circle': return aiTcAddCircle(args);
+      case 'add_polygon': return aiTcAddPolygon(args);
+      case 'add_angle': return aiTcAddAngle(args);
+      case 'add_text': return aiTcAddText(args);
+      case 'measure_length': return aiTcMeasureLength(args);
+      case 'measure_angle': return aiTcMeasureAngle(args);
+      case 'construct_midpoint': return aiTcMidpoint(args);
+      case 'construct_perpbisect': return aiTcPerpbisect(args);
+      case 'construct_bisect': return aiTcBisect(args);
+      case 'construct_perpendicular': return aiTcPerpendicular(args);
+      case 'construct_parallel': return aiTcParallel(args);
+      case 'construct_intersection': return aiTcIntersection(args);
+      case 'delete': return aiTcDelete(args);
+      case 'clear_board': return aiTcClearBoard();
+      case 'finish': return; // 收尾由 aiSend 末尾处理
+      default: throw new Error('未知工具: ' + name);
+    }
+  }
+  function aiTcAddPoint(args) {
+    if (typeof args.x !== 'number' || typeof args.y !== 'number') throw new Error('需要 x, y');
+    const lbl = aiAllocateLabel(args.label);
+    const id = ++state.nextId;
+    const p = { id, t: 'p', x: args.x, y: args.y, label: lbl };
+    state.elements.push(p);
+    if (lbl === aiIndexToLabel(state.nextLabelIdx)) {
+      // 用掉了 nextLabelIdx, 推进
+      state.nextLabelIdx++;
+    }
+    render();
+    return lbl;
+  }
+  function aiTcAddSegment(args) { return aiTcAddLineLike(args, 's'); }
+  function aiTcAddRay(args) { return aiTcAddLineLike(args, 'r'); }
+  function aiTcAddLine(args) { return aiTcAddLineLike(args, 'l'); }
+  function aiTcAddLineLike(args, t) {
+    const a = aiFindPointByLabel(args.p1);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !b) throw new Error(`找不到点 ${args.p1} 或 ${args.p2}`);
+    // 避免重复
+    for (const el of state.elements) {
+      if (el.t !== t) continue;
+      if ((el.a === a.id && el.b === b.id) || (el.a === b.id && el.b === a.id)) {
+        return; // 重复
+      }
+    }
+    const id = ++state.nextId;
+    state.elements.push({ id, t, a: a.id, b: b.id, dashed: !!args.dashed });
+    render();
+  }
+  function aiTcAddCircle(args) {
+    const c = aiFindPointByLabel(args.center);
+    const r = aiFindPointByLabel(args.radius);
+    if (!c || !r) throw new Error('找不到圆心或半径点');
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'c', center: c.id, radius: r.id, dashed: !!args.dashed });
+    render();
+  }
+  function aiTcAddPolygon(args) {
+    if (!Array.isArray(args.points) || args.points.length < 3) throw new Error('points 至少 3 个');
+    const pts = args.points.map(l => aiFindPointByLabel(l)).filter(Boolean);
+    if (pts.length < 3) throw new Error('至少 3 个点存在');
+    const id = ++state.nextId;
+    const el = { id, t: 'g', points: pts.map(p => p.id) };
+    if (args.constraint) el.constraint = args.constraint;
+    state.elements.push(el);
+    render();
+  }
+  function aiTcAddAngle(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const v = aiFindPointByLabel(args.vertex);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !v || !b) throw new Error('角度需要 3 个点');
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'a', vertex: v.id, p1: a.id, p2: b.id });
+    render();
+  }
+  function aiTcAddText(args) {
+    if (typeof args.x !== 'number' || typeof args.y !== 'number' || !args.text) throw new Error('需要 x, y, text');
+    const id = ++state.nextId;
+    const el = { id, t: 'x', x: args.x, y: args.y, text: String(args.text) };
+    if (args.anchor) {
+      const p = aiFindPointByLabel(args.anchor);
+      if (p) el.anchor = p.id;
+    }
+    state.elements.push(el);
+    render();
+  }
+  function aiTcMeasureLength(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !b) throw new Error('找不到测度点');
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'm', a: a.id, b: b.id });
+    render();
+  }
+  function aiTcMeasureAngle(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const v = aiFindPointByLabel(args.vertex);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !v || !b) throw new Error('角度测度需要 3 个点');
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'a', vertex: v.id, p1: a.id, p2: b.id });
+    render();
+  }
+  function aiTcMidpoint(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !b) throw new Error('找不到点');
+    const mid = G.midpoint(a, b);
+    const lbl = aiAllocateLabel(args.label);
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'p', x: mid.x, y: mid.y, label: lbl, derived: true });
+    if (lbl === aiIndexToLabel(state.nextLabelIdx)) state.nextLabelIdx++;
+    render();
+    return lbl;
+  }
+  function aiTcPerpbisect(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !b) throw new Error('找不到点');
+    // 找或建 p1-p2 线段
+    let seg = state.elements.find(el => el.t === 's' &&
+      ((el.a === a.id && el.b === b.id) || (el.a === b.id && el.b === a.id)));
+    if (!seg) {
+      const sid = ++state.nextId;
+      seg = { id: sid, t: 's', a: a.id, b: b.id, dashed: true, derived: true };
+      state.elements.push(seg);
+    }
+    // 中点 (作为 vertex), 沿垂线方向两点
+    const mid = G.midpoint(a, b);
+    const dir = G.sub(b, a);
+    const perp = { x: -dir.y, y: dir.x };
+    const len = G.len(dir);
+    if (len < 1e-9) throw new Error('两点重合');
+    const u = { x: perp.x / len, y: perp.y / len };
+    const p1 = { x: mid.x + u.x * 10, y: mid.y + u.y * 10 };
+    const p2 = { x: mid.x - u.x * 10, y: mid.y - u.y * 10 };
+    const vp1Id = ++state.nextId, vp2Id = ++state.nextId;
+    state.elements.push({ id: vp1Id, t: 'p', x: p1.x, y: p1.y, derived: true });
+    state.elements.push({ id: vp2Id, t: 'p', x: p2.x, y: p2.y, derived: true });
+    const lid = ++state.nextId;
+    state.elements.push({ id: lid, t: 'l', a: vp1Id, b: vp2Id, dashed: true, derived: true });
+    render();
+  }
+  function aiTcBisect(args) {
+    const a = aiFindPointByLabel(args.p1);
+    const v = aiFindPointByLabel(args.vertex);
+    const b = aiFindPointByLabel(args.p2);
+    if (!a || !v || !b) throw new Error('角平分线需要 3 个点');
+    const dir1 = G.sub(a, v);
+    const dir2 = G.sub(b, v);
+    const u1 = G.norm(dir1);
+    const u2 = G.norm(dir2);
+    if (!u1 || !u2) throw new Error('顶点重合');
+    const bisDir = { x: u1.x + u2.x, y: u1.y + u2.y };
+    if (G.len(bisDir) < 1e-9) throw new Error('两方向相反, 角平分线未定义');
+    const u = G.norm(bisDir);
+    const p1 = { x: v.x + u.x * 10, y: v.y + u.y * 10 };
+    const pid = ++state.nextId;
+    state.elements.push({ id: pid, t: 'p', x: p1.x, y: p1.y, derived: true });
+    const rid = ++state.nextId;
+    state.elements.push({ id: rid, t: 'r', a: v.id, b: pid, dashed: true, derived: true });
+    render();
+  }
+  function aiTcPerpendicular(args) {
+    return aiTcPerpOrPara(args, true);
+  }
+  function aiTcParallel(args) {
+    return aiTcPerpOrPara(args, false);
+  }
+  function aiTcPerpOrPara(args, isPerp) {
+    const line = args.line;
+    if (!line || !line.p1 || !line.p2) throw new Error('line 需要 p1, p2');
+    const la = aiFindPointByLabel(line.p1);
+    const lb = aiFindPointByLabel(line.p2);
+    const pt = aiFindPointByLabel(args.point);
+    if (!la || !lb || !pt) throw new Error('点不存在');
+    const dir = G.sub(lb, la);
+    const u = isPerp ? { x: -dir.y, y: dir.x } : dir;
+    const len = G.len(dir) || 1;
+    const norm = { x: u.x / len, y: u.y / len };
+    const p1 = { x: pt.x + norm.x * 10, y: pt.y + norm.y * 10 };
+    const p2 = { x: pt.x - norm.x * 10, y: pt.y - norm.y * 10 };
+    const pid1 = ++state.nextId, pid2 = ++state.nextId;
+    state.elements.push({ id: pid1, t: 'p', x: p1.x, y: p1.y, derived: true });
+    state.elements.push({ id: pid2, t: 'p', x: p2.x, y: p2.y, derived: true });
+    const lid = ++state.nextId;
+    state.elements.push({ id: lid, t: 'l', a: pid1, b: pid2, dashed: true, derived: true });
+    render();
+  }
+  function aiTcIntersection(args) {
+    // 简化: 仅支持 线-线 交点. 解析 {el1, el2} 形式: {p1, p2} 表示线
+    function parseLine(o) {
+      if (o && o.p1 && o.p2) {
+        const a = aiFindPointByLabel(o.p1);
+        const b = aiFindPointByLabel(o.p2);
+        if (a && b) return { type: 'line', a, b };
+      }
+      return null;
+    }
+    const e1 = parseLine(args.el1);
+    const e2 = parseLine(args.el2);
+    if (!e1 || !e2) throw new Error('仅支持线-线交点');
+    const p = G.lineLineIntersect(e1.a, e1.b, e2.a, e2.b);
+    if (!p) throw new Error('两线平行');
+    const lbl = aiAllocateLabel(args.label);
+    const id = ++state.nextId;
+    state.elements.push({ id, t: 'p', x: p.x, y: p.y, label: lbl, derived: true });
+    if (lbl === aiIndexToLabel(state.nextLabelIdx)) state.nextLabelIdx++;
+    render();
+    return lbl;
+  }
+  function aiTcDelete(args) {
+    const p = aiFindPointByLabel(args.label);
+    if (!p) throw new Error('找不到点 ' + args.label);
+    state.elements = state.elements.filter(e => e.id !== p.id);
+    render();
+  }
+  function aiTcClearBoard() {
+    state.elements = [];
+    state.nextId = 1;
+    state.nextLabelIdx = 0;
+    state.selection.clear();
+    state.pendingVertex = null;
+    state.pendingCircleCenter = null;
+    state.pendingPoly = [];
+    state.toolStep = 0;
+    state.toolPicked = [];
+    state.shapeDrag = null;
+    state.hoverPoint = null;
+    render();
+  }
+
+  // ==================== 初始化 ====================
+  function init() {
+    renderSidebar();
+    activateTool('select');
+    render();
+    loadFromUrl();
+  }
+  // 测试钩子 (e2e 验证)
+  window.__geo = {
+    state,
+    addPoint: (x, y, l) => aiApplyToolCall('add_point', { x, y, label: l }),
+    addSegment: (p1, p2, dashed) => aiApplyToolCall('add_segment', { p1, p2, dashed }),
+    addRay: (p1, p2, dashed) => aiApplyToolCall('add_ray', { p1, p2, dashed }),
+    addLine: (p1, p2, dashed) => aiApplyToolCall('add_line', { p1, p2, dashed }),
+    addCircle: (c, r, dashed) => aiApplyToolCall('add_circle', { center: c, radius: r, dashed }),
+    addPolygon: (pts, c) => aiApplyToolCall('add_polygon', { points: pts, constraint: c }),
+    addAngle: (p1, v, p2) => aiApplyToolCall('add_angle', { p1, vertex: v, p2 }),
+    addText: (x, y, text, a) => aiApplyToolCall('add_text', { x, y, text, anchor: a }),
+    measureLength: (p1, p2) => aiApplyToolCall('measure_length', { p1, p2 }),
+    measureAngle: (p1, v, p2) => aiApplyToolCall('measure_angle', { p1, vertex: v, p2 }),
+    midpoint: (p1, p2) => aiApplyToolCall('construct_midpoint', { p1, p2 }),
+    perpbisect: (p1, p2) => aiApplyToolCall('construct_perpbisect', { p1, p2 }),
+    bisect: (p1, v, p2) => aiApplyToolCall('construct_bisect', { p1, vertex: v, p2 }),
+    perpendicular: (l1, l2, pt) => aiApplyToolCall('construct_perpendicular', { line: { p1: l1, p2: l2 }, point: pt }),
+    parallel: (l1, l2, pt) => aiApplyToolCall('construct_parallel', { line: { p1: l1, p2: l2 }, point: pt }),
+    intersection: (a, b, c, d) => aiApplyToolCall('construct_intersection', { el1: { p1: a, p2: b }, el2: { p1: c, p2: d } }),
+    delete: (l) => aiApplyToolCall('delete', { label: l }),
+    clear: () => aiApplyToolCall('clear_board', {}),
+    state: () => state,
+    applyToolCall: aiApplyToolCall
+  };
+  init();
+})();
+</script>
+
+    <script src="../_shared/tool-header.js" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勾股树（毕达哥拉斯树）演示</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --text-color: #f8fafc;
+            --accent-color: #10b981;
+            --danger-color: #ef4444;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 1.5rem;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.025em;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding: 1rem;
+            gap: 1rem;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.3);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .controls-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 180px;
+        }
+
+        .control-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .control-group label span {
+            color: var(--accent-color);
+            font-family: monospace;
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 2px solid white;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--primary-hover);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        #startBtn {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4);
+        }
+
+        #startBtn:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -1px rgba(99, 102, 241, 0.5);
+        }
+
+        #startBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #resetBtn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #resetBtn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .controls-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                min-width: 100%;
+            }
+
+            .button-group {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+    </style>
+
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+
+<body>
+    <header>
+        <h1>勾股树可视化演示</h1>
+    </header>
+
+    <main class="main-container">
+        <div class="canvas-wrapper">
+            <canvas id="treeCanvas"></canvas>
+        </div>
+
+        <div class="controls-panel">
+            <div class="control-group">
+                <label>递归深度 <span id="depthVal">10</span></label>
+                <input type="range" id="depthInput" min="1" max="30" value="10">
+            </div>
+
+            <div class="control-group">
+                <label>锐角角度 (°) <span id="angleVal">45</span></label>
+                <input type="range" id="angleInput" min="1" max="89" value="45">
+            </div>
+
+            <div class="control-group">
+                <label>生长速度 <span id="speedVal">200</span></label>
+                <input type="range" id="speedInput" min="1" max="1000" value="200">
+            </div>
+
+            <div class="button-group">
+                <button id="startBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span>开始生长</span>
+                </button>
+                <button id="stopBtn" style="display: none; background: var(--danger-color);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="6" y="6" width="12" height="12"></rect>
+                    </svg>
+                    <span>停止</span>
+                </button>
+                <button id="resetBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                    <span>重置</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://pixijs.download/v8.6.6/pixi.min.js"></script>
+    <script>
+        const depthInput = document.getElementById('depthInput');
+        const depthVal = document.getElementById('depthVal');
+        const angleInput = document.getElementById('angleInput');
+        const angleVal = document.getElementById('angleVal');
+        const speedInput = document.getElementById('speedInput');
+        const speedVal = document.getElementById('speedVal');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+
+        let app = null;
+        let squareTexture = null;
+        let isAnimating = false;
+        let worker = null;
+        let renderQueue = [];
+        let currentMaxDepth = 0;
+
+        // Initialize PixiJS
+        async function initPixi() {
+            app = new PIXI.Application();
+            await app.init({
+                canvas: document.getElementById('treeCanvas'),
+                resizeTo: canvasWrapper,
+                backgroundAlpha: 0,
+                antialias: true,
+                resolution: window.devicePixelRatio || 1,
+                autoDensity: true,
+            });
+
+            // Create a 100x100 white square texture
+            const g = new PIXI.Graphics()
+                .rect(0, 0, 100, 100)
+                .fill(0xffffff);
+            squareTexture = app.renderer.generateTexture(g);
+        }
+
+        // Web Worker source code
+        const workerCode = `
+            self.onmessage = async function(e) {
+                const { startX, startY, initialSize, initialAngle, maxDepth, angleDeg } = e.data;
+                const alpha = (angleDeg * Math.PI) / 180;
+                
+                let currentLevel = [{ x: startX, y: startY, size: initialSize, angle: initialAngle }];
+
+                for (let d = 0; d < maxDepth; d++) {
+                    const nextLevel = [];
+                    const levelData = [];
+
+                    for (const node of currentLevel) {
+                        levelData.push({ x: node.x, y: node.y, size: node.size, angle: node.angle, depth: d });
+
+                        const sizeL = node.size * Math.cos(alpha);
+                        const sizeR = node.size * Math.sin(alpha);
+                        const tlX = node.x + node.size * Math.sin(node.angle);
+                        const tlY = node.y - node.size * Math.cos(node.angle);
+                        const angleL = node.angle - alpha;
+                        const apexX = tlX + sizeL * Math.cos(angleL);
+                        const apexY = tlY + sizeL * Math.sin(angleL);
+                        const angleR = angleL + Math.PI / 2;
+
+                        nextLevel.push({ x: tlX, y: tlY, size: sizeL, angle: angleL });
+                        nextLevel.push({ x: apexX, y: apexY, size: sizeR, angle: angleR });
+                    }
+
+                    self.postMessage({ type: 'level', data: levelData, depth: d });
+                    currentLevel = nextLevel;
+                }
+                self.postMessage({ type: 'complete' });
+            };
+        `;
+
+        const workerBlob = new Blob([workerCode], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(workerBlob);
+
+        // Update displays
+        depthInput.oninput = () => depthVal.textContent = depthInput.value;
+        angleInput.oninput = () => angleVal.textContent = angleInput.value;
+        speedInput.oninput = () => speedVal.textContent = Math.round(speedInput.value / 10);
+
+        function getColorAtDepth(depth, maxDepth) {
+            const hue = 30 + (depth / maxDepth) * 90;
+            const saturation = 40 + (depth / maxDepth) * 40;
+            const lightness = 30 + (depth / maxDepth) * 30;
+
+            // Convert HSL to Hex for Pixi
+            return hslToHex(hue, saturation, lightness);
+        }
+
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return parseInt(`0x${f(0)}${f(8)}${f(4)}`, 16);
+        }
+
+        let isWorkerComplete = false;
+
+        function processRenderQueue() {
+            if (!isAnimating) return;
+
+            const speed = parseInt(speedInput.value);
+            // Higher speed = more levels processed per frame
+            const levelsPerFrame = Math.max(1, Math.floor(speed / 100));
+            const itemsProcessed = levelsPerFrame * 100;
+
+            let processedCount = 0;
+            while (renderQueue.length > 0 && processedCount < itemsProcessed) {
+                const data = renderQueue.shift();
+                for (const node of data) {
+                    const sprite = new PIXI.Sprite(squareTexture);
+                    sprite.anchor.set(0, 1);
+                    sprite.x = node.x;
+                    sprite.y = node.y;
+                    sprite.width = node.size;
+                    sprite.height = node.size;
+                    sprite.rotation = node.angle;
+                    sprite.tint = getColorAtDepth(node.depth, currentMaxDepth);
+                    app.stage.addChild(sprite);
+                }
+                processedCount++;
+            }
+
+            if (isWorkerComplete && renderQueue.length === 0) {
+                stopAnimation();
+                return;
+            }
+
+            if (isAnimating) {
+                requestAnimationFrame(processRenderQueue);
+            }
+        }
+
+        async function start() {
+            if (!app || isAnimating) return;
+
+            const maxDepth = parseInt(depthInput.value);
+            if (maxDepth > 20 && !confirm(`深度超过20（约100万个方块）可能会导致浏览器响应缓慢。是否继续？`)) {
+                return;
+            }
+
+            reset();
+            isAnimating = true;
+            isWorkerComplete = false;
+            currentMaxDepth = maxDepth;
+
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'flex';
+
+            const canvasWidth = app.screen.width;
+            const canvasHeight = app.screen.height;
+            const initialSize = Math.min(canvasWidth, canvasHeight) / 6;
+            const startX = (canvasWidth - initialSize) / 2;
+            const startY = canvasHeight - 50;
+
+            worker = new Worker(workerUrl);
+            worker.onmessage = (e) => {
+                if (e.data.type === 'level') {
+                    renderQueue.push(e.data.data);
+                } else if (e.data.type === 'complete') {
+                    isWorkerComplete = true;
+                }
+            };
+
+            worker.postMessage({
+                startX, startY, initialSize, initialAngle: 0, maxDepth,
+                angleDeg: parseInt(angleInput.value)
+            });
+
+            processRenderQueue();
+        }
+
+        function stopAnimation() {
+            isAnimating = false;
+            if (worker) {
+                worker.terminate();
+                worker = null;
+            }
+            renderQueue = [];
+            startBtn.style.display = 'flex';
+            stopBtn.style.display = 'none';
+        }
+
+        function reset() {
+            stopAnimation();
+            if (app && app.stage) {
+                app.stage.removeChildren();
+            }
+        }
+
+        startBtn.onclick = start;
+        stopBtn.onclick = stopAnimation;
+        resetBtn.onclick = reset;
+
+        // Initial setup
+        speedVal.textContent = Math.round(speedInput.value / 10);
+        initPixi();
+    </script>
+    <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
+    <script src="../_shared/tool-header.js" defer></script>
+</body>
+
+</html>

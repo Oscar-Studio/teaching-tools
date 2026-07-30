@@ -1,0 +1,284 @@
+{
+  "tools": [
+    {
+      "id": "linear-function",
+      "name": "一次函数演示",
+      "description": "演示一次函数与二次函数（顶部可切换）",
+      "tags": ["图像", "函数"],
+      "subject": ["数学"],
+      "icon": "📐",
+      "featured": false,
+      "demoFile": "一次函数演示/index.html"
+    },
+    {
+      "id": "data-stats",
+      "name": "数据统计",
+      "description": "根据输入的数据计算平均数、离散平方和、方差和标准差",
+      "tags": ["统计"],
+      "subject": ["数学"],
+      "icon": "📊",
+      "featured": false,
+      "demoFile": "数据统计/index.html"
+    },
+    {
+      "id": "pythagoras-tree",
+      "name": "勾股树",
+      "description": "显示勾股树",
+      "tags": ["勾股定理", "图像"],
+      "subject": ["数学"],
+      "icon": "📊",
+      "featured": false,
+      "demoFile": "勾股树/index.html"
+    },
+    {
+      "id": "boxplot",
+      "name": "箱线图与分位数",
+      "description": "根据输入数据显示9个分位数和箱线图",
+      "tags": ["统计", "图像"],
+      "subject": ["数学"],
+      "icon": "📊",
+      "featured": false,
+      "demoFile": "箱线图与分位数/index.html"
+    },
+    {
+      "id": "convex-lens",
+      "name": "凸透镜成像规律",
+      "description": "动态HTML凸透镜成像规律演示",
+      "tags": ["动画", "图像"],
+      "subject": ["物理"],
+      "icon": "⚛️",
+      "featured": true,
+      "demoFile": "凸透镜成像规律/index.html"
+    },
+    {
+      "id": "english-parser",
+      "name": "英语句子成分分析",
+      "description": "分析输入英语句子的成分（主谓宾等）",
+      "tags": ["语法", "英语"],
+      "subject": ["英语"],
+      "icon": "🇬🇧",
+      "featured": false,
+      "demoFile": "英语句子成分分析/index.html",
+      "prefill": {
+        "params": ["sentence-input"],
+        "description": "要分析的英语句子"
+      }
+    },
+    {
+      "id": "chinese-parser",
+      "name": "语文句子成分分析",
+      "description": "使用DeepSeek API 分析输入的中文句子的成分（主谓宾定状补）",
+      "tags": ["语法", "语文", "AI"],
+      "subject": ["语文"],
+      "icon": "🇨🇳",
+      "featured": true,
+      "demoFile": "语文句子成分分析/index.html",
+      "prefill": {
+        "params": ["sentence-input"],
+        "description": "要分析的中文句子"
+      }
+    },
+    {
+      "id": "data-stats-pro",
+      "name": "数据统计PRO",
+      "description": "更高级的数据统计功能",
+      "tags": ["统计", "图像"],
+      "subject": ["数学"],
+      "icon": "📊",
+      "featured": true,
+      "demoFile": "数据统计PRO/index.html"
+    },
+    {
+      "id": "chem-balance",
+      "name": "化学方程式配平",
+      "description": "使用AI配平输入的化学方程式",
+      "tags": ["配平", "AI"],
+      "subject": ["化学"],
+      "icon": "🧪",
+      "featured": true,
+      "demoFile": "化学方程式配平/index.html",
+      "prefill": {
+        "params": ["reactants", "products"],
+        "description": "反应物和生成物（中间用 → 或 -> 分隔，例如 H2+O2 → H2O）"
+      }
+    },
+    {
+      "id": "scientific-calc",
+      "name": "科学计算器",
+      "description": "简洁好用的科学计算器",
+      "tags": ["计算"],
+      "subject": ["数学"],
+      "icon": "🧮",
+      "featured": true,
+      "demoFile": "科学计算器/index.html"
+    },
+    {
+      "id": "concentration",
+      "name": "浓度计算器",
+      "description": "计算溶液的浓度或需要的质量",
+      "tags": ["溶液"],
+      "subject": ["生物", "化学"],
+      "icon": "🧪",
+      "featured": true,
+      "demoFile": "浓度计算器/index.html",
+      "prefill": {
+        "params": ["massA", "concA", "massB", "concB"],
+        "description": "溶液A/B的质量和浓度（数字）"
+      }
+    },
+    {
+      "id": "polygon-bloom",
+      "name": "PolygonBloom",
+      "description": "观察多边形边数随时间指数级增长的过程。每秒钟边数乘以倍数。",
+      "tags": ["动画", "图像"],
+      "subject": ["数学"],
+      "icon": "📐",
+      "featured": true,
+      "demoFile": "PolygonBloom/index.html"
+    },
+    {
+      "id": "homework-mgmt",
+      "name": "作业管理系统",
+      "description": "全新的作业管理系统",
+      "tags": ["作业"],
+      "subject": ["通用"],
+      "icon": "",
+      "featured": true,
+      "demoFile": "作业管理系统/index.html"
+    },
+    {
+      "id": "roll-caller",
+      "name": "智能点名器",
+      "description": "简洁的自动随机点名系统",
+      "tags": ["点名"],
+      "subject": ["通用"],
+      "icon": "",
+      "featured": true,
+      "demoFile": "智能点名器/index.html"
+    },
+    {
+      "id": "class-timer",
+      "name": "课堂倒计时器",
+      "description": "适用于课堂答题、小组讨论等场景的倒计时工具",
+      "tags": ["计时", "课堂"],
+      "subject": ["通用"],
+      "icon": "⏱️",
+      "featured": false,
+      "demoFile": "课堂倒计时器/index.html"
+    },
+    {
+      "id": "random-group",
+      "name": "随机分组器",
+      "description": "将名单随机分成若干组，适用于课堂小组分配",
+      "tags": ["分组", "课堂"],
+      "subject": ["通用"],
+      "icon": "🎲",
+      "featured": false,
+      "demoFile": "随机分组器/index.html"
+    },
+    {
+      "id": "dice-sim",
+      "name": "骰子模拟器",
+      "description": "模拟掷骰子，可用于随机抽取或课堂互动",
+      "tags": ["随机", "课堂"],
+      "subject": ["通用"],
+      "icon": "🎲",
+      "featured": false,
+      "demoFile": "骰子模拟器/index.html"
+    },
+    {
+      "id": "lottery",
+      "name": "抽签器",
+      "description": "转盘抽签工具，可用于随机抽取学生回答问题",
+      "tags": ["随机", "课堂"],
+      "subject": ["通用"],
+      "icon": "🎯",
+      "featured": false,
+      "demoFile": "抽签器/index.html",
+      "prefill": {
+        "params": ["namesInput"],
+        "description": "换行分隔的姓名列表"
+      }
+    },
+    {
+      "id": "stopwatch",
+      "name": "计时器",
+      "description": "秒表功能，记录单圈时间",
+      "tags": ["计时", "秒表"],
+      "subject": ["通用"],
+      "icon": "⏱️",
+      "featured": false,
+      "demoFile": "计时器/index.html"
+    },
+    {
+      "id": "scoreboard",
+      "name": "记分板",
+      "description": "课堂竞赛、答题比赛专用记分工具",
+      "tags": ["竞赛", "记分"],
+      "subject": ["通用"],
+      "icon": "🏆",
+      "featured": false,
+      "demoFile": "记分板/index.html"
+    },
+    {
+      "id": "history-timeline",
+      "name": "历史时间轴",
+      "description": "中国近现代史时间轴，垂直分为政治、外交、经济、科技、社会等类别，点击查看详情",
+      "tags": ["历史", "时间轴", "事件"],
+      "subject": ["历史"],
+      "icon": "📜",
+      "featured": true,
+      "demoFile": "历史时间轴/index.html"
+    },
+    {
+      "id": "camouflage",
+      "name": "保护色实验",
+      "description": "模拟生物保护色实验，点击你看到的纸片进行自然选择，观看复式折线统计图了解种群变化",
+      "tags": ["生物", "实验", "教学"],
+      "subject": ["生物"],
+      "icon": "🦎",
+      "featured": false,
+      "demoFile": "保护色实验/index.html"
+    },
+    {
+      "id": "pomodoro",
+      "name": "番茄钟",
+      "description": "专注计时器，适合学习和工作",
+      "tags": ["计时", "专注"],
+      "subject": ["通用"],
+      "icon": "🍅",
+      "featured": false,
+      "demoFile": "番茄钟/index.html"
+    },
+    {
+      "id": "wordbook",
+      "name": "摘词本",
+      "description": "英语单词背诵与复习工具，支持艾宾浩斯遗忘曲线复习",
+      "tags": ["英语", "背诵", "记忆"],
+      "subject": ["英语"],
+      "icon": "📒",
+      "featured": true,
+      "demoFile": "摘词本/index.html"
+    },
+    {
+      "id": "media-player",
+      "name": "媒体播放器",
+      "description": "支持多种音视频格式播放，倍速、单曲循环、列表循环、随机播放、全屏等功能",
+      "tags": ["播放器", "音视频", "多媒体"],
+      "subject": ["通用"],
+      "icon": "🎵",
+      "featured": true,
+      "demoFile": "media-player/index.html"
+    },
+    {
+      "id": "geometry-board",
+      "name": "几何画板",
+      "description": "交互式几何画板，支持点、线段、射线、直线、圆、多边形、角度标、文本;多边形下拉提供等腰/等边三角形、平行四边形/矩形/菱形/正方形;可一键构造中点、垂线、平行线、角平分线、三角形的高/中线/角平分线/中位线/外接圆/内切圆/四心(重/垂/外/内);支持 PNG / JSON 导出与可分享链接",
+      "tags": ["几何", "画板", "绘图"],
+      "subject": ["数学"],
+      "icon": "📐",
+      "featured": true,
+      "demoFile": "几何画板/index.html"
+    }
+  ]
+}

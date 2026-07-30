@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>从三角形到圆的旅程</title>
+    <style>
+        :root {
+            --primary-color: #2A5CAA;
+            --secondary-color: #00E5FF;
+            --accent-color: #6A00FF;
+            --light-color: #010409;
+            --dark-color: #ffffff;
+            --card-bg: #0d1117;
+            --card-border: 1px solid #30363d;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            --text-secondary: #8b949e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            color: var(--dark-color);
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: var(--card-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .description {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        label {
+            font-weight: 500;
+            color: var(--secondary-color);
+        }
+
+        input {
+            padding: 10px 15px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #161b22;
+            color: var(--dark-color);
+            width: 100px;
+            text-align: center;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #1a4a9a;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 600px;
+            /* Fixed height for the drawing area */
+            background: #161b22;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .info-panel {
+            margin-top: 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .highlight {
+            color: var(--secondary-color);
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+    </style>
+
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+
+<body>
+    <div class="container">
+        <h1>从三角形到圆的旅程</h1>
+        <p class="description">观察多边形边数随时间指数级增长的过程。每秒钟边数乘以倍数。</p>
+
+        <div class="controls">
+            <label for="multiplierInput">倍数 (Multiplier):</label>
+            <input type="number" id="multiplierInput" value="2" min="1.1" step="0.1">
+            <button id="resetBtn">重置 (Reset)</button>
+            <button id="pauseBtn">暂停 (Pause)</button>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="polygonCanvas"></canvas>
+        </div>
+
+        <div class="info-panel">
+            当前边数 (Sides): <span id="sidesDisplay" class="highlight">3</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('polygonCanvas');
+        const ctx = canvas.getContext('2d');
+        const multiplierInput = document.getElementById('multiplierInput');
+        const resetBtn = document.getElementById('resetBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const sidesDisplay = document.getElementById('sidesDisplay');
+
+        // State
+        let n = 3; // Initial sides
+        let multiplier = 2;
+        let lastTime = 0;
+        const interval = 1000; // 1 second
+        let animationId;
+        let timer = 0;
+        let isPaused = false;
+
+        // Resize canvas to fit container
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            draw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // Core update logic
+        function update(deltaTime) {
+            if (isPaused) return;
+
+            timer += deltaTime;
+            if (timer >= interval) {
+                timer = 0;
+                n = Math.ceil(n * multiplier);
+                sidesDisplay.textContent = n.toLocaleString();
+            }
+        }
+
+        // Draw logic
+        function draw() {
+            // Clear screen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            // Radius is slightly smaller than half the smallest dimension to fit
+            const radius = Math.min(centerX, centerY) * 0.8;
+
+            ctx.beginPath();
+            // Rotate -90 degrees (Math.PI / 2) so the first vertex is at the top
+            const startAngle = -Math.PI / 2;
+
+            for (let i = 0; i <= n; i++) {
+                // Angle for this vertex
+                const angle = startAngle + (i * 2 * Math.PI / n);
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+
+            // Style
+            ctx.strokeStyle = '#00E5FF'; // Secondary color
+            ctx.lineWidth = 3;
+            ctx.fillStyle = 'rgba(42, 92, 170, 0.3)'; // Primary color with opacity
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // Animation Loop
+        function loop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            update(deltaTime);
+            draw();
+
+            animationId = requestAnimationFrame(loop);
+        }
+
+        // Reset
+        function reset() {
+            n = 3;
+            timer = 0;
+            // Get current multiplier
+            multiplier = parseFloat(multiplierInput.value) || 2;
+            if (multiplier < 1.01) multiplier = 1.01; // Safety minimum
+
+            sidesDisplay.textContent = n;
+            isPaused = false;
+            updatePauseButton();
+            draw();
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            updatePauseButton();
+        }
+
+        function updatePauseButton() {
+            pauseBtn.textContent = isPaused ? "继续 (Resume)" : "暂停 (Pause)";
+        }
+
+        // Event Listeners
+        resetBtn.addEventListener('click', reset);
+        pauseBtn.addEventListener('click', togglePause);
+
+        multiplierInput.addEventListener('change', () => {
+            multiplier = parseFloat(multiplierInput.value) || 2;
+            if (multiplier < 1.01) multiplier = 1.01;
+        });
+
+        // Init
+        resizeCanvas();
+        reset();
+        requestAnimationFrame(loop);
+    </script>
+    <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
+    <script src="../_shared/tool-header.js" defer></script>
+</body>
+
+</html>
