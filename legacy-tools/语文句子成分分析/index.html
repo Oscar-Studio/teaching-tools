@@ -7,18 +7,9 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>中文句子成分分析工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <style>
         :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-            --success-color: #28a745;
             --error-color: #e74c3c;
         }
 
@@ -79,8 +70,8 @@
             width: 100%;
             height: 120px;
             padding: 15px;
-            background: #161b22;
-            border: 1px solid #30363d;
+            background: var(--surface-soft);
+            border: 1px solid var(--hairline);
             border-radius: 5px;
             color: var(--dark-color);
             font-size: 1.1em;
@@ -121,7 +112,7 @@
         }
 
         #clear-btn {
-            background: #30363d;
+            background: var(--hairline);
             color: var(--text-secondary);
         }
 
@@ -135,7 +126,7 @@
             font-size: 0.9em;
             color: var(--text-secondary);
             text-align: center;
-            border-top: 1px solid #30363d;
+            border-top: 1px solid var(--hairline);
             padding-top: 15px;
         }
 
@@ -181,7 +172,7 @@
             color: var(--secondary-color);
             font-size: 1.2em;
             margin-bottom: 15px;
-            border-bottom: 1px solid #30363d;
+            border-bottom: 1px solid var(--hairline);
             padding-bottom: 10px;
         }
 

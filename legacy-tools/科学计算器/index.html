@@ -7,27 +7,17 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>科学计算器</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <style>
         :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --success-color: #28a745;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
             --transition: all 0.3s ease;
 
             /* Mapped Variables */
-            --bg-color: var(--light-color);
             --panel-color: var(--card-bg);
-            --text-color: var(--dark-color);
-            --button-bg: #161b22;
-            --button-border: #30363d;
-            --button-hover: #21262d;
-            --button-active: #2f363d;
+            --button-bg: var(--surface-soft);
+            --button-border: var(--hairline);
+            --button-hover: var(--surface-cream-strong);
+            --button-active: var(--hairline);
             --operator-color: var(--secondary-color);
         }
 
@@ -372,28 +362,157 @@
             let expression = lastLine.replace(/^\s*=\s*/, '');
 
             if (!expression) return;
+            // ===== 安全数学表达式求值 =====
+            // 词法分析：将输入字符串拆分为 token（数字、运算符、函数名、括号）
+            function tokenizeMath(expr) {
+                const tokens = [];
+                let i = 0;
+                while (i < expr.length) {
+                    const ch = expr[i];
+                    if (/\s/.test(ch)) { i++; continue; }
+                    if (/[0-9.]/.test(ch)) {
+                        let j = i;
+                        while (j < expr.length && /[0-9.]/.test(expr[j])) j++;
+                        tokens.push({ type: 'num', value: parseFloat(expr.slice(i, j)) });
+                        i = j;
+                        continue;
+                    }
+                    if (/[+\-*/^(),%]/.test(ch)) {
+                        tokens.push({ type: 'op', value: ch });
+                        i++;
+                        continue;
+                    }
+                    if (/[a-zA-Zπ]/.test(ch)) {
+                        let j = i;
+                        while (j < expr.length && /[a-zA-Z0-9]/.test(expr[j])) j++;
+                        const name = expr.slice(i, j);
+                        tokens.push({ type: 'name', value: name });
+                        i = j;
+                        continue;
+                    }
+                    throw new Error('Unexpected char: ' + ch);
+                }
+                return tokens;
+            }
+
+            // 递归下降解析：实现运算符优先级和一元负号
+            class MathParser {
+                constructor(tokens) { this.tokens = tokens; this.pos = 0; }
+                peek() { return this.tokens[this.pos]; }
+                consume() { return this.tokens[this.pos++]; }
+                parse() {
+                    if (this.tokens.length === 0) throw new Error('Empty');
+                    const result = this.parseExpr();
+                    if (this.pos < this.tokens.length) throw new Error('Unexpected token');
+                    return result;
+                }
+                parseExpr() {
+                    let left = this.parseTerm();
+                    while (this.pos < this.tokens.length) {
+                        const t = this.peek();
+                        if (t.type !== 'op' || (t.value !== '+' && t.value !== '-')) break;
+                        this.consume();
+                        const right = this.parseTerm();
+                        left = (t.value === '+') ? left + right : left - right;
+                    }
+                    return left;
+                }
+                parseTerm() {
+                    let left = this.parseFactor();
+                    while (this.pos < this.tokens.length) {
+                        const t = this.peek();
+                        if (t.type !== 'op') break;
+                        if (!['*', '/', '%'].includes(t.value)) break;
+                        this.consume();
+                        const right = this.parseFactor();
+                        if (t.value === '*') left = left * right;
+                        else if (t.value === '/') {
+                            if (right === 0) throw new Error('Div by 0');
+                            left = left / right;
+                        } else left = left % right;
+                    }
+                    return left;
+                }
+                parseFactor() {
+                    let left = this.parseUnary();
+                    while (this.pos < this.tokens.length) {
+                        const t = this.peek();
+                        if (t.type !== 'op' || t.value !== '^') break;
+                        this.consume();
+                        const right = this.parseUnary();
+                        left = Math.pow(left, right);
+                    }
+                    return left;
+                }
+                parseUnary() {
+                    const t = this.peek();
+                    if (t && t.type === 'op' && t.value === '-') {
+                        this.consume();
+                        return -this.parseUnary();
+                    }
+                    if (t && t.type === 'op' && t.value === '+') {
+                        this.consume();
+                        return this.parseUnary();
+                    }
+                    return this.parseAtom();
+                }
+                parseAtom() {
+                    const t = this.consume();
+                    if (t.type === 'num') return t.value;
+                    if (t.type === 'op' && t.value === '(') {
+                        const v = this.parseExpr();
+                        const close = this.consume();
+                        if (!close || close.type !== 'op' || close.value !== ')') throw new Error('Missing )');
+                        return v;
+                    }
+                    if (t.type === 'name') {
+                        const next = this.peek();
+                        if (next && next.type === 'op' && next.value === '(') {
+                            this.consume();
+                            const arg = this.parseExpr();
+                            const close = this.consume();
+                            if (!close || close.value !== ')') throw new Error('Missing )');
+                            const fname = t.value;
+                            if (fname === 'sin') return Math.sin(arg);
+                            if (fname === 'cos') return Math.cos(arg);
+                            if (fname === 'tan') return Math.tan(arg);
+                            if (fname === 'log') return Math.log10(arg);
+                            if (fname === 'ln') return Math.log(arg);
+                            if (fname === 'sqrt') return Math.sqrt(arg);
+                            if (fname === 'abs') return Math.abs(arg);
+                            throw new Error('Unknown function: ' + fname);
+                        }
+                        // 常量
+                        if (t.value === 'π' || t.value === 'PI') return Math.PI;
+                        if (t.value === 'E') return Math.E;
+                        throw new Error('Unknown name: ' + t.value);
+                    }
+                    throw new Error('Unexpected token');
+                }
+            }
+
+            function safeEval(expr) {
+                const normalized = expr
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/')
+                    .replace(/π/g, 'PI'); // 保留 PI 标识
+                const tokens = tokenizeMath(normalized);
+                const parser = new MathParser(tokens);
+                const result = parser.parse();
+                if (!Number.isFinite(result)) throw new Error('Invalid result');
+                return result;
+            }
+            // ===== 安全求值结束 =====
+
+
 
             // Store original expression for reading
             lastExpression = expression;
 
-            // Replace UI symbols with JS Math equivalent
-            let evalExpr = expression
-                .replace(/×/g, '*')
-                .replace(/÷/g, '/')
-                .replace(/\^/g, '**')
-                .replace(/π/g, 'Math.PI')
-                .replace(/PI/g, 'Math.PI') // Just in case
-                .replace(/\bE\b/g, 'Math.E')
-                .replace(/sin\(/g, 'Math.sin(')
-                .replace(/cos\(/g, 'Math.cos(')
-                .replace(/tan\(/g, 'Math.tan(')
-                .replace(/log\(/g, 'Math.log10(')
-                .replace(/ln\(/g, 'Math.log(')
-                .replace(/sqrt\(/g, 'Math.sqrt(');
-
+            // 安全数学表达式求值：使用词法分析 + 递归下降解析器
+            // 使用词法分析 + 递归下降的安全求值器（避免 RCE）
             try {
-                // Safer evaluation than raw eval, though still Function
-                const result = new Function('return ' + evalExpr)();
+                const result = safeEval(expression);
 
                 // Format result
                 let resultStr = result.toString();

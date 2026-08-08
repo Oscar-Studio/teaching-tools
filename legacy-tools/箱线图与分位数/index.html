@@ -7,18 +7,9 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据分位数计算与箱线图</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <style>
-        :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-        }
+        
 
         * {
             box-sizing: border-box;
@@ -66,12 +57,12 @@
             width: 100%;
             height: 150px;
             padding: 15px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
             border-radius: 5px;
             font-size: 16px;
             resize: vertical;
             transition: border-color 0.3s;
-            background: #161b22;
+            background: var(--surface-soft);
             color: var(--dark-color);
         }
 
@@ -111,24 +102,24 @@
             border-collapse: collapse;
             margin-bottom: 30px;
             box-shadow: none;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
         }
 
         th,
         td {
             padding: 12px 15px;
             text-align: center;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
         }
 
         th {
-            background-color: #161b22;
+            background-color: var(--surface-soft);
             font-weight: 600;
             color: var(--secondary-color);
         }
 
         tr:nth-child(even) {
-            background-color: #161b22;
+            background-color: var(--surface-soft);
         }
 
         .chart-container {
@@ -138,10 +129,10 @@
 
         canvas {
             max-width: 100%;
-            background-color: #0d1117;
+            background-color: var(--surface-card);
             border-radius: 5px;
             box-shadow: none;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
         }
 
         .error {
@@ -387,32 +378,41 @@
                 ctx.fillText('数据分位数箱线图', boxPlotCanvas.width / 2, padding - 20);
             }
 
-            // 生成结果表格
+            // 生成结果表格（返回 DOM 元素而非 HTML 字符串，避免 innerHTML）
             function generateTable(datasets, quantilesData) {
                 const percentiles = [0.03, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.97];
                 const percentileLabels = ['3%', '5%', '10%', '25%', '50%', '75%', '90%', '95%', '97%'];
 
-                let tableHTML = '<table>';
-
-                // 表头
-                tableHTML += '<thead><tr><th>数据集</th>';
+                const table = document.createElement('table');
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+                const nameTh = document.createElement('th');
+                nameTh.textContent = '数据集';
+                headRow.appendChild(nameTh);
                 percentileLabels.forEach(label => {
-                    tableHTML += `<th>${label}分位数</th>`;
+                    const th = document.createElement('th');
+                    th.textContent = `${label}分位数`;
+                    headRow.appendChild(th);
                 });
-                tableHTML += '</tr></thead>';
+                thead.appendChild(headRow);
+                table.appendChild(thead);
 
-                // 表格内容
-                tableHTML += '<tbody>';
+                const tbody = document.createElement('tbody');
                 datasets.forEach((dataset, index) => {
-                    tableHTML += `<tr><td>${dataset.name}</td>`;
+                    const row = document.createElement('tr');
+                    const nameTd = document.createElement('td');
+                    nameTd.textContent = dataset.name;
+                    row.appendChild(nameTd);
                     percentiles.forEach(p => {
-                        tableHTML += `<td>${quantilesData[index][p].toFixed(4)}</td>`;
+                        const td = document.createElement('td');
+                        td.textContent = quantilesData[index][p].toFixed(4);
+                        row.appendChild(td);
                     });
-                    tableHTML += '</tr>';
+                    tbody.appendChild(row);
                 });
-                tableHTML += '</tbody></table>';
+                table.appendChild(tbody);
 
-                return tableHTML;
+                return table;
             }
 
             // 计算按钮点击事件
@@ -430,7 +430,8 @@
                     );
 
                     // 生成结果表格
-                    tableContainer.innerHTML = generateTable(datasets, quantilesData);
+                    tableContainer.textContent = '';
+                    tableContainer.appendChild(generateTable(datasets, quantilesData));
 
                     // 绘制箱线图
                     drawBoxPlot(datasets, quantilesData);

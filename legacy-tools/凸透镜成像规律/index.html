@@ -7,18 +7,9 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>凸透镜成像原理演示</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <style>
-        :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #00E5FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-        }
+        
 
         * {
             box-sizing: border-box;
@@ -90,7 +81,7 @@
         h2 {
             color: var(--primary-color);
             margin-bottom: 20px;
-            border-bottom: 1px solid #30363d;
+            border-bottom: 1px solid var(--hairline);
             padding-bottom: 10px;
             font-size: 1.5em;
         }
@@ -129,8 +120,8 @@
         input[type=number] {
             width: 70px;
             padding: 5px;
-            background: #161b22;
-            border: 1px solid #30363d;
+            background: var(--surface-soft);
+            border: 1px solid var(--hairline);
             color: var(--dark-color);
             border-radius: 4px;
         }
@@ -205,7 +196,7 @@
             font-family: 'Courier New', Courier, monospace;
             font-size: 1.2em;
             margin: 20px 0;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
             color: var(--accent-color);
         }
     </style>

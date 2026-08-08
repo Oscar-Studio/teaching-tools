@@ -4,17 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>媒体播放器 - 教学工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #2A5CAA;
-            --secondary: #00E5FF;
             --accent: #6A00FF;
-            --bg-dark: #010409;
-            --bg-card: #0d1117;
-            --border: #30363d;
-            --text: #ffffff;
-            --text-secondary: #8b949e;
             --success: #28a745;
             --warning: #f59e0b;
         }
@@ -596,7 +590,10 @@
     }
 
     function setIcon(el, iconClass) {
-        el.innerHTML = `<i class="${iconClass}"></i>`;
+        el.textContent = '';
+        const i = document.createElement('i');
+        i.className = iconClass;
+        el.appendChild(i);
     }
 
     function syncVolume() {
@@ -785,8 +782,25 @@
             window.oscarFeatured.forEach((item, i) => {
                 const div = document.createElement('div');
                 div.className = 'playlist-item' + (currentListType === 'featured' && i === currentIndex ? ' active playing' : '');
-                div.innerHTML = `<span class="item-icon"><i class="fa-solid fa-music"></i></span>
-                    <div class="item-info"><div class="item-name">${item.name}</div>${item.duration ? `<div class="item-duration">${formatTime(item.duration)}</div>` : ''}</div>`;
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'item-icon';
+                const iconI = document.createElement('i');
+                iconI.className = 'fa-solid fa-music';
+                iconSpan.appendChild(iconI);
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'item-info';
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'item-name';
+                nameDiv.textContent = item.name;
+                infoDiv.appendChild(nameDiv);
+                if (item.duration) {
+                    const durDiv = document.createElement('div');
+                    durDiv.className = 'item-duration';
+                    durDiv.textContent = formatTime(item.duration);
+                    infoDiv.appendChild(durDiv);
+                }
+                div.appendChild(iconSpan);
+                div.appendChild(infoDiv);
                 div.addEventListener('click', () => playFeatured(i));
                 featuredPlaylistEl.appendChild(div);
             });
@@ -795,9 +809,31 @@
         playlist.forEach((item, i) => {
             const div = document.createElement('div');
             div.className = 'playlist-item' + (currentListType === 'user' && i === currentIndex ? ' active playing' : '');
-            div.innerHTML = `<span class="item-icon">${item.isAudio ? '<i class="fa-solid fa-music"></i>' : '<i class="fa-solid fa-film"></i>'}</span>
-                <div class="item-info"><div class="item-name">${item.name}</div>${item.duration ? `<div class="item-duration">${formatTime(item.duration)}</div>` : ''}</div>
-                <button class="btn btn-sm item-remove"><i class="fa-solid fa-times"></i></button>`;
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'item-icon';
+            const iconI = document.createElement('i');
+            iconI.className = item.isAudio ? 'fa-solid fa-music' : 'fa-solid fa-film';
+            iconSpan.appendChild(iconI);
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'item-info';
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'item-name';
+            nameDiv.textContent = item.name;
+            infoDiv.appendChild(nameDiv);
+            if (item.duration) {
+                const durDiv = document.createElement('div');
+                durDiv.className = 'item-duration';
+                durDiv.textContent = formatTime(item.duration);
+                infoDiv.appendChild(durDiv);
+            }
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn btn-sm item-remove';
+            const removeI = document.createElement('i');
+            removeI.className = 'fa-solid fa-times';
+            removeBtn.appendChild(removeI);
+            div.appendChild(iconSpan);
+            div.appendChild(infoDiv);
+            div.appendChild(removeBtn);
             div.addEventListener('click', (e) => {
                 if (e.target.closest('.item-remove')) {
                     removeFromPlaylist(i);

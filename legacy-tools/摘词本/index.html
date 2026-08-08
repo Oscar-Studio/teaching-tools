@@ -4,19 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>摘词本 - 教学工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <script defer src="https://cloud.umami.is/script.js"
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <style>
-        :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --bg-color: #010409;
-            --card-bg: #0d1117;
-            --card-border: #30363d;
-            --text-color: #ffffff;
-            --text-muted: #8b949e;
-        }
+        
 
         * {
             margin: 0;
@@ -573,8 +565,34 @@
 
         function renderWordList() {
             const list = document.getElementById('wordList');
-            if (!words.length) { list.innerHTML = '<div class="empty-state">暂无生词</div>'; return; }
-            list.innerHTML = words.map(w => `<div class="word-item"><div><div class="word">${w.word}</div><div class="translation">${w.translation}</div></div><button class="delete-btn" onclick="deleteWord(${w.id})">删除</button></div>`).join('');
+            list.textContent = '';
+            if (!words.length) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'empty-state';
+                emptyDiv.textContent = '暂无生词';
+                list.appendChild(emptyDiv);
+                return;
+            }
+            for (const w of words) {
+                const item = document.createElement('div');
+                item.className = 'word-item';
+                const inner = document.createElement('div');
+                const wordDiv = document.createElement('div');
+                wordDiv.className = 'word';
+                wordDiv.textContent = w.word;
+                const transDiv = document.createElement('div');
+                transDiv.className = 'translation';
+                transDiv.textContent = w.translation;
+                inner.appendChild(wordDiv);
+                inner.appendChild(transDiv);
+                item.appendChild(inner);
+                const btn = document.createElement('button');
+                btn.className = 'delete-btn';
+                btn.textContent = '删除';
+                btn.addEventListener('click', () => deleteWord(w.id));
+                item.appendChild(btn);
+                list.appendChild(item);
+            }
         }
 
         function renderViewList() {
@@ -593,16 +611,49 @@
                 if (ft === 'date-asc') return new Date(a.created_at) - new Date(b.created_at);
                 return new Date(b.created_at) - new Date(a.created_at);
             });
-            if (!filtered.length) { list.innerHTML = '<div class="empty-state">没有单词</div>'; return; }
+            list.textContent = '';
+            if (!filtered.length) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'empty-state';
+                emptyDiv.textContent = '没有单词';
+                list.appendChild(emptyDiv);
+                return;
+            }
             const statusText = {new:'未学习',learning:'学习中',mastered:'已掌握'};
             const statusCss = {new:'new',learning:'learning',mastered:'mastered'};
-            list.innerHTML = filtered.map(w => {
+            for (const w of filtered) {
                 const rc = w.review_count || 0;
                 const progress = w.status === 'mastered' ? 100 : (w.status === 'learning' ? Math.min(rc / 5, 1) * 100 : 0);
-                const progressHtml = w.status !== 'new' ? `<div class="mastery-bar"><div class="mastery-fill" style="width:${progress}%"></div></div>` : '';
-                const statusHtml = w.status === 'mastered' ? `<span class="status ${statusCss[w.status]}">${statusText[w.status]}</span>` : '';
-                return `<div class="view-item"><div class="word-info"><div class="word">${w.word}</div><div class="translation">${w.translation}</div>${progressHtml}</div>${statusHtml}</div>`;
-            }).join('');
+                const item = document.createElement('div');
+                item.className = 'view-item';
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'word-info';
+                const wordDiv = document.createElement('div');
+                wordDiv.className = 'word';
+                wordDiv.textContent = w.word;
+                const transDiv = document.createElement('div');
+                transDiv.className = 'translation';
+                transDiv.textContent = w.translation;
+                infoDiv.appendChild(wordDiv);
+                infoDiv.appendChild(transDiv);
+                if (w.status !== 'new') {
+                    const barDiv = document.createElement('div');
+                    barDiv.className = 'mastery-bar';
+                    const fillDiv = document.createElement('div');
+                    fillDiv.className = 'mastery-fill';
+                    fillDiv.style.width = progress + '%';
+                    barDiv.appendChild(fillDiv);
+                    infoDiv.appendChild(barDiv);
+                }
+                item.appendChild(infoDiv);
+                if (w.status === 'mastered') {
+                    const span = document.createElement('span');
+                    span.className = `status ${statusCss[w.status]}`;
+                    span.textContent = statusText[w.status];
+                    item.appendChild(span);
+                }
+                list.appendChild(item);
+            }
         }
 
         function initRecite() {

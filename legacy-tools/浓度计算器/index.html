@@ -7,20 +7,10 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>浓度计算器</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-            --success-color: #238636;
-        }
+        
 
         * {
             box-sizing: border-box;
@@ -78,13 +68,13 @@
             align-items: center;
             padding: 20px;
             border-radius: 8px;
-            background-color: #161b22;
+            background-color: var(--surface-soft);
             border: 1px solid transparent;
             transition: all 0.3s ease;
         }
 
         .calc-row:hover {
-            border-color: #30363d;
+            border-color: var(--hairline);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
@@ -125,8 +115,8 @@
             width: 100%;
             padding: 12px 15px;
             padding-right: 45px;
-            background-color: #0d1117;
-            border: 1px solid #30363d;
+            background-color: var(--surface-card);
+            border: 1px solid var(--hairline);
             border-radius: 6px;
             color: var(--dark-color);
             font-size: 16px;
@@ -161,7 +151,7 @@
         .lock-btn {
             background: none;
             border: none;
-            color: #30363d;
+            color: var(--hairline);
             cursor: pointer;
             padding: 8px;
             margin-left: 8px;

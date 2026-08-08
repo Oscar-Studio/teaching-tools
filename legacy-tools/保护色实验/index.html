@@ -4,17 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>保护色实验 - Oscar Studio</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #0d1117; color: #fff;
+            background: var(--surface-card); color: #fff;
             min-height: 100vh; display: flex; flex-direction: column;
             align-items: center; padding: 20px;
         }
         h1 {
             font-size: 1.8rem; margin-bottom: 8px;
-            background: linear-gradient(135deg, #2A5CAA, #00E5FF);
+            background: linear-gradient(135deg, var(--primary), #00E5FF);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .subtitle {
@@ -23,16 +24,16 @@
         }
         .settings {
             display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
-            margin-bottom: 20px; background: #161b22; border: 1px solid #30363d;
+            margin-bottom: 20px; background: var(--surface-soft); border: 1px solid var(--hairline);
             border-radius: 12px; padding: 20px; align-items: flex-end;
         }
         .setting-item { display: flex; flex-direction: column; gap: 6px; }
         .setting-item label { font-size: 0.85rem; color: #8b949e; }
         .setting-item input[type="number"] {
-            padding: 8px 12px; border-radius: 8px; border: 1px solid #30363d;
-            background: #0d1117; color: #fff; font-size: 1rem; outline: none; width: 100px;
+            padding: 8px 12px; border-radius: 8px; border: 1px solid var(--hairline);
+            background: var(--surface-card); color: #fff; font-size: 1rem; outline: none; width: 100px;
         }
-        .setting-item input[type="number"]:focus { border-color: #00E5FF; }
+        .setting-item input[type="number"]:focus { border-color: var(--primary); }
         .bg-color-select { display: flex; flex-direction: column; gap: 6px; }
         .bg-color-select > label { font-size: 0.85rem; color: #8b949e; }
         .bg-options { display: flex; gap: 6px; flex-wrap: wrap; max-width: 300px; }
@@ -44,24 +45,24 @@
         .bg-option:hover { transform: scale(1.15); }
         .bg-option.selected { border-color: #fff; }
         .btn-start {
-            padding: 10px 30px; background: linear-gradient(135deg, #2A5CAA, #6A00FF);
+            padding: 10px 30px; background: linear-gradient(135deg, var(--primary), #6A00FF);
             color: #fff; border: none; border-radius: 20px; font-size: 1rem;
             font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
         }
         .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(106,0,255,0.3); }
         #gameArea {
             position: relative; width: min(90vw, 700px); height: min(70vh, 500px);
-            border-radius: 12px; overflow: hidden; border: 2px solid #30363d;
+            border-radius: 12px; overflow: hidden; border: 2px solid var(--hairline);
             margin-bottom: 15px; cursor: crosshair;
         }
         .paper { position: absolute; border-radius: 4px; cursor: pointer; transition: transform 0.1s; user-select: none; }
         .paper:hover { transform: scale(1.1); }
         #timerBar {
             width: min(90vw, 700px); height: 6px;
-            background: #21262d; border-radius: 3px; overflow: hidden; margin-bottom: 10px;
+            background: var(--surface-cream-strong); border-radius: 3px; overflow: hidden; margin-bottom: 10px;
         }
         #timerFill {
-            height: 100%; background: linear-gradient(90deg, #00E5FF, #6A00FF);
+            height: 100%; background: linear-gradient(90deg, var(--primary));
             width: 100%; transition: width 0.05s linear;
         }
         #roundInfo { color: #8b949e; font-size: 0.95rem; margin-bottom: 10px; text-align: center; min-height: 24px; }
@@ -70,8 +71,8 @@
             min-height: 20px;
         }
         #chartContainer {
-            width: min(90vw, 700px); background: #161b22;
-            border: 1px solid #30363d; border-radius: 12px; padding: 20px; display: none;
+            width: min(90vw, 700px); background: var(--surface-soft);
+            border: 1px solid var(--hairline); border-radius: 12px; padding: 20px; display: none;
         }
         #chartContainer h2 { font-size: 1.2rem; margin-bottom: 15px; color: #00E5FF; }
         #chartCanvas { width: 100%; height: 300px; display: block; }
@@ -391,10 +392,19 @@ function endGame() {
     chartContainer.style.display = 'block';
 
     const last = state.history[state.history.length-1];
-    statsSummary.innerHTML = state.cardColors.map((c,i) => {
+    statsSummary.textContent = '';
+    state.cardColors.forEach((c, i) => {
         const count = last ? last.counts[c] : 0;
-        return `<div class="stat-item"><div class="stat-dot" style="background:${c}"></div>${i+1}号色: ${count}张</div>`;
-    }).join('');
+        const div = document.createElement('div');
+        div.className = 'stat-item';
+        const dot = document.createElement('div');
+        dot.className = 'stat-dot';
+        dot.style.background = c;
+        const label = document.createTextNode(`${i+1}号色: ${count}张`);
+        div.appendChild(dot);
+        div.appendChild(label);
+        statsSummary.appendChild(div);
+    });
 
     settingsPanel.style.display = 'flex';
     requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(drawChart)));

@@ -5,21 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>随机分组器 - 教学工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <script defer src="https://cloud.umami.is/script.js"
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <style>
-        :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-            --success-color: #28a745;
-        }
+        
 
         * {
             box-sizing: border-box;
@@ -379,18 +369,24 @@
                 const card = document.createElement('div');
                 card.className = 'group-card';
                 card.style.animationDelay = `${index * 0.1}s`;
-                
+
                 const color = groupColors[index % groupColors.length];
-                
-                card.innerHTML = `
-                    <div class="group-header" style="color: ${color}; border-color: ${color}">
-                        第 ${index + 1} 组 (${group.length}人)
-                    </div>
-                    <ul class="group-members">
-                        ${group.map(name => `<li>${name}</li>`).join('')}
-                    </ul>
-                `;
-                
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'group-header';
+                headerDiv.style.color = color;
+                headerDiv.style.borderColor = color;
+                headerDiv.textContent = `第 ${index + 1} 组 (${group.length}人)`;
+                const membersUl = document.createElement('ul');
+                membersUl.className = 'group-members';
+                for (const name of group) {
+                    const li = document.createElement('li');
+                    li.textContent = name;
+                    membersUl.appendChild(li);
+                }
+                card.appendChild(headerDiv);
+                card.appendChild(membersUl);
+
                 container.appendChild(card);
             });
         }

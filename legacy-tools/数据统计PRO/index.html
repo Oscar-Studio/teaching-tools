@@ -7,17 +7,12 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>高级数据统计分析工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <script src="../plotly-2.27.0.min.js"></script>
     <style>
         :root {
-            --primary-color: #2A5CAA;
             --danger-color: #e74c3c;
-            --bg-color: #010409;
-            --card-bg: #0d1117;
-            --border-color: #30363d;
-            --text-color: #ffffff;
-            --secondary-color: #00E5FF;
-            --text-secondary: #8b949e;
+            --border-color: var(--hairline);
         }
 
         body {
@@ -72,7 +67,7 @@
             resize: vertical;
             font-family: monospace;
             font-size: 16px;
-            background: #161b22;
+            background: var(--surface-soft);
             color: var(--text-color);
         }
 
@@ -176,7 +171,7 @@
             margin-bottom: 10px;
             word-wrap: break-word;
             font-family: monospace;
-            background: #161b22;
+            background: var(--surface-soft);
             padding: 8px;
             border-radius: 4px;
             color: var(--text-color);
@@ -217,13 +212,13 @@
         }
 
         th {
-            background-color: #161b22;
+            background-color: var(--surface-soft);
             font-weight: 600;
             color: var(--secondary-color);
         }
 
         tr:nth-child(even) {
-            background-color: #161b22;
+            background-color: var(--surface-soft);
         }
 
         /* 图表容器 */
@@ -360,7 +355,7 @@
 
             const closeBtn = document.createElement('div');
             closeBtn.className = 'close-btn';
-            closeBtn.innerHTML = '&times;';
+            closeBtn.textContent = '\u00d7';
             closeBtn.title = "移除此组";
             closeBtn.onclick = function () { removeGroup(wrapper.id); };
 
@@ -432,7 +427,11 @@
             groups.forEach(g => {
                 const div = document.createElement('div');
                 div.className = 'sorted-data-row';
-                div.innerHTML = `<span class="group-name">${g.name}:</span> ${g.data.join(', ')}`;
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'group-name';
+                nameSpan.textContent = `${g.name}:`;
+                div.appendChild(nameSpan);
+                div.appendChild(document.createTextNode(' ' + g.data.join(', ')));
                 container.appendChild(div);
             });
         }
@@ -474,22 +473,30 @@
 
                 // --- 填充表格 1 (分位数) ---
                 const trQ = document.createElement('tr');
-                let qHtml = `<td>${g.name}</td><td>${min}</td>`;
-                pValues.forEach(val => qHtml += `<td>${formatNum(val)}</td>`);
-                qHtml += `<td>${max}</td>`;
-                trQ.innerHTML = qHtml;
+                const tq1 = document.createElement('td');
+                tq1.textContent = g.name;
+                const tq2 = document.createElement('td');
+                tq2.textContent = String(min);
+                trQ.appendChild(tq1);
+                trQ.appendChild(tq2);
+                pValues.forEach(val => {
+                    const td = document.createElement('td');
+                    td.textContent = formatNum(val);
+                    trQ.appendChild(td);
+                });
+                const tqLast = document.createElement('td');
+                tqLast.textContent = String(max);
+                trQ.appendChild(tqLast);
                 qTbody.appendChild(trQ);
 
                 // --- 填充表格 2 (统计量) ---
                 const trS = document.createElement('tr');
-                trS.innerHTML = `
-                <td>${g.name}</td>
-                <td>${formatNum(mean)}</td>
-                <td>${mode}</td>
-                <td>${formatNum(ss)}</td>
-                <td>${formatNum(variance)}</td>
-                <td>${formatNum(stdDev)}</td>
-            `;
+                const tsCells = [g.name, formatNum(mean), mode, formatNum(ss), formatNum(variance), formatNum(stdDev)];
+                tsCells.forEach(val => {
+                    const td = document.createElement('td');
+                    td.textContent = String(val);
+                    trS.appendChild(td);
+                });
                 sTbody.appendChild(trS);
             });
         }

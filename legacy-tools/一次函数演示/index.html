@@ -6,222 +6,481 @@
     <script defer src="https://cloud.umami.is/script.js"
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>一次函数演示</title>
+    <title>函数图像</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
+
+    <!-- 设计令牌：参照 Claude DESIGN.md（暖米色画布 + 深海军色画板 + 珊瑚色强调） -->
     <style>
         :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #00E5FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
+            /* 色板 */
+            --primary-active: #a9583e;
+            --primary-disabled: #e6dfd8;
+            --ink: #141413;
+            --body: #3d3d3a;
+            --body-strong: #252523;
+            --muted: #6c6a64;
+            --muted-soft: #8e8b82;
+            --hairline: #e6dfd8;
+            --hairline-soft: #ebe6df;
+            --canvas: #faf9f5;
+            --surface-soft: #f5f0e8;
+            --surface-card: #efe9de;
+            --surface-cream-strong: #e8e0d2;
+            --surface-dark: #181715;
+            --surface-dark-elevated: #252320;
+            --surface-dark-soft: #1f1e1b;
+            --on-primary: #ffffff;
+            --on-dark: #faf9f5;
+            --on-dark-soft: #a09d96;
+            --accent-teal: #5db8a6;
+            --accent-amber: #e8a55a;
+            --success: #5db872;
+            --warning: #d4a017;
+
+            /* 圆角 / 间距 */
+            --r-xs: 4px;
+            --r-sm: 6px;
+            --r-md: 8px;
+            --r-lg: 12px;
+            --r-xl: 16px;
+            --r-pill: 9999px;
+
+            /* 字体栈（Copernicus / StyreneB 不可用，使用同族替代） */
+            --font-serif: "Tiempos Headline", "Copernicus", "EB Garamond", "Source Serif Pro", Georgia, serif;
+            --font-sans: "StyreneB", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        html, body {
+            background-color: var(--canvas);
+            color: var(--body);
+            font-family: var(--font-sans);
+            font-size: 16px;
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
-            background-color: var(--light-color);
-            color: var(--dark-color);
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 48px 24px 32px;
+        }
+
+        /* ===== 顶部 Eyebrow / 标题区 ===== */
+        .eyebrow {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.4;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 16px;
         }
 
         header {
             text-align: center;
-            margin-bottom: 20px;
+            max-width: 760px;
+            margin-bottom: 32px;
         }
 
         h1 {
-            color: var(--secondary-color);
-            margin-bottom: 10px;
+            font-family: var(--font-serif);
+            font-size: 48px;
+            font-weight: 400;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            color: var(--ink);
+            margin-bottom: 12px;
         }
 
         .subtitle {
-            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 18px;
+            line-height: 1.5;
+            color: var(--muted);
+            max-width: 560px;
+            margin: 0 auto;
         }
 
-        .content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
+        /* ===== 模式切换（一次 / 二次） ===== */
+        .mode-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background-color: var(--surface-soft);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-pill);
+            padding: 4px;
+            margin-top: 24px;
+        }
+
+        .mode-btn {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1;
+            color: var(--muted);
+            background: transparent;
+            border: 0;
+            padding: 10px 18px;
+            border-radius: var(--r-pill);
+            cursor: pointer;
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .mode-btn:hover { color: var(--ink); }
+
+        .mode-btn.active {
+            background-color: var(--surface-dark);
+            color: var(--on-dark);
+        }
+
+        /* ===== 主内容栅格 ===== */
+        .stage {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+            gap: 24px;
             width: 100%;
             max-width: 1200px;
+            margin-top: 8px;
         }
 
-        .graph-container {
-            background: var(--card-bg);
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: var(--card-shadow);
-            border: var(--card-border);
+        /* ===== 画布卡片（深海军色，对应 Claude 的 product-mockup-card-dark） ===== */
+        .graph-card {
+            background-color: var(--surface-dark);
+            border-radius: var(--r-xl);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 460px;
+        }
+
+        .graph-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--on-dark-soft);
+        }
+
+        .graph-card-title {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--on-dark-soft);
+        }
+
+        .graph-card-meta {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--on-dark-soft);
+            letter-spacing: 0;
         }
 
         canvas {
-            background: #000;
-            border-radius: 5px;
+            width: 100%;
+            height: auto;
+            display: block;
+            background-color: var(--surface-dark);
+            border-radius: var(--r-md);
         }
 
-        .controls {
-            flex: 1;
-            min-width: 300px;
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: var(--card-shadow);
-            border: var(--card-border);
+        /* ===== 控件侧栏 ===== */
+        .sidebar {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
+            min-width: 0;
         }
 
-        .control-group {
-            background: #161b22;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #30363d;
+        .cream-card {
+            background-color: var(--surface-card);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-lg);
+            padding: 20px;
+        }
+
+        .cream-card-soft {
+            background-color: var(--surface-soft);
+            border-radius: var(--r-lg);
+            padding: 20px;
+        }
+
+        .control-group + .control-group {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--hairline);
         }
 
         .control-title {
-            font-weight: bold;
-            color: var(--secondary-color);
-            margin-bottom: 10px;
             display: flex;
+            align-items: baseline;
             justify-content: space-between;
+            margin-bottom: 8px;
         }
 
-        .slider-container {
-            margin: 10px 0;
+        .control-title-name {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        .control-title-hint {
+            font-family: var(--font-sono, var(--font-mono));
+            font-size: 12px;
+            color: var(--muted-soft);
         }
 
         .slider-label {
             display: flex;
             justify-content: space-between;
-            font-size: 0.8em;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
+            align-items: baseline;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .slider-value {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--ink);
         }
 
         input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
             width: 100%;
-            accent-color: var(--primary-color);
+            height: 4px;
+            background-color: var(--hairline);
+            border-radius: var(--r-pill);
+            outline: none;
+            cursor: pointer;
         }
 
-        .function-display {
-            font-family: 'Courier New', monospace;
-            font-size: 1.5em;
-            text-align: center;
-            padding: 15px;
-            background: #161b22;
-            border-radius: 8px;
-            color: var(--accent-color);
-            border: 1px solid var(--secondary-color);
-            margin-top: 10px;
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background-color: var(--primary);
+            border-radius: var(--r-pill);
+            border: 3px solid var(--canvas);
+            box-shadow: 0 0 0 1px var(--primary);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
         }
 
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background-color: var(--primary);
+            border-radius: var(--r-pill);
+            border: 3px solid var(--canvas);
+            box-shadow: 0 0 0 1px var(--primary);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover { background-color: var(--primary-active); }
+        input[type="range"]::-moz-range-thumb:hover { background-color: var(--primary-active); }
+
+        .control-explain {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        /* ===== 函数表达式卡片 ===== */
+        .formula-card {
+            background-color: var(--surface-cream-strong);
+            border-radius: var(--r-lg);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .formula-eyebrow {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .formula-display {
+            font-family: var(--font-serif);
+            font-size: 30px;
+            font-weight: 400;
+            letter-spacing: -0.3px;
+            color: var(--primary);
+            line-height: 1.1;
+        }
+
+        /* 公式中数学符号样式 */
+        .formula-display em {
+            font-style: italic;
+            font-family: var(--font-serif);
+        }
+
+        .formula-display sub,
+        .formula-display sup {
+            font-size: 0.6em;
+        }
+
+        /* ===== 关键点卡片栅格 ===== */
         .key-points {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .key-points.cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
         .point-card {
-            background: #161b22;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-            border: 1px solid #30363d;
+            background-color: var(--surface-soft);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-md);
+            padding: 12px 14px;
         }
 
         .point-title {
-            font-size: 0.8em;
-            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
         }
 
+        .point-value {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--ink);
+            line-height: 1.3;
+            word-break: break-all;
+        }
+
+        /* ===== 按钮 ===== */
         .reset-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--on-primary);
+            background-color: var(--primary);
+            border: 0;
+            border-radius: var(--r-md);
+            padding: 12px 20px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background-color 0.15s ease;
+            width: 100%;
         }
 
-        .reset-btn:hover {
-            background: #1a4a9a;
-        }
+        .reset-btn:hover { background-color: var(--primary-active); }
+        .reset-btn:active { background-color: var(--primary-active); }
 
+        /* ===== 解析说明区 ===== */
         .explanation {
             width: 100%;
             max-width: 1200px;
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border: var(--card-border);
+            background-color: var(--surface-card);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-lg);
+            padding: 32px;
+            margin-top: 24px;
+        }
+
+        .explanation-eyebrow {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
         }
 
         .explanation h3 {
-            color: var(--secondary-color);
-            border-bottom: 1px solid #30363d;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
+            font-family: var(--font-serif);
+            font-size: 28px;
+            font-weight: 400;
+            letter-spacing: -0.3px;
+            color: var(--ink);
+            margin-bottom: 16px;
         }
 
-        ul {
+        .explanation p,
+        .explanation li {
+            font-family: var(--font-sans);
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--body);
+        }
+
+        .explanation ul {
             padding-left: 20px;
         }
 
-        li {
-            margin-bottom: 5px;
+        .explanation li { margin-bottom: 8px; }
+
+        .explanation strong {
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-weight: 400;
+            color: var(--ink);
         }
 
         footer {
-            margin-top: 30px;
-            color: var(--text-secondary);
-            font-size: 0.9em;
-        }
-
-        /* 模式切换（一次 / 二次） */
-        .mode-toggle {
-            display: inline-flex;
-            background: var(--card-bg);
-            border: var(--card-border);
-            border-radius: 10px;
-            padding: 4px;
-            margin-top: 16px;
-            gap: 4px;
-        }
-
-        .mode-btn {
-            background: transparent;
-            color: var(--text-secondary);
-            border: none;
-            padding: 8px 18px;
-            border-radius: 6px;
-            cursor: pointer;
+            margin-top: 48px;
+            color: var(--muted);
+            font-family: var(--font-sans);
             font-size: 13px;
-            font-family: 'Courier New', monospace;
-            transition: background 0.2s, color 0.2s;
+            text-align: center;
         }
 
-        .mode-btn:hover { color: var(--dark-color); }
+        footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
 
-        .mode-btn.active {
-            background: var(--primary-color);
-            color: white;
+        footer a:hover { color: var(--ink); }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 900px) {
+            body { padding: 32px 16px 24px; }
+            h1 { font-size: 36px; letter-spacing: -0.5px; }
+            .subtitle { font-size: 16px; }
+            .stage { grid-template-columns: 1fr; }
+            .key-points.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .formula-display { font-size: 24px; }
+        }
+
+        @media (max-width: 540px) {
+            h1 { font-size: 28px; }
+            .mode-btn { padding: 8px 12px; font-size: 13px; }
+            .explanation { padding: 20px; }
+            .key-points,
+            .key-points.cols-3 { grid-template-columns: 1fr; }
         }
     </style>
 
@@ -231,212 +490,224 @@
 
 
 <body>
+    <div class="eyebrow">Teaching Tool · 数学</div>
     <header>
-        <h1 id="pageTitle">一次函数演示</h1>
-        <p class="subtitle" id="pageSubtitle">探索一次函数 y = kx + b 中斜率和截距的作用</p>
-        <div class="mode-toggle">
-            <button class="mode-btn active" data-mode="linear" type="button">一次函数  y = kx + b</button>
-            <button class="mode-btn" data-mode="quadratic" type="button">二次函数  y = ax² + bx + c</button>
+        <h1 id="pageTitle">函数图像</h1>
+        <p class="subtitle" id="pageSubtitle">探索一次函数与二次函数的图像、关键点与判别式 — 拖动滑块即看变化。</p>
+
+        <div class="mode-toggle" role="tablist">
+            <button class="mode-btn active" data-mode="linear" type="button" role="tab">一次函数 · <em style="font-family:var(--font-serif);font-style:italic">y</em> = <em style="font-family:var(--font-serif);font-style:italic">kx</em> + <em style="font-family:var(--font-serif);font-style:italic">b</em></button>
+            <button class="mode-btn" data-mode="quadratic" type="button" role="tab">二次函数 · <em style="font-family:var(--font-serif);font-style:italic">y</em> = <em style="font-family:var(--font-serif);font-style:italic">ax</em><sup style="font-family:var(--font-serif)">2</sup> + <em style="font-family:var(--font-serif);font-style:italic">bx</em> + <em style="font-family:var(--font-serif);font-style:italic">c</em></button>
         </div>
     </header>
 
-    <div class="content">
-        <div class="graph-container">
-            <canvas id="graphCanvas" width="600" height="400"></canvas>
-        </div>
+    <div class="stage">
+        <!-- 左侧：画布卡片（深海军色，模拟 Claude 的 product-mockup-card-dark） -->
+        <section class="graph-card">
+            <div class="graph-card-header">
+                <span class="graph-card-title" id="cardTitle">Coordinate Plane</span>
+                <span class="graph-card-meta" id="cardMeta">y = kx + b</span>
+            </div>
+            <canvas id="graphCanvas" width="600" height="420" aria-label="函数图像画布"></canvas>
+        </section>
 
-        <div class="controls">
+        <!-- 右侧：控件侧栏 -->
+        <aside class="sidebar">
             <!-- 一次函数控件 -->
-            <div id="linearControls">
+            <div class="cream-card" id="linearControls">
                 <div class="control-group">
                     <div class="control-title">
-                        <span>斜率 (k)</span>
+                        <span class="control-title-name">斜率 <em style="font-family:var(--font-serif);font-style:italic">k</em></span>
+                        <span class="control-title-hint">倾斜程度</span>
                     </div>
-                    <div class="slider-container">
-                        <div class="slider-label">
-                            <span>负斜率</span>
-                            <span id="kValue">1.0</span>
-                            <span>正斜率</span>
-                        </div>
-                        <input type="range" id="kSlider" min="-3" max="3" step="0.1" value="1">
+                    <div class="slider-label">
+                        <span>递减</span>
+                        <span class="slider-value" id="kValue">1.0</span>
+                        <span>递增</span>
                     </div>
-                    <p>斜率表示直线的倾斜程度：</p>
-                    <ul>
-                        <li>k &gt; 0: 函数递增</li>
-                        <li>k = 0: 水平直线</li>
-                        <li>k &lt; 0: 函数递减</li>
-                    </ul>
+                    <input type="range" id="kSlider" min="-3" max="3" step="0.1" value="1" aria-label="斜率 k">
                 </div>
 
                 <div class="control-group">
                     <div class="control-title">
-                        <span>截距 (b)</span>
+                        <span class="control-title-name">截距 <em style="font-family:var(--font-serif);font-style:italic">b</em></span>
+                        <span class="control-title-hint">y 轴交点</span>
                     </div>
-                    <div class="slider-container">
-                        <div class="slider-label">
-                            <span>负截距</span>
-                            <span id="bValue">0.0</span>
-                            <span>正截距</span>
-                        </div>
-                        <input type="range" id="bSlider" min="-5" max="5" step="0.1" value="0">
+                    <div class="slider-label">
+                        <span>下移</span>
+                        <span class="slider-value" id="bValue">0.0</span>
+                        <span>上移</span>
                     </div>
-                    <p>截距表示直线与y轴的交点：</p>
-                    <ul>
-                        <li>当x=0时，y=b</li>
-                        <li>b值上下平移直线</li>
-                    </ul>
+                    <input type="range" id="bSlider" min="-5" max="5" step="0.1" value="0" aria-label="截距 b">
                 </div>
             </div>
 
             <!-- 二次函数控件 -->
-            <div id="quadraticControls" hidden>
+            <div class="cream-card" id="quadraticControls" hidden>
                 <div class="control-group">
                     <div class="control-title">
-                        <span>二次项系数 (a)</span>
+                        <span class="control-title-name">二次项 <em style="font-family:var(--font-serif);font-style:italic">a</em></span>
+                        <span class="control-title-hint">开口方向 · 宽窄</span>
                     </div>
-                    <div class="slider-container">
-                        <div class="slider-label">
-                            <span>开口向下</span>
-                            <span id="aValue">1.0</span>
-                            <span>开口向上</span>
-                        </div>
-                        <input type="range" id="aSlider" min="-2" max="2" step="0.1" value="1">
+                    <div class="slider-label">
+                        <span>向下</span>
+                        <span class="slider-value" id="aValue">1.0</span>
+                        <span>向上</span>
                     </div>
-                    <p>二次项系数 a 决定抛物线的开口与宽窄：</p>
-                    <ul>
-                        <li>a &gt; 0: 开口向上</li>
-                        <li>a &lt; 0: 开口向下</li>
-                        <li>|a| 越大，抛物线越窄</li>
-                    </ul>
+                    <input type="range" id="aSlider" min="-2" max="2" step="0.1" value="1" aria-label="二次项系数 a">
                 </div>
 
                 <div class="control-group">
                     <div class="control-title">
-                        <span>一次项系数 (b)</span>
+                        <span class="control-title-name">一次项 <em style="font-family:var(--font-serif);font-style:italic">b</em></span>
+                        <span class="control-title-hint">对称轴</span>
                     </div>
-                    <div class="slider-container">
-                        <div class="slider-label">
-                            <span>负</span>
-                            <span id="bQValue">0.0</span>
-                            <span>正</span>
-                        </div>
-                        <input type="range" id="bQSlider" min="-5" max="5" step="0.1" value="0">
+                    <div class="slider-label">
+                        <span>左移</span>
+                        <span class="slider-value" id="bQValue">0.0</span>
+                        <span>右移</span>
                     </div>
-                    <p>b 决定对称轴的位置（对称轴 x = -b/2a）。</p>
+                    <input type="range" id="bQSlider" min="-5" max="5" step="0.1" value="0" aria-label="一次项系数 b">
                 </div>
 
                 <div class="control-group">
                     <div class="control-title">
-                        <span>常数项 (c)</span>
+                        <span class="control-title-name">常数项 <em style="font-family:var(--font-serif);font-style:italic">c</em></span>
+                        <span class="control-title-hint">y 轴交点</span>
                     </div>
-                    <div class="slider-container">
-                        <div class="slider-label">
-                            <span>负</span>
-                            <span id="cValue">0.0</span>
-                            <span>正</span>
-                        </div>
-                        <input type="range" id="cSlider" min="-5" max="5" step="0.1" value="0">
+                    <div class="slider-label">
+                        <span>下方</span>
+                        <span class="slider-value" id="cValue">0.0</span>
+                        <span>上方</span>
                     </div>
-                    <p>c 是抛物线与 y 轴的交点 (0, c)。</p>
+                    <input type="range" id="cSlider" min="-5" max="5" step="0.1" value="0" aria-label="常数项 c">
                 </div>
             </div>
 
-            <div class="function-display" id="functionText">
-                y = 1.0x + 0.0
+            <!-- 函数表达式 -->
+            <div class="formula-card">
+                <div>
+                    <div class="formula-eyebrow">Expression</div>
+                    <div class="formula-display" id="functionText">
+                        <em>y</em> = <em>1.0</em><em>x</em>
+                    </div>
+                </div>
             </div>
 
             <!-- 一次函数关键点 -->
-            <div class="key-points" id="linearInfo">
-                <div class="point-card">
-                    <div class="point-title">斜率 (k)</div>
-                    <div id="slopeInfo">k = 1.0</div>
+            <div class="cream-card-soft" id="linearInfo">
+                <div class="control-title" style="margin-bottom:12px">
+                    <span class="control-title-name">关键点</span>
+                    <span class="control-title-hint">Key Points</span>
                 </div>
-                <div class="point-card">
-                    <div class="point-title">截距 (b)</div>
-                    <div id="interceptInfo">b = 0.0</div>
-                </div>
-                <div class="point-card">
-                    <div class="point-title">与y轴交点</div>
-                    <div id="yIntercept">(0, 0.0)</div>
-                </div>
-                <div class="point-card">
-                    <div class="point-title">与x轴交点</div>
-                    <div id="xIntercept">(0.0, 0)</div>
+                <div class="key-points">
+                    <div class="point-card">
+                        <div class="point-title">斜率 k</div>
+                        <div class="point-value" id="slopeInfo">k = 1.0</div>
+                    </div>
+                    <div class="point-card">
+                        <div class="point-title">截距 b</div>
+                        <div class="point-value" id="interceptInfo">b = 0.0</div>
+                    </div>
+                    <div class="point-card">
+                        <div class="point-title">y 轴交点</div>
+                        <div class="point-value" id="yIntercept">(0, 0.0)</div>
+                    </div>
+                    <div class="point-card">
+                        <div class="point-title">x 轴交点</div>
+                        <div class="point-value" id="xIntercept">(0.0, 0)</div>
+                    </div>
                 </div>
             </div>
 
             <!-- 二次函数关键点 -->
-            <div class="key-points" id="quadraticInfo" hidden>
-                <div class="point-card">
-                    <div class="point-title">二次项系数 (a)</div>
-                    <div id="qAInfo">a = 1.0</div>
+            <div class="cream-card-soft" id="quadraticInfo" hidden>
+                <div class="control-title" style="margin-bottom:12px">
+                    <span class="control-title-name">关键点</span>
+                    <span class="control-title-hint">Key Points</span>
                 </div>
-                <div class="point-card">
-                    <div class="point-title">一次项系数 (b)</div>
-                    <div id="qBInfo">b = 0.0</div>
-                </div>
-                <div class="point-card">
-                    <div class="point-title">常数项 (c)</div>
-                    <div id="qCInfo">c = 0.0</div>
-                </div>
-                <div class="point-card">
-                    <div class="point-title">顶点</div>
-                    <div id="qVertex">(0.00, 0.00)</div>
-                </div>
-                <div class="point-card">
-                    <div class="point-title">对称轴</div>
-                    <div id="qAxis">x = 0.00</div>
-                </div>
-                <div class="point-card">
-                    <div class="point-title">与x轴交点</div>
-                    <div id="qXIntercept">—</div>
+                <div class="key-points cols-3">
+                    <div class="point-card">
+                        <div class="point-title">a</div>
+                        <div class="point-value" id="qAInfo">a = 1.0</div>
+                    </div>
+                    <div class="point-card">
+                        <div class="point-title">b</div>
+                        <div class="point-value" id="qBInfo">b = 0.0</div>
+                    </div>
+                    <div class="point-card">
+                        <div class="point-title">c</div>
+                        <div class="point-value" id="qCInfo">c = 0.0</div>
+                    </div>
+                    <div class="point-card">
+                        <div class="point-title">顶点</div>
+                        <div class="point-value" id="qVertex">(0.00, 0.00)</div>
+                    </div>
+                    <div class="point-card">
+                        <div class="point-title">对称轴</div>
+                        <div class="point-value" id="qAxis">x = 0.00</div>
+                    </div>
+                    <div class="point-card">
+                        <div class="point-title">x 轴交点</div>
+                        <div class="point-value" id="qXIntercept">—</div>
+                    </div>
                 </div>
             </div>
 
-            <button class="reset-btn" id="resetBtn">重置为默认值</button>
-        </div>
+            <button class="reset-btn" id="resetBtn" type="button">重置为默认值</button>
+        </aside>
     </div>
 
-    <div class="explanation" id="linearExplanation">
+    <!-- 解析说明 -->
+    <section class="explanation" id="linearExplanation">
+        <div class="explanation-eyebrow">Linear · 一次函数</div>
         <h3>一次函数解析</h3>
-        <p>一次函数是形如 y = kx + b 的函数，其中：</p>
+        <p>一次函数是形如 <strong>y = kx + b</strong> 的函数，其中：</p>
         <ul>
-            <li><strong>k</strong> 是斜率，表示直线的倾斜程度。当k&gt;0时，函数递增；当k&lt;0时，函数递减；当k=0时，函数为水平直线。</li>
-            <li><strong>b</strong> 是y轴截距，表示当x=0时，函数与y轴的交点。</li>
+            <li><strong>k</strong> 是斜率，表示直线的倾斜程度。当 <strong>k &gt; 0</strong> 时函数递增；当 <strong>k &lt; 0</strong> 时函数递减；当 <strong>k = 0</strong> 时函数为水平直线。</li>
+            <li><strong>b</strong> 是 y 轴截距，表示当 <strong>x = 0</strong> 时函数与 y 轴的交点。</li>
         </ul>
-        <p>通过调整上方的滑块，您可以直观地看到斜率和截距如何影响一次函数的图像。</p>
-    </div>
+        <p style="margin-top:12px">拖动右侧滑块即可直观看到斜率和截距如何改变一次函数的图像。</p>
+    </section>
 
-    <div class="explanation" id="quadraticExplanation" hidden>
+    <section class="explanation" id="quadraticExplanation" hidden>
+        <div class="explanation-eyebrow">Quadratic · 二次函数</div>
         <h3>二次函数解析</h3>
-        <p>二次函数是形如 y = ax² + bx + c 的函数，图像为一条抛物线，其中：</p>
+        <p>二次函数是形如 <strong>y = ax² + bx + c</strong> 的函数，图像为一条抛物线，其中：</p>
         <ul>
-            <li><strong>a</strong> 是二次项系数，决定抛物线的开口方向与宽窄。a &gt; 0 开口向上，a &lt; 0 开口向下；|a| 越大，抛物线越窄。</li>
-            <li><strong>b</strong> 是一次项系数，影响对称轴的位置。对称轴为 x = -b/(2a)。</li>
-            <li><strong>c</strong> 是常数项，决定抛物线与 y 轴的交点 (0, c)。</li>
-            <li><strong>顶点</strong>坐标为 (-b/(2a), c - b²/(4a))，是抛物线的最高点或最低点。</li>
-            <li><strong>与 x 轴的交点</strong>由 ax² + bx + c = 0 决定：
+            <li><strong>a</strong> 是二次项系数，决定抛物线的开口方向与宽窄。<strong>a &gt; 0</strong> 开口向上，<strong>a &lt; 0</strong> 开口向下；<strong>|a|</strong> 越大，抛物线越窄。</li>
+            <li><strong>b</strong> 是一次项系数，影响对称轴的位置，对称轴为 <strong>x = −b / 2a</strong>。</li>
+            <li><strong>c</strong> 是常数项，决定抛物线与 y 轴的交点 <strong>(0, c)</strong>。</li>
+            <li><strong>顶点</strong>坐标为 <strong>(−b / 2a,&nbsp; c − b² / 4a)</strong>，是抛物线的最高点或最低点。</li>
+            <li><strong>与 x 轴的交点</strong>由 <strong>ax² + bx + c = 0</strong> 决定：
                 <ul>
-                    <li>判别式 Δ = b² - 4ac &gt; 0：两个不同的实数根</li>
-                    <li>Δ = 0：一个二重实数根（顶点在 x 轴上）</li>
-                    <li>Δ &lt; 0：无实数根（抛物线不与 x 轴相交）</li>
+                    <li>判别式 <strong>Δ = b² − 4ac &gt; 0</strong>：两个不同的实数根</li>
+                    <li><strong>Δ = 0</strong>：一个二重实数根（顶点在 x 轴上）</li>
+                    <li><strong>Δ &lt; 0</strong>：无实数根（抛物线不与 x 轴相交）</li>
                 </ul>
             </li>
         </ul>
-        <p>通过调整上方的滑块，您可以直观地看到 a、b、c 如何影响二次函数的图像、顶点、对称轴和与 x 轴的交点。</p>
-    </div>
+        <p style="margin-top:12px">拖动右侧滑块即可直观看到 <strong>a</strong>、<strong>b</strong>、<strong>c</strong> 如何改变二次函数的图像、顶点、对称轴与 x 轴交点。</p>
+    </section>
 
     <footer>
-        <p>一次函数演示 &copy; 2023 | 数学可视化工具</p>
+        <p>函数图像 · 数学可视化工具</p>
+        <p style="margin-top:6px"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026012488号-1</a></p>
     </footer>
 
+    <script src="../_shared/tool-header.js" defer></script>
     <script>
+        // ============================================================
+        // 函数图像演示 — 重设计版（保留全部原有数学逻辑）
+        // ============================================================
+
         // ===== 公共 =====
         const canvas = document.getElementById('graphCanvas');
         const ctx = canvas.getContext('2d');
         const functionText = document.getElementById('functionText');
         const resetBtn = document.getElementById('resetBtn');
-        const STEP = 30; // 网格间距（每数学单位对应的像素数）
+        const cardMeta = document.getElementById('cardMeta');
+        const STEP = 30; // 每数学单位对应的像素数
 
         // ===== 模式状态 =====
         let currentMode = 'linear';
@@ -448,7 +719,7 @@
         const kValue = document.getElementById('kValue');
         const bValue = document.getElementById('bValue');
 
-        // ===== 二次函数状态（bq, cq 避免与一次函数 b 冲突）=====
+        // ===== 二次函数状态（bq, cq 避免与一次函数 b 冲突） =====
         let aq = 1, bq = 0, cq = 0;
         const aSlider = document.getElementById('aSlider');
         const bQSlider = document.getElementById('bQSlider');
@@ -483,13 +754,15 @@
             quadraticExplanation.hidden = mode !== 'quadratic';
 
             if (mode === 'linear') {
-                pageTitle.textContent = '一次函数演示';
-                pageSubtitle.textContent = '探索一次函数 y = kx + b 中斜率和截距的作用';
-                document.title = '一次函数演示';
+                pageTitle.textContent = '一次函数';
+                pageSubtitle.textContent = '探索一次函数 y = kx + b 中斜率和截距的作用 — 拖动滑块即看变化。';
+                document.title = '函数图像 · 一次函数';
+                cardMeta.textContent = 'y = kx + b';
             } else {
-                pageTitle.textContent = '二次函数演示';
-                pageSubtitle.textContent = '探索二次函数 y = ax² + bx + c 中系数的作用';
-                document.title = '二次函数演示';
+                pageTitle.textContent = '二次函数';
+                pageSubtitle.textContent = '探索二次函数 y = ax² + bx + c 中系数的作用 — 顶点、对称轴、判别式一目了然。';
+                document.title = '函数图像 · 二次函数';
+                cardMeta.textContent = 'y = ax² + bx + c';
             }
             drawFunction();
         }
@@ -508,19 +781,23 @@
         const qAxis = document.getElementById('qAxis');
         const qXIntercept = document.getElementById('qXIntercept');
 
-        // ===== 网格 =====
+        // ===== 工具：数字格式化 =====
+        const fmt = (n, p = 2) => Number.isFinite(n) ? n.toFixed(p) : '—';
+
+        // ===== 网格（深海军色画布配色） =====
         function drawGrid() {
             const width = canvas.width;
             const height = canvas.height;
             const centerX = width / 2;
             const centerY = height / 2;
 
-            ctx.fillStyle = '#000';
+            // 深色画布背景
+            ctx.fillStyle = '#181715';
             ctx.fillRect(0, 0, width, height);
 
-            ctx.strokeStyle = '#333';
+            // 网格
+            ctx.strokeStyle = '#252320';
             ctx.lineWidth = 1;
-
             for (let x = centerX; x < width; x += STEP) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
             }
@@ -534,44 +811,76 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
             }
 
-            ctx.strokeStyle = '#8b949e';
-            ctx.lineWidth = 2;
+            // 主坐标轴（暖米色 hairline）
+            ctx.strokeStyle = '#a09d96';
+            ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(0, centerY); ctx.lineTo(width, centerY); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(centerX, 0); ctx.lineTo(centerX, height); ctx.stroke();
 
-            ctx.fillStyle = '#8b949e';
-            ctx.font = '12px Arial';
+            // 刻度
+            ctx.fillStyle = '#a09d96';
+            ctx.font = '12px JetBrains Mono, ui-monospace, monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             for (let x = centerX + STEP; x < width; x += STEP) {
-                ctx.fillText(((x - centerX) / STEP).toString(), x, centerY + 5);
+                ctx.fillText(((x - centerX) / STEP).toString(), x, centerY + 6);
             }
             for (let x = centerX - STEP; x > 0; x -= STEP) {
-                ctx.fillText(((x - centerX) / STEP).toString(), x, centerY + 5);
+                ctx.fillText(((x - centerX) / STEP).toString(), x, centerY + 6);
             }
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
             for (let y = centerY + STEP; y < height; y += STEP) {
-                ctx.fillText((-(y - centerY) / STEP).toString(), centerX - 5, y);
+                ctx.fillText((-(y - centerY) / STEP).toString(), centerX - 6, y);
             }
             for (let y = centerY - STEP; y > 0; y -= STEP) {
-                ctx.fillText((-(y - centerY) / STEP).toString(), centerX - 5, y);
+                ctx.fillText((-(y - centerY) / STEP).toString(), centerX - 6, y);
             }
-            ctx.fillText('0', centerX - 5, centerY + 5);
+            ctx.fillText('0', centerX - 6, centerY + 6);
+
+            // 轴端箭头提示（暖米色文字）
+            ctx.fillStyle = '#faf9f5';
+            ctx.font = 'italic 14px "Tiempos Headline", Georgia, serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText('x', width - 14, centerY + 6);
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillText('y', centerX - 6, 6);
         }
 
-        // ===== 一次函数 =====
-        function formatLinear(k, b) {
-            let kDisplay = k === 1 ? '' : (k === -1 ? '-' : k.toFixed(1));
-            if (b === 0) return `y = ${kDisplay}x`;
-            if (b > 0) return `y = ${kDisplay}x + ${b.toFixed(1)}`;
-            return `y = ${kDisplay}x - ${Math.abs(b).toFixed(1)}`;
+        // ===== 一次函数（serif 排版的公式） =====
+        function formatLinearHTML(kVal, bVal) {
+            const kStr = kVal.toFixed(1);
+            const bStr = bVal.toFixed(1);
+            let html = '<em>y</em> = ';
+            // k 部分
+            if (kVal === 0) {
+                html += '0';
+            } else if (kVal === 1) {
+                html += '<em>x</em>';
+            } else if (kVal === -1) {
+                html += '−<em>x</em>';
+            } else {
+                html += `<em>${kStr}</em><em>x</em>`;
+            }
+            // b 部分
+            if (bVal !== 0) {
+                if (bVal > 0) {
+                    html += ` + <em>${bStr}</em>`;
+                } else {
+                    html += ` − <em>${Math.abs(parseFloat(bStr)).toFixed(1)}</em>`;
+                }
+            }
+            return html;
         }
 
         function drawLinearCurve() {
             ctx.beginPath();
-            ctx.strokeStyle = '#e74c3c';
+            // 曲线使用珊瑚色（Claude 设计令牌 --primary）
+            ctx.strokeStyle = '#cc785c';
             ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
             for (let x = -10; x <= 10; x += 0.05) {
                 const y = k * x + b;
                 const canvasX = x * STEP + canvas.width / 2;
@@ -580,15 +889,48 @@
                 else ctx.lineTo(canvasX, canvasY);
             }
             ctx.stroke();
+
+            // 标记与 y 轴交点
+            const yiX = canvas.width / 2;
+            const yiY = canvas.height / 2 - b * STEP;
+            if (yiY >= 0 && yiY <= canvas.height) {
+                ctx.beginPath();
+                ctx.fillStyle = '#cc785c';
+                ctx.arc(yiX, yiY, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#faf9f5';
+                ctx.font = '12px JetBrains Mono, ui-monospace, monospace';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(`(0, ${b.toFixed(1)})`, yiX + 10, yiY - 6);
+            }
+
+            // 标记与 x 轴交点
+            if (k !== 0) {
+                const xi = -b / k;
+                const xiX = xi * STEP + canvas.width / 2;
+                const xiY = canvas.height / 2;
+                if (xiX >= 0 && xiX <= canvas.width) {
+                    ctx.beginPath();
+                    ctx.fillStyle = '#cc785c';
+                    ctx.arc(xiX, xiY, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#faf9f5';
+                    ctx.font = '12px JetBrains Mono, ui-monospace, monospace';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(`(${xi.toFixed(2)}, 0)`, xiX + 10, xiY + 6);
+                }
+            }
         }
 
         function updateLinearInfo() {
-            functionText.textContent = formatLinear(k, b);
+            functionText.innerHTML = formatLinearHTML(k, b);
             slopeInfo.textContent = `k = ${k.toFixed(1)}`;
             interceptInfo.textContent = `b = ${b.toFixed(1)}`;
             yIntercept.textContent = `(0, ${b.toFixed(1)})`;
             if (k !== 0) {
-                xIntercept.textContent = `(${(-b / k).toFixed(1)}, 0)`;
+                xIntercept.textContent = `(${(-b / k).toFixed(2)}, 0)`;
             } else if (b === 0) {
                 xIntercept.textContent = '所有点';
             } else {
@@ -597,32 +939,46 @@
         }
 
         // ===== 二次函数 =====
-        function formatQuadratic(a, b, c) {
-            let aPart;
-            if (a === 1) aPart = 'x²';
-            else if (a === -1) aPart = '-x²';
-            else aPart = a.toFixed(1) + 'x²';
-
-            let bPart = '';
-            if (b !== 0) {
-                if (b === 1) bPart = ' + x';
-                else if (b === -1) bPart = ' - x';
-                else if (b > 0) bPart = ' + ' + b.toFixed(1) + 'x';
-                else bPart = ' - ' + Math.abs(b).toFixed(1) + 'x';
+        function formatQuadraticHTML(aVal, bVal, cVal) {
+            const aStr = aVal.toFixed(1);
+            const bStr = bVal.toFixed(1);
+            const cStr = cVal.toFixed(1);
+            let html = '<em>y</em> = ';
+            // a 部分
+            if (aVal === 0) {
+                // 退化为一次
+                if (bVal === 1) html += '<em>x</em>';
+                else if (bVal === -1) html += '−<em>x</em>';
+                else if (bVal !== 0) html += `<em>${bStr}</em><em>x</em>`;
+                else html += '0';
+            } else if (aVal === 1) {
+                html += '<em>x</em><sup>2</sup>';
+            } else if (aVal === -1) {
+                html += '−<em>x</em><sup>2</sup>';
+            } else {
+                html += `<em>${aStr}</em><em>x</em><sup>2</sup>`;
             }
-
-            let cPart = '';
-            if (c !== 0) {
-                cPart = c > 0 ? ' + ' + c.toFixed(1) : ' - ' + Math.abs(c).toFixed(1);
+            // b 部分
+            if (bVal !== 0) {
+                if (bVal === 1) html += ' + <em>x</em>';
+                else if (bVal === -1) html += ' − <em>x</em>';
+                else if (bVal > 0) html += ` + <em>${bStr}</em><em>x</em>`;
+                else html += ` − <em>${Math.abs(parseFloat(bStr)).toFixed(1)}</em><em>x</em>`;
             }
-            return `y = ${aPart}${bPart}${cPart}`;
+            // c 部分
+            if (cVal !== 0) {
+                if (cVal > 0) html += ` + <em>${cStr}</em>`;
+                else html += ` − <em>${Math.abs(parseFloat(cStr)).toFixed(1)}</em>`;
+            }
+            return html;
         }
 
         function drawQuadraticCurve() {
+            // 抛物线本体（珊瑚色）
             ctx.beginPath();
-            ctx.strokeStyle = '#2ecc71';
+            ctx.strokeStyle = '#cc785c';
             ctx.lineWidth = 3;
-            // 在 [-10, 10] 范围细步长采样，超出画布的部分由 canvas 自身裁剪
+            ctx.lineCap = 'round';
             for (let x = -10; x <= 10; x += 0.02) {
                 const y = aq * x * x + bq * x + cq;
                 const canvasX = x * STEP + canvas.width / 2;
@@ -632,44 +988,73 @@
             }
             ctx.stroke();
 
-            if (aq === 0) return; // a=0 时退化为直线，没有顶点/对称轴
+            // 对称轴（仅在 a ≠ 0 时）
+            if (aq !== 0) {
+                const vx = -bq / (2 * aq);
+                const canvasVx = vx * STEP + canvas.width / 2;
+                if (canvasVx >= 0 && canvasVx <= canvas.width) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(93, 184, 166, 0.45)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(canvasVx, 0);
+                    ctx.lineTo(canvasVx, canvas.height);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                // 顶点
+                const vy = cq - (bq * bq) / (4 * aq);
+                const canvasVy = canvas.height / 2 - vy * STEP;
+                if (canvasVx >= 0 && canvasVx <= canvas.width &&
+                    canvasVy >= 0 && canvasVy <= canvas.height) {
+                    ctx.beginPath();
+                    ctx.fillStyle = '#5db8a6';
+                    ctx.arc(canvasVx, canvasVy, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#faf9f5';
+                    ctx.font = '12px JetBrains Mono, ui-monospace, monospace';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(`顶点 (${vx.toFixed(2)}, ${vy.toFixed(2)})`, canvasVx + 10, canvasVy - 6);
+                }
 
-            const vx = -bq / (2 * aq);
-            const vy = cq - (bq * bq) / (4 * aq);
-            const canvasVx = vx * STEP + canvas.width / 2;
-            const canvasVy = canvas.height / 2 - vy * STEP;
-
-            // 对称轴（虚线，仅在画布范围内绘制）
-            if (canvasVx >= 0 && canvasVx <= canvas.width) {
-                ctx.save();
-                ctx.strokeStyle = 'rgba(46, 204, 113, 0.35)';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([5, 5]);
-                ctx.beginPath();
-                ctx.moveTo(canvasVx, 0);
-                ctx.lineTo(canvasVx, canvas.height);
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            // 顶点（小圆点，仅在画布范围内绘制）
-            if (canvasVx >= 0 && canvasVx <= canvas.width &&
-                canvasVy >= 0 && canvasVy <= canvas.height) {
-                ctx.beginPath();
-                ctx.fillStyle = '#2ecc71';
-                ctx.arc(canvasVx, canvasVy, 5, 0, Math.PI * 2);
-                ctx.fill();
+                // 与 x 轴交点
+                const disc = bq * bq - 4 * aq * cq;
+                if (disc > 1e-9) {
+                    const r1 = (-bq + Math.sqrt(disc)) / (2 * aq);
+                    const r2 = (-bq - Math.sqrt(disc)) / (2 * aq);
+                    [r1, r2].forEach((r) => {
+                        const cx = r * STEP + canvas.width / 2;
+                        const cy = canvas.height / 2;
+                        if (cx >= 0 && cx <= canvas.width) {
+                            ctx.beginPath();
+                            ctx.fillStyle = '#cc785c';
+                            ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    });
+                } else if (Math.abs(disc) <= 1e-9) {
+                    const r = -bq / (2 * aq);
+                    const cx = r * STEP + canvas.width / 2;
+                    const cy = canvas.height / 2;
+                    if (cx >= 0 && cx <= canvas.width) {
+                        ctx.beginPath();
+                        ctx.fillStyle = '#cc785c';
+                        ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
             }
         }
 
         function updateQuadraticInfo() {
-            functionText.textContent = formatQuadratic(aq, bq, cq);
+            functionText.innerHTML = formatQuadraticHTML(aq, bq, cq);
             qAInfo.textContent = `a = ${aq.toFixed(1)}`;
             qBInfo.textContent = `b = ${bq.toFixed(1)}`;
             qCInfo.textContent = `c = ${cq.toFixed(1)}`;
 
             if (aq === 0) {
-                // 退化为一次函数，不显示顶点/对称轴
                 qVertex.textContent = '—';
                 qAxis.textContent = '—';
                 if (bq === 0) {
@@ -685,7 +1070,6 @@
             qVertex.textContent = `(${vx.toFixed(2)}, ${vy.toFixed(2)})`;
             qAxis.textContent = `x = ${vx.toFixed(2)}`;
 
-            // 判别式 Δ = b² - 4ac
             const disc = bq * bq - 4 * aq * cq;
             if (disc > 1e-9) {
                 const r1 = (-bq + Math.sqrt(disc)) / (2 * aq);
@@ -758,12 +1142,11 @@
         // 初始绘制
         drawFunction();
 
+        // 响应式：保持画布像素密度
         window.addEventListener('resize', function () {
-            // 可在此扩展响应式调整
+            // 当前固定 600x420，预留扩展
         });
     </script>
-    <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
-    <script src="../_shared/tool-header.js" defer></script>
 </body>
 
 </html>

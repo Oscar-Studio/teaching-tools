@@ -7,19 +7,10 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>英语句子成分分析</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <script src="https://unpkg.com/compromise"></script>
     <style>
-        :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-        }
+        
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -48,12 +39,12 @@
             width: 100%;
             height: 120px;
             padding: 15px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
             border-radius: 8px;
             font-size: 16px;
             resize: vertical;
             box-sizing: border-box;
-            background: #161b22;
+            background: var(--surface-soft);
             color: var(--dark-color);
         }
 
@@ -82,20 +73,20 @@
         .result-section {
             margin-top: 30px;
             padding: 20px;
-            background-color: #161b22;
+            background-color: var(--surface-soft);
             border-radius: 8px;
             border-left: 4px solid var(--primary-color);
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
             border-left-width: 4px;
         }
 
         .result-item {
             margin: 15px 0;
             padding: 10px;
-            background-color: #0d1117;
+            background-color: var(--surface-card);
             border-radius: 5px;
             box-shadow: none;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
         }
 
         .result-title {
@@ -130,7 +121,7 @@
             border-radius: 4px;
             font-size: 12px;
             color: var(--secondary-color);
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
         }
 
         .tag-item {
@@ -142,10 +133,10 @@
             font-size: 18px;
             line-height: 1.6;
             padding: 15px;
-            background-color: #161b22;
+            background-color: var(--surface-soft);
             border-radius: 8px;
             margin: 20px 0;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
         }
 
         .noun {
@@ -392,55 +383,64 @@
             </div>`;
 
                 // 介词
-                resultHTML += `<div class="result-item">
-                <div class="result-title">介词 (${prepositions.length})：</div>
-                <div class="result-content">${prepositions.length > 0 ? prepositions.join(', ') : '未检测到介词'}</div>
-            </div>`;
+                // 用 DOM API 构建结果，避免 innerHTML + XSS 风险
+                resultDiv.textContent = '';
+                function appendResultItem(title, content) {
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'result-title';
+                    titleDiv.textContent = title;
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'result-content';
+                    contentDiv.textContent = content;
+                    item.appendChild(titleDiv);
+                    item.appendChild(contentDiv);
+                    resultDiv.appendChild(item);
+                }
+                appendResultItem(`介词 (${prepositions.length})：`, prepositions.length > 0 ? prepositions.join(', ') : '未检测到介词');
+                appendResultItem(`代词 (${pronouns.length})：`, pronouns.length > 0 ? pronouns.join(', ') : '未检测到代词');
+                appendResultItem(`连词 (${conjunctions.length})：`, conjunctions.length > 0 ? conjunctions.join(', ') : '未检测到连词');
 
-                // 代词
-                resultHTML += `<div class="result-item">
-                <div class="result-title">代词 (${pronouns.length})：</div>
-                <div class="result-content">${pronouns.length > 0 ? pronouns.join(', ') : '未检测到代词'}</div>
-            </div>`;
-
-                // 连词
-                resultHTML += `<div class="result-item">
-                <div class="result-title">连词 (${conjunctions.length})：</div>
-                <div class="result-content">${conjunctions.length > 0 ? conjunctions.join(', ') : '未检测到连词'}</div>
-            </div>`;
-
-                // 词性标记 - 修复版本
-                resultHTML += `<div class="result-item">
-                <div class="result-title">详细词性分析：</div>
-                <div class="result-content">`;
-
-                // 修复标签显示问题 - 使用正确的API获取词性标签
+                // 词性标记
+                const tagItem = document.createElement('div');
+                tagItem.className = 'result-item';
+                const tagTitle = document.createElement('div');
+                tagTitle.className = 'result-title';
+                tagTitle.textContent = '详细词性分析：';
+                const tagContent = document.createElement('div');
+                tagContent.className = 'result-content';
                 const terms = doc.json();
                 if (terms && terms.length > 0 && terms[0].terms) {
                     terms[0].terms.forEach(term => {
                         const termText = term.text || term.normal || '未知词汇';
                         const tags = term.tags || [];
-
-                        // 安全地处理标签显示
-                        let tagDisplay = '未知词性';
-                        if (tags && tags.length > 0) {
-                            // 将标签数组转换为可读字符串
-                            tagDisplay = tags.join(', ');
-                        }
-
-                        resultHTML += `<div class="tag-item"><span class="word-tag">${termText}</span>: ${tagDisplay}</div>`;
+                        const tagDisplay = (tags && tags.length > 0) ? tags.join(', ') : '未知词性';
+                        const tagDiv = document.createElement('div');
+                        tagDiv.className = 'tag-item';
+                        const wordSpan = document.createElement('span');
+                        wordSpan.className = 'word-tag';
+                        wordSpan.textContent = termText;
+                        tagDiv.appendChild(wordSpan);
+                        tagDiv.appendChild(document.createTextNode(`: ${tagDisplay}`));
+                        tagContent.appendChild(tagDiv);
                     });
                 } else {
-                    resultHTML += '<div>无法获取详细词性分析</div>';
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.textContent = '无法获取详细词性分析';
+                    tagContent.appendChild(emptyDiv);
                 }
-
-                resultHTML += `</div></div>`;
-
-                resultDiv.innerHTML = resultHTML;
+                tagItem.appendChild(tagTitle);
+                tagItem.appendChild(tagContent);
+                resultDiv.appendChild(tagItem);
 
             } catch (error) {
                 console.error('NLP分析错误:', error);
-                resultDiv.innerHTML = `<div class="error">分析过程中出现错误：${error.message}</div>`;
+                resultDiv.textContent = '';
+                const errDiv = document.createElement('div');
+                errDiv.className = 'error';
+                errDiv.textContent = `分析过程中出现错误：${error.message}`;
+                resultDiv.appendChild(errDiv);
             }
         }
 

@@ -7,18 +7,9 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>从三角形到圆的旅程</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <style>
-        :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-        }
+        
 
         * {
             box-sizing: border-box;
@@ -81,10 +72,10 @@
 
         input {
             padding: 10px 15px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
             border-radius: 8px;
             font-size: 16px;
-            background: #161b22;
+            background: var(--surface-soft);
             color: var(--dark-color);
             width: 100px;
             text-align: center;
@@ -118,9 +109,9 @@
             max-width: 600px;
             height: 600px;
             /* Fixed height for the drawing area */
-            background: #161b22;
+            background: var(--surface-soft);
             border-radius: 12px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
             display: flex;
             justify-content: center;
             align-items: center;

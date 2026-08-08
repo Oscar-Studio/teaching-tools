@@ -9,19 +9,10 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据统计分析工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-        }
+        
 
         * {
             box-sizing: border-box;
@@ -85,11 +76,11 @@
         input {
             flex: 1;
             padding: 12px 15px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
             border-radius: 8px;
             font-size: 16px;
             transition: all 0.3s;
-            background: #161b22;
+            background: var(--surface-soft);
             color: var(--dark-color);
         }
 
@@ -129,13 +120,13 @@
         }
 
         .result-card {
-            background: #161b22;
+            background: var(--surface-soft);
             border-radius: 8px;
             padding: 1.5rem;
             text-align: center;
             box-shadow: none;
             transition: transform 0.3s;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
         }
 
         .result-card:hover {
@@ -163,9 +154,9 @@
         .data-list {
             margin-top: 1.5rem;
             padding: 1rem;
-            background: #161b22;
+            background: var(--surface-soft);
             border-radius: 8px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
         }
 
         .data-list h3 {

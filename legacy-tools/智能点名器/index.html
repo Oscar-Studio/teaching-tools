@@ -7,18 +7,9 @@
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智能点名器</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <style>
         :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-            --success-color: #2ea043;
             --danger-color: #da3633;
         }
 
@@ -113,8 +104,8 @@
 
         input[type="number"],
         input[type="file"] {
-            background-color: #161b22;
-            border: 1px solid #30363d;
+            background-color: var(--surface-soft);
+            border: 1px solid var(--hairline);
             color: var(--dark-color);
             padding: 10px;
             border-radius: 6px;
@@ -135,16 +126,16 @@
             gap: 10px;
             flex-wrap: wrap;
             padding-bottom: 20px;
-            border-bottom: 1px solid #30363d;
+            border-bottom: 1px solid var(--hairline);
         }
 
         .student-list-container {
             flex: 1;
             overflow-y: auto;
-            border: 1px solid #30363d;
+            border: 1px solid var(--hairline);
             border-radius: 8px;
             padding: 10px;
-            background-color: #161b22;
+            background-color: var(--surface-soft);
             max-height: 400px;
         }
 
@@ -154,7 +145,7 @@
             align-items: center;
             margin-bottom: 10px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #30363d;
+            border-bottom: 1px solid var(--hairline);
         }
 
         .student-grid {
@@ -168,15 +159,15 @@
             align-items: center;
             gap: 8px;
             padding: 8px;
-            background-color: #0d1117;
-            border: 1px solid #30363d;
+            background-color: var(--surface-card);
+            border: 1px solid var(--hairline);
             border-radius: 6px;
             transition: background-color 0.2s;
             cursor: pointer;
         }
 
         .student-item:hover {
-            background-color: #21262d;
+            background-color: var(--surface-cream-strong);
             border-color: var(--secondary-color);
         }
 
@@ -411,21 +402,25 @@
         }
 
         function renderStudentList() {
-            studentGrid.innerHTML = '';
+            studentGrid.textContent = '';
             students.forEach((s, index) => {
                 const item = document.createElement('div');
                 item.className = 'student-item';
-                item.innerHTML = `
-                    <input type="checkbox" ${s.selected ? 'checked' : ''} data-index="${index}">
-                    <span>${s.name}</span>
-                `;
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                if (s.selected) checkbox.checked = true;
+                checkbox.dataset.index = String(index);
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = s.name;
+                item.appendChild(checkbox);
+                item.appendChild(nameSpan);
 
                 // Click handler for the whole item
                 item.addEventListener('click', (e) => {
                     if (e.target.tagName !== 'INPUT') {
-                        const checkbox = item.querySelector('input');
-                        checkbox.checked = !checkbox.checked;
-                        updateStudentSelection(index, checkbox.checked);
+                        const cb = item.querySelector('input');
+                        cb.checked = !cb.checked;
+                        updateStudentSelection(index, cb.checked);
                     }
                 });
 

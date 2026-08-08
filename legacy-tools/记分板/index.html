@@ -5,20 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>记分板 - 教学工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <script defer src="https://cloud.umami.is/script.js"
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <style>
         :root {
-            --primary-color: #2A5CAA;
-            --secondary-color: #00E5FF;
-            --accent-color: #6A00FF;
-            --light-color: #010409;
-            --dark-color: #ffffff;
-            --card-bg: #0d1117;
-            --card-border: 1px solid #30363d;
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            --text-secondary: #8b949e;
-            --success-color: #28a745;
             --danger-color: #e74c3c;
         }
 
@@ -293,20 +284,44 @@
             const teamsContainer = document.getElementById('teams');
             const newTeam = document.createElement('div');
             newTeam.className = 'team-card';
-            newTeam.innerHTML = `
-                <div class="team-name">
-                    <input type="text" value="队伍 ${teamCount + 1}" onchange="updateTeamName(${teamCount}, this.value)">
-                </div>
-                <div class="score" id="score${teamCount}">0</div>
-                <div class="score-controls">
-                    <button class="score-btn minus" onclick="changeScore(${teamCount}, -1)">−</button>
-                    <button class="score-btn plus" onclick="changeScore(${teamCount}, 1)">+</button>
-                </div>
-                <div class="custom-score">
-                    <input type="number" id="custom${teamCount}" placeholder="自定义">
-                    <button onclick="setCustomScore(${teamCount})">设置</button>
-                </div>
-            `;
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'team-name';
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.value = `队伍 ${teamCount + 1}`;
+            nameInput.addEventListener('change', (e) => updateTeamName(teamCount, e.target.value));
+            nameDiv.appendChild(nameInput);
+            const scoreDiv = document.createElement('div');
+            scoreDiv.className = 'score';
+            scoreDiv.id = `score${teamCount}`;
+            scoreDiv.textContent = '0';
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'score-controls';
+            const minusBtn = document.createElement('button');
+            minusBtn.className = 'score-btn minus';
+            minusBtn.textContent = '−';
+            minusBtn.addEventListener('click', () => changeScore(teamCount, -1));
+            const plusBtn = document.createElement('button');
+            plusBtn.className = 'score-btn plus';
+            plusBtn.textContent = '+';
+            plusBtn.addEventListener('click', () => changeScore(teamCount, 1));
+            controlsDiv.appendChild(minusBtn);
+            controlsDiv.appendChild(plusBtn);
+            const customDiv = document.createElement('div');
+            customDiv.className = 'custom-score';
+            const customInput = document.createElement('input');
+            customInput.type = 'number';
+            customInput.id = `custom${teamCount}`;
+            customInput.placeholder = '自定义';
+            const setBtn = document.createElement('button');
+            setBtn.textContent = '设置';
+            setBtn.addEventListener('click', () => setCustomScore(teamCount));
+            customDiv.appendChild(customInput);
+            customDiv.appendChild(setBtn);
+            newTeam.appendChild(nameDiv);
+            newTeam.appendChild(scoreDiv);
+            newTeam.appendChild(controlsDiv);
+            newTeam.appendChild(customDiv);
 
             teamsContainer.appendChild(newTeam);
             scores.push(0);

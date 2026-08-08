@@ -5,15 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>几何画板</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
     <style>
         :root {
-            --bg: #0d1117;
-            --bg-2: #161b22;
-            --bg-3: #1f262e;
-            --border: #30363d;
-            --text: #e6edf3;
+            --bg: var(--surface-card);
+            --bg-2: var(--surface-soft);
+            --bg-3: var(--surface-soft);
             --text-2: #8b949e;
-            --primary: #2a5caa;
             --primary-2: #1f4787;
             --accent: #00e5ff;
             --danger: #f85149;
@@ -1275,8 +1273,19 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
           const btn = document.createElement('button');
           btn.className = 'tool';
           btn.dataset.tool = item.id;
-          btn.innerHTML = `<span class="icon">${item.icon}</span><span>${item.name}</span>` +
-            (item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : '');
+          const toolIconSpan = document.createElement('span');
+          toolIconSpan.className = 'icon';
+          toolIconSpan.textContent = item.icon;
+          const toolNameSpan = document.createElement('span');
+          toolNameSpan.textContent = item.name;
+          btn.appendChild(toolIconSpan);
+          btn.appendChild(toolNameSpan);
+          if (item.shortcut) {
+            const sc = document.createElement('span');
+            sc.className = 'shortcut';
+            sc.textContent = item.shortcut;
+            btn.appendChild(sc);
+          }
           btn.addEventListener('click', () => activateTool(item.id));
           g.appendChild(btn);
         }
@@ -1291,11 +1300,17 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     wrap.dataset.tool = item.id;
     const main = document.createElement('button');
     main.className = 'tool';
-    main.innerHTML = `<span class="icon">${item.icon}</span><span>${item.name}</span>`;
+    const mIconSpan = document.createElement('span');
+    mIconSpan.className = 'icon';
+    mIconSpan.textContent = item.icon;
+    const mNameSpan = document.createElement('span');
+    mNameSpan.textContent = item.name;
+    main.appendChild(mIconSpan);
+    main.appendChild(mNameSpan);
     main.addEventListener('click', () => { closeAllDropdowns(); activateTool(item.id); });
     const arrow = document.createElement('button');
     arrow.className = 'dropdown-arrow';
-    arrow.innerHTML = '▼';
+    arrow.textContent = '▼';
     arrow.addEventListener('click', e => {
       e.stopPropagation();
       const popup = wrap.querySelector('.dropdown-popup');
@@ -1310,25 +1325,57 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     });
     const popup = document.createElement('div');
     popup.className = 'dropdown-popup dropdown-popup-fixed';
-    popup.innerHTML = `
-      <div class="item" data-action="polygon">任意多边形</div>
-      <div class="item has-submenu" data-action="toggle-tri">
-        <span>三角形</span>
-        <div class="submenu">
-          <div class="item" data-action="tri-isoceles">等腰三角形</div>
-          <div class="item" data-action="tri-equilateral">等边三角形</div>
-        </div>
-      </div>
-      <div class="item has-submenu" data-action="toggle-quad">
-        <span>四边形</span>
-        <div class="submenu">
-          <div class="item" data-action="quad-parallelogram">平行四边形</div>
-          <div class="item" data-action="quad-rectangle">矩形</div>
-          <div class="item" data-action="quad-rhombus">菱形</div>
-          <div class="item" data-action="quad-square">正方形</div>
-        </div>
-      </div>
-    `;
+    popup.textContent = '';
+    const polygonItem = document.createElement('div');
+    polygonItem.className = 'item';
+    polygonItem.dataset.action = 'polygon';
+    polygonItem.textContent = '任意多边形';
+    popup.appendChild(polygonItem);
+    // 三角形
+    const triItem = document.createElement('div');
+    triItem.className = 'item has-submenu';
+    triItem.dataset.action = 'toggle-tri';
+    const triLabel = document.createElement('span');
+    triLabel.textContent = '三角形';
+    triItem.appendChild(triLabel);
+    const triSubmenu = document.createElement('div');
+    triSubmenu.className = 'submenu';
+    const triIsoceles = document.createElement('div');
+    triIsoceles.className = 'item';
+    triIsoceles.dataset.action = 'tri-isoceles';
+    triIsoceles.textContent = '等腰三角形';
+    triSubmenu.appendChild(triIsoceles);
+    const triEquil = document.createElement('div');
+    triEquil.className = 'item';
+    triEquil.dataset.action = 'tri-equilateral';
+    triEquil.textContent = '等边三角形';
+    triSubmenu.appendChild(triEquil);
+    triItem.appendChild(triSubmenu);
+    popup.appendChild(triItem);
+    // 四边形
+    const quadItem = document.createElement('div');
+    quadItem.className = 'item has-submenu';
+    quadItem.dataset.action = 'toggle-quad';
+    const quadLabel = document.createElement('span');
+    quadLabel.textContent = '四边形';
+    quadItem.appendChild(quadLabel);
+    const quadSubmenu = document.createElement('div');
+    quadSubmenu.className = 'submenu';
+    const quadItems = [
+      ['quad-parallelogram', '平行四边形'],
+      ['quad-rectangle', '矩形'],
+      ['quad-rhombus', '菱形'],
+      ['quad-square', '正方形'],
+    ];
+    for (const [action, label] of quadItems) {
+      const q = document.createElement('div');
+      q.className = 'item';
+      q.dataset.action = action;
+      q.textContent = label;
+      quadSubmenu.appendChild(q);
+    }
+    quadItem.appendChild(quadSubmenu);
+    popup.appendChild(quadItem);
     popup.querySelectorAll('.item').forEach(it => {
       it.addEventListener('click', e => {
         e.stopPropagation();
@@ -1701,7 +1748,8 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
     }
     panel.hidden = false;
     title.textContent = (TYPE_NAMES[el.t] || el.t) + ' #' + el.id;
-    body.innerHTML = buildParamContent(el);
+    body.textContent = '';
+    body.appendChild(buildParamContent(el));
   }
 
   function buildParamContent(el) {
@@ -3480,7 +3528,25 @@ function angleParams(el) {
         const badges = [];
         if (m.recommended) badges.push('<span class="badge recommended">推荐</span>');
         else if (m.premium) badges.push('<span class="badge pro">PRO</span>');
-        row.innerHTML = `<span class="name">${m.name}</span><span class="id">${m.id}</span>${badges.join('')}`;
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'name';
+        nameSpan.textContent = m.name;
+        const idSpan = document.createElement('span');
+        idSpan.className = 'id';
+        idSpan.textContent = m.id;
+        row.appendChild(nameSpan);
+        row.appendChild(idSpan);
+        if (m.recommended) {
+            const badge = document.createElement('span');
+            badge.className = 'badge recommended';
+            badge.textContent = '推荐';
+            row.appendChild(badge);
+        } else if (m.premium) {
+            const badge = document.createElement('span');
+            badge.className = 'badge pro';
+            badge.textContent = 'PRO';
+            row.appendChild(badge);
+        }
         row.onclick = () => {
           aiCurrentModel = m.id;
           localStorage.setItem('geoAIModel', m.id);
@@ -3540,7 +3606,14 @@ function angleParams(el) {
   }
   function aiShowThinking() {
     aiRecvMsgEl = aiAppendMsg('thinking', '');
-    aiRecvMsgEl.querySelector('.text').innerHTML = '<span class="dot">●</span><span class="dot">●</span><span class="dot">●</span>';
+    const aiTextEl = aiRecvMsgEl.querySelector('.text');
+    aiTextEl.textContent = '';
+    for (let i = 0; i < 3; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      dot.textContent = '●';
+      aiTextEl.appendChild(dot);
+    }
     aiThinkingEl = aiRecvMsgEl;
     return aiRecvMsgEl;
   }
