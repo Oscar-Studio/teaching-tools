@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>凸透镜成像原理演示</title>
     <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
     <style>
         
 
@@ -46,7 +48,7 @@
 
         .demo-area {
             position: relative;
-            background: #000;
+            background: var(--graph-card);
             border-radius: 8px;
             box-shadow: var(--card-shadow);
             margin-bottom: 30px;
@@ -56,7 +58,7 @@
 
         canvas {
             display: block;
-            background-color: #050505;
+            background-color: var(--graph-card);
         }
 
         .lens-svg {
@@ -672,9 +674,15 @@
         // 初始化绘制
         updateMinObjectDistance();
         draw();
+    
+        // 主题切换响应
+        document.documentElement.addEventListener('themechange', function () {
+          ttTheme.refresh();
+          if (typeof redraw === 'function') redraw();
+        });
+
     </script>
     <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
-    <script src="../_shared/tool-header.js" defer></script>
 </body>
 
 </html>

@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>高级数据统计分析工具</title>
     <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
     <script src="../plotly-2.27.0.min.js"></script>
     <style>
         :root {
@@ -552,8 +554,8 @@
             }
 
             const layoutDefaults = {
-                paper_bgcolor: '#0d1117',
-                plot_bgcolor: '#0d1117',
+                paper_bgcolor: ttTheme.colors.graphBg,
+                plot_bgcolor: ttTheme.colors.graphBg,
                 font: { color: '#8b949e' },
                 xaxis: { gridcolor: '#30363d', zerolinecolor: '#30363d' },
                 yaxis: { gridcolor: '#30363d', zerolinecolor: '#30363d' }
@@ -851,10 +853,16 @@
             ctx.textAlign = 'center';
             ctx.fillText('频数直方图 (Canvas Fallback)', width / 2, 25);
         }
+    
+        // 主题切换响应
+        document.documentElement.addEventListener('themechange', function () {
+          ttTheme.refresh();
+          if (typeof redraw === 'function') redraw();
+        });
+
     </script>
     <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
 
-    <script src="../_shared/tool-header.js" defer></script>
 </body>
 
 </html>

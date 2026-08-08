@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>保护色实验 - Oscar Studio</title>
     <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -436,11 +438,11 @@ function drawChart() {
     const chartW=W-padL-padR, chartH=H-padT-padB;
 
     // Grid
-    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    ctx.strokeStyle=ttTheme.colors.graphGrid; ctx.lineWidth=1;
     for (let i=0; i<=4; i++) {
         const y=padT+(chartH/4)*i;
         ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+chartW,y); ctx.stroke();
-        ctx.fillStyle='#8b949e'; ctx.font='11px Segoe UI'; ctx.textAlign='right';
+        ctx.fillStyle=ttTheme.colors.graphAxisText; ctx.font='11px Segoe UI'; ctx.textAlign='right';
         ctx.fillText(Math.round(maxVal*(1-i/4)), padL-5, y+4);
     }
 
@@ -491,7 +493,13 @@ document.getElementById('btnStart').addEventListener('click', () => {
     if (!selectedBgColor)    { alert('请先选择背景颜色'); return; }
     initGame();
 });
-</script>
-    <script src="../_shared/tool-header.js" defer></script>
+
+        // 主题切换响应
+        document.documentElement.addEventListener('themechange', function () {
+          ttTheme.refresh();
+          if (typeof redraw === 'function') redraw();
+        });
+
+    </script>
 </body>
 </html>

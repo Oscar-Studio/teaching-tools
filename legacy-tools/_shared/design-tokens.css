@@ -1,187 +1,300 @@
 /* =====================================================
- * 教学工具 — 共享设计令牌
- * 参照 Design/Claude/DESIGN.md（暖米色画布 + 深海军色画板 + 珊瑚色 CTA）
- * 每个工具的 index.html 在 <head> 里加：
+ * 教学工具 — 共享设计令牌（双主题）
+ * 参照 Design/Claude/DESIGN.md：
+ *   - 浅色（默认）：暖米色画布 + 深海军色"画板" + 珊瑚色 CTA
+ *   - 深色：深海军色画布 + 米色"画板" + 珊瑚色 CTA（节奏反转）
+ *
+ * 每个工具的 <head> 加：
  *   <link rel="stylesheet" href="../_shared/design-tokens.css">
- * 然后把工具自己的 :root 颜色声明删掉（共享文件已用相同变量名提供 Claude 取值）
+ *   <script src="../_shared/tool-header.js" defer></script>
+ *
+ * 主题切换由 tool-header.js 接管：
+ *   - 复用入口页的 localStorage 键 'oscar-theme'
+ *   - 切换时设置 <html data-theme="..."> 并派发 themechange CustomEvent
+ *   - canvas/plotly 工具监听 themechange → 读 CSS 变量 → 重绘
  * ===================================================== */
 
+/* ---------- Claude 原始色板（不再随主题变化） ---------- */
 :root {
-  /* ----- Claude 色板（新增令牌） ----- */
   --claude-primary: #cc785c;
   --claude-primary-active: #a9583e;
   --claude-primary-disabled: #e6dfd8;
-  --claude-ink: #141413;
-  --claude-body: #3d3d3a;
-  --claude-body-strong: #252523;
-  --claude-muted: #6c6a64;
-  --claude-muted-soft: #8e8b82;
-  --claude-hairline: #e6dfd8;
-  --claude-hairline-soft: #ebe6df;
-  --claude-canvas: #faf9f5;
-  --claude-surface-soft: #f5f0e8;
-  --claude-surface-card: #efe9de;
-  --claude-surface-cream-strong: #e8e0d2;
-  --claude-surface-dark: #181715;
-  --claude-surface-dark-elevated: #252320;
+  --claude-ink-light: #141413;       /* 浅色主题下的 ink */
+  --claude-ink-dark: #faf9f5;        /* 深色主题下的 ink */
+  --claude-body-light: #3d3d3a;
+  --claude-body-dark: #c8c5be;
+  --claude-muted-light: #6c6a64;
+  --claude-muted-dark: #a09d96;
+  --claude-hairline-light: #e6dfd8;
+  --claude-hairline-dark: #2f2c28;
+  --claude-canvas-light: #faf9f5;    /* 浅色主题页 bg */
+  --claude-canvas-dark: #0f1419;     /* 深色主题页 bg */
+  --claude-surface-soft-light: #f5f0e8;
+  --claude-surface-soft-dark: #1f1e1b;
+  --claude-surface-card-light: #efe9de;
+  --claude-surface-card-dark: #252320;
+  --claude-surface-cream-strong-light: #e8e0d2;
+  --claude-surface-cream-strong-dark: #2a2724;
+  --claude-surface-graph-light: #181715;  /* 浅色主题的画板（深色） */
+  --claude-surface-graph-dark: #faf9f5;   /* 深色主题的画板（米色，反转） */
   --claude-on-primary: #ffffff;
-  --claude-on-dark: #faf9f5;
-  --claude-on-dark-soft: #a09d96;
+  --claude-on-graph-light: #faf9f5;       /* 浅色主题画板上的文字（米色） */
+  --claude-on-graph-dark: #141413;        /* 深色主题画板上的文字（深色） */
+  --claude-on-graph-soft-light: #a09d96;
+  --claude-on-graph-soft-dark: #6c6a64;
   --claude-accent-teal: #5db8a6;
   --claude-accent-amber: #e8a55a;
   --claude-success: #5db872;
 
-  /* ----- 字体 ----- */
+  /* 字体 */
   --claude-font-serif: "Tiempos Headline", "Copernicus", "EB Garamond", "Source Serif Pro", Georgia, serif;
   --claude-font-sans: "StyreneB", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --claude-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
 
-  /* ----- 圆角 / 缓动 ----- */
+  /* 圆角 / 缓动 */
   --claude-r-md: 8px;
   --claude-r-lg: 12px;
   --claude-r-xl: 16px;
   --claude-r-pill: 9999px;
   --elastic-bezier: cubic-bezier(0.34, 1.56, 0.64, 1);
   --smooth-bezier: cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  /* ----- 兼容旧工具的变量名（直接映射到 Claude 令牌）-----
-   * 这样老 CSS 里 var(--primary-color)、var(--card-bg) 等不用动也能拿到新配色。
-   * 个别工具如果用 --secondary-color 当主题色，会拿到 coral（视觉上仍是强调色）；
-   * 如果用作辅助色，会拿到 ink（成为主标题色）。大多数工具是前者。 */
-  --primary-color: var(--claude-primary);
+/* ---------- 浅色主题（默认） ---------- */
+:root,
+:root[data-theme="light"] {
+  /* 主色板 */
   --primary: var(--claude-primary);
-  --secondary-color: var(--claude-ink);          /* 旧用法：标题色 */
+  --primary-active: var(--claude-primary-active);
+  --primary-disabled: var(--claude-primary-disabled);
+  --ink: var(--claude-ink-light);
+  --body: var(--claude-body-light);
+  --muted: var(--claude-muted-light);
+  --muted-soft: #8e8b82;
+  --hairline: var(--claude-hairline-light);
+  --hairline-soft: #ebe6df;
+
+  /* 表面 */
+  --canvas: var(--claude-canvas-light);
+  --surface-soft: var(--claude-surface-soft-light);
+  --surface-card: var(--claude-surface-card-light);
+  --surface-cream-strong: var(--claude-surface-cream-strong-light);
+
+  /* "画板"表面（数学/图表容器）—— 浅色主题下是深色块 */
+  --graph-card: var(--claude-surface-graph-light);
+  --graph-card-elevated: #252320;
+  --on-graph: var(--claude-on-graph-light);
+  --on-graph-soft: var(--claude-on-graph-soft-light);
+  --graph-card-border: rgba(204, 120, 92, 0.30);
+  --graph-card-shadow: 0 1px 2px rgba(20, 20, 19, 0.04), 0 8px 24px rgba(20, 20, 19, 0.04);
+
+  /* 兼容别名（旧工具用） */
+  --primary-color: var(--claude-primary);
+  --secondary-color: var(--claude-ink-light);
   --accent-color: var(--claude-primary);
   --accent-teal: var(--claude-accent-teal);
   --accent-amber: var(--claude-accent-amber);
-  --light-color: var(--claude-canvas);           /* 页面背景 */
-  --dark-color: var(--claude-ink);               /* 主文字 */
-  --bg-color: var(--claude-canvas);
-  --card-bg: var(--claude-surface-card);         /* 卡片背景 */
-  --card-border: 1px solid var(--claude-hairline);
+  --light-color: var(--canvas);
+  --dark-color: var(--ink);
+  --bg-color: var(--canvas);
+  --card-bg: var(--surface-card);
+  --card-border: 1px solid var(--hairline);
   --card-shadow: 0 1px 2px rgba(20, 20, 19, 0.04), 0 8px 24px rgba(20, 20, 19, 0.04);
-  --text-color: var(--claude-ink);
-  --text-secondary: var(--claude-muted);
-  --text-muted: var(--claude-muted);
-  --surface-card: var(--claude-surface-card);
-  --surface-soft: var(--claude-surface-soft);
-  --surface-cream-strong: var(--claude-surface-cream-strong);
-  --surface-dark: var(--claude-surface-dark);
-  --surface-dark-elevated: var(--claude-surface-dark-elevated);
-  --canvas: var(--claude-canvas);
-  --ink: var(--claude-ink);
-  --body: var(--claude-body);
-  --muted: var(--claude-muted);
-  --muted-soft: var(--claude-muted-soft);
-  --hairline: var(--claude-hairline);
-  --on-primary: var(--claude-on-primary);
-  --on-dark: var(--claude-on-dark);
-  --on-dark-soft: var(--claude-on-dark-soft);
-  --success: var(--claude-success);
+  --text-color: var(--ink);
+  --text-secondary: var(--muted);
+  --text-muted: var(--muted);
+  --success-color: var(--claude-success);
+
+  /* 字体的简短别名 */
+  --font-serif: var(--claude-font-serif);
+  --font-sans: var(--claude-font-sans);
+  --font-mono: var(--claude-font-mono);
+
+  /* 圆角 */
   --r-md: var(--claude-r-md);
   --r-lg: var(--claude-r-lg);
   --r-xl: var(--claude-r-xl);
   --r-pill: var(--claude-r-pill);
+
+  color-scheme: light;
+}
+
+/* ---------- 深色主题 ---------- */
+:root[data-theme="dark"] {
+  --primary: var(--claude-primary);
+  --primary-active: var(--claude-primary-active);
+  --ink: var(--claude-ink-dark);
+  --body: var(--claude-body-dark);
+  --muted: var(--claude-muted-dark);
+  --muted-soft: #8e8b82;
+  --hairline: var(--claude-hairline-dark);
+  --hairline-soft: #3a3633;
+
+  --canvas: var(--claude-canvas-dark);
+  --surface-soft: var(--claude-surface-soft-dark);
+  --surface-card: var(--claude-surface-card-dark);
+  --surface-cream-strong: var(--claude-surface-cream-strong-dark);
+
+  /* 深色主题下"画板"反转成米色 —— 维持 Claude 节奏 */
+  --graph-card: var(--claude-surface-graph-dark);
+  --graph-card-elevated: #ebe6df;
+  --on-graph: var(--claude-on-graph-dark);
+  --on-graph-soft: var(--claude-on-graph-soft-dark);
+  --graph-card-border: rgba(204, 120, 92, 0.30);
+  --graph-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.20), 0 8px 24px rgba(0, 0, 0, 0.30);
+
+  --primary-color: var(--claude-primary);
+  --secondary-color: var(--claude-ink-dark);
+  --accent-color: var(--claude-primary);
+  --accent-teal: var(--claude-accent-teal);
+  --light-color: var(--canvas);
+  --dark-color: var(--ink);
+  --bg-color: var(--canvas);
+  --card-bg: var(--surface-card);
+  --card-border: 1px solid var(--hairline);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.20), 0 8px 24px rgba(0, 0, 0, 0.30);
+  --text-color: var(--ink);
+  --text-secondary: var(--muted);
+  --text-muted: var(--muted);
+  --success-color: var(--claude-success);
+
   --font-serif: var(--claude-font-serif);
   --font-sans: var(--claude-font-sans);
   --font-mono: var(--claude-font-mono);
-  --success-color: var(--claude-success);
+
+  --r-md: var(--claude-r-md);
+  --r-lg: var(--claude-r-lg);
+  --r-xl: var(--claude-r-xl);
+  --r-pill: var(--claude-r-pill);
+
+  color-scheme: dark;
 }
 
-/* ----- 基础元素（仅在工具未显式覆盖时生效） ----- */
+/* ---------- 系统偏好（仅在未显式设置 data-theme 时生效） ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --primary: var(--claude-primary);
+    --primary-active: var(--claude-primary-active);
+    --ink: var(--claude-ink-dark);
+    --body: var(--claude-body-dark);
+    --muted: var(--claude-muted-dark);
+    --muted-soft: #8e8b82;
+    --hairline: var(--claude-hairline-dark);
+    --hairline-soft: #3a3633;
+
+    --canvas: var(--claude-canvas-dark);
+    --surface-soft: var(--claude-surface-soft-dark);
+    --surface-card: var(--claude-surface-card-dark);
+    --surface-cream-strong: var(--claude-surface-cream-strong-dark);
+
+    --graph-card: var(--claude-surface-graph-dark);
+    --graph-card-elevated: #ebe6df;
+    --on-graph: var(--claude-on-graph-dark);
+    --on-graph-soft: var(--claude-on-graph-soft-dark);
+
+    --text-color: var(--ink);
+    --text-secondary: var(--muted);
+    --text-muted: var(--muted);
+
+    color-scheme: dark;
+  }
+}
+
+/* ---------- 基础元素（仅在工具未显式覆盖时生效） ---------- */
 html, body {
-  background-color: var(--claude-canvas);
-  color: var(--claude-body);
-  font-family: var(--claude-font-sans);
+  background-color: var(--canvas);
+  color: var(--body);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4 {
-  font-family: var(--claude-font-serif);
+  font-family: var(--font-serif);
   font-weight: 400;
-  color: var(--claude-ink);
+  color: var(--ink);
   letter-spacing: -0.3px;
 }
 
-/* ----- 实用类（工具可选用） ----- */
-
-/* 顶部小标识：TEACHING TOOL · 学科 */
+/* ---------- 实用类（工具可选用） ---------- */
 .eyebrow {
-  font-family: var(--claude-font-sans);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--claude-muted);
+  color: var(--muted);
   margin-bottom: 16px;
 }
 
-/* 米色卡片（控件容器） */
 .cream-card {
-  background-color: var(--claude-surface-card);
-  border: 1px solid var(--claude-hairline);
-  border-radius: var(--claude-r-lg);
+  background-color: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
   padding: 20px;
+  color: var(--ink);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* 更浅的米色卡片（信息块） */
 .cream-card-soft {
-  background-color: var(--claude-surface-soft);
-  border-radius: var(--claude-r-lg);
+  background-color: var(--surface-soft);
+  border-radius: var(--r-lg);
   padding: 20px;
+  color: var(--ink);
+  transition: background-color 0.2s ease;
 }
 
-/* 深色"画板"卡片（用于承载 Canvas / Plotly 图） */
+/* 深色"画板"卡片（数学/图表容器）
+ * 浅色主题：画板是深色块，嵌在米色页里
+ * 深色主题：画板是米色块，嵌在深色页里（Claude 节奏反转） */
 .graph-card {
-  background-color: var(--claude-surface-dark);
-  color: var(--claude-on-dark);
-  border-radius: var(--claude-r-xl);
+  background-color: var(--graph-card);
+  color: var(--on-graph);
+  border: 1px solid var(--graph-card-border);
+  border-radius: var(--r-xl);
   padding: 24px;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* 珊瑚色主按钮 */
 .reset-btn,
 .primary-btn {
-  font-family: var(--claude-font-sans);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 500;
   color: var(--claude-on-primary);
-  background-color: var(--claude-primary);
+  background-color: var(--primary);
   border: 0;
-  border-radius: var(--claude-r-md);
+  border-radius: var(--r-md);
   padding: 12px 20px;
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
 
 .reset-btn:hover,
-.primary-btn:hover { background-color: var(--claude-primary-active); }
+.primary-btn:hover { background-color: var(--primary-active); }
 
-/* 浅色次按钮 */
 .secondary-btn {
-  font-family: var(--claude-font-sans);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 500;
-  color: var(--claude-ink);
-  background-color: var(--claude-canvas);
-  border: 1px solid var(--claude-hairline);
-  border-radius: var(--claude-r-md);
+  color: var(--ink);
+  background-color: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
   padding: 12px 20px;
   cursor: pointer;
 }
 
-/* 输入框 / 文本域（统一观感） */
 input[type="text"],
 input[type="number"],
 textarea,
 select {
-  font-family: var(--claude-font-sans);
+  font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--claude-ink);
-  background-color: var(--claude-canvas);
-  border: 1px solid var(--claude-hairline);
-  border-radius: var(--claude-r-md);
+  color: var(--ink);
+  background-color: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
   padding: 10px 12px;
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -191,65 +304,61 @@ input[type="text"]:focus,
 input[type="number"]:focus,
 textarea:focus,
 select:focus {
-  border-color: var(--claude-primary);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(204, 120, 92, 0.18);
 }
 
-/* 模式切换按钮（pilled 形） */
 .mode-toggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background-color: var(--claude-surface-soft);
-  border: 1px solid var(--claude-hairline);
-  border-radius: var(--claude-r-pill);
+  background-color: var(--surface-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
   padding: 4px;
 }
 
 .mode-btn {
-  font-family: var(--claude-font-sans);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 500;
-  color: var(--claude-muted);
+  color: var(--muted);
   background: transparent;
   border: 0;
   padding: 10px 18px;
-  border-radius: var(--claude-r-pill);
+  border-radius: var(--r-pill);
   cursor: pointer;
   transition: color 0.2s ease, background-color 0.2s ease;
 }
 
-.mode-btn:hover { color: var(--claude-ink); }
+.mode-btn:hover { color: var(--ink); }
 .mode-btn.active {
-  background-color: var(--claude-surface-dark);
-  color: var(--claude-on-dark);
+  background-color: var(--graph-card);
+  color: var(--on-graph);
 }
 
-/* 链接默认色 */
 a {
-  color: var(--claude-primary);
+  color: var(--primary);
   text-decoration: none;
 }
-a:hover { color: var(--claude-primary-active); }
+a:hover { color: var(--primary-active); }
 
-/* 表格 */
 table { border-collapse: collapse; }
 th, td {
   padding: 10px 12px;
-  border-bottom: 1px solid var(--claude-hairline);
+  border-bottom: 1px solid var(--hairline);
   text-align: left;
-  font-family: var(--claude-font-sans);
+  font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--claude-body);
+  color: var(--body);
 }
-th { color: var(--claude-muted); font-weight: 500; font-size: 13px; }
+th { color: var(--muted); font-weight: 500; font-size: 13px; }
 
-/* 滚动条（webkit） */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb {
-  background: var(--claude-hairline);
-  border-radius: var(--claude-r-pill);
-  border: 2px solid var(--claude-canvas);
+  background: var(--hairline);
+  border-radius: var(--r-pill);
+  border: 2px solid var(--canvas);
 }
-::-webkit-scrollbar-thumb:hover { background: var(--claude-muted-soft); }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-soft); }
 ::-webkit-scrollbar-track { background: transparent; }

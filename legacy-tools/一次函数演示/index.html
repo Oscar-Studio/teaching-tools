@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>函数图像</title>
     <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
 
     <!-- 设计令牌：参照 Claude DESIGN.md（暖米色画布 + 深海军色画板 + 珊瑚色强调） -->
     <style>
@@ -26,9 +28,9 @@
             --surface-soft: #f5f0e8;
             --surface-card: #efe9de;
             --surface-cream-strong: #e8e0d2;
-            --surface-dark: #181715;
-            --surface-dark-elevated: #252320;
-            --surface-dark-soft: #1f1e1b;
+            --surface-dark: var(--graph-card);
+            --surface-dark-elevated: var(--graph-card-elevated);
+            --surface-dark-soft: var(--graph-card);
             --on-primary: #ffffff;
             --on-dark: #faf9f5;
             --on-dark-soft: #a09d96;
@@ -695,7 +697,6 @@
         <p style="margin-top:6px"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026012488号-1</a></p>
     </footer>
 
-    <script src="../_shared/tool-header.js" defer></script>
     <script>
         // ============================================================
         // 函数图像演示 — 重设计版（保留全部原有数学逻辑）
@@ -791,12 +792,12 @@
             const centerX = width / 2;
             const centerY = height / 2;
 
-            // 深色画布背景
-            ctx.fillStyle = '#181715';
+            // 画板背景（主题感知 —— 浅色模式下深，深色模式下米）
+            ctx.fillStyle = ttTheme.colors.graphBg;
             ctx.fillRect(0, 0, width, height);
 
             // 网格
-            ctx.strokeStyle = '#252320';
+            ctx.strokeStyle = ttTheme.colors.graphGrid;
             ctx.lineWidth = 1;
             for (let x = centerX; x < width; x += STEP) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
@@ -811,14 +812,14 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
             }
 
-            // 主坐标轴（暖米色 hairline）
-            ctx.strokeStyle = '#a09d96';
+            // 主坐标轴
+            ctx.strokeStyle = ttTheme.colors.graphAxis;
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(0, centerY); ctx.lineTo(width, centerY); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(centerX, 0); ctx.lineTo(centerX, height); ctx.stroke();
 
-            // 刻度
-            ctx.fillStyle = '#a09d96';
+            // 刻度文字
+            ctx.fillStyle = ttTheme.colors.graphAxisText;
             ctx.font = '12px JetBrains Mono, ui-monospace, monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
@@ -838,8 +839,8 @@
             }
             ctx.fillText('0', centerX - 6, centerY + 6);
 
-            // 轴端箭头提示（暖米色文字）
-            ctx.fillStyle = '#faf9f5';
+            // 轴端 x / y 标识
+            ctx.fillStyle = ttTheme.colors.graphText;
             ctx.font = 'italic 14px "Tiempos Headline", Georgia, serif';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
@@ -898,7 +899,7 @@
                 ctx.fillStyle = '#cc785c';
                 ctx.arc(yiX, yiY, 5, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = '#faf9f5';
+                ctx.fillStyle = ttTheme.colors.graphText;
                 ctx.font = '12px JetBrains Mono, ui-monospace, monospace';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'bottom';
@@ -915,7 +916,7 @@
                     ctx.fillStyle = '#cc785c';
                     ctx.arc(xiX, xiY, 5, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.fillStyle = '#faf9f5';
+                    ctx.fillStyle = ttTheme.colors.graphText;
                     ctx.font = '12px JetBrains Mono, ui-monospace, monospace';
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'top';
@@ -1012,7 +1013,7 @@
                     ctx.fillStyle = '#5db8a6';
                     ctx.arc(canvasVx, canvasVy, 6, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.fillStyle = '#faf9f5';
+                    ctx.fillStyle = ttTheme.colors.graphText;
                     ctx.font = '12px JetBrains Mono, ui-monospace, monospace';
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'bottom';
@@ -1141,6 +1142,12 @@
 
         // 初始绘制
         drawFunction();
+
+        // 响应主题切换 → 重绘
+        document.documentElement.addEventListener('themechange', function () {
+            ttTheme.refresh();
+            drawFunction();
+        });
 
         // 响应式：保持画布像素密度
         window.addEventListener('resize', function () {

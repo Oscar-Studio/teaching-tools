@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>勾股树（毕达哥拉斯树）演示</title>
     <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
     <style>
         :root {
             --primary-hover: #4f46e5;
@@ -461,9 +463,15 @@
         // Initial setup
         speedVal.textContent = Math.round(speedInput.value / 10);
         initPixi();
+    
+        // 主题切换响应
+        document.documentElement.addEventListener('themechange', function () {
+          ttTheme.refresh();
+          if (typeof redraw === 'function') redraw();
+        });
+
     </script>
     <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
-    <script src="../_shared/tool-header.js" defer></script>
 </body>
 
 </html>

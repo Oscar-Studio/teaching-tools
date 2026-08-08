@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据分位数计算与箱线图</title>
     <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
     <style>
         
 
@@ -284,7 +286,7 @@
                 maxVal += range * 0.05;
 
                 // 绘制坐标轴
-                ctx.strokeStyle = '#8b949e';
+                ctx.strokeStyle = ttTheme.colors.graphAxisText;
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(padding, padding);
@@ -334,8 +336,8 @@
                     const yUpperWhisker = boxPlotCanvas.height - padding - upperWhisker;
 
                     // 绘制箱线
-                    ctx.strokeStyle = '#00E5FF';
-                    ctx.fillStyle = 'rgba(42, 92, 170, 0.3)';
+                    ctx.strokeStyle = ttTheme.colors.accentTeal;
+                    ctx.fillStyle = ttTheme.colors.isDark ? 'rgba(204, 120, 92, 0.3)' : 'rgba(42, 92, 170, 0.3)';
                     ctx.lineWidth = 2;
 
                     // 绘制箱体
@@ -343,7 +345,7 @@
                     ctx.strokeRect(x - boxWidth / 2, yQ3, boxWidth, yQ1 - yQ3);
 
                     // 绘制中位数线
-                    ctx.strokeStyle = '#ff7b72';
+                    ctx.strokeStyle = ttTheme.colors.danger;
                     ctx.beginPath();
                     ctx.moveTo(x - boxWidth / 2, yMedian);
                     ctx.lineTo(x + boxWidth / 2, yMedian);
@@ -446,9 +448,15 @@
             // 初始计算
             calculateBtn.click();
         });
+    
+        // 主题切换响应
+        document.documentElement.addEventListener('themechange', function () {
+          ttTheme.refresh();
+          if (typeof redraw === 'function') redraw();
+        });
+
     </script>
     <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>
-    <script src="../_shared/tool-header.js" defer></script>
 </body>
 
 </html>
