@@ -75,14 +75,14 @@
         '.tt-sh-left,.tt-sh-right{display:flex;align-items:center;gap:8px}' +
         '.tt-sh-back{color:var(--muted);text-decoration:none;display:inline-flex;' +
           'align-items:center;gap:4px;padding:6px 10px;border-radius:6px;' +
-          'transition:all .2s}' +
+          'transition:background .2s,border-color .2s,color .2s}' +
         '.tt-sh-back:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}' +
         // 主题按钮
         '.tt-sh-theme{width:32px;height:32px;border-radius:8px;border:1px solid var(--hairline);' +
-          'background:color-mix(in srgb,var(--ink) 4%,transparent);color:var(--ink);' +
+          'background:var(--surface-soft);color:var(--ink);' +
           'font-size:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;' +
-          'transition:all .2s}' +
-        '.tt-sh-theme:hover{background:color-mix(in srgb,var(--ink) 10%,transparent);border-color:var(--primary)}' +
+          'transition:background .2s,border-color .2s,color .2s}' +
+        '.tt-sh-theme:hover{background:var(--surface-card);border-color:var(--primary);color:var(--primary)}' +
         // 兼容：把 opilot-prefill-banner 往下挪（避开 44px 共享头）
         '.opilot-prefill-banner{top:140px!important}' +
         '@media(max-width:640px){.opilot-prefill-banner{top:120px!important}}';
