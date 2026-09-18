@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>位似图形</title>
+<link rel="stylesheet" href="../_shared/design-tokens.css">
+<script src="../_shared/tool-header.js"></script>
+<style>
+  :root {
+    --bg: var(--canvas);
+    --panel: var(--surface-card);
+    --panel-soft: var(--surface-soft);
+    --border: var(--hairline);
+    --text: var(--ink);
+    --text-2: var(--muted);
+    --accent-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ===== 整体布局 ===== */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding-top: 44px;
+  }
+
+  /* ===== 工具栏 ===== */
+  #toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .tb-section { display: flex; align-items: center; gap: 12px; }
+  #toolbar .title {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #toolbar .title-icon {
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent-soft);
+    color: var(--primary);
+    border-radius: var(--r-md);
+    font-size: 16px;
+  }
+
+  .mode-toggle, .view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: var(--panel-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    padding: 4px;
+  }
+  .mode-btn {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+    background: transparent;
+    border: 0;
+    padding: 6px 16px;
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    transition: color .15s ease, background-color .15s ease;
+  }
+  .mode-btn:hover { color: var(--text); }
+  .mode-btn.active {
+    background-color: var(--primary);
+    color: var(--claude-on-primary);
+  }
+  .mode-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  .tt-btn {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    background-color: var(--panel-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s, color .15s;
+  }
+  .tt-btn:hover:not(:disabled) {
+    background-color: var(--surface-card);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .tt-btn.primary {
+    background-color: var(--primary);
+    color: var(--claude-on-primary);
+    border-color: var(--primary);
+  }
+  .tt-btn.primary:hover:not(:disabled) {
+    background-color: var(--primary-active);
+    border-color: var(--primary-active);
+  }
+  .tt-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* ===== 状态栏 ===== */
+  #status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 8px 20px;
+    background: var(--panel-soft);
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-2);
+    flex-shrink: 0;
+  }
+  #status-text strong { color: var(--text); font-weight: 500; }
+  #status-text .hint { color: var(--text-2); margin-left: 12px; font-size: 12px; }
+  #status-text .key {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text);
+    margin: 0 2px;
+  }
+  #ratio-display {
+    font-family: var(--font-mono);
+    color: var(--primary);
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  /* ===== 画布区 ===== */
+  #canvas-container {
+    flex: 1;
+    position: relative;
+    background: var(--graph-card);
+    overflow: hidden;
+    min-height: 0;
+  }
+  #canvas-2d {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #canvas-3d {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+  }
+
+  /* ===== 浮动面板 ===== */
+  .float-panel {
+    position: absolute;
+    background: color-mix(in srgb, var(--canvas) 92%, transparent);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 14px 16px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  }
+  #info-panel {
+    top: 16px;
+    left: 16px;
+    min-width: 200px;
+    font-size: 12px;
+  }
+  #info-panel h4 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 10px;
+    font-family: var(--font-sans);
+  }
+  #info-panel .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 6px 0;
+  }
+  #info-panel .label { color: var(--text-2); }
+  #info-panel .value {
+    font-family: var(--font-mono);
+    color: var(--text);
+    font-size: 12px;
+  }
+
+  #help-panel {
+    bottom: 16px;
+    right: 16px;
+    max-width: 300px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-2);
+  }
+  #help-panel h4 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    margin-top: 4px;
+    font-family: var(--font-sans);
+  }
+  #help-panel h4:first-child { margin-top: 0; }
+  #help-panel ul { list-style: none; padding: 0; }
+  #help-panel li {
+    margin: 4px 0;
+    padding-left: 14px;
+    position: relative;
+  }
+  #help-panel li::before {
+    content: '·';
+    position: absolute;
+    left: 2px;
+    color: var(--primary);
+    font-weight: 700;
+  }
+  #help-panel .legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+  }
+  #help-panel .swatch {
+    width: 14px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .c-orig { background: #cc785c; }
+  .c-trans { background: #e8a55a; }
+  .c-center { background: #5db8a6; }
+  .c-green { background: #5db872; }
+  .c-ray { background: rgba(250,249,245,.45); border: 1px dashed rgba(250,249,245,.7); }
+  .c-blue { background: rgba(64,128,208,.55); }
+
+  :root[data-theme="dark"] .c-ray { background: rgba(20,20,19,.35); border-color: rgba(20,20,19,.6); }
+
+  #three-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 14px;
+    background: color-mix(in srgb, var(--canvas) 88%, transparent);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    font-size: 12px;
+    color: var(--text-2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
+    pointer-events: none;
+  }
+  #canvas-container.view-3d #three-hint { display: block; }
+  #canvas-container.view-3d #canvas-2d { display: none; }
+  #canvas-container.view-3d #canvas-3d { display: block; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="toolbar">
+    <div class="tb-section">
+      <span class="title"><span class="title-icon">⊕</span>位似图形</span>
+    </div>
+
+    <div class="tb-section">
+      <div class="mode-toggle" id="mode-toggle">
+        <button class="mode-btn active" data-mode="edit">编辑</button>
+        <button class="mode-btn" data-mode="preview" id="btn-mode-preview">预览</button>
+      </div>
+      <div class="view-toggle" id="view-toggle">
+        <button class="mode-btn active" data-view="2d">2D</button>
+        <button class="mode-btn" data-view="3d">3D</button>
+      </div>
+    </div>
+
+    <div class="tb-section">
+      <button class="tt-btn" id="btn-back">← 上一步</button>
+      <button class="tt-btn" id="btn-finish">完成多边形</button>
+      <button class="tt-btn primary" id="btn-reset">重置</button>
+    </div>
+  </div>
+
+  <div id="status-bar">
+    <span id="status-text">点击画布绘制多边形顶点（至少 3 个）</span>
+    <span id="ratio-display"></span>
+  </div>
+
+  <div id="canvas-container">
+    <canvas id="canvas-2d"></canvas>
+    <div id="canvas-3d"></div>
+
+    <div id="info-panel" class="float-panel">
+      <h4>参数</h4>
+      <div class="row"><span class="label">顶点数</span><span class="value" id="info-vertices">0</span></div>
+      <div class="row"><span class="label">位似比 k</span><span class="value" id="info-ratio">—</span></div>
+      <div class="row"><span class="label">|k|</span><span class="value" id="info-ratio-abs">—</span></div>
+      <div class="row"><span class="label">k²（面积比）</span><span class="value" id="info-ratio-sq">—</span></div>
+    </div>
+
+    <div id="help-panel" class="float-panel">
+      <h4 id="help-title">操作指南</h4>
+      <ul id="help-list">
+        <li>点击画布添加多边形顶点</li>
+        <li>按 <span class="key">Enter</span> 或点「完成多边形」结束绘制</li>
+        <li>按 <span class="key">Esc</span> 取消当前操作</li>
+      </ul>
+      <h4>图例</h4>
+      <div class="legend"><span class="swatch c-orig"></span>原图形</div>
+      <div class="legend"><span class="swatch c-trans"></span>位似图形</div>
+      <div class="legend"><span class="swatch c-center"></span>位似中心 O</div>
+      <div class="legend"><span class="swatch c-ray"></span>射线</div>
+      <div class="legend"><span class="swatch c-green"></span>对应点连线（过 O）</div>
+      <div class="legend"><span class="swatch c-blue"></span>3D 金字塔侧壁</div>
+    </div>
+
+    <div id="three-hint">鼠标拖动旋转 · 滚轮缩放 · 右键平移</div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ===================== 状态 =====================
+const S = {
+  step: 'drawing',   // 'drawing' | 'center' | 'ratio' | 'preview'
+  mode: 'edit',      // 'edit' | 'preview'
+  view: '2d',        // '2d' | '3d'
+
+  // 单组位似
+  polygon: null,     // {vertices: [{x,y}]} 原图形
+  transformed: null, // {vertices: [{x,y}]} 位似图形
+  center: null,      // {x,y} 位似中心
+  ratio: null,       // number
+
+  draftVerts: [],    // step='drawing' 时收集的顶点
+  draftCenter: null, // step='center' 时选的位似中心
+  draftRatio: null,  // step='ratio' 时算出的 k
+
+  mouse: null,
+  snap: null,
+};
+
+// ===================== 常量 =====================
+const SNAP_DIST = 16;
+
+// ===================== DOM =====================
+const $ = id => document.getElementById(id);
+const canvas = $('canvas-2d');
+const ctx = canvas.getContext('2d');
+const container = $('canvas-container');
+const threeHost = $('canvas-3d');
+const statusText = $('status-text');
+const ratioDisplay = $('ratio-display');
+const modeToggle = $('mode-toggle');
+const viewToggle = $('view-toggle');
+const btnBack = $('btn-back');
+const btnFinish = $('btn-finish');
+const btnReset = $('btn-reset');
+const btnModePreview = $('btn-mode-preview');
+const helpList = $('help-list');
+const helpTitle = $('help-title');
+const infoVertices = $('info-vertices');
+const infoRatio = $('info-ratio');
+const infoRatioAbs = $('info-ratio-abs');
+const infoRatioSq = $('info-ratio-sq');
+
+let W = 0, H = 0, DPR = 1;
+
+// ===================== 颜色 =====================
+function isDarkCanvas() {
+  const bg = getComputedStyle(container).backgroundColor;
+  const m = bg.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (!m) return true;
+  const [, r, g, b] = m.map(Number);
+  return (0.299 * r + 0.587 * g + 0.114 * b) < 128;
+}
+
+function C() {
+  const dark = isDarkCanvas();
+  return {
+    bg: dark ? '#181715' : '#faf9f5',
+    inkRgb: dark ? '250,249,245' : '20,20,19',
+    inkHex: dark ? 0xfaf9f5 : 0x141413,
+    inkAlpha: dark ? 'rgba(250,249,245,0.65)' : 'rgba(20,20,19,0.65)',
+    grid: dark ? 'rgba(250,249,245,0.05)' : 'rgba(20,20,19,0.05)',
+    gridStrong: dark ? 'rgba(250,249,245,0.12)' : 'rgba(20,20,19,0.12)',
+    primary: '#cc785c',
+    primaryRgb: '204,120,92',
+    primaryHex: 0xcc785c,
+    accent: '#e8a55a',
+    accentRgb: '232,165,90',
+    accentHex: 0xe8a55a,
+    teal: '#5db8a6',
+    tealRgb: '93,184,166',
+    tealHex: 0x5db8a6,
+    green: '#5db872',
+    greenRgb: '93,184,114',
+    greenHex: 0x5db872,
+    rayColor: dark ? 'rgba(250,249,245,0.32)' : 'rgba(20,20,19,0.30)',
+  };
+}
+
+// ===================== 画布尺寸 =====================
+function resize() {
+  const r = container.getBoundingClientRect();
+  W = r.width;
+  H = r.height;
+  DPR = window.devicePixelRatio || 1;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (renderer) {
+    renderer.setSize(W, H);
+    if (camera) { camera.aspect = W / H; camera.updateProjectionMatrix(); }
+  }
+  draw();
+}
+window.addEventListener('resize', resize);
+
+// ===================== 几何工具 =====================
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function closestOnSegment(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return { x: a.x, y: a.y, t: 0 };
+  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return { x: a.x + t * dx, y: a.y + t * dy, t };
+}
+
+// 吸附到多边形的顶点或边
+function snapToPolygon(p) {
+  if (!S.polygon || S.polygon.vertices.length === 0) return null;
+  let best = null, bestD = SNAP_DIST;
+  for (let i = 0; i < S.polygon.vertices.length; i++) {
+    const v = S.polygon.vertices[i];
+    const d = dist(p, v);
+    if (d < bestD) { bestD = d; best = { x: v.x, y: v.y, type: 'vertex', index: i }; }
+  }
+  const n = S.polygon.vertices.length;
+  for (let i = 0; i < n; i++) {
+    const a = S.polygon.vertices[i], b = S.polygon.vertices[(i + 1) % n];
+    const q = closestOnSegment(p, a, b);
+    const d = dist(p, q);
+    if (d < bestD) { bestD = d; best = { x: q.x, y: q.y, type: 'edge', index: i, t: q.t }; }
+  }
+  return best;
+}
+
+// 吸附到射线
+function snapToRay(p) {
+  if (!S.polygon || !S.draftCenter) return null;
+  const c = S.draftCenter;
+  let best = null, bestD = SNAP_DIST;
+  for (let i = 0; i < S.polygon.vertices.length; i++) {
+    const v = S.polygon.vertices[i];
+    const dx = v.x - c.x, dy = v.y - c.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 0.001) continue;
+    const nx = dx / len, ny = dy / len;
+    const t = (p.x - c.x) * nx + (p.y - c.y) * ny;
+    const qx = c.x + t * nx, qy = c.y + t * ny;
+    const d = Math.hypot(p.x - qx, p.y - qy);
+    if (d < bestD) { bestD = d; best = { x: qx, y: qy, type: 'ray', index: i, t, len }; }
+  }
+  return best;
+}
+
+function applyHomothety(vertices, center, ratio) {
+  return vertices.map(v => ({
+    x: center.x + ratio * (v.x - center.x),
+    y: center.y + ratio * (v.y - center.y),
+  }));
+}
+
+// ===================== 2D 绘制 =====================
+function draw() {
+  if (!W || !H) return;
+  if (S.view === '2d' || S.mode === 'edit') draw2D();
+  if (S.view === '3d' && S.mode === 'preview') render3D();
+  updateInfoUI();
+  updateStatusUI();
+  updateButtonsUI();
+}
+
+function draw2D() {
+  const c = C();
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = c.bg;
+  ctx.fillRect(0, 0, W, H);
+  drawGrid(c);
+
+  if (S.polygon) drawPolygon(S.polygon.vertices, 0, c);
+  if (S.step === 'ratio' && S.draftCenter) drawRays(c);
+  if (S.center) drawCenter(S.center, c);
+  if (S.transformed) drawPolygon(S.transformed.vertices, 1, c);
+  if (S.transformed && S.center) drawGreenLine(c);
+  if (S.snap) drawSnapIndicator(c);
+  if (S.step === 'drawing' && S.draftVerts.length > 0) drawPolygon(S.draftVerts, -1, c);
+  if (S.step === 'ratio' && S.snap && S.snap.type === 'ray') drawRatioPreview(c);
+  if (S.step === 'drawing') drawDraftLine(c);
+}
+
+function drawGrid(c) {
+  const step = 40;
+  ctx.strokeStyle = c.grid;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = step; x < W; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for (let y = step; y < H; y += step) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+  ctx.strokeStyle = c.gridStrong;
+  ctx.beginPath();
+  ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H);
+  ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2);
+  ctx.stroke();
+}
+
+// idx: 0=原图，1=位似图，-1=草稿
+function drawPolygon(pts, idx, c) {
+  if (pts.length === 0) return;
+  const isDraft = (idx === -1);
+  const isOrig = (idx === 0);
+  const strokeRgb = isOrig ? c.primaryRgb : c.accentRgb;
+  const fillRgb = isOrig ? c.primaryRgb : c.accentRgb;
+
+  if (pts.length >= 3) {
+    ctx.fillStyle = `rgba(${fillRgb},0.16)`;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.strokeStyle = `rgb(${strokeRgb})`;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  if (pts.length >= 3 && !isDraft) ctx.closePath();
+  ctx.stroke();
+
+  for (let i = 0; i < pts.length; i++) {
+    const isStart = (isDraft && i === 0 && pts.length >= 3);
+    if (isStart) {
+      ctx.strokeStyle = `rgba(${c.accentRgb},0.85)`;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(pts[i].x, pts[i].y, 11, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.fillStyle = isStart ? `rgb(${c.accentRgb})` : `rgb(${strokeRgb})`;
+    ctx.strokeStyle = c.bg;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(pts[i].x, pts[i].y, isDraft ? 6 : 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  if (pts.length > 0 && !isDraft) {
+    ctx.fillStyle = `rgba(${strokeRgb},0.85)`;
+    ctx.font = '500 11px var(--font-mono, monospace)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < pts.length; i++) {
+      ctx.fillText((isOrig ? 'P' : "P'") + (i + 1), pts[i].x, pts[i].y - 14);
+    }
+  }
+}
+
+function drawCenter(o, c) {
+  ctx.strokeStyle = `rgb(${c.tealRgb})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(o.x, o.y, 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(o.x - 13, o.y); ctx.lineTo(o.x + 13, o.y);
+  ctx.moveTo(o.x, o.y - 13); ctx.lineTo(o.x, o.y + 13);
+  ctx.stroke();
+  ctx.fillStyle = `rgb(${c.tealRgb})`;
+  ctx.beginPath();
+  ctx.arc(o.x, o.y, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgb(${c.tealRgb})`;
+  ctx.font = '600 11px var(--font-mono, monospace)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('O', o.x, o.y - 22);
+}
+
+function drawRays(c) {
+  if (!S.polygon || !S.draftCenter) return;
+  const o = S.draftCenter;
+  ctx.lineWidth = 1.2;
+  for (let i = 0; i < S.polygon.vertices.length; i++) {
+    const v = S.polygon.vertices[i];
+    const dx = v.x - o.x, dy = v.y - o.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 0.001) continue;
+    const nx = dx / len, ny = dy / len;
+
+    // 双向延伸的直线：求经过 O、方向 (nx,ny) 的直线与画布四边的交点
+    const ts = [];
+    if (Math.abs(nx) > 1e-4) {
+      ts.push(-o.x / nx);
+      ts.push((W - o.x) / nx);
+    }
+    if (Math.abs(ny) > 1e-4) {
+      ts.push(-o.y / ny);
+      ts.push((H - o.y) / ny);
+    }
+    const tLo = Math.min(...ts);
+    const tHi = Math.max(...ts);
+
+    const hover = (S.snap && S.snap.type === 'ray' && S.snap.index === i);
+    if (hover) {
+      ctx.strokeStyle = `rgb(${c.accentRgb})`;
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([]);
+    } else {
+      ctx.strokeStyle = c.rayColor;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([5, 5]);
+    }
+    ctx.beginPath();
+    ctx.moveTo(o.x + tLo * nx, o.y + tLo * ny);
+    ctx.lineTo(o.x + tHi * nx, o.y + tHi * ny);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+
+// 绿线：直线两端不出头 + 必过 O
+function drawGreenLine(c) {
+  if (!S.center || !S.transformed) return;
+  const n = Math.min(S.polygon.vertices.length, S.transformed.vertices.length);
+  for (let i = 0; i < n; i++) {
+    const a = S.polygon.vertices[i], b = S.transformed.vertices[i];
+    const sameSide = (a.x - S.center.x) * (b.x - S.center.x) + (a.y - S.center.y) * (b.y - S.center.y) > 0;
+    let p1, p2;
+    if (sameSide) {
+      const dA = Math.hypot(a.x - S.center.x, a.y - S.center.y);
+      const dB = Math.hypot(b.x - S.center.x, b.y - S.center.y);
+      p1 = S.center;
+      p2 = (dA > dB) ? a : b;
+    } else {
+      p1 = a; p2 = b;
+    }
+    ctx.strokeStyle = `rgb(${c.greenRgb})`;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  }
+}
+
+function drawSnapIndicator(c) {
+  if (!S.snap) return;
+  const s = S.snap;
+  ctx.strokeStyle = `rgb(${c.accentRgb})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, s.type === 'vertex' ? 13 : (s.type === 'ray' ? 9 : 8), 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(s.x - 5, s.y); ctx.lineTo(s.x + 5, s.y);
+  ctx.moveTo(s.x, s.y - 5); ctx.lineTo(s.x, s.y + 5);
+  ctx.stroke();
+}
+
+function drawDraftLine(c) {
+  if (S.draftVerts.length === 0 || !S.mouse) return;
+  const last = S.draftVerts[S.draftVerts.length - 1];
+  ctx.strokeStyle = `rgba(${c.primaryRgb},0.6)`;
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(last.x, last.y);
+  ctx.lineTo(S.mouse.x, S.mouse.y);
+  ctx.stroke();
+  if (S.draftVerts.length >= 3) {
+    ctx.strokeStyle = `rgba(${c.accentRgb},0.45)`;
+    ctx.beginPath();
+    ctx.moveTo(S.mouse.x, S.mouse.y);
+    ctx.lineTo(S.draftVerts[0].x, S.draftVerts[0].y);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+
+function drawRatioPreview(c) {
+  if (!S.polygon || !S.draftCenter || !S.snap) return;
+  const s = S.snap;
+  const o = S.draftCenter;
+  const v = S.polygon.vertices[s.index];
+  const r0 = Math.hypot(v.x - o.x, v.y - o.y);
+  const k = r0 > 0.001 ? (s.t / r0) : 0;
+  const preview = applyHomothety(S.polygon.vertices, o, k);
+  if (preview.length >= 3) {
+    ctx.strokeStyle = `rgba(${c.accentRgb},0.6)`;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(preview[0].x, preview[0].y);
+    for (let i = 1; i < preview.length; i++) ctx.lineTo(preview[i].x, preview[i].y);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.fillStyle = `rgb(${c.accentRgb})`;
+  ctx.strokeStyle = c.bg;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  const label = 'k = ' + k.toFixed(3);
+  ctx.font = '600 12px var(--font-mono, monospace)';
+  ctx.textBaseline = 'middle';
+  const w = ctx.measureText(label).width + 10;
+  const tx = s.x + 12, ty = s.y + 16;
+  ctx.fillStyle = c.bg;
+  ctx.globalAlpha = 0.85;
+  ctx.fillRect(tx - 4, ty - 9, w, 18);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = `rgb(${c.accentRgb})`;
+  ctx.textAlign = 'left';
+  ctx.fillText(label, tx, ty);
+}
+
+// ===================== Three.js 3D =====================
+let scene, camera, renderer, controls;
+let threeReady = false;
+
+function initThree() {
+  if (threeReady) return;
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 200);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(W, H);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  threeHost.appendChild(renderer.domElement);
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 2;
+  controls.maxDistance = 80;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const dir1 = new THREE.DirectionalLight(0xffffff, 0.95);
+  dir1.position.set(5, 8, 6);
+  scene.add(dir1);
+  const dir2 = new THREE.DirectionalLight(0xb0c8ff, 0.4);
+  dir2.position.set(-6, 4, -5);
+  scene.add(dir2);
+
+  threeReady = true;
+  animate3D();
+}
+
+function animate3D() {
+  if (!renderer) return;
+  requestAnimationFrame(animate3D);
+  controls && controls.update();
+  renderer.render(scene, camera);
+}
+
+function clearDynamic() {
+  if (!scene) return;
+  const toRemove = [];
+  scene.traverse(o => { if (o.userData.dynamic) toRemove.push(o); });
+  toRemove.forEach(o => {
+    scene.remove(o);
+    if (o.geometry) o.geometry.dispose();
+    if (o.material) {
+      if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+      else o.material.dispose();
+    }
+  });
+}
+
+function render3D() {
+  initThree();
+  clearDynamic();
+  const c = C();
+  scene.background = new THREE.Color(c.bg);
+
+  if (!S.polygon || !S.transformed || !S.center) return;
+
+  // 世界原点 = 位似中心 O：这样 2D 的位似关系 V' = O + k*(V-O) 能直接映射到 3D
+  // （V 和 V' 都和 O 共线，是同一个金字塔的两个横截面）
+  const ox = S.center.x, oy = S.center.y;
+  const scale = 1 / 80;
+  // canvas (px, py) → 世界 (x, y, z)，y 是高度
+  const toVec = (p, y = 0) => new THREE.Vector3((p.x - ox) * scale, y, -(p.y - oy) * scale);
+
+  // ====================== 倒金字塔 ======================
+  // 位似中心 O 当顶点（y=0）。3D 中位似关系 V' = O + k*(V-O) 等价于 V' = k*V
+  // （O 在世界原点），所以两个截面必须满足 yTrans = k * yOrig。
+  // 固定原图在 y = H_BASE（朝向相机为正方向），则：
+  //   - k > 0: 位似图同侧，y = k*H_BASE
+  //       k > 1: 位似图在外侧（更高），原图在内侧
+  //       0 < k < 1: 原图在外侧（更高），位似图在内侧
+  //   - k < 0: 位似图在异侧，y = k*H_BASE（负值，穿过 O 到对面）
+  const H_BASE = 2.5;
+  const yOrig = H_BASE;
+  const yTrans = S.ratio * H_BASE;
+
+  // 两侧"最外"截面（用于相机瞄准点和后续侧壁判定）
+  const yPos = Math.max(yOrig, yTrans);
+  const yNeg = Math.min(yOrig, yTrans);
+
+  // 相机：从侧前斜俯视，瞄准横截面中点，能同时看到顶点 + 底面 + 横截面
+  // ox/oy/scale 已在前面定义；位似中心 O 在世界原点 (0, 0, 0)
+  let maxR2 = 0;
+  for (const v of S.polygon.vertices) maxR2 = Math.max(maxR2, Math.hypot(v.x - ox, -(v.y - oy)) * scale);
+  for (const v of S.transformed.vertices) maxR2 = Math.max(maxR2, Math.hypot(v.x - ox, -(v.y - oy)) * scale);
+  const dist = Math.max(8, maxR2 * 1.6);
+  const camY = (yPos + yNeg) * 0.5;
+  camera.position.set(dist * 0.5, dist * 0.45, dist * 1.1);
+  controls.target.set(0, camY, 0);
+  camera.lookAt(controls.target);
+  // 覆盖 OrbitControls 初始位姿，避免 reset() 又把相机拉回 (0,0,0)
+  controls.position0.copy(camera.position);
+  controls.target0.copy(controls.target);
+
+  // === 两个多边形：水平横截面 ===
+  const polys = [
+    { pts: S.polygon.vertices, y: yOrig, color: c.primaryHex },
+    { pts: S.transformed.vertices, y: yTrans, color: c.accentHex },
+  ];
+  for (const { pts, y, color } of polys) {
+    if (pts.length < 3) continue;
+    const positions = pts.map(p => {
+      const v = toVec(p, y);
+      return [v.x, v.y, v.z];
+    }).flat();
+    const indices = [];
+    for (let k = 1; k < pts.length - 1; k++) indices.push(0, k, k + 1);
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    const mat = new THREE.MeshPhongMaterial({
+      color, transparent: true, opacity: 0.92, shininess: 50, side: THREE.DoubleSide,
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.userData.dynamic = true;
+    scene.add(mesh);
+
+    // 描边
+    const ringPts = pts.map(p => toVec(p, y));
+    ringPts.push(ringPts[0]);
+    const ringGeom = new THREE.BufferGeometry().setFromPoints(ringPts);
+    const ringMat = new THREE.LineBasicMaterial({ color: c.inkHex, transparent: true, opacity: 0.4 });
+    scene.add(Object.assign(new THREE.Line(ringGeom, ringMat), { userData: { dynamic: true } }));
+  }
+
+  // === 蓝色金字塔侧壁：仅当多边形是简单凸多边形时才画 ===
+  // 用鞋带公式的有向面积判断绕向一致性 → 凸 → 能干净地构成金字塔
+  function isConvexAndSimple(pts) {
+    if (pts.length < 3) return false;
+    let sign = 0;
+    const m = pts.length;
+    for (let i = 0; i < m; i++) {
+      const a = pts[i], b = pts[(i + 1) % m], c = pts[(i + 2) % m];
+      const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+      if (Math.abs(cross) < 1e-6) continue;
+      const s = cross > 0 ? 1 : -1;
+      if (sign === 0) sign = s;
+      else if (sign !== s) return false;
+    }
+    return sign !== 0;
+  }
+
+  const apex3D = new THREE.Vector3(0, 0, 0);
+  if (isConvexAndSimple(S.polygon.vertices) && isConvexAndSimple(S.transformed.vertices)) {
+    const wallMat = new THREE.MeshPhongMaterial({
+      color: 0x4080d0, transparent: true, opacity: 0.32,
+      side: THREE.DoubleSide, depthWrite: false, shininess: 30,
+    });
+
+    // 在 y 轴正方向上，哪个多边形落在最外层（与正侧梯形相连）
+    const posPoly = yOrig >= yTrans ? S.polygon : S.transformed;
+    // 在 y 轴负方向上，哪个多边形落在最外层（仅 k<0 时使用）
+    const negPoly = yOrig <= yTrans ? S.polygon : S.transformed;
+
+    // 正侧金字塔侧壁：O → 正侧最外截面
+    if (yPos > 0) {
+      for (let k = 0; k < posPoly.vertices.length; k++) {
+        const a = posPoly.vertices[k], b = posPoly.vertices[(k + 1) % posPoly.vertices.length];
+        const va = toVec(a, yPos);
+        const vb = toVec(b, yPos);
+        const geom = new THREE.BufferGeometry();
+        const verts = new Float32Array([
+          apex3D.x, apex3D.y, apex3D.z,
+          va.x, va.y, va.z,
+          vb.x, vb.y, vb.z,
+        ]);
+        geom.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+        geom.setIndex([0, 1, 2]);
+        geom.computeVertexNormals();
+        const wall = new THREE.Mesh(geom, wallMat);
+        wall.userData.dynamic = true;
+        scene.add(wall);
+      }
+    }
+    // 负侧对跖金字塔侧壁：O → 负侧最外截面（仅 k<0 时存在）
+    if (yNeg < 0) {
+      for (let k = 0; k < negPoly.vertices.length; k++) {
+        const a = negPoly.vertices[k], b = negPoly.vertices[(k + 1) % negPoly.vertices.length];
+        const va = toVec(a, yNeg);
+        const vb = toVec(b, yNeg);
+        const geom = new THREE.BufferGeometry();
+        const verts = new Float32Array([
+          apex3D.x, apex3D.y, apex3D.z,
+          va.x, va.y, va.z,
+          vb.x, vb.y, vb.z,
+        ]);
+        geom.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+        geom.setIndex([0, 1, 2]);
+        geom.computeVertexNormals();
+        const wall = new THREE.Mesh(geom, wallMat);
+        wall.userData.dynamic = true;
+        scene.add(wall);
+      }
+    }
+    // 注意：内层截面（不在最外侧的那个）不画独立侧壁。
+    // 它所在的"金字塔台"由从 O 出发到最外截面的面天然包含，绿色折线已经把它与 O 的位置关系画清楚了。
+  }
+  // 非凸/自交的多边形只画两个横截面和绿色折线，不硬塞金字塔
+
+  // === 绿色折线：源顶点 (yOrig) → 顶点 (y=0) → 派生顶点 (yTrans) ===
+  const mat = new THREE.LineBasicMaterial({ color: c.greenHex, transparent: true, opacity: 0.95 });
+  const n = Math.min(S.polygon.vertices.length, S.transformed.vertices.length);
+  for (let k = 0; k < n; k++) {
+    const a = S.polygon.vertices[k], b = S.transformed.vertices[k];
+    const pts = [toVec(a, yOrig), apex3D, toVec(b, yTrans)];
+    const geom = new THREE.BufferGeometry().setFromPoints(pts);
+    const line = new THREE.Line(geom, mat);
+    line.userData.dynamic = true;
+    scene.add(line);
+  }
+
+  // === 位似中心标记 ===
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 24, 24),
+    new THREE.MeshBasicMaterial({ color: c.tealHex })
+  );
+  sphere.position.copy(apex3D);
+  sphere.userData.dynamic = true;
+  scene.add(sphere);
+
+  // 地面网格
+  const grid = new THREE.GridHelper(60, 60, c.inkHex, c.inkHex);
+  grid.material.transparent = true;
+  grid.material.opacity = 0.18;
+  grid.position.y = 0;
+  grid.userData.dynamic = true;
+  scene.add(grid);
+}
+
+// ===================== 鼠标交互 =====================
+function getMousePos(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+function onMove(e) {
+  if (S.mode !== 'edit') { S.snap = null; draw(); return; }
+  const p = getMousePos(e);
+  S.mouse = p;
+  if (S.step === 'center') {
+    S.snap = snapToPolygon(p);
+  } else if (S.step === 'ratio') {
+    S.snap = snapToRay(p);
+  } else {
+    S.snap = null;
+  }
+  draw();
+}
+
+function onClick(e) {
+  if (S.mode !== 'edit') return;
+  const p = getMousePos(e);
+
+  if (S.step === 'drawing') {
+    if (S.draftVerts.length >= 3) {
+      const first = S.draftVerts[0];
+      if (dist(p, first) < SNAP_DIST) {
+        finishPolygon();
+        return;
+      }
+    }
+    S.draftVerts.push(p);
+    draw();
+  } else if (S.step === 'center') {
+    const pt = S.snap || p;
+    S.draftCenter = { x: pt.x, y: pt.y };
+    S.snap = null;
+    S.step = 'ratio';
+    draw();
+  } else if (S.step === 'ratio') {
+    if (S.snap && S.snap.type === 'ray') {
+      const o = S.draftCenter;
+      const v = S.polygon.vertices[S.snap.index];
+      const r0 = Math.hypot(v.x - o.x, v.y - o.y);
+      if (r0 > 0.001) {
+        S.draftRatio = S.snap.t / r0;
+        commitHomothety();
+      }
+    }
+  }
+}
+
+function onDblClick(e) {
+  if (S.mode === 'edit' && S.step === 'drawing' && S.draftVerts.length >= 3) {
+    finishPolygon();
+  }
+}
+
+canvas.addEventListener('mousemove', onMove);
+canvas.addEventListener('click', onClick);
+canvas.addEventListener('dblclick', onDblClick);
+
+// ===================== 状态切换 =====================
+function finishPolygon() {
+  if (S.draftVerts.length < 3) return;
+  S.polygon = { vertices: S.draftVerts.map(v => ({ x: v.x, y: v.y })) };
+  S.draftVerts = [];
+  S.step = 'center';
+  S.draftCenter = null;
+  draw();
+}
+
+function commitHomothety() {
+  S.transformed = { vertices: applyHomothety(S.polygon.vertices, S.draftCenter, S.draftRatio) };
+  S.center = { x: S.draftCenter.x, y: S.draftCenter.y };
+  S.ratio = S.draftRatio;
+  enterPreview();
+}
+
+function enterPreview() {
+  S.step = 'preview';
+  S.mode = 'preview';
+  S.view = '2d';
+  S.snap = null;
+  container.classList.remove('view-3d');
+  syncModeButtons(); syncViewButtons();
+  draw();
+}
+
+function backStep() {
+  if (S.mode === 'preview') {
+    // 回到 ratio 步（保留所有数据，让用户重选比值）
+    S.step = 'ratio';
+    S.mode = 'edit';
+    S.view = '2d';
+    container.classList.remove('view-3d');
+    S.transformed = null;
+    S.draftCenter = S.center ? { x: S.center.x, y: S.center.y } : null;
+    S.draftRatio = null;
+  } else if (S.step === 'center') {
+    if (!S.polygon) {
+      // 还没有原图：退回 drawing
+      S.step = 'drawing';
+      S.draftCenter = null;
+    } else {
+      // 已经有原图，回 drawing 清掉当前 draft
+      S.step = 'drawing';
+      S.draftCenter = null;
+      S.draftVerts = [];
+    }
+  } else if (S.step === 'ratio') {
+    S.step = 'center';
+    S.draftRatio = null;
+  }
+  syncModeButtons(); syncViewButtons();
+  draw();
+}
+
+function resetAll() {
+  S.step = 'drawing';
+  S.mode = 'edit';
+  S.view = '2d';
+  S.polygon = null;
+  S.transformed = null;
+  S.center = null;
+  S.ratio = null;
+  S.draftVerts = [];
+  S.draftCenter = null;
+  S.draftRatio = null;
+  S.snap = null;
+  S.mouse = null;
+  container.classList.remove('view-3d');
+  syncModeButtons(); syncViewButtons();
+  draw();
+}
+
+function syncModeButtons() {
+  modeToggle.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === S.mode);
+  });
+  viewToggle.style.display = (S.mode === 'preview') ? 'inline-flex' : 'none';
+}
+
+function syncViewButtons() {
+  viewToggle.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === S.view);
+  });
+  container.classList.toggle('view-3d', S.view === '3d');
+}
+
+// ===================== UI =====================
+function updateInfoUI() {
+  const vCount = S.polygon ? S.polygon.vertices.length : (S.draftVerts.length || 0);
+  infoVertices.textContent = vCount;
+  const r = S.ratio;
+  if (r !== null) {
+    infoRatio.textContent = r.toFixed(3);
+    infoRatioAbs.textContent = Math.abs(r).toFixed(3);
+    infoRatioSq.textContent = (r * r).toFixed(3);
+  } else {
+    infoRatio.textContent = '—';
+    infoRatioAbs.textContent = '—';
+    infoRatioSq.textContent = '—';
+  }
+}
+
+function updateStatusUI() {
+  let html = '';
+  let ratioHtml = '';
+  if (S.mode === 'edit') {
+    if (S.step === 'drawing') {
+      const n = S.draftVerts.length;
+      html = `<strong>步骤 1/3 · 绘制多边形</strong>
+               <span class="hint">已添加 <strong>${n}</strong> 个顶点${n >= 3 ? '，可点击起点或按 <span class="key">Enter</span> 闭合' : ''}</span>`;
+    } else if (S.step === 'center') {
+      html = `<strong>步骤 2/3 · 选择位似中心</strong>
+               <span class="hint">靠近顶点或边时会自动吸附</span>`;
+    } else if (S.step === 'ratio') {
+      html = `<strong>步骤 3/3 · 选取位似比</strong>
+               <span class="hint">在任意一条射线上点击即可确定 k（也支持射线反方向 → k&lt;0）</span>`;
+      if (S.snap && S.snap.type === 'ray') {
+        const v = S.polygon.vertices[S.snap.index];
+        const r0 = Math.hypot(v.x - S.draftCenter.x, v.y - S.draftCenter.y);
+        const k = r0 > 0.001 ? (S.snap.t / r0) : 0;
+        ratioHtml = `k ≈ ${k.toFixed(3)}`;
+      }
+    }
+  } else {
+    const sign = S.ratio < 0 ? ' · <strong style="color:var(--primary)">k &lt; 0</strong>' : '';
+    html = `<strong>预览</strong>
+             <span class="hint">绿色折线连接对应点（必过 O）${sign}</span>`;
+    if (S.ratio !== null) ratioHtml = `k = ${S.ratio.toFixed(3)} · |k| = ${Math.abs(S.ratio).toFixed(3)} · k² = ${(S.ratio*S.ratio).toFixed(3)}`;
+  }
+  statusText.innerHTML = html;
+  ratioDisplay.textContent = ratioHtml;
+}
+
+function updateButtonsUI() {
+  // 返回：编辑模式下除 drawing 外，或预览模式
+  const showBack = (S.mode === 'edit' && S.step !== 'drawing') || S.mode === 'preview';
+  btnBack.style.display = showBack ? '' : 'none';
+  btnBack.textContent = S.mode === 'preview' ? '← 重新选比值' : '← 上一步';
+  // 完成多边形：仅在 drawing 步
+  btnFinish.style.display = (S.mode === 'edit' && S.step === 'drawing') ? '' : 'none';
+  btnFinish.disabled = (S.draftVerts.length < 3);
+  // 预览按钮：仅在位似完成后可用
+  btnModePreview.disabled = !S.transformed;
+}
+
+// ===================== 事件 =====================
+btnReset.addEventListener('click', resetAll);
+btnFinish.addEventListener('click', () => { if (S.draftVerts.length >= 3) finishPolygon(); });
+btnBack.addEventListener('click', backStep);
+
+modeToggle.addEventListener('click', e => {
+  const btn = e.target.closest('.mode-btn');
+  if (!btn) return;
+  const mode = btn.dataset.mode;
+  if (mode === 'preview' && !S.transformed) return;
+  if (mode === S.mode) return;
+  if (mode === 'preview') {
+    enterPreview();
+  } else {
+    // 切回编辑：保留 polygon，撤销 transformed，回到 ratio 步
+    S.mode = 'edit';
+    S.view = '2d';
+    container.classList.remove('view-3d');
+    if (S.transformed) {
+      S.step = 'ratio';
+      S.draftCenter = S.center ? { x: S.center.x, y: S.center.y } : null;
+      S.transformed = null;
+    } else if (S.center) {
+      S.step = 'center';
+    } else if (S.polygon) {
+      S.step = 'drawing';
+    } else {
+      S.step = 'drawing';
+      S.draftVerts = [];
+    }
+    S.draftRatio = null;
+    syncModeButtons(); syncViewButtons(); draw();
+  }
+});
+
+viewToggle.addEventListener('click', e => {
+  const btn = e.target.closest('.mode-btn');
+  if (!btn) return;
+  S.view = btn.dataset.view;
+  syncViewButtons();
+  draw();
+});
+
+window.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea') return;
+  if (e.key === 'Enter') {
+    if (S.mode === 'edit' && S.step === 'drawing' && S.draftVerts.length >= 3) finishPolygon();
+  } else if (e.key === 'Escape') {
+    if (S.mode === 'preview' || S.step === 'center' || S.step === 'ratio') backStep();
+  } else if ((e.key === 'Delete' || e.key === 'Backspace') && S.step === 'drawing' && S.draftVerts.length > 0) {
+    e.preventDefault();
+    S.draftVerts.pop();
+    draw();
+  }
+});
+
+document.addEventListener('themechange', () => draw());
+
+// ===================== 启动 =====================
+resize();
+draw();
+</script>
+</body>
+</html>
