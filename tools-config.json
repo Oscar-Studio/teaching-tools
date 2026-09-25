@@ -479,6 +479,23 @@
       "icon": "🌊",
       "featured": true,
       "demoFile": "欧拉流体模拟/index.html"
+    },
+    {
+      "id": "six-stroke-engine",
+      "name": "六冲程汽油机工作循环模拟器",
+      "description": "可视化展示六冲程汽油机的曲柄-连杆-活塞机构与完整工作循环（进气、压缩、燃烧/做功、排气、冷却水进气、蒸汽排气），实时显示曲柄转角、活塞位移与 P-V 图",
+      "tags": [
+        "动画",
+        "热机",
+        "物理",
+        "仿真"
+      ],
+      "subject": [
+        "物理"
+      ],
+      "icon": "⚙️",
+      "featured": true,
+      "demoFile": "六冲程汽油机工作循环模拟器/index.html"
     }
   ]
 }
