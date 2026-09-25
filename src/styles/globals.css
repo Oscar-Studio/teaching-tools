@@ -1,3 +1,43 @@
+/* =====================================================
+   Topbar 主题切换按钮（classic / notebook）
+   ===================================================== */
+.theme-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--canvas-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 3px;
+  margin: 0 4px;
+  height: 32px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.theme-mode-toggle button {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  padding: 0 12px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.theme-mode-toggle button:hover {
+  color: var(--ink);
+}
+
+.theme-mode-toggle button.active {
+  background: var(--ink);
+  color: var(--canvas);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
 /* Global overrides for React-mounted subsite */
 
 #root {
@@ -12,22 +52,11 @@
 }
 
 /* ===================== 背景层与页面内容分层 ===================== */
-/* userBgLayer(z=0) / userBgMask(z=1) 由 user-button.js / GlassProvider 创建。
+/* userBgLayer(z=0) / userBgMask(z=1) 由 GlassProvider 创建。
  * 所有页面内容必须高于 z=1，否则会被遮罩盖住。 */
 #root {
   position: relative;
   z-index: 2;
-}
-
-/* Make sure LiquidGlass canvas sits behind content */
-#liquid-glass-canvas,
-#lg-webgl-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 3;
-  pointer-events: none;
 }
 
 #root > *:not(.top-bar) {
@@ -55,29 +84,283 @@
   z-index: 300;
 }
 
-/* Glass fallback styles (no WebGL) */
-body.no-lg-refraction .card {
-  background: rgba(255, 255, 255, 0.04) !important;
-  backdrop-filter: blur(8px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+/* ===================== Theme Toggle Dropdown ===================== */
+.theme-dropdown {
+  min-width: 180px;
+  padding: 6px;
 }
 
-body.no-lg-refraction .top-bar {
-  background: rgba(255, 255, 255, 0.04) !important;
-  backdrop-filter: blur(10px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(150%) !important;
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-/* low 档（用户 UI 设置里的「低」画质）：完全不用 WebGL */
-body.liquid-glass-low #liquid-glass-canvas,
-body.liquid-glass-low #lg-webgl-canvas {
+.theme-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.theme-option.active {
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--secondary-color);
+}
+
+.theme-option-icon {
+  width: 18px;
+  text-align: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.theme-option-hint {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* =====================================================
+   Notebook 主题专用样式（[data-edu-theme="notebook"] 作用域）
+   —— 横纹纸笔记本风：暖米底 + 衬线大标题 + 珊瑚 accent + 页码角标
+   ===================================================== */
+
+:root[data-edu-theme="notebook"] body {
+  background-color: var(--canvas) !important;
+  background-image: var(--paper-texture) !important;
+  transition: background 0.25s, color 0.25s;
+}
+
+/* —— Hero（横纹纸 + 衬线大标题）—— */
+:root[data-edu-theme="notebook"] .notebook-hero {
+  background: transparent;
+  padding: clamp(48px, 8vw, 96px) clamp(20px, 4vw, 64px) clamp(24px, 4vw, 48px);
+  border-bottom: 1px solid var(--hairline);
+}
+:root[data-edu-theme="notebook"] .notebook-hero__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+:root[data-edu-theme="notebook"] .notebook-intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(24px, 4vw, 64px);
+  flex-wrap: wrap;
+}
+:root[data-edu-theme="notebook"] .notebook-intro__left {
+  flex: 1 1 480px;
+  min-width: 0;
+}
+
+:root[data-edu-theme="notebook"] .eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  font-weight: 700;
+  margin: 0 0 14px;
+  text-transform: uppercase;
+}
+
+:root[data-edu-theme="notebook"] .notebook-intro__left h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 0;
+  font-weight: 600;
+  color: var(--ink);
+}
+:root[data-edu-theme="notebook"] .notebook-intro__left h1 em {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 600;
+}
+
+:root[data-edu-theme="notebook"] .notebook-intro__lede {
+  color: var(--body);
+  font-size: var(--fs-body-lg);
+  line-height: 1.75;
+  margin: 18px 0 0;
+  max-width: 56ch;
+  font-family: var(--font-serif);
+}
+
+/* 页码装饰：右下角，mono 字体，竖排两行 */
+:root[data-edu-theme="notebook"] .notebook-intro__page {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 10px 14px;
+  border-right: 2px solid var(--accent);
+  flex-shrink: 0;
+}
+:root[data-edu-theme="notebook"] .notebook-intro__page-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+:root[data-edu-theme="notebook"] .notebook-intro__page-num {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+/* —— Card Grid（笔记本页面）—— */
+:root[data-edu-theme="notebook"] .notebook-grid {
+  padding: clamp(40px, 6vw, 72px) clamp(20px, 4vw, 64px) clamp(48px, 6vw, 96px);
+  background: transparent;
+}
+:root[data-edu-theme="notebook"] .notebook-grid__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+:root[data-edu-theme="notebook"] .notebook-grid__header {
+  margin-bottom: 28px;
+}
+:root[data-edu-theme="notebook"] .notebook-grid__title {
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 2.4vw, 32px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 6px 0 0;
+  color: var(--ink);
+}
+:root[data-edu-theme="notebook"] .notebook-grid__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+/* 学科分组块：每个 subject 一个 <section> */
+:root[data-edu-theme="notebook"] .notebook-grid__group + .notebook-grid__group {
+  margin-top: clamp(28px, 4vw, 44px);
+  padding-top: clamp(24px, 3vw, 36px);
+  border-top: 1px dashed var(--hairline);
+}
+:root[data-edu-theme="notebook"] .notebook-grid__group-head {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+:root[data-edu-theme="notebook"] .notebook-grid__group-head .eyebrow {
+  margin: 0;
+}
+:root[data-edu-theme="notebook"] .notebook-grid__group-title {
+  font-family: var(--font-serif);
+  font-size: clamp(20px, 2vw, 26px);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 0;
+  color: var(--ink);
+}
+:root[data-edu-theme="notebook"] .notebook-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface-card);
+  border: var(--card-border);
+  border-radius: var(--r-md);
+  box-shadow: var(--card-shadow);
+  padding: 18px 20px 18px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.18s var(--ease-snap),
+              box-shadow 0.22s var(--ease-snap),
+              border-color 0.22s;
+  cursor: pointer;
+  min-height: 158px;
+}
+:root[data-edu-theme="notebook"] .notebook-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--card-shadow-hover);
+}
+:root[data-edu-theme="notebook"] .notebook-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+:root[data-edu-theme="notebook"] .notebook-card__tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 3px 8px;
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+}
+:root[data-edu-theme="notebook"] .notebook-card__icon {
+  font-size: 18px;
+  color: var(--muted);
+  line-height: 1;
+}
+:root[data-edu-theme="notebook"] .notebook-card__name {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 4px 0 0;
+  color: var(--ink);
+}
+:root[data-edu-theme="notebook"] .notebook-card__desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* 页码角标：右下角，mono 字体 */
+:root[data-edu-theme="notebook"] .notebook-card__page {
+  position: absolute;
+  bottom: 12px;
+  right: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+:root[data-edu-theme="notebook"] .notebook-card__page-num {
+  color: var(--accent);
+  font-weight: 600;
+}
+:root[data-edu-theme="notebook"] .notebook-card__page-total {
+  color: var(--muted);
+}
+
+/* —— 主题切换：在 notebook 主题下隐藏 classic 内容 —— */
+:root[data-edu-theme="notebook"] .classic-only {
   display: none;
 }
+:root[data-edu-theme="notebook"] .notebook-landing {
+  display: block;
+}
 
-body.liquid-glass-low .card,
-body.liquid-glass-low .top-bar,
-body.liquid-glass-low .morph-card {
-  background: rgba(255, 255, 255, 0.04) !important;
-  backdrop-filter: blur(8px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+/* —— Notebook 主题下隐藏用户背景图（干净画布，跟 games/arcade 一致） —— */
+:root[data-edu-theme="notebook"] #userBgLayer,
+:root[data-edu-theme="notebook"] #userBgMask {
+  display: none;
 }

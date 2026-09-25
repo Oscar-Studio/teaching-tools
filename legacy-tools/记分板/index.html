@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../_shared/design-tokens.css">
     <script src="../_shared/tool-header.js"></script>
     <script src="../_shared/theme-tokens.js"></script>
+    <script src="../plotly-2.27.0.min.js"></script>
     <script defer src="https://cloud.umami.is/script.js"
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <style>
@@ -194,11 +195,233 @@
             background-color: #6b7280;
         }
 
+        /* ========== 历史记录面板 ========== */
+        .history-panel {
+            margin-top: 28px;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            border: var(--card-border);
+            box-shadow: var(--card-shadow);
+            padding: 22px 22px 16px;
+            display: none;
+        }
+
+        .history-panel.open {
+            display: block;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .history-title {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-title .count-pill {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: 999px;
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-mini {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: white;
+        }
+
+        .btn-mini.btn-export {
+            background-color: var(--primary-color);
+        }
+        .btn-mini.btn-export:hover { background-color: var(--secondary-color); }
+
+        .btn-mini.btn-import {
+            background-color: var(--accent-teal, #5db8a6);
+        }
+        .btn-mini.btn-import:hover { background-color: var(--secondary-color); }
+
+        /* ===== 导出下拉菜单 ===== */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-toggle::after {
+            content: ' ▾';
+            font-size: 0.7em;
+            opacity: 0.85;
+            margin-left: 2px;
+        }
+        .dropdown.open .dropdown-toggle::after {
+            content: ' ▴';
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            min-width: 160px;
+            background-color: var(--card-bg);
+            border: var(--card-border);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+            padding: 4px 0;
+            z-index: 20;
+            display: none;
+        }
+        .dropdown.open .dropdown-menu {
+            display: block;
+        }
+        .dropdown-menu button {
+            display: block;
+            width: 100%;
+            padding: 7px 14px;
+            border: none;
+            background: transparent;
+            color: var(--dark-color);
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+        .dropdown-menu button:hover {
+            background-color: rgba(0, 0, 0, 0.06);
+        }
+        .dropdown-menu .menu-sep {
+            height: 1px;
+            background-color: var(--card-border, #e5e7eb);
+            margin: 4px 0;
+        }
+
+        .btn-mini.btn-clear {
+            background-color: var(--danger-color);
+        }
+        .btn-mini.btn-clear:hover { background-color: #c0392b; }
+
+        .btn-toggle-history {
+            background-color: var(--accent-color, var(--primary-color));
+            color: white;
+        }
+        .btn-toggle-history:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .chart-wrap {
+            width: 100%;
+            min-height: 340px;
+            background: var(--graph-card, var(--card-bg));
+            border-radius: 10px;
+            padding: 8px;
+        }
+
+        .chart-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 30px 10px;
+            font-size: 0.95rem;
+        }
+
+        .history-list {
+            margin-top: 16px;
+            max-height: 240px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid var(--card-border, #e5e7eb);
+        }
+
+        .history-row {
+            display: grid;
+            grid-template-columns: 78px 96px 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--card-border, #e5e7eb);
+        }
+
+        .history-row:last-child {
+            border-bottom: none;
+        }
+
+        .history-row:nth-child(odd) {
+            background: rgba(0, 0, 0, 0.025);
+        }
+
+        .history-row .round-no {
+            font-weight: bold;
+            color: var(--secondary-color);
+            font-family: 'Courier New', monospace;
+        }
+
+        .history-row .round-time {
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .history-row .round-scores {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+        }
+
+        .history-row .team-line {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .history-row .team-line .swatch {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .history-row .team-line .delta {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            min-width: 28px;
+        }
+
+        .history-row .team-line .delta.pos { color: var(--success-color, #2ecc71); }
+        .history-row .team-line .delta.neg { color: var(--danger-color); }
+        .history-row .team-line .delta.zero { color: var(--text-secondary); }
+
         footer {
             text-align: center;
             margin-top: 30px;
             color: var(--text-secondary);
             font-size: 0.9rem;
+        }
+
+        @media (max-width: 520px) {
+            .history-row {
+                grid-template-columns: 60px 80px 1fr;
+                font-size: 0.82rem;
+            }
         }
     </style>
 <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
@@ -210,43 +433,39 @@
         <h1>🏆 记分板</h1>
         <p class="subtitle">课堂竞赛、答题比赛专用</p>
 
-        <div class="teams" id="teams">
-            <div class="team-card">
-                <div class="team-name">
-                    <input type="text" value="队伍 1" onchange="updateTeamName(0, this.value)">
-                </div>
-                <div class="score" id="score0">0</div>
-                <div class="score-controls">
-                    <button class="score-btn minus" onclick="changeScore(0, -1)">−</button>
-                    <button class="score-btn plus" onclick="changeScore(0, 1)">+</button>
-                </div>
-                <div class="custom-score">
-                    <input type="number" id="custom0" placeholder="自定义">
-                    <button onclick="setCustomScore(0)">设置</button>
-                </div>
-            </div>
-
-            <div class="team-card">
-                <div class="team-name">
-                    <input type="text" value="队伍 2" onchange="updateTeamName(1, this.value)">
-                </div>
-                <div class="score" id="score1">0</div>
-                <div class="score-controls">
-                    <button class="score-btn minus" onclick="changeScore(1, -1)">−</button>
-                    <button class="score-btn plus" onclick="changeScore(1, 1)">+</button>
-                </div>
-                <div class="custom-score">
-                    <input type="number" id="custom1" placeholder="自定义">
-                    <button onclick="setCustomScore(1)">设置</button>
-                </div>
-            </div>
-        </div>
+        <div class="teams" id="teams"><!-- 由 JS 动态构建 --></div>
 
         <div class="controls">
             <button class="btn btn-add-team" onclick="addTeam()">+ 添加队伍</button>
             <button class="btn btn-reset" onclick="resetAll()">重置所有</button>
+            <button class="btn btn-toggle-history" onclick="toggleHistoryPanel()">📈 历史记录</button>
             <button class="btn btn-fullscreen" onclick="toggleFullscreen()">全屏</button>
         </div>
+
+        <section class="history-panel" id="historyPanel" aria-label="历史记录与统计图">
+            <div class="history-header">
+                <div class="history-title">
+                    📊 分数变化复式折线图
+                    <span class="count-pill" id="historyCount">0 回合</span>
+                </div>
+                <div class="history-actions">
+                    <div class="dropdown" id="exportDropdown">
+                        <button class="btn-mini btn-export dropdown-toggle" onclick="toggleDropdown('exportDropdown', event)">📤 导出</button>
+                        <div class="dropdown-menu" role="menu">
+                            <button onclick="exportJSON(); closeDropdowns();">JSON（完整数据）</button>
+                            <button onclick="exportHistoryCSV(); closeDropdowns();">CSV（历史记录）</button>
+                        </div>
+                    </div>
+                    <div class="dropdown" id="importDropdown">
+                        <button class="btn-mini btn-import dropdown-toggle" onclick="triggerImport()">📥 导入</button>
+                    </div>
+                    <button class="btn-mini btn-clear" onclick="clearHistory()">清空历史</button>
+                    <input type="file" id="importInput" accept=".json,.csv,application/json,text/csv" hidden>
+                </div>
+            </div>
+            <div class="chart-wrap" id="historyChart"></div>
+            <div class="history-list" id="historyList"></div>
+        </section>
     </div>
 
     <footer>
@@ -254,27 +473,476 @@
     </footer>
 
     <script>
-        let scores = [0, 0];
-        let teamCount = 2;
+        // ===================== 状态 =====================
+        var ROUNDS_KEY = 'teaching-tools-scoreboard-rounds-v1';
+        var STATE_KEY = 'teaching-tools-scoreboard-state-v1';
+        var MAX_HISTORY = 500;
+        var JSON_FORMAT_VERSION = 1;
+        var PALETTE = ['#cc785c', '#2A5CAA', '#5db8a6', '#e8a55a', '#9b59b6', '#c64545', '#3498db', '#27ae60'];
 
+        var scores = [];
+        var teamCount = 0;
+        var teamNames = [];
+        var rounds = [];
+        var historyOpen = false;
+
+        function defaultState() {
+            return { teamNames: ['队伍 1', '队伍 2'], scores: [0, 0] };
+        }
+
+        // ===================== 历史记录持久化 =====================
+        function loadRounds() {
+            try {
+                var raw = localStorage.getItem(ROUNDS_KEY);
+                if (!raw) return [];
+                var parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return [];
+                return parsed.slice(-MAX_HISTORY);
+            } catch (e) {
+                console.warn('读取历史记录失败', e);
+                return [];
+            }
+        }
+
+        function saveRounds() {
+            try {
+                localStorage.setItem(ROUNDS_KEY, JSON.stringify(rounds));
+            } catch (e) {
+                console.warn('保存历史记录失败', e);
+            }
+        }
+
+        function loadState() {
+            try {
+                var raw = localStorage.getItem(STATE_KEY);
+                if (!raw) return null;
+                var parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== 'object') return null;
+                if (!Array.isArray(parsed.teamNames) || !Array.isArray(parsed.scores)) return null;
+                if (parsed.teamNames.length < 2 || parsed.teamNames.length > 6) return null;
+                if (parsed.teamNames.length !== parsed.scores.length) return null;
+                if (parsed.teamNames.some(function (n) { return typeof n !== 'string' || n.trim() === ''; })) return null;
+                if (parsed.scores.some(function (s) { return typeof s !== 'number' || s < 0 || !Number.isFinite(s); })) return null;
+                return parsed;
+            } catch (e) {
+                console.warn('读取记分板状态失败', e);
+                return null;
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STATE_KEY, JSON.stringify({
+                    teamNames: teamNames.slice(),
+                    scores: scores.slice()
+                }));
+            } catch (e) {
+                console.warn('保存记分板状态失败', e);
+            }
+        }
+
+        function recordSnapshot() {
+            rounds.push({ t: Date.now(), s: scores.slice() });
+            if (rounds.length > MAX_HISTORY) rounds = rounds.slice(-MAX_HISTORY);
+            saveRounds();
+            if (historyOpen) renderHistory();
+        }
+
+        function clearHistory() {
+            if (rounds.length === 0) return;
+            if (!confirm('确定要清空所有历史记录吗？此操作不可恢复？')) return;
+            rounds = [];
+            saveRounds();
+            renderHistory();
+        }
+
+        function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+        function exportHistoryCSV() {
+            if (rounds.length === 0) {
+                alert('暂无历史记录可导出');
+                return;
+            }
+            var header = ['回合', '时间'];
+            for (var i = 0; i < teamNames.length; i++) {
+                header.push(teamNames[i] + '_分数');
+            }
+            var rows = rounds.map(function (h, i) {
+                var ts = new Date(h.t);
+                var timeStr = ts.getFullYear() + '-' + pad2(ts.getMonth() + 1) + '-' + pad2(ts.getDate()) +
+                    ' ' + pad2(ts.getHours()) + ':' + pad2(ts.getMinutes()) + ':' + pad2(ts.getSeconds());
+                var cells = [];
+                for (var k = 0; k < teamNames.length; k++) {
+                    cells.push(String(h.s[k] != null ? h.s[k] : 0));
+                }
+                return [String(i + 1), timeStr].concat(cells);
+            });
+            var lines = [header].concat(rows).map(function (row) {
+                return row.map(function (cell) {
+                    var s = String(cell);
+                    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+                }).join(',');
+            });
+            var csv = lines.join('\n');
+            var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            var ts = new Date();
+            a.download = 'scoreboard-rounds-' +
+                ts.getFullYear() + pad2(ts.getMonth() + 1) + pad2(ts.getDate()) +
+                '-' + pad2(ts.getHours()) + pad2(ts.getMinutes()) + pad2(ts.getSeconds()) +
+                '.csv';
+            a.href = url;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ===================== JSON 导出 / 导入 =====================
+        function buildExportData() {
+            return {
+                version: JSON_FORMAT_VERSION,
+                type: 'oscar-studio-scoreboard',
+                exportedAt: Date.now(),
+                teamNames: teamNames.slice(),
+                scores: scores.slice(),
+                rounds: rounds.slice()
+            };
+        }
+
+        function exportJSON() {
+            if (teamCount < 2) {
+                alert('当前无队伍，无可导出数据');
+                return;
+            }
+            var data = buildExportData();
+            var json = JSON.stringify(data, null, 2);
+            var blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            var ts = new Date();
+            a.download = 'scoreboard-' +
+                ts.getFullYear() + pad2(ts.getMonth() + 1) + pad2(ts.getDate()) +
+                '-' + pad2(ts.getHours()) + pad2(ts.getMinutes()) + pad2(ts.getSeconds()) +
+                '.json';
+            a.href = url;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ===== 下拉菜单 =====
+        function toggleDropdown(id, e) {
+            if (e) e.stopPropagation();
+            closeDropdowns(id);
+            var el = document.getElementById(id);
+            if (el) el.classList.toggle('open');
+        }
+
+        function closeDropdowns(exceptId) {
+            var menus = document.querySelectorAll('.dropdown');
+            for (var i = 0; i < menus.length; i++) {
+                if (menus[i].id !== exceptId) menus[i].classList.remove('open');
+            }
+        }
+
+        // 点击外部关闭
+        document.addEventListener('click', function () {
+            closeDropdowns();
+        });
+
+        // ===== 导入 =====
+        function triggerImport() {
+            var input = document.getElementById('importInput');
+            if (!input) return;
+            input.value = ''; // 允许重复选同一文件
+            input.click();
+        }
+
+        function validateImported(data) {
+            if (!data || typeof data !== 'object') return 'JSON 内容无效';
+            if (data.type !== 'oscar-studio-scoreboard') return '不是记分板导出文件';
+            if (data.version !== JSON_FORMAT_VERSION) return '版本不匹配（期望 v' + JSON_FORMAT_VERSION + '）';
+            if (!Array.isArray(data.teamNames)) return '缺少 teamNames 数组';
+            if (data.teamNames.length < 2 || data.teamNames.length > 6) return '队伍数量必须在 2~6 之间';
+            if (data.teamNames.some(function (n) { return typeof n !== 'string' || n.trim() === ''; })) {
+                return '队伍名称必须是非空字符串';
+            }
+            if (!Array.isArray(data.scores)) return '缺少 scores 数组';
+            if (data.scores.length !== data.teamNames.length) return 'scores 与 teamNames 长度不一致';
+            if (data.scores.some(function (s) { return typeof s !== 'number' || s < 0 || !Number.isFinite(s); })) {
+                return '分数必须是非负有限数';
+            }
+            if (!Array.isArray(data.rounds)) return '缺少 rounds 数组';
+            if (data.rounds.length > MAX_HISTORY) return '历史记录过长（>' + MAX_HISTORY + '）';
+            for (var i = 0; i < data.rounds.length; i++) {
+                var h = data.rounds[i];
+                if (!h || typeof h !== 'object') return '第 ' + (i + 1) + ' 条历史格式错误';
+                if (typeof h.t !== 'number' || !Number.isFinite(h.t)) return '第 ' + (i + 1) + ' 条历史时间戳无效';
+                if (!Array.isArray(h.s)) return '第 ' + (i + 1) + ' 条历史分数格式错误';
+                // 允许 s.length < teamNames.length：未加入的队视为 null（折线段断开）
+                // 但 s.length 不得超过 teamNames.length，否则视为脏数据
+                if (h.s.length > data.teamNames.length) {
+                    return '第 ' + (i + 1) + ' 条历史分数长度超过队伍数';
+                }
+                if (h.s.some(function (s) { return typeof s !== 'number' || s < 0 || !Number.isFinite(s); })) {
+                    return '第 ' + (i + 1) + ' 条历史包含无效分数';
+                }
+            }
+            return null;
+        }
+
+        function applyImportedData(data) {
+            var err = validateImported(data);
+            if (err) { alert('导入失败：' + err); return false; }
+            if (!confirm('导入将覆盖当前所有数据（分数、队伍名、历史记录），是否继续？')) return false;
+
+            initTeams({ teamNames: data.teamNames, scores: data.scores });
+            rounds = data.rounds.slice();
+            saveState();
+            saveRounds();
+            if (historyOpen) renderHistory();
+            return true;
+        }
+
+        function handleImportFile(file) {
+            if (!file) return;
+            var name = (file.name || '').toLowerCase();
+            var ext = name.lastIndexOf('.') >= 0 ? name.slice(name.lastIndexOf('.') + 1) : '';
+            if (ext === 'json') {
+                importFromJSON(file);
+            } else if (ext === 'csv') {
+                importFromCSV(file);
+            } else {
+                alert('不支持的文件格式：.' + ext + '\n请选择 .json 或 .csv 文件');
+            }
+        }
+
+        function importFromJSON(file) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                try {
+                    var data = JSON.parse(String(reader.result));
+                    applyImportedData(data);
+                } catch (e) {
+                    alert('JSON 解析失败：' + e.message);
+                }
+            };
+            reader.onerror = function () { alert('文件读取失败'); };
+            reader.readAsText(file, 'utf-8');
+        }
+
+        // 极简 CSV 解析：支持双引号包裹 + "" 转义 "
+        function parseCSV(text) {
+            var rows = [], row = [], cell = '', inQ = false;
+            for (var i = 0; i < text.length; i++) {
+                var c = text[i];
+                if (inQ) {
+                    if (c === '"') {
+                        if (text[i + 1] === '"') { cell += '"'; i++; }
+                        else { inQ = false; }
+                    } else {
+                        cell += c;
+                    }
+                } else {
+                    if (c === '"') { inQ = true; }
+                    else if (c === ',') { row.push(cell); cell = ''; }
+                    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+                    else if (c === '\r') { /* skip */ }
+                    else { cell += c; }
+                }
+            }
+            if (cell.length > 0 || row.length > 0) { row.push(cell); rows.push(row); }
+            return rows;
+        }
+
+        function parseCSVTime(s) {
+            var m = /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/.exec(s);
+            if (!m) return null;
+            var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+            var t = d.getTime();
+            return Number.isFinite(t) ? t : null;
+        }
+
+        function applyImportedRoundsCSV(teamNamesArr, roundsArr) {
+            if (!confirm('CSV 导入将覆盖当前所有数据（分数、队伍名、历史记录），是否继续？')) return false;
+            var lastScores = roundsArr.length > 0
+                ? roundsArr[roundsArr.length - 1].s.slice()
+                : teamNamesArr.map(function () { return 0; });
+            initTeams({ teamNames: teamNamesArr, scores: lastScores });
+            rounds = roundsArr;
+            saveState();
+            saveRounds();
+            if (historyOpen) renderHistory();
+            return true;
+        }
+
+        function importFromCSV(file) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                try {
+                    var text = String(reader.result);
+                    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // 去掉 BOM
+                    var rows = parseCSV(text);
+                    if (rows.length < 2) {
+                        alert('CSV 内容为空或只有表头');
+                        return;
+                    }
+                    var header = rows[0];
+                    if (header[0] !== '回合' || header[1] !== '时间') {
+                        alert('CSV 表头格式错误：应为「回合,时间,队名_分数,...」');
+                        return;
+                    }
+                    var names = [];
+                    for (var i = 2; i < header.length; i++) {
+                        var col = header[i];
+                        if (col.indexOf('_分数') !== col.length - 3) {
+                            alert('列名格式错误：' + col + '\n应为「队名_分数」');
+                            return;
+                        }
+                        names.push(col.slice(0, -3));
+                    }
+                    if (names.length < 2 || names.length > 6) {
+                        alert('队伍数量必须在 2~6 之间（实际 ' + names.length + '）');
+                        return;
+                    }
+                    var rs = [];
+                    for (var r = 1; r < rows.length; r++) {
+                        var row = rows[r];
+                        if (row.length < 2 + names.length) {
+                            alert('第 ' + (r + 1) + ' 行字段数不足');
+                            return;
+                        }
+                        var ts = parseCSVTime(row[1]);
+                        if (ts == null) {
+                            alert('第 ' + (r + 1) + ' 行时间格式错误：' + row[1]);
+                            return;
+                        }
+                        var s = [];
+                        for (var c = 2; c < 2 + names.length; c++) {
+                            var v = parseFloat(row[c]);
+                            if (!Number.isFinite(v) || v < 0) {
+                                alert('第 ' + (r + 1) + ' 行第 ' + (c + 1) + ' 列分数无效：' + row[c]);
+                                return;
+                            }
+                            s.push(v);
+                        }
+                        rs.push({ t: ts, s: s });
+                    }
+                    applyImportedRoundsCSV(names, rs);
+                } catch (e) {
+                    alert('CSV 解析失败：' + e.message);
+                }
+            };
+            reader.onerror = function () { alert('文件读取失败'); };
+            reader.readAsText(file, 'utf-8');
+        }
+
+        // ===================== 分数操作 =====================
         function changeScore(teamIndex, delta) {
-            scores[teamIndex] += delta;
-            if (scores[teamIndex] < 0) scores[teamIndex] = 0;
-            document.getElementById(`score${teamIndex}`).textContent = scores[teamIndex];
+            var before = scores[teamIndex];
+            scores[teamIndex] = Math.max(0, scores[teamIndex] + delta);
+            var el = document.getElementById('score' + teamIndex);
+            if (el) el.textContent = scores[teamIndex];
+            if (scores[teamIndex] !== before) { saveState(); recordSnapshot(); }
         }
 
         function setCustomScore(teamIndex) {
-            const input = document.getElementById(`custom${teamIndex}`);
-            const value = parseInt(input.value);
+            var input = document.getElementById('custom' + teamIndex);
+            if (!input) return;
+            var value = parseInt(input.value, 10);
             if (!isNaN(value) && value >= 0) {
-                scores[teamIndex] = value;
-                document.getElementById(`score${teamIndex}`).textContent = value;
+                if (scores[teamIndex] !== value) {
+                    scores[teamIndex] = value;
+                    var el = document.getElementById('score' + teamIndex);
+                    if (el) el.textContent = value;
+                    saveState();
+                    recordSnapshot();
+                }
                 input.value = '';
             }
         }
 
         function updateTeamName(teamIndex, name) {
-            // 名称已通过 onchange 更新
+            teamNames[teamIndex] = name;
+            saveState();
+            if (historyOpen) renderHistory();
+        }
+
+        function buildTeamCard(idx, name, score) {
+            var card = document.createElement('div');
+            card.className = 'team-card';
+            card.dataset.teamIndex = String(idx);
+
+            var nameDiv = document.createElement('div');
+            nameDiv.className = 'team-name';
+            var nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.value = name;
+            nameInput.addEventListener('change', (function (i) {
+                return function (e) { updateTeamName(i, e.target.value); };
+            })(idx));
+            nameDiv.appendChild(nameInput);
+
+            var scoreDiv = document.createElement('div');
+            scoreDiv.className = 'score';
+            scoreDiv.id = 'score' + idx;
+            scoreDiv.textContent = String(score);
+
+            var controlsDiv = document.createElement('div');
+            controlsDiv.className = 'score-controls';
+            var minusBtn = document.createElement('button');
+            minusBtn.className = 'score-btn minus';
+            minusBtn.textContent = '−';
+            minusBtn.addEventListener('click', (function (i) {
+                return function () { changeScore(i, -1); };
+            })(idx));
+            var plusBtn = document.createElement('button');
+            plusBtn.className = 'score-btn plus';
+            plusBtn.textContent = '+';
+            plusBtn.addEventListener('click', (function (i) {
+                return function () { changeScore(i, 1); };
+            })(idx));
+            controlsDiv.appendChild(minusBtn);
+            controlsDiv.appendChild(plusBtn);
+
+            var customDiv = document.createElement('div');
+            customDiv.className = 'custom-score';
+            var customInput = document.createElement('input');
+            customInput.type = 'number';
+            customInput.id = 'custom' + idx;
+            customInput.placeholder = '自定义';
+            var setBtn = document.createElement('button');
+            setBtn.textContent = '设置';
+            setBtn.addEventListener('click', (function (i) {
+                return function () { setCustomScore(i); };
+            })(idx));
+            customDiv.appendChild(customInput);
+            customDiv.appendChild(setBtn);
+
+            card.appendChild(nameDiv);
+            card.appendChild(scoreDiv);
+            card.appendChild(controlsDiv);
+            card.appendChild(customDiv);
+            return card;
+        }
+
+        function initTeams(state) {
+            var container = document.getElementById('teams');
+            container.innerHTML = '';
+            scores = [];
+            teamNames = [];
+            teamCount = 0;
+            for (var i = 0; i < state.teamNames.length; i++) {
+                var name = state.teamNames[i];
+                var score = typeof state.scores[i] === 'number' ? state.scores[i] : 0;
+                container.appendChild(buildTeamCard(i, name, score));
+                teamNames.push(name);
+                scores.push(score);
+                teamCount++;
+            }
         }
 
         function addTeam() {
@@ -282,61 +950,26 @@
                 alert('最多添加6支队伍');
                 return;
             }
-
-            const teamsContainer = document.getElementById('teams');
-            const newTeam = document.createElement('div');
-            newTeam.className = 'team-card';
-            const nameDiv = document.createElement('div');
-            nameDiv.className = 'team-name';
-            const nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.value = `队伍 ${teamCount + 1}`;
-            nameInput.addEventListener('change', (e) => updateTeamName(teamCount, e.target.value));
-            nameDiv.appendChild(nameInput);
-            const scoreDiv = document.createElement('div');
-            scoreDiv.className = 'score';
-            scoreDiv.id = `score${teamCount}`;
-            scoreDiv.textContent = '0';
-            const controlsDiv = document.createElement('div');
-            controlsDiv.className = 'score-controls';
-            const minusBtn = document.createElement('button');
-            minusBtn.className = 'score-btn minus';
-            minusBtn.textContent = '−';
-            minusBtn.addEventListener('click', () => changeScore(teamCount, -1));
-            const plusBtn = document.createElement('button');
-            plusBtn.className = 'score-btn plus';
-            plusBtn.textContent = '+';
-            plusBtn.addEventListener('click', () => changeScore(teamCount, 1));
-            controlsDiv.appendChild(minusBtn);
-            controlsDiv.appendChild(plusBtn);
-            const customDiv = document.createElement('div');
-            customDiv.className = 'custom-score';
-            const customInput = document.createElement('input');
-            customInput.type = 'number';
-            customInput.id = `custom${teamCount}`;
-            customInput.placeholder = '自定义';
-            const setBtn = document.createElement('button');
-            setBtn.textContent = '设置';
-            setBtn.addEventListener('click', () => setCustomScore(teamCount));
-            customDiv.appendChild(customInput);
-            customDiv.appendChild(setBtn);
-            newTeam.appendChild(nameDiv);
-            newTeam.appendChild(scoreDiv);
-            newTeam.appendChild(controlsDiv);
-            newTeam.appendChild(customDiv);
-
-            teamsContainer.appendChild(newTeam);
+            var idx = teamCount;
+            var name = '队伍 ' + (idx + 1);
+            var card = buildTeamCard(idx, name, 0);
+            document.getElementById('teams').appendChild(card);
+            teamNames.push(name);
             scores.push(0);
             teamCount++;
+            saveState();
         }
 
         function resetAll() {
             if (!confirm('确定要重置所有分数吗？')) return;
-            
-            scores = scores.map(() => 0);
-            for (let i = 0; i < teamCount; i++) {
-                document.getElementById(`score${i}`).textContent = '0';
+
+            for (var i = 0; i < teamCount; i++) {
+                scores[i] = 0;
+                var el = document.getElementById('score' + i);
+                if (el) el.textContent = '0';
             }
+            saveState();
+            recordSnapshot();
         }
 
         function toggleFullscreen() {
@@ -347,15 +980,215 @@
             }
         }
 
-        // 键盘快捷键
-        document.addEventListener('keydown', (e) => {
-            if (e.key === '1') changeScore(0, 1);
-            else if (e.key === 'q') changeScore(0, -1);
-            else if (e.key === '2') changeScore(1, 1);
-            else if (e.key === 'w') changeScore(1, -1);
-            else if (e.key === 'r') resetAll();
-            else if (e.key === 'f') toggleFullscreen();
+        function toggleHistoryPanel() {
+            historyOpen = !historyOpen;
+            var panel = document.getElementById('historyPanel');
+            panel.classList.toggle('open', historyOpen);
+            if (historyOpen) renderHistory();
+        }
+
+        // ===================== 渲染：列表 + 折线图 =====================
+        function renderHistory() {
+            renderHistoryList();
+            renderHistoryChart();
+            var countEl = document.getElementById('historyCount');
+            countEl.textContent = rounds.length + ' 回合';
+        }
+
+        function renderHistoryList() {
+            var list = document.getElementById('historyList');
+            list.innerHTML = '';
+            if (rounds.length === 0) {
+                var empty = document.createElement('div');
+                empty.className = 'chart-empty';
+                empty.textContent = '暂无历史记录，开始计分后将自动记录。';
+                list.appendChild(empty);
+                return;
+            }
+
+            for (var i = rounds.length - 1; i >= 0; i--) {
+                var entry = rounds[i];
+                var row = document.createElement('div');
+                row.className = 'history-row';
+
+                var round = document.createElement('div');
+                round.className = 'round-no';
+                round.textContent = '第 ' + (i + 1) + ' 回合';
+
+                var time = document.createElement('div');
+                time.className = 'round-time';
+                var ts = new Date(entry.t);
+                time.textContent = pad2(ts.getHours()) + ':' + pad2(ts.getMinutes()) + ':' + pad2(ts.getSeconds());
+
+                var scoresEl = document.createElement('div');
+                scoresEl.className = 'round-scores';
+
+                var prev = i > 0 ? rounds[i - 1].s : entry.s;
+
+                for (var k = 0; k < teamNames.length; k++) {
+                    var line = document.createElement('span');
+                    line.className = 'team-line';
+
+                    var sw = document.createElement('span');
+                    sw.className = 'swatch';
+                    sw.style.background = PALETTE[k % PALETTE.length];
+
+                    var name = document.createElement('span');
+                    name.textContent = teamNames[k] + ' ';
+                    name.style.color = PALETTE[k % PALETTE.length];
+                    name.style.fontWeight = '600';
+
+                    var cur = document.createElement('span');
+                    var curVal = entry.s[k] != null ? entry.s[k] : 0;
+                    cur.textContent = String(curVal);
+                    cur.style.fontFamily = "'Courier New', monospace";
+
+                    var delta = document.createElement('span');
+                    delta.className = 'delta';
+                    if (i === 0) {
+                        delta.textContent = '';
+                    } else {
+                        var prevVal = prev[k] != null ? prev[k] : 0;
+                        var d = curVal - prevVal;
+                        if (d > 0) { delta.classList.add('pos'); delta.textContent = '+' + d; }
+                        else if (d < 0) { delta.classList.add('neg'); delta.textContent = String(d); }
+                        else { delta.classList.add('zero'); delta.textContent = '±0'; }
+                    }
+
+                    line.appendChild(sw);
+                    line.appendChild(name);
+                    line.appendChild(cur);
+                    line.appendChild(delta);
+                    scoresEl.appendChild(line);
+                }
+
+                row.appendChild(round);
+                row.appendChild(time);
+                row.appendChild(scoresEl);
+                list.appendChild(row);
+            }
+        }
+
+        function renderHistoryChart() {
+            var container = document.getElementById('historyChart');
+            if (rounds.length === 0) {
+                container.innerHTML = '<div class="chart-empty">还没有分数变化记录，无法绘制统计图。</div>';
+                if (typeof Plotly !== 'undefined' && container._fullLayout) {
+                    try { Plotly.purge(container); } catch (e) { /* ignore */ }
+                }
+                return;
+            }
+
+            if (typeof Plotly === 'undefined') {
+                container.innerHTML = '<div class="chart-empty">图表组件未加载。</div>';
+                return;
+            }
+
+            var colors = (typeof window.ttTheme !== 'undefined') ? window.ttTheme.colors : null;
+            var paperBg = (colors && colors.graphBg) ? colors.graphBg :
+                (getComputedStyle(document.documentElement).getPropertyValue('--graph-card').trim() || '#fff');
+            var axisColor = (colors && colors.graphAxis) ? colors.graphAxis : '#a09d96';
+            var gridColor = (colors && colors.graphGrid) ? colors.graphGrid : 'rgba(0,0,0,0.06)';
+            var textColor = (colors && colors.graphText) ? colors.graphText : '#141413';
+
+            var xLabels = rounds.map(function (_, i) { return i + 1; });
+            var traces = teamNames.map(function (name, k) {
+                var ys = rounds.map(function (h) { return h.s[k] != null ? h.s[k] : null; });
+                return {
+                    x: xLabels,
+                    y: ys,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: name,
+                    line: { color: PALETTE[k % PALETTE.length], width: 2.5, shape: 'linear' },
+                    marker: { color: PALETTE[k % PALETTE.length], size: 7 },
+                    connectgaps: false,
+                    hovertemplate: '<b>' + name + '</b><br>第 %{x} 回合<br>分数：%{y}<extra></extra>'
+                };
+            });
+
+            var layout = {
+                paper_bgcolor: paperBg,
+                plot_bgcolor: paperBg,
+                font: { color: textColor, family: "'Segoe UI', sans-serif" },
+                margin: { t: 50, r: 20, b: 50, l: 55 },
+                xaxis: {
+                    title: { text: '回合', font: { color: textColor } },
+                    gridcolor: gridColor,
+                    zerolinecolor: gridColor,
+                    linecolor: axisColor,
+                    tickcolor: axisColor,
+                    tickfont: { color: textColor },
+                    dtick: 1
+                },
+                yaxis: {
+                    title: { text: '分数', font: { color: textColor } },
+                    gridcolor: gridColor,
+                    zerolinecolor: axisColor,
+                    linecolor: axisColor,
+                    tickcolor: axisColor,
+                    tickfont: { color: textColor },
+                    rangemode: 'tozero'
+                },
+                legend: {
+                    orientation: 'h',
+                    x: 0, xanchor: 'left',
+                    y: 1.14, yanchor: 'top',
+                    bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: textColor }
+                },
+                hovermode: 'x unified'
+            };
+
+            var config = {
+                responsive: true,
+                displaylogo: false,
+                modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d']
+            };
+
+            try {
+                Plotly.react(container, traces, layout, config);
+            } catch (e) {
+                console.error('Plotly 渲染失败', e);
+                container.innerHTML = '<div class="chart-empty">图表渲染失败，请刷新页面重试。</div>';
+            }
+        }
+
+        // ===================== 主题响应 =====================
+        document.documentElement.addEventListener('themechange', function () {
+            if (typeof window.ttTheme !== 'undefined') window.ttTheme.refresh();
+            if (historyOpen) renderHistoryChart();
         });
+
+        // ===================== 键盘快捷键 =====================
+        document.addEventListener('keydown', function (e) {
+            var tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            if (e.key === '1') changeScore(0, 1);
+            else if (e.key === 'q' || e.key === 'Q') changeScore(0, -1);
+            else if (e.key === '2') changeScore(1, 1);
+            else if (e.key === 'w' || e.key === 'W') changeScore(1, -1);
+            else if (e.key === '3') changeScore(2, 1);
+            else if (e.key === 'e' || e.key === 'E') changeScore(2, -1);
+            else if (e.key === '4') changeScore(3, 1);
+            else if (e.key === 'r' && !e.ctrlKey && !e.metaKey) resetAll();
+            else if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+            else if (e.key === 'h' || e.key === 'H') toggleHistoryPanel();
+        });
+
+        // ===================== 初始化 =====================
+        (function init() {
+            var state = loadState() || defaultState();
+            initTeams(state);
+            rounds = loadRounds();
+            // 绑定文件选择
+            var fi = document.getElementById('importInput');
+            if (fi) fi.addEventListener('change', function (e) {
+                var f = e.target.files && e.target.files[0];
+                handleImportFile(f);
+                e.target.value = '';
+            });
+        })();
     </script>
 </body>
 

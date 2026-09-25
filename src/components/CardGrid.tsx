@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Glass } from '@samasante/liquid-glass';
 import type { Tool } from '../types';
-import { useUserLiquidGlass } from '../hooks/useUserLiquidGlass';
 import type { Phase } from '../App';
+import { SUBJECT_NAMES, groupToolsBySubject } from '../lib/subjects';
 
-const GLASS_ROOT_MARGIN = '100px';
+const ROOT_MARGIN = '100px';
 
 function useInView(
   ref: React.RefObject<Element | null>,
-  rootMargin: string = GLASS_ROOT_MARGIN,
+  rootMargin: string = ROOT_MARGIN,
 ): boolean {
   const [inView, setInView] = useState(false);
 
@@ -34,23 +33,6 @@ function useInView(
   return inView;
 }
 
-const FALLBACK_CARD_STYLE: React.CSSProperties = {
-  width: '100%',
-  minHeight: 140,
-  padding: '24px 28px',
-  borderRadius: 16,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-start',
-  justifyContent: 'center',
-  gap: 12,
-  cursor: 'pointer',
-  background: 'rgba(255, 255, 255, 0.04)',
-  backdropFilter: 'blur(8px) saturate(150%)',
-  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
-  border: '0.5px solid rgba(255, 255, 255, 0.18)',
-};
-
 interface Props {
   tools: Tool[];
   loading: boolean;
@@ -61,36 +43,22 @@ interface Props {
   onSelect: (tool: Tool, rect: DOMRect) => void;
 }
 
-const SUBJECT_NAMES: Record<string, string> = {
-  '数学': '数学',
-  '物理': '物理',
-  '化学': '化学',
-  '生物': '生物',
-  '语文': '语文',
-  '英语': '英语',
-  '地理': '地理',
-  '历史': '历史',
-  '道法': '道法',
-  '通用': '通用工具',
-};
-
 const CARD_STYLE: React.CSSProperties = {
   width: '100%',
-  minHeight: 140,
-  padding: '24px 28px',
-  borderRadius: 16,
+  minHeight: 110,
+  padding: '16px 20px',
+  borderRadius: 12,
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'flex-start',
   justifyContent: 'center',
-  gap: 12,
+  gap: 8,
   cursor: 'pointer',
-  background: 'rgba(255, 255, 255, 0.06)',
-  border: '0.5px solid rgba(255, 255, 255, 0.18)',
 };
 
 const HIDE_MAX_DELAY = 0.12;
 const RETURN_MAX_DELAY = 0.4;
+
 
 interface ToolCardProps {
   tool: Tool;
@@ -114,10 +82,6 @@ function ToolCard({
   const isSelected = tool.id === selectedId;
   const isOther = !!selectedId && !isSelected;
   const elRef = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(elRef);
-  const { quality, budget: glassBudget, optics } = useUserLiquidGlass();
-  // 'low' 档完全不用 WebGL（无论是否在视窗），走 CSS 兜底
-  const useGlass = quality !== 'low' && inView;
 
   const hideDelay = useMemo(() => {
     if (!cardRect) return 0;
@@ -134,7 +98,7 @@ function ToolCard({
   const [closingStage, setClosingStage] = useState<0 | 1 | 2>(0);
 
   useEffect(() => {
-    if (phase === 'closing' && isOther && quality !== 'low') {
+    if (phase === 'closing' && isOther) {
       setClosingStage(1);
       const raf = requestAnimationFrame(() => {
         requestAnimationFrame(() => setClosingStage(2));
@@ -144,7 +108,7 @@ function ToolCard({
     if (phase === 'idle') {
       setClosingStage(0);
     }
-  }, [phase, isOther, quality]);
+  }, [phase, isOther]);
 
   const propAnimate = useMemo(() => {
     if (phase === 'opening' || phase === 'open') {
@@ -177,12 +141,11 @@ function ToolCard({
     }
     if (phase === 'opening' || phase === 'open') {
       if (isSelected) return { delay: hideDelay, duration: 0.15 };
-      if (quality === 'low' && isOther) return { duration: 0 };
       return { delay: hideDelay, duration: 0.9, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] };
     }
     if (isSelected) return { duration: 0.25, ease: [0.4, 0, 0.2, 1] };
     return { type: 'spring' as const, stiffness: 320, damping: 28, mass: 0.8, delay: index * 0.03 };
-  }, [phase, hideDelay, returnDelay, index, isSelected, isOther, quality, closingStage]);
+  }, [phase, hideDelay, returnDelay, index, isSelected, isOther, closingStage]);
 
   const cardContent = (
     <>
@@ -215,24 +178,9 @@ function ToolCard({
       }}
       whileHover={isOther ? undefined : { y: -4, scale: 1.02 }}
     >
-      {useGlass ? (
-        <Glass
-          className="glass-element card-glass"
-          style={CARD_STYLE}
-          optics={optics}
-          maxDpr={glassBudget.maxDpr}
-          filterResolution={glassBudget.filterResolution}
-        >
-          {cardContent}
-        </Glass>
-      ) : (
-        <div
-          className="glass-element card-glass"
-          style={FALLBACK_CARD_STYLE}
-        >
-          {cardContent}
-        </div>
-      )}
+      <div className="card-glass" style={CARD_STYLE}>
+        {cardContent}
+      </div>
     </motion.div>
   );
 }
@@ -240,23 +188,10 @@ function ToolCard({
 export function CardGrid({ tools, loading, error, selectedId, phase, rects, onSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLElement>>(new Map());
-  const { quality } = useUserLiquidGlass();
 
   const registerRef = (id: string, el: HTMLElement | null) => {
     if (el) cardRefs.current.set(id, el);
     else cardRefs.current.delete(id);
-  };
-
-  const handleSelect = (tool: Tool, rect: DOMRect) => {
-    if (quality === 'low') {
-      onSelect(tool, rect);
-      return;
-    }
-    const allRects: Record<string, DOMRect> = {};
-    cardRefs.current.forEach((el, id) => {
-      allRects[id] = el.getBoundingClientRect();
-    });
-    onSelect(tool, rect);
   };
 
   if (loading) {
@@ -269,16 +204,7 @@ export function CardGrid({ tools, loading, error, selectedId, phase, rects, onSe
     return <main className="card-container"><p className="no-results">没有找到匹配的工具</p></main>;
   }
 
-  const grouped: Record<string, Tool[]> = {};
-  tools.forEach(tool => {
-    const subject = (tool.subject && tool.subject[0]) || '通用';
-    if (!grouped[subject]) grouped[subject] = [];
-    grouped[subject].push(tool);
-  });
-
-  const subjects = Object.keys(grouped).sort(
-    (a, b) => grouped[b].length - grouped[a].length,
-  );
+  const { grouped, order: subjects } = groupToolsBySubject(tools);
 
   let globalIdx = 0;
 
@@ -298,7 +224,7 @@ export function CardGrid({ tools, loading, error, selectedId, phase, rects, onSe
                   selectedId={selectedId}
                   phase={phase}
                   cardRect={rects[tool.id]}
-                  onSelect={handleSelect}
+                  onSelect={onSelect}
                   registerRef={registerRef}
                 />
               );

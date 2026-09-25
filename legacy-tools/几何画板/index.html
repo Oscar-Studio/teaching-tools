@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="../_shared/design-tokens.css">
     <script src="../_shared/tool-header.js"></script>
     <script src="../_shared/theme-tokens.js"></script>
+    <!-- 几何画板本身不需要登录，但 AI 解题依赖用户系统；
+         这里只装载守卫，不立刻拦截，由 AI 解题入口手动调用 redirectToLogin() -->
+    <script src="../_shared/auth-guard.js"></script>
     <style>
         :root {
             --bg: var(--surface-card);
@@ -3646,7 +3649,12 @@ function angleParams(el) {
     if (!problem) return;
     const token = (document.cookie.match(/(?:^|; )userToken=([^;]+)/) || [])[1] || localStorage.getItem('ai_token') || localStorage.getItem('userToken');
     if (!token) {
-      aiAppendError('请先登录后再使用模型解题');
+      // 未登录：跳转到登录页，登录成功后会跳回当前页继续解题
+      if (window.__oscarAuth && window.__oscarAuth.redirectToLogin) {
+        window.__oscarAuth.redirectToLogin();
+      } else {
+        aiAppendError('请先登录后再使用模型解题');
+      }
       return;
     }
 

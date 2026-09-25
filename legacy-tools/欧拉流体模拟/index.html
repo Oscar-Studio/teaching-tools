@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欧拉流体模拟</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--canvas);
+            color: var(--ink);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            padding: 18px 18px 40px;
+        }
+
+        header { text-align: center; margin-bottom: 16px; }
+
+        h1 { font-size: 1.5em; font-weight: 600; letter-spacing: .01em; }
+
+        .subtitle {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: .84em;
+            line-height: 1.7;
+            max-width: 820px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .wrap {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 296px;
+            gap: 16px;
+            max-width: 1320px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .wrap { grid-template-columns: minmax(0, 1fr); }
+        }
+
+        .demo-area {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            min-height: 320px;
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            border: 1px solid var(--graph-card-border);
+            box-shadow: var(--graph-card-shadow);
+            background: #1c1914;
+            touch-action: none;
+        }
+
+        canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+        .legend, .hud, .hint {
+            position: absolute;
+            font: 11px/1.5 var(--font-mono);
+            color: #d9d5cc;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .legend { top: 10px; left: 10px; display: flex; align-items: center; gap: 7px; }
+
+        .legend select {
+            pointer-events: auto;
+            background: #232019;
+            color: #eae6dd;
+            border: 1px solid #3c372e;
+            border-radius: 5px;
+            font: inherit;
+            padding: 2px 4px;
+        }
+
+        .legend .rng { min-width: 70px; opacity: .82; text-align: right; }
+
+        .hud {
+            top: 10px; right: 10px;
+            text-align: right;
+            white-space: pre;
+            color: #b8b3a8;
+        }
+
+        .hint {
+            bottom: 10px; left: 10px; right: 10px;
+            opacity: .55;
+            text-align: center;
+            font-size: 10.5px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .seg { display: flex; gap: 0; border: 1px solid var(--hairline); border-radius: var(--r-md); overflow: hidden; }
+
+        .seg button {
+            border: 0;
+            background: var(--surface-soft);
+            color: var(--muted);
+            font: 600 12px/1 var(--font-sans);
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background .15s, color .15s;
+        }
+
+        .seg button + button { border-left: 1px solid var(--hairline); }
+        .seg button:hover { color: var(--ink); }
+        .seg button.on { background: var(--primary); color: #fff; }
+
+        .btn {
+            border: 1px solid var(--hairline);
+            background: var(--surface-soft);
+            color: var(--ink);
+            border-radius: var(--r-md);
+            font: 600 12px/1 var(--font-sans);
+            padding: 9px 13px;
+            cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .btn:hover { border-color: var(--primary); color: var(--primary); }
+        .btn.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+        .badge {
+            margin-left: auto;
+            font: 11px/1 var(--font-mono);
+            color: var(--muted);
+            border: 1px dashed var(--hairline);
+            border-radius: var(--r-pill);
+            padding: 6px 10px;
+        }
+
+        .panel { display: flex; flex-direction: column; gap: 12px; }
+
+        .card {
+            background: var(--surface-card);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-lg);
+            padding: 12px;
+        }
+
+        .card > h2 {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            letter-spacing: .04em;
+            margin-bottom: 10px;
+        }
+
+        .scenes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+
+        .scenes button {
+            border: 1px solid var(--hairline);
+            background: var(--surface-soft);
+            color: var(--ink);
+            border-radius: var(--r-md);
+            font: 600 12px/1.3 var(--font-sans);
+            padding: 10px 6px;
+            cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .scenes button:hover { border-color: var(--primary); color: var(--primary); }
+        .scenes button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+        .row { margin-bottom: 11px; }
+        .row:last-child { margin-bottom: 0; }
+
+        .row .lab { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+
+        .row .lab b { color: var(--primary); font: 600 12px/1 var(--font-mono); }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--hairline);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid var(--canvas);
+            cursor: pointer;
+        }
+
+        input[type=range]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid var(--canvas);
+            cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
+
+        .note { font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>欧拉流体模拟</h1>
+        <p class="subtitle">
+            基于 MAC 交错网格 + Stable Fluids 投影法的欧拉视角流体演示：物理量（u, v, p, dye）定义在固定的网格上，<br>
+            每步顺序：<code>addForces → advect → diffuse → ∇·u → Jacobi(p) → project → advect(dye)</code>。<br>
+            默认视图为俯视的<u>向量场</u>（u 方向 + 长度 = \|u\|），染料用深蓝 → 紫 → 珊瑚红 的渐变映射浓度。
+        </p>
+    </header>
+
+    <div class="wrap">
+        <div>
+            <div class="demo-area" id="stage">
+                <canvas id="cv"></canvas>
+                <div class="legend">
+                    <span>视图</span>
+                    <select id="colorMode">
+                        <option value="vector">向量场</option>
+                        <option value="dye">染料</option>
+                        <option value="speed">速度 |u|</option>
+                        <option value="pressure">压力 p</option>
+                        <option value="vorticity">涡量 ω</option>
+                    </select>
+                    <span class="rng" id="colorRange"></span>
+                </div>
+                <div class="hud" id="hud"></div>
+                <div class="hint" id="hint"></div>
+            </div>
+
+            <div class="toolbar">
+                <div class="seg">
+                    <button id="btnRun" type="button">▶ 连续模拟</button>
+                    <button id="btnStepMode" type="button">⏭ 分步模拟</button>
+                </div>
+                <button class="btn" id="btnStep" type="button">单步执行</button>
+                <button class="btn" id="btnReset" type="button">重置场景</button>
+                <span class="badge" id="modeBadge"></span>
+            </div>
+        </div>
+
+        <aside class="panel">
+            <section class="card">
+                <h2>场景</h2>
+                <div class="scenes" id="sceneList"></div>
+                <p class="note" id="sceneNote"></p>
+            </section>
+
+            <section class="card">
+                <h2>模拟控制</h2>
+                <div class="row">
+                    <div class="lab"><span>模拟速度</span><b id="oSpeed">1.0×</b></div>
+                    <input type="range" id="sSpeed" min="0.1" max="3" step="0.1" value="1">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>每帧子步数</span><b id="oSub">2</b></div>
+                    <input type="range" id="sSub" min="1" max="4" step="1" value="2">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>网格宽度（格）</span><b id="oRes">96</b></div>
+                    <input type="range" id="sRes" min="48" max="192" step="4" value="96">
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>物理参数</h2>
+                <div class="row">
+                    <div class="lab"><span>压力迭代次数</span><b id="oIters">25</b></div>
+                    <input type="range" id="sIters" min="5" max="80" step="1" value="25">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>粘度 ν</span><b id="oMu">0.005</b></div>
+                    <input type="range" id="sMu" min="0" max="0.05" step="0.001" value="0.005">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>重力 g</span><b id="oG">9.8</b></div>
+                    <input type="range" id="sG" min="0" max="20" step="0.1" value="9.8">
+                </div>
+                <p class="note">粘度隐式雅可比；重力以浮力项 β·g·d 作用于含染料格点。</p>
+            </section>
+
+            <section class="card hidden" id="inletCard">
+                <h2>入口（圆柱绕流）</h2>
+                <div class="row">
+                    <div class="lab"><span>来流速度 U₀</span><b id="oInletU">30</b></div>
+                    <input type="range" id="sInletU" min="5" max="60" step="1" value="30">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>入口高度区间</span><b id="oInletSpan">25%–75%</b></div>
+                    <input type="range" id="sInletSpan" min="0.1" max="0.8" step="0.05" value="0.5">
+                </div>
+                <p class="note">左侧第 1 列 u 面以软拉方式向 U₀ 收敛（每步 50% 插值），避免硬设造成爆炸。</p>
+            </section>
+        </aside>
+    </div>
+
+
+    <script>
+
+        /* ============================================================================
+         * 欧拉流体模拟 — MAC staggered grid + Stable Fluids
+         *
+         * 网格布局（与参考 code.html 同构）：
+         *   u[i][j]    : x 方向速度，垂直面心 (i, j+0.5)   (NX+1) × NY
+         *   v[i][j]    : y 方向速度，水平面心 (i+0.5, j)   NX × (NY+1)
+         *   p[i][j]    : 压力，格点中心                    NX × NY
+         *   dye[i][j]  : 染料浓度（标量），格点中心         NX × NY   ← 单值，无 RGB
+         *   solid[i][j]: 固体标记                         NX × NY
+         *
+         * 染料颜色统一用三色渐变映射：#1a2340 → #7d4bd6 → #ff5f6d（深蓝 → 紫 → 珊瑚红），
+         * 由 dye 值决定颜色：低浓度 = 深蓝，高浓度 = 珊瑚红，中间 = 紫。
+         * 不再有 per-cell RGB 跟踪 —— 拖拽 / 入口补给 / 场景染料一律只写 dye 标量。
+         *
+         * 时间步顺序：forces → advect → diffuse → ∇·u → Jacobi(p, ω=0.85 SOR) → project → advect(dye)
+         * ========================================================================== */
+
+        'use strict';
+
+        // ---------------------------------------------------------------- 常量
+        var DT_BASE = 1 / 60;
+        var NX_DEF = 96;
+        var NY_DEF = 54;
+        var DX = 1;
+        var CELL_PX = 8;
+        var BETA_BUOY = 0.5;
+        var DYE_DISS = 0.999;
+        var VEL_DISS = 0.9998;
+
+        function ui(i, j) { return i + j * (NX + 1); }
+        function vi(i, j) { return i + j * NX; }
+        function ci(i, j) { return i + j * NX; }
+
+        // ---------------------------------------------------------------- 场景
+        var SCENES = {
+            dambreak: {
+                label: '溃坝',
+                defaults: { g: 9.8, mu: 0, iters: 25, inletU: 0 },
+                note: '经典溃坝：左侧水柱在浮力式重力下崩塌、推进、翻卷。'
+            },
+            cylinder: {
+                label: '圆柱绕流',
+                defaults: { g: 0, mu: 0.005, iters: 25, inletU: 30 },
+                note: '左侧均匀来流撞圆柱障碍；观察绕流速度梯度、柱后尾流与涡量分布。'
+            },
+            vortex: {
+                label: '双涡',
+                defaults: { g: 0, mu: 0.002, iters: 25, inletU: 0 },
+                note: '一对反向旋转的涡旋（蓝顺时针 / 橙逆时针），通过粘性扩散缓慢耗散。'
+            }
+        };
+
+        // ---------------------------------------------------------------- 模拟状态
+        var sim = {
+            scene: 'dambreak',
+            params: {
+                speed: 1, substeps: 2, iters: 25,
+                g: 9.8, mu: 0.005,
+                colorMode: 'vector',
+                nRes: NX_DEF,
+                inletU: 30, inletSpan: 0.5
+            },
+            t: 0
+        };
+
+        // ---------------------------------------------------------------- 场
+        var u  = new Float32Array(0);
+        var v  = new Float32Array(0);
+        var u0 = new Float32Array(0);
+        var v0 = new Float32Array(0);
+        var p  = new Float32Array(0);
+        var p0 = new Float32Array(0);
+        var div = new Float32Array(0);
+        var dye  = new Float32Array(0);
+        var dye0 = new Float32Array(0);
+        var solid  = new Uint8Array(0);
+        var solidU = new Uint8Array(0);
+        var solidV = new Uint8Array(0);
+        var nFl = new Uint8Array(0);
+
+        // ---------------------------------------------------------------- 画布
+        var canvas = document.getElementById('cv');
+        var ctx = canvas.getContext('2d');
+        var hudEl = document.getElementById('hud');
+        var hintEl = document.getElementById('hint');
+        var modeBadgeEl = document.getElementById('modeBadge');
+        var sceneNoteEl = document.getElementById('sceneNote');
+
+        var W = 1024, H = 576;
+        var offCanvas = null, offCtx = null, imageData = null;
+        var arrowImage = null;
+
+        // ---------------------------------------------------------------- 数学工具
+        function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+        function num(v, d) { var f = parseFloat(v); return Number.isFinite(f) ? f : d; }
+        function bilin(arr, stride, ni, nj, x, y) {
+            if (x < 0) x = 0; else if (x > ni - 1.001) x = ni - 1.001;
+            if (y < 0) y = 0; else if (y > nj - 1.001) y = nj - 1.001;
+            var i = x | 0, j = y | 0;
+            var fx = x - i, fy = y - j;
+            var a = arr[i + j * stride];
+            var b = arr[i + 1 + j * stride];
+            var c = arr[i + (j + 1) * stride];
+            var d2 = arr[i + 1 + (j + 1) * stride];
+            return (1 - fx) * (1 - fy) * a + fx * (1 - fy) * b + (1 - fx) * fy * c + fx * fy * d2;
+        }
+
+        function sampleU(x, y) { return bilin(u, NX + 1, NX + 1, NY, x, y - 0.5); }
+        function sampleV(x, y) { return bilin(v, NX, NX, NY + 1, x - 0.5, y); }
+        function sampleDye(x, y) { return bilin(dye, NX, NX, NY, x - 0.5, y - 0.5); }
+
+        // ---------------------------------------------------------------- 场分配
+        var NX = 0, NY = 0, NU = 0, NV = 0, NC = 0;
+        function allocFields(nx, ny) {
+            NX = nx; NY = ny;
+            NU = (NX + 1) * NY;
+            NV = NX * (NY + 1);
+            NC = NX * NY;
+            u  = new Float32Array(NU); v  = new Float32Array(NV);
+            u0 = new Float32Array(NU); v0 = new Float32Array(NV);
+            p  = new Float32Array(NC); p0 = new Float32Array(NC);
+            div = new Float32Array(NC);
+            dye  = new Float32Array(NC); dye0 = new Float32Array(NC);
+            solid  = new Uint8Array(NC);
+            solidU = new Uint8Array(NU);
+            solidV = new Uint8Array(NV);
+            nFl = new Uint8Array(NC);
+        }
+
+        function clearAll() {
+            u.fill(0); v.fill(0); u0.fill(0); v0.fill(0);
+            p.fill(0); p0.fill(0); div.fill(0);
+            dye.fill(0); dye0.fill(0);
+        }
+
+        // ---------------------------------------------------------------- 几何 / 边界
+        function fillSolidRect(x0, y0, x1, y1) {
+            var i0 = clamp(Math.floor(x0), 0, NX), i1 = clamp(Math.ceil(x1), 0, NX);
+            var j0 = clamp(Math.floor(y0), 0, NY), j1 = clamp(Math.ceil(y1), 0, NY);
+            for (var j = j0; j < j1; j++)
+                for (var i = i0; i < i1; i++)
+                    solid[ci(i, j)] = 1;
+        }
+        function fillSolidCircle(cx, cy, r) {
+            var r2 = r * r;
+            var i0 = clamp(Math.floor(cx - r), 0, NX), i1 = clamp(Math.ceil(cx + r), 0, NX);
+            var j0 = clamp(Math.floor(cy - r), 0, NY), j1 = clamp(Math.ceil(cy + r), 0, NY);
+            for (var j = j0; j < j1; j++) {
+                for (var i = i0; i < i1; i++) {
+                    var dx = i + 0.5 - cx, dy = j + 0.5 - cy;
+                    if (dx * dx + dy * dy <= r2) solid[ci(i, j)] = 1;
+                }
+            }
+        }
+
+        // 染料：单值标量场，无 RGB
+        function paintDye(x0, y0, x1, y1) {
+            var i0 = clamp(Math.floor(x0), 0, NX), i1 = clamp(Math.ceil(x1), 0, NX);
+            var j0 = clamp(Math.floor(y0), 0, NY), j1 = clamp(Math.ceil(y1), 0, NY);
+            for (var j = j0; j < j1; j++) {
+                for (var i = i0; i < i1; i++) {
+                    var k = ci(i, j);
+                    if (solid[k]) continue;
+                    dye[k] = 1;
+                }
+            }
+        }
+        function paintDyeRect(x, y, w, h) { paintDye(x, y, x + w, y + h); }
+        function paintDyeEllipse(cx, cy, rx, ry) {
+            var i0 = clamp(Math.floor(cx - rx), 0, NX), i1 = clamp(Math.ceil(cx + rx), 0, NX);
+            var j0 = clamp(Math.floor(cy - ry), 0, NY), j1 = clamp(Math.ceil(cy + ry), 0, NY);
+            for (var j = j0; j < j1; j++) {
+                for (var i = i0; i < i1; i++) {
+                    var dx = (i + 0.5 - cx) / rx, dy = (j + 0.5 - cy) / ry;
+                    if (dx * dx + dy * dy > 1) continue;
+                    var k = ci(i, j);
+                    if (solid[k]) continue;
+                    dye[k] = 1;
+                }
+            }
+        }
+
+        function setWalls() {
+            fillSolidRect(0, NY - 1, NX, NY);
+            fillSolidRect(0, 0, 1, NY);
+            fillSolidRect(NX - 1, 0, NX, NY);
+        }
+
+        function buildSolid() {
+            solid.fill(0);
+            if (sim.scene === 'cylinder') {
+                var cx = Math.floor(NX * 0.25);
+                var cy = Math.floor(NY * 0.50);
+                var R = clamp(Math.floor(Math.min(NX, NY) * 0.10), 4, 12);
+                fillSolidCircle(cx, cy, R);
+            }
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i <= NX; i++) {
+                    var L = (i === 0) ? 1 : solid[ci(i - 1, j)];
+                    var R = (i === NX) ? 1 : solid[ci(i, j)];
+                    solidU[ui(i, j)] = (L || R) ? 1 : 0;
+                }
+            }
+            for (var j = 0; j <= NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var B = (j === 0) ? 1 : solid[ci(i, j - 1)];
+                    var T = (j === NY) ? 1 : solid[ci(i, j)];
+                    solidV[vi(i, j)] = (B || T) ? 1 : 0;
+                }
+            }
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var c = ci(i, j);
+                    if (solid[c]) continue;
+                    var n = 0;
+                    if (i > 0 && !solid[ci(i - 1, j)]) n++;
+                    if (i < NX - 1 && !solid[ci(i + 1, j)]) n++;
+                    if (j > 0 && !solid[ci(i, j - 1)]) n++;
+                    if (j < NY - 1 && !solid[ci(i, j + 1)]) n++;
+                    nFl[c] = Math.max(1, n);
+                }
+            }
+        }
+
+        function applyBC() {
+            for (var k = 0; k < NU; k++) if (solidU[k]) u[k] = 0;
+            for (var k = 0; k < NV; k++) if (solidV[k]) v[k] = 0;
+            for (var i = 0; i < NX; i++) { v[vi(i, 0)] = 0; v[vi(i, NY)] = 0; }
+            for (var j = 0; j < NY; j++) { u[ui(0, j)] = 0; u[ui(NX, j)] = 0; }
+            for (var k = 0; k < NC; k++) if (solid[k]) { dye[k] = 0; p[k] = 0; }
+        }
+
+
+        // ---------------------------------------------------------------- 场景搭建
+        function setupDambreak() {
+            clearAll();
+            buildSolid();
+            paintDyeRect(
+                Math.floor(NX * 0.05), Math.floor(NY * 0.20),
+                Math.floor(NX * 0.32), Math.floor(NY * 0.98)
+            );
+        }
+
+        function setupCylinder() {
+            clearAll();
+            buildSolid();
+            var u0 = sim.params.inletU;
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < Math.floor(NX * 0.20); i++) {
+                    if (!solidU[ui(i, j)]) u[ui(i, j)] = u0 * 0.5;
+                }
+            }
+        }
+
+        function setupVortex() {
+            clearAll();
+            buildSolid();
+            var R = clamp(Math.floor(Math.min(NX, NY) * 0.13), 5, 14);
+            var cx1 = Math.floor(NX * 0.35), cy1 = Math.floor(NY * 0.50);
+            var cx2 = Math.floor(NX * 0.65), cy2 = Math.floor(NY * 0.50);
+            paintDyeEllipse(cx1, cy1, R, R);
+            paintDyeEllipse(cx2, cy2, R, R);
+            var strength = 8;
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    if (solid[ci(i, j)]) continue;
+                    var dx1 = i + 0.5 - cx1, dy1 = j + 0.5 - cy1;
+                    var r1sq = dx1 * dx1 + dy1 * dy1;
+                    if (r1sq < R * R && r1sq > 1e-6) {
+                        var r1 = Math.sqrt(r1sq);
+                        var f = strength * (1 - r1 / R);
+                        u[ui(i, j)] += dy1 * f / r1;
+                        u[ui(i + 1, j)] += dy1 * f / r1;
+                        v[vi(i, j)] += -dx1 * f / r1;
+                        v[vi(i, j + 1)] += -dx1 * f / r1;
+                    }
+                    var dx2 = i + 0.5 - cx2, dy2 = j + 0.5 - cy2;
+                    var r2sq = dx2 * dx2 + dy2 * dy2;
+                    if (r2sq < R * R && r2sq > 1e-6) {
+                        var r2 = Math.sqrt(r2sq);
+                        var f2 = strength * (1 - r2 / R);
+                        u[ui(i, j)] += -dy2 * f2 / r2;
+                        u[ui(i + 1, j)] += -dy2 * f2 / r2;
+                        v[vi(i, j)] += dx2 * f2 / r2;
+                        v[vi(i, j + 1)] += dx2 * f2 / r2;
+                    }
+                }
+            }
+        }
+
+        function setupScene() {
+            if (sim.scene === 'dambreak') setupDambreak();
+            else if (sim.scene === 'cylinder') setupCylinder();
+            else if (sim.scene === 'vortex') setupVortex();
+            sim.t = 0;
+        }
+
+        // ---------------------------------------------------------------- 力
+        function addForces(dt) {
+            var P = sim.params;
+            if (P.g > 0) {
+                var gy = BETA_BUOY * P.g * dt;
+                for (var j = 0; j < NY; j++) {
+                    for (var i = 0; i < NX; i++) {
+                        var c = ci(i, j);
+                        if (solid[c]) continue;
+                        var d = dye[c];
+                        if (d < 0.003) continue;
+                        v[vi(i, j)] += gy * d;
+                        v[vi(i, j + 1)] += gy * d;
+                    }
+                }
+            }
+            if (sim.scene === 'cylinder') {
+                var center = 0.5, half = P.inletSpan * 0.5;
+                var yMin = Math.floor(NY * (center - half));
+                var yMax = Math.floor(NY * (center + half));
+                for (var j = yMin; j < yMax; j++) {
+                    if (!solidU[ui(1, j)]) u[ui(1, j)] += (P.inletU - u[ui(1, j)]) * 0.5;
+                }
+                // 入口附近补给染料（每个流体格点 = dye=1）
+                for (var j = yMin; j < yMax; j++) {
+                    for (var i = 0; i < 3; i++) {
+                        var c = ci(i, j);
+                        if (solid[c]) continue;
+                        dye[c] = 1;
+                    }
+                }
+            }
+            applyBC();
+        }
+
+        function advectVelocity(dt) {
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i <= NX; i++) {
+                    var k = ui(i, j);
+                    if (solidU[k]) { u0[k] = 0; continue; }
+                    var x = i, y = j + 0.5;
+                    var uHere = sampleU(x, y);
+                    var vHere = sampleV(x, y);
+                    var xx = x - dt * uHere;
+                    var yy = y - dt * vHere;
+                    u0[k] = sampleU(xx, yy) * VEL_DISS;
+                }
+            }
+            for (var j = 0; j <= NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var k = vi(i, j);
+                    if (solidV[k]) { v0[k] = 0; continue; }
+                    var x = i + 0.5, y = j;
+                    var uHere = sampleU(x, y);
+                    var vHere = sampleV(x, y);
+                    var xx = x - dt * uHere;
+                    var yy = y - dt * vHere;
+                    v0[k] = sampleV(xx, yy) * VEL_DISS;
+                }
+            }
+            var tu = u; u = u0; u0 = tu;
+            var tv = v; v = v0; v0 = tv;
+            applyBC();
+        }
+
+        function advectDye(dt) {
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var c = ci(i, j);
+                    if (solid[c]) { dye0[c] = 0; continue; }
+                    var x = i + 0.5, y = j + 0.5;
+                    var uHere = sampleU(x, y);
+                    var vHere = sampleV(x, y);
+                    var xx = x - dt * uHere;
+                    var yy = y - dt * vHere;
+                    dye0[c] = sampleDye(xx, yy);
+                }
+            }
+            var td = dye; dye = dye0; dye0 = td;
+            for (var k = 0; k < NC; k++) dye[k] *= DYE_DISS;
+        }
+
+        function diffuse(dt) {
+            var P = sim.params;
+            var nu = P.mu;
+            if (nu <= 0) return;
+            var a = dt * nu;
+            var den = 4 + a;
+            if (a > 400) return;
+            for (var it = 0; it < 2; it++) {
+                for (var j = 0; j < NY; j++) {
+                    for (var i = 0; i <= NX; i++) {
+                        var k = ui(i, j);
+                        if (solidU[k]) { u0[k] = 0; continue; }
+                        var L = (i > 0) ? u[k - 1] : u[k];
+                        var R = (i < NX) ? u[k + 1] : u[k];
+                        var B = (j > 0) ? u[k - (NX + 1)] : u[k];
+                        var T = (j < NY - 1) ? u[k + (NX + 1)] : u[k];
+                        u0[k] = (u[k] * a + L + R + B + T) / den;
+                    }
+                }
+                for (var j = 0; j <= NY; j++) {
+                    for (var i = 0; i < NX; i++) {
+                        var k = vi(i, j);
+                        if (solidV[k]) { v0[k] = 0; continue; }
+                        var L = (i > 0) ? v[k - 1] : v[k];
+                        var R = (i < NX - 1) ? v[k + 1] : v[k];
+                        var B = (j > 0) ? v[k - NX] : v[k];
+                        var T = (j < NY) ? v[k + NX] : v[k];
+                        v0[k] = (v[k] * a + L + R + B + T) / den;
+                    }
+                }
+                var tu = u; u = u0; u0 = tu;
+                var tv = v; v = v0; v0 = tv;
+            }
+            applyBC();
+        }
+
+        function computeDivergence() {
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var c = ci(i, j);
+                    if (solid[c]) { div[c] = 0; continue; }
+                    div[c] = (u[ui(i + 1, j)] - u[ui(i, j)] + v[vi(i, j + 1)] - v[vi(i, j)]) / DX;
+                }
+            }
+        }
+
+        // SOR 阻尼（ω=0.85）抑制 collocated p 的 (-1)^(i+j) 棋盘格模式
+        var SOR_OMEGA = 0.85;
+        function jacobiOnce() {
+            var h2 = DX * DX;
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var c = ci(i, j);
+                    if (solid[c]) { p0[c] = 0; continue; }
+                    var s = 0;
+                    if (i > 0 && !solid[ci(i - 1, j)]) s += p[ci(i - 1, j)];
+                    if (i < NX - 1 && !solid[ci(i + 1, j)]) s += p[ci(i + 1, j)];
+                    if (j > 0 && !solid[ci(i, j - 1)]) s += p[ci(i, j - 1)];
+                    if (j < NY - 1 && !solid[ci(i, j + 1)]) s += p[ci(i, j + 1)];
+                    var pJac = (s - h2 * div[c]) / nFl[c];
+                    p0[c] = (1 - SOR_OMEGA) * p[c] + SOR_OMEGA * pJac;
+                }
+            }
+            var tp = p; p = p0; p0 = tp;
+        }
+
+        function project() {
+            for (var j = 0; j < NY; j++) {
+                for (var i = 1; i < NX; i++) {
+                    var k = ui(i, j);
+                    if (solidU[k]) continue;
+                    u[k] -= (p[ci(i, j)] - p[ci(i - 1, j)]) / DX;
+                }
+            }
+            for (var j = 1; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var k = vi(i, j);
+                    if (solidV[k]) continue;
+                    v[k] -= (p[ci(i, j)] - p[ci(i, j - 1)]) / DX;
+                }
+            }
+            applyBC();
+        }
+
+        function substep(dt) {
+            addForces(dt);
+            advectVelocity(dt);
+            diffuse(dt);
+            computeDivergence();
+            for (var k = 0; k < sim.params.iters; k++) jacobiOnce();
+            project();
+            computeDivergence();
+            advectDye(dt);
+        }
+
+        function stepPhysics(dt) {
+            if (!(dt > 0)) dt = DT_BASE;
+            substep(dt);
+            sim.t += dt;
+        }
+
+
+        // ---------------------------------------------------------------- 染料色带（参考 code.html）
+        // #1a2340 (26, 35, 64)     t=0   深蓝
+        // #7d4bd6 (125, 75, 214)   t=0.5 紫
+        // #ff5f6d (255, 95, 109)   t=1   珊瑚红
+        var DYE_RAMP = [[26, 35, 64], [125, 75, 214], [255, 95, 109]];
+        function dyeColor(t) {
+            t = t < 0 ? 0 : (t > 1 ? 1 : t);
+            var a, b, f;
+            if (t < 0.5) { a = DYE_RAMP[0]; b = DYE_RAMP[1]; f = t * 2; }
+            else { a = DYE_RAMP[1]; b = DYE_RAMP[2]; f = (t - 0.5) * 2; }
+            return [
+                Math.round(a[0] + (b[0] - a[0]) * f),
+                Math.round(a[1] + (b[1] - a[1]) * f),
+                Math.round(a[2] + (b[2] - a[2]) * f)
+            ];
+        }
+
+        function makeArrowImage() {
+            if (arrowImage) return arrowImage;
+            var w = 24, h = 6;
+            var c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            var cx = c.getContext('2d');
+            cx.strokeStyle = 'rgba(0, 224, 184, 0.95)';
+            cx.fillStyle = 'rgba(0, 224, 184, 0.95)';
+            cx.lineWidth = 0.8;
+            cx.lineCap = 'round';
+            cx.beginPath();
+            cx.moveTo(1, h / 2);
+            cx.lineTo(w - 4, h / 2);
+            cx.stroke();
+            cx.beginPath();
+            cx.moveTo(w - 5, 0.5);
+            cx.lineTo(w - 1, h / 2);
+            cx.lineTo(w - 5, h - 0.5);
+            cx.closePath();
+            cx.fill();
+            arrowImage = c;
+            return c;
+        }
+
+        // 染料背景：t = γ 校正后的 dye 值 → 颜色
+        function renderDyeBackground() {
+            if (!offCanvas || offCanvas.width !== NX || offCanvas.height !== NY) {
+                offCanvas = document.createElement('canvas');
+                offCanvas.width = NX;
+                offCanvas.height = NY;
+                offCtx = offCanvas.getContext('2d');
+                imageData = offCtx.createImageData(NX, NY);
+            }
+            var data = imageData.data;
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var k = ci(i, j);
+                    var p = k * 4;
+                    if (solid[k]) {
+                        data[p] = 8; data[p + 1] = 7; data[p + 2] = 6; data[p + 3] = 255;
+                        continue;
+                    }
+                    var d = dye[k];
+                    if (d <= 0.001) {
+                        data[p + 3] = 0;
+                        continue;
+                    }
+                    var col = dyeColor(d);
+                    // alpha 与浓度挂钩：高浓度实色、低浓度半透明 → 视觉上有"厚度感"
+                    var alpha = Math.min(158, 0.62 * 255 * Math.min(1, d * 1.35)) | 0;
+                    data[p]     = col[0];
+                    data[p + 1] = col[1];
+                    data[p + 2] = col[2];
+                    data[p + 3] = alpha;
+                }
+            }
+            offCtx.putImageData(imageData, 0, 0);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(offCanvas, 0, 0, W, H);
+        }
+
+        function renderVectorField() {
+            var img = makeArrowImage();
+            var stride = 1;
+            if (NX >= 144) stride = 2;
+            if (NX >= 192) stride = 3;
+            var maxArrowPx = CELL_PX * 1.6;
+            var speeds = new Float32Array(NC);
+            var cnt = 0, uc, vc, sp;
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    uc = 0.5 * (u[ui(i, j)] + u[ui(i + 1, j)]);
+                    vc = 0.5 * (v[vi(i, j)] + v[vi(i, j + 1)]);
+                    sp = Math.sqrt(uc * uc + vc * vc);
+                    if (sp > 0.1) speeds[cnt++] = sp;
+                }
+            }
+            var refU = 8;
+            if (cnt > 0) {
+                var sub = speeds.subarray(0, cnt);
+                sub.sort();
+                refU = Math.max(2, sub[Math.floor(cnt * 0.85)]);
+            }
+            ctx.lineCap = 'round';
+            for (var jj = 0; jj < NY; jj += stride) {
+                for (var ii = 0; ii < NX; ii += stride) {
+                    if (solid[ci(ii, jj)]) continue;
+                    uc = 0.5 * (u[ui(ii, jj)] + u[ui(ii + 1, jj)]);
+                    vc = 0.5 * (v[vi(ii, jj)] + v[vi(ii, jj + 1)]);
+                    sp = Math.sqrt(uc * uc + vc * vc);
+                    if (sp < 0.4) continue;
+                    var frac = clamp(sp / refU, 0, 1);
+                    var len = frac * maxArrowPx;
+                    var dir = Math.atan2(vc, uc);
+                    ctx.save();
+                    ctx.translate((ii + 0.5) * CELL_PX, (jj + 0.5) * CELL_PX);
+                    ctx.rotate(dir);
+                    ctx.scale(len / img.width, 1);
+                    ctx.drawImage(img, 0, 0);
+                    ctx.restore();
+                }
+            }
+        }
+
+        // 标量场着色（viridis / 压力发散 / 涡量发散）
+        function renderScalarField(mode) {
+            if (!offCanvas || offCanvas.width !== NX || offCanvas.height !== NY) {
+                offCanvas = document.createElement('canvas');
+                offCanvas.width = NX;
+                offCanvas.height = NY;
+                offCtx = offCanvas.getContext('2d');
+                imageData = offCtx.createImageData(NX, NY);
+            }
+            var data = imageData.data;
+            var maxSpeed = 0, maxP = 0, maxVort = 0;
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var c = ci(i, j);
+                    if (solid[c]) continue;
+                    var uc = 0.5 * (u[ui(i, j)] + u[ui(i + 1, j)]);
+                    var vc = 0.5 * (v[vi(i, j)] + v[vi(i, j + 1)]);
+                    var s = Math.sqrt(uc * uc + vc * vc);
+                    if (s > maxSpeed) maxSpeed = s;
+                    var ap = Math.abs(p[c]);
+                    if (ap > maxP) maxP = ap;
+                }
+            }
+            for (var jj = 1; jj < NY - 1; jj++) {
+                for (var ii = 1; ii < NX - 1; ii++) {
+                    var cc = ci(ii, jj);
+                    if (solid[cc]) continue;
+                    var u1 = 0.5 * (u[ui(ii, jj + 1)] + u[ui(ii + 1, jj + 1)]);
+                    var u0_ = 0.5 * (u[ui(ii, jj - 1)] + u[ui(ii + 1, jj - 1)]);
+                    var v1 = 0.5 * (v[vi(ii + 1, jj)] + v[vi(ii + 1, jj + 1)]);
+                    var v0_ = 0.5 * (v[vi(ii - 1, jj)] + v[vi(ii - 1, jj + 1)]);
+                    var vort = Math.abs((v1 - v0_ - (u1 - u0_)) / (2 * DX));
+                    if (vort > maxVort) maxVort = vort;
+                }
+            }
+            var refSpeed = Math.max(1, maxSpeed * 0.9);
+            var refP = Math.max(0.1, maxP);
+            var refVort = Math.max(0.5, maxVort * 0.6);
+
+            for (var j2 = 0; j2 < NY; j2++) {
+                for (var i2 = 0; i2 < NX; i2++) {
+                    var c2 = ci(i2, j2);
+                    var p2 = c2 * 4;
+                    if (solid[c2]) {
+                        data[p2] = 8; data[p2 + 1] = 7; data[p2 + 2] = 6; data[p2 + 3] = 255;
+                        continue;
+                    }
+                    var t, col;
+                    if (mode === 'speed') {
+                        var uc2 = 0.5 * (u[ui(i2, j2)] + u[ui(i2 + 1, j2)]);
+                        var vc2 = 0.5 * (v[vi(i2, j2)] + v[vi(i2, j2 + 1)]);
+                        var s2 = Math.sqrt(uc2 * uc2 + vc2 * vc2);
+                        t = s2 / refSpeed;
+                        col = rampColor(t);
+                    } else if (mode === 'pressure') {
+                        t = p[c2] / refP;
+                        col = divergingColor(t);
+                    } else {
+                        if (i2 === 0 || i2 === NX - 1 || j2 === 0 || j2 === NY - 1) {
+                            t = 0; col = divergingColor(0);
+                        } else {
+                            var u_ = 0.5 * (u[ui(i2, j2 + 1)] + u[ui(i2 + 1, j2 + 1)]);
+                            var u0_ = 0.5 * (u[ui(i2, j2 - 1)] + u[ui(i2 + 1, j2 - 1)]);
+                            var v_ = 0.5 * (v[vi(i2 + 1, j2)] + v[vi(i2 + 1, j2 + 1)]);
+                            var v0_ = 0.5 * (v[vi(i2 - 1, j2)] + v[vi(i2 - 1, j2 + 1)]);
+                            t = ((v_ - v0_ - (u_ - u0_)) / (2 * DX)) / refVort;
+                            col = divergingColor(t);
+                        }
+                    }
+                    data[p2] = col[0]; data[p2 + 1] = col[1]; data[p2 + 2] = col[2]; data[p2 + 3] = 255;
+                }
+            }
+            offCtx.putImageData(imageData, 0, 0);
+            ctx.imageSmoothingEnabled = true;
+            ctx.drawImage(offCanvas, 0, 0, W, H);
+        }
+
+        function rampColor(t) {
+            var VIRIDIS_RAMP = [
+                [0.267, 0.005, 0.329], [0.283, 0.141, 0.458], [0.254, 0.265, 0.530],
+                [0.207, 0.372, 0.553], [0.164, 0.471, 0.558], [0.128, 0.567, 0.551],
+                [0.135, 0.659, 0.518], [0.267, 0.749, 0.441], [0.478, 0.821, 0.318],
+                [0.741, 0.873, 0.150], [0.993, 0.906, 0.144]
+            ];
+            t = clamp(t, 0, 1) * (VIRIDIS_RAMP.length - 1);
+            var i = t | 0, f = t - i;
+            if (i >= VIRIDIS_RAMP.length - 1) i = VIRIDIS_RAMP.length - 2;
+            var a = VIRIDIS_RAMP[i], b = VIRIDIS_RAMP[i + 1];
+            return [
+                Math.round(255 * (a[0] + (b[0] - a[0]) * f)),
+                Math.round(255 * (a[1] + (b[1] - a[1]) * f)),
+                Math.round(255 * (a[2] + (b[2] - a[2]) * f))
+            ];
+        }
+        function divergingColor(t) {
+            t = clamp(t, -1, 1);
+            if (t >= 0) {
+                return [Math.round(255*(1-t)+220*t), Math.round(255*(1-t)+80*t), Math.round(255*(1-t)+80*t)];
+            } else {
+                var u = -t;
+                return [Math.round(255*(1-u)+90*u), Math.round(255*(1-u)+160*u), Math.round(255*(1-u)+230*u)];
+            }
+        }
+
+        function drawScene() {
+            var P = sim.params;
+            if (P.colorMode === 'vector' || P.colorMode === 'dye') {
+                renderDyeBackground();
+                if (P.colorMode === 'vector') renderVectorField();
+            } else {
+                renderScalarField(P.colorMode);
+            }
+        }
+
+
+        // ---------------------------------------------------------------- HUD
+        function updateHUD(fps) {
+            var maxU = 0, maxDiv = 0, sumDye = 0, count = 0;
+            for (var j = 0; j < NY; j++) {
+                for (var i = 0; i < NX; i++) {
+                    var c = ci(i, j);
+                    if (solid[c]) continue;
+                    var uc = 0.5 * (u[ui(i, j)] + u[ui(i + 1, j)]);
+                    var vc = 0.5 * (v[vi(i, j)] + v[vi(i, j + 1)]);
+                    var s = Math.abs(uc) + Math.abs(vc);
+                    if (s > maxU) maxU = s;
+                    var ad = Math.abs(div[c]);
+                    if (ad > maxDiv) maxDiv = ad;
+                    sumDye += dye[c];
+                    count++;
+                }
+            }
+            var dt = DT_BASE * clamp(sim.params.speed, 0.05, 4) / Math.max(1, sim.params.substeps);
+            var cfl = maxU * dt / DX;
+            var txt = 'FPS  ' + String(fps).padStart(3, ' ') + '\n' +
+                't    ' + sim.t.toFixed(2) + ' s\n' +
+                '网格  ' + NX + '×' + NY + '\n' +
+                '‖u‖∞  ' + maxU.toFixed(1) + '\n' +
+                '‖div u‖∞  ' + maxDiv.toFixed(3) + '\n' +
+                'CFL  ' + cfl.toFixed(2) +
+                (count > 0 ? '\ndye  ' + (sumDye / count * 100).toFixed(1) + '%' : '');
+            hudEl.textContent = txt;
+        }
+
+        function updateLegendRange() {
+            var el = document.getElementById('colorRange');
+            if (el) el.textContent = '0.0 – 1.0 (染料: 深蓝 → 紫 → 红)';
+        }
+
+        // ---------------------------------------------------------------- 交互
+        var dragState = { active: false, x: 0, y: 0, px: 0, py: 0, accX: 0, accY: 0 };
+
+        function localPoint(ev) {
+            var r = canvas.getBoundingClientRect();
+            var t = (ev.touches && ev.touches[0]) ? ev.touches[0] : ev;
+            return [(t.clientX || 0) - r.left, (t.clientY || 0) - r.top];
+        }
+        function eventToWorld(pt) {
+            return [pt[0] / canvas.clientWidth * W, pt[1] / canvas.clientHeight * H];
+        }
+
+        function applyDragForce() {
+            if (!dragState.active) { dragState.accX = 0; dragState.accY = 0; return; }
+            var ax = dragState.accX, ay = dragState.accY;
+            dragState.accX = 0; dragState.accY = 0;
+            if (ax === 0 && ay === 0) return;
+            var gx = dragState.x, gy = dragState.y;
+            var R = Math.max(3, Math.min(NX, NY) * 0.12);
+            var R2 = R * R;
+            var i0 = clamp(Math.floor(gx - R), 0, NX), i1 = clamp(Math.ceil(gx + R), 0, NX);
+            var j0 = clamp(Math.floor(gy - R), 0, NY), j1 = clamp(Math.ceil(gy + R), 0, NY);
+            for (var j = j0; j < j1; j++) {
+                for (var i = i0; i < i1; i++) {
+                    var dx = i + 0.5 - gx, dy = j + 0.5 - gy;
+                    var d2 = dx * dx + dy * dy;
+                    if (d2 > R2) continue;
+                    var k = ci(i, j);
+                    if (solid[k]) continue;
+                    var fall = 1 - Math.sqrt(d2) / R;
+                    if (!solidU[ui(i, j)]) u[ui(i, j)] += ax * 0.4 * fall;
+                    if (!solidU[ui(i + 1, j)]) u[ui(i + 1, j)] += ax * 0.4 * fall;
+                    if (!solidV[vi(i, j)]) v[vi(i, j)] += ay * 0.4 * fall;
+                    if (!solidV[vi(i, j + 1)]) v[vi(i, j + 1)] += ay * 0.4 * fall;
+                    // 笔刷痕迹：染料单值场，色带自动渲染成红紫色（高浓度 → 珊瑚红）
+                    dye[k] = Math.min(1.2, dye[k] + fall * 0.5);
+                }
+            }
+        }
+
+        function onPointerDown(ev) {
+            var pt = localPoint(ev);
+            var wp = eventToWorld(pt);
+            var gx = wp[0] / CELL_PX, gy = wp[1] / CELL_PX;
+            dragState.active = true;
+            dragState.x = gx; dragState.y = gy;
+            dragState.px = gx; dragState.py = gy;
+            dragState.accX = 0; dragState.accY = 0;
+            if (canvas.setPointerCapture && ev.pointerId !== undefined) {
+                try { canvas.setPointerCapture(ev.pointerId); } catch (e) {}
+            }
+        }
+        function onPointerMove(ev) {
+            if (!dragState.active) return;
+            var pt = localPoint(ev);
+            var wp = eventToWorld(pt);
+            var gx = wp[0] / CELL_PX, gy = wp[1] / CELL_PX;
+            dragState.accX += (gx - dragState.px) * 60;
+            dragState.accY += (gy - dragState.py) * 60;
+            dragState.x = gx; dragState.y = gy;
+            dragState.px = gx; dragState.py = gy;
+        }
+        function onPointerUp() { dragState.active = false; }
+
+        var running = true;
+        var stepMode = false;
+        var needStep = false;
+        var lastTime = 0, fps = 60;
+
+        function stepFrame() {
+            var P = sim.params;
+            var sub = Math.max(1, P.substeps | 0);
+            var dt = DT_BASE * clamp(P.speed, 0.05, 4) / sub;
+            for (var i = 0; i < sub; i++) stepPhysics(dt);
+        }
+
+        function frame(now) {
+            requestAnimationFrame(frame);
+            if (lastTime) {
+                var d = now - lastTime;
+                if (d > 0 && d < 500) fps = Math.round(fps * 0.9 + (1000 / d) * 0.1);
+            }
+            lastTime = now;
+
+            if (dragState.active) applyDragForce();
+            if (needStep) { needStep = false; stepFrame(); }
+            else if (running && !stepMode) stepFrame();
+
+            drawScene();
+            updateLegendRange();
+            updateHUD(fps);
+        }
+
+        function el(id) { return document.getElementById(id); }
+
+        function readSliders() {
+            var P = sim.params;
+            P.speed = clamp(num(el('sSpeed').value, 1) || 1, 0.1, 3);
+            P.substeps = Math.round(clamp(num(el('sSub').value, 2) || 2, 1, 4));
+            P.iters = Math.round(clamp(num(el('sIters').value, 25) || 25, 5, 80));
+            P.mu = clamp(num(el('sMu').value, 0.005), 0, 0.05);
+            P.g = clamp(num(el('sG').value, 9.8), 0, 20);
+            P.inletU = clamp(num(el('sInletU').value, 30), 0, 80);
+            P.inletSpan = clamp(num(el('sInletSpan').value, 0.5), 0.1, 0.9);
+        }
+
+        function syncUI() {
+            var P = sim.params;
+            el('oSpeed').textContent = P.speed.toFixed(1) + '×';
+            el('oSub').textContent = String(P.substeps);
+            el('oRes').textContent = String(P.nRes);
+            el('oIters').textContent = String(P.iters);
+            el('oMu').textContent = P.mu.toFixed(3);
+            el('oG').textContent = P.g.toFixed(1);
+            el('oInletU').textContent = String(Math.round(P.inletU));
+            el('oInletSpan').textContent = Math.round((0.5 - P.inletSpan / 2) * 100) + '%–' + Math.round((0.5 + P.inletSpan / 2) * 100) + '%';
+
+            el('btnRun').className = stepMode ? '' : (running ? 'on' : '');
+            el('btnRun').textContent = (running && !stepMode) ? '▶ 连续模拟' : '⏸ 已暂停';
+            el('btnStepMode').className = stepMode ? 'on' : '';
+            modeBadgeEl.textContent = stepMode
+                ? '分步模式：点「单步执行」推进一步（投影 ' + P.iters + ' 次）'
+                : (running ? '连续模拟中' : '已暂停');
+            el('inletCard').className = 'card' + (sim.scene === 'cylinder' ? '' : ' hidden');
+            hintEl.textContent = '拖拽画布注入动量 + 染料（笔刷痕迹跟随流场）｜ 单步模式可逐步观察'
+                + (sim.scene === 'cylinder' ? ' ｜ 左边界 = 入口（软拉向 U₀）' : '')
+                + (sim.scene === 'vortex' ? ' ｜ 一对反向旋转的涡旋' : '');
+            sceneNoteEl.textContent = SCENES[sim.scene] ? SCENES[sim.scene].note : '';
+            var btns = document.querySelectorAll('#sceneList button');
+            for (var i = 0; i < btns.length; i++) {
+                btns[i].className = (btns[i].dataset.scene === sim.scene) ? 'on' : '';
+            }
+        }
+
+        function selectScene(name) {
+            if (!SCENES[name]) name = 'dambreak';
+            var P = sim.params, d = SCENES[name];
+            sim.scene = name;
+            P.g = d.defaults.g; P.mu = d.defaults.mu; P.iters = d.defaults.iters;
+            if (d.defaults.inletU !== undefined) P.inletU = d.defaults.inletU;
+            running = true; stepMode = false;
+            setupScene();
+            syncUI();
+        }
+
+        function wireSlider(id, apply) {
+            var node = el(id);
+            if (!node || !node.addEventListener) return;
+            node.addEventListener('input', function () {
+                apply(num(node.value, 0));
+                syncUI();
+            });
+        }
+
+        function buildUI() {
+            var list = el('sceneList');
+            var keys = Object.keys(SCENES), i, b;
+            for (i = 0; i < keys.length; i++) {
+                b = document.createElement('button');
+                b.type = 'button';
+                b.textContent = SCENES[keys[i]].label;
+                b.dataset.scene = keys[i];
+                b.addEventListener('click', function (ev) {
+                    selectScene(ev.currentTarget.dataset.scene);
+                });
+                list.appendChild(b);
+            }
+
+            wireSlider('sSpeed', function (v) { sim.params.speed = v || 1; });
+            wireSlider('sSub', function (v) { sim.params.substeps = Math.max(1, Math.round(v)); });
+            wireSlider('sIters', function (v) { sim.params.iters = Math.max(1, Math.round(v)); });
+            wireSlider('sMu', function (v) { sim.params.mu = v; });
+            wireSlider('sG', function (v) { sim.params.g = v; });
+            wireSlider('sRes', function (v) {
+                var nx = Math.round(v / 4) * 4;
+                if (nx !== NX) rebuildGrid(nx);
+            });
+            wireSlider('sInletU', function (v) {
+                sim.params.inletU = v || 0;
+                if (sim.scene === 'cylinder') setupScene();
+            });
+            wireSlider('sInletSpan', function (v) {
+                sim.params.inletSpan = v || 0.5;
+                if (sim.scene === 'cylinder') setupScene();
+            });
+
+            el('btnRun').addEventListener('click', function () {
+                if (stepMode) { stepMode = false; running = true; }
+                else running = !running;
+                syncUI();
+            });
+            el('btnStepMode').addEventListener('click', function () {
+                stepMode = !stepMode;
+                if (stepMode) running = false;
+                syncUI();
+            });
+            el('btnStep').addEventListener('click', function () {
+                stepMode = true; running = false;
+                needStep = true;
+                syncUI();
+            });
+            el('btnReset').addEventListener('click', function () {
+                setupScene();
+                syncUI();
+            });
+            var cm = el('colorMode');
+            if (cm && cm.addEventListener) {
+                cm.value = sim.params.colorMode;
+                cm.addEventListener('change', function () { sim.params.colorMode = cm.value; });
+            }
+
+            canvas.addEventListener('pointerdown', onPointerDown);
+            canvas.addEventListener('pointermove', onPointerMove);
+            canvas.addEventListener('pointerup', onPointerUp);
+            canvas.addEventListener('pointercancel', onPointerUp);
+        }
+
+        function rebuildGrid(newNx) {
+            sim.params.nRes = newNx;
+            var ny = Math.round(newNx * 9 / 16);
+            allocFields(newNx, ny);
+            CELL_PX = Math.max(4, Math.min(W / newNx, H / ny));
+            setupScene();
+        }
+
+        function resizeCanvas() {
+            var r = canvas.getBoundingClientRect();
+            var dpr = (window && window.devicePixelRatio) ? window.devicePixelRatio : 1;
+            var nw = Math.max(320, Math.round((r && r.width) || 1024));
+            var nh = Math.max(240, Math.round((r && r.height) || 576));
+            W = nw; H = nh;
+            CELL_PX = Math.max(4, Math.min(W / NX, H / NY));
+            canvas.width = Math.round(W * dpr);
+            canvas.height = Math.round(H * dpr);
+            if (ctx.setTransform) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function boot() {
+            buildUI();
+            readSliders();
+            sim.params.nRes = NX_DEF;
+            allocFields(NX_DEF, NY_DEF);
+            selectScene(sim.scene);
+            resizeCanvas();
+            syncUI();
+            requestAnimationFrame(frame);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+        } else {
+            boot();
+        }
+
+        if (window && window.addEventListener) {
+            var resizePending = false;
+            window.addEventListener('resize', function () {
+                if (resizePending) return;
+                resizePending = true;
+                requestAnimationFrame(function () {
+                    resizePending = false;
+                    resizeCanvas();
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="../_shared/design-tokens.css">
     <script src="../_shared/tool-header.js"></script>
     <script src="../_shared/theme-tokens.js"></script>
+    <!-- 未登录立即跳转到登录页，登录成功后会跳回 -->
+    <script src="../_shared/auth-guard.js" data-guard="immediate"></script>
     <style>
         :root {
             --error-color: #e74c3c;
@@ -355,9 +357,10 @@
             const loginPrompt = document.getElementById('loginPrompt');
             const loginLink = document.getElementById('loginLink');
 
-            // 未登录时给出跳转登录入口
+            // 未登录时给出跳转登录入口（_shared/auth-guard.js 已在页面加载时立即守卫，
+            // 这里保留作为页内 token 过期后的兜底：跳转到登录页而非新开标签）
             loginLink.addEventListener('click', () => {
-                window.open('https://api.oscarstudio.cn/auth.html?return=' + encodeURIComponent(location.href), '_blank');
+                window.__oscarAuth && window.__oscarAuth.redirectToLogin();
             });
 
             // 示例点击：填入两侧

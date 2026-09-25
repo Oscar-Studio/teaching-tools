@@ -175,13 +175,15 @@
         }
 
         #resetBtn {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
+            background: var(--surface-soft);
+            color: var(--ink);
             border: 1px solid var(--hairline);
         }
 
         #resetBtn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: var(--card-bg);
+            border-color: var(--primary);
+            color: var(--primary);
             transform: translateY(-2px);
         }
 
@@ -340,7 +342,7 @@
         // Update displays
         depthInput.oninput = () => depthVal.textContent = depthInput.value;
         angleInput.oninput = () => angleVal.textContent = angleInput.value;
-        speedInput.oninput = () => speedVal.textContent = Math.round(speedInput.value / 10);
+        speedInput.oninput = () => speedVal.textContent = speedInput.value;
 
         function getColorAtDepth(depth, maxDepth) {
             const hue = 30 + (depth / maxDepth) * 90;
@@ -363,17 +365,18 @@
         }
 
         let isWorkerComplete = false;
+        let frameCounter = 0;
 
         function processRenderQueue() {
             if (!isAnimating) return;
 
             const speed = parseInt(speedInput.value);
-            // Higher speed = more levels processed per frame
-            const levelsPerFrame = Math.max(1, Math.floor(speed / 100));
-            const itemsProcessed = levelsPerFrame * 100;
+            // speed 1→60 帧/层（约 1s/层），speed 1000→5 帧/层（约 80ms/层）
+            const framesPerLevel = Math.max(1, Math.round(60 - (speed / 1000) * 55));
 
-            let processedCount = 0;
-            while (renderQueue.length > 0 && processedCount < itemsProcessed) {
+            frameCounter++;
+            if (frameCounter >= framesPerLevel && renderQueue.length > 0) {
+                frameCounter = 0;
                 const data = renderQueue.shift();
                 for (const node of data) {
                     const sprite = new PIXI.Sprite(squareTexture);
@@ -386,7 +389,6 @@
                     sprite.tint = getColorAtDepth(node.depth, currentMaxDepth);
                     app.stage.addChild(sprite);
                 }
-                processedCount++;
             }
 
             if (isWorkerComplete && renderQueue.length === 0) {
@@ -410,6 +412,7 @@
             reset();
             isAnimating = true;
             isWorkerComplete = false;
+            frameCounter = 0;
             currentMaxDepth = maxDepth;
 
             startBtn.style.display = 'none';
@@ -461,7 +464,7 @@
         resetBtn.onclick = reset;
 
         // Initial setup
-        speedVal.textContent = Math.round(speedInput.value / 10);
+        speedVal.textContent = speedInput.value;
         initPixi();
     
         // 主题切换响应

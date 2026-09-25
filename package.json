@@ -7,14 +7,16 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 4173",
-    "deploy": "gh-pages -d dist --no-history",
-    "predeploy": "npm run build"
+    "deploy": "npm run build:fsrs && tsc -b && vite build && bash ../sync-site.sh teaching-tools /www/wwwroot/edu.oscarstudio.cn",
+    "build:fsrs": "node scripts/build-fsrs-bundle.mjs",
+    "test:sph": "node scripts/sph-smoke.test.mjs"
   },
   "dependencies": {
-    "@samasante/liquid-glass": "^0.1.1",
+    "esbuild": "^0.28.2",
     "framer-motion": "^11.11.17",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "ts-fsrs": "^5.4.2"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

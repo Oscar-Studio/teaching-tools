@@ -5,17 +5,19 @@ import { CardGrid } from './components/CardGrid';
 import { MorphCard } from './components/MorphCard';
 import { useToolsConfig } from './hooks/useToolsConfig';
 import { useOpilot } from './hooks/useOpilot';
-import { useGlassBackground } from './components/GlassProvider';
-import { UserLiquidGlassProvider } from './hooks/useUserLiquidGlass';
+import { useUserBackground } from './components/GlassProvider';
+import { useHomeTheme } from './hooks/useHomeTheme';
+import { NotebookLanding } from './components/Notebook/NotebookLanding';
 import type { Tool } from './types';
 
 export type Phase = 'idle' | 'opening' | 'open' | 'closing';
 
 function AppContent() {
-  useGlassBackground();
+  useUserBackground();
   const { tools, loading, error } = useToolsConfig();
   const [selected, setSelected] = useState<{ tool: Tool; rect: DOMRect } | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
+  const [eduTheme] = useHomeTheme();
   const lockRef = useRef(false);
   const rectsRef = useRef<Record<string, DOMRect>>({});
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -45,17 +47,25 @@ function AppContent() {
 
   return (
     <>
-      <TopBar />
-      <Hero />
-      <CardGrid
-        tools={tools}
-        loading={loading}
-        error={error}
-        selectedId={selected?.tool.id ?? null}
-        phase={phase}
-        rects={rectsRef.current}
-        onSelect={handleSelect}
-      />
+      <TopBar section="教学工具" />
+      {/* Classic 主题：原版卡片网格。Notebook 主题下用 .classic-only 隐藏 */}
+      <div className="classic-only">
+        <Hero />
+        <CardGrid
+          tools={tools}
+          loading={loading}
+          error={error}
+          selectedId={selected?.tool.id ?? null}
+          phase={phase}
+          rects={rectsRef.current}
+          onSelect={handleSelect}
+        />
+      </div>
+      {/* Notebook 主题：落地页（点击直接跳转，无 MorphCard）。Classic 主题下不渲染（节省 JS） */}
+      {!loading && !error && eduTheme === 'notebook' && (
+        <NotebookLanding tools={tools} />
+      )}
+      {/* MorphCard 复用：两个主题共用工具开启动画 */}
       <MorphCard
         tool={selected?.tool ?? null}
         sourceRect={selected?.rect ?? null}
@@ -68,9 +78,5 @@ function AppContent() {
 }
 
 export default function App() {
-  return (
-    <UserLiquidGlassProvider>
-      <AppContent />
-    </UserLiquidGlassProvider>
-  );
+  return <AppContent />;
 }

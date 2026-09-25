@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拉格朗日流体模拟</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--canvas);
+            color: var(--ink);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            padding: 18px 18px 40px;
+        }
+
+        header { text-align: center; margin-bottom: 16px; }
+
+        h1 { font-size: 1.5em; font-weight: 600; letter-spacing: .01em; }
+
+        .subtitle {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: .84em;
+            line-height: 1.7;
+            max-width: 780px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .wrap {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 296px;
+            gap: 16px;
+            max-width: 1320px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .wrap { grid-template-columns: minmax(0, 1fr); }
+        }
+
+        /* ---------- 画布区 ---------- */
+        .demo-area {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            min-height: 320px;
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            border: 1px solid var(--graph-card-border);
+            box-shadow: var(--graph-card-shadow);
+            /* 模拟视口固定使用深色画板：着色量表对比度不随主题反转而失效 */
+            background: #14130f;
+            touch-action: none;
+        }
+
+        canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+        .legend, .hud, .hint {
+            position: absolute;
+            font: 11px/1.5 var(--font-mono);
+            color: #d9d5cc;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .legend { top: 10px; left: 10px; display: flex; align-items: center; gap: 7px; }
+
+        .legend select {
+            pointer-events: auto;
+            background: #232019;
+            color: #eae6dd;
+            border: 1px solid #3c372e;
+            border-radius: 5px;
+            font: inherit;
+            padding: 2px 4px;
+        }
+
+        .legend .bar { width: 74px; height: 9px; border-radius: 2px; border: 1px solid #3c372e; }
+
+        .legend .rng { min-width: 74px; opacity: .82; }
+
+        .hud { top: 10px; right: 10px; text-align: right; white-space: pre; }
+
+        .hint { bottom: 10px; left: 10px; right: 10px; opacity: .62; text-align: center; }
+
+        /* ---------- 工具条 ---------- */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .seg { display: flex; gap: 0; border: 1px solid var(--hairline); border-radius: var(--r-md); overflow: hidden; }
+
+        .seg button {
+            border: 0;
+            background: var(--surface-soft);
+            color: var(--muted);
+            font: 600 12px/1 var(--font-sans);
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background .15s, color .15s;
+        }
+
+        .seg button + button { border-left: 1px solid var(--hairline); }
+        .seg button:hover { color: var(--ink); }
+
+        .seg button.on { background: var(--primary); color: #fff; }
+
+        .btn {
+            border: 1px solid var(--hairline);
+            background: var(--surface-soft);
+            color: var(--ink);
+            border-radius: var(--r-md);
+            font: 600 12px/1 var(--font-sans);
+            padding: 9px 13px;
+            cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .btn:hover { border-color: var(--primary); color: var(--primary); }
+        .btn.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+        .badge {
+            margin-left: auto;
+            font: 11px/1 var(--font-mono);
+            color: var(--muted);
+            border: 1px dashed var(--hairline);
+            border-radius: var(--r-pill);
+            padding: 6px 10px;
+        }
+
+        /* ---------- 右侧面板 ---------- */
+        .panel { display: flex; flex-direction: column; gap: 12px; }
+
+        .card {
+            background: var(--surface-card);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-lg);
+            padding: 12px;
+        }
+
+        .card > h2 {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            letter-spacing: .04em;
+            margin-bottom: 10px;
+        }
+
+        .scenes { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+
+        .scenes button {
+            border: 1px solid var(--hairline);
+            background: var(--surface-soft);
+            color: var(--ink);
+            border-radius: var(--r-md);
+            font: 600 12px/1.3 var(--font-sans);
+            padding: 10px 6px;
+            cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .scenes button:hover { border-color: var(--primary); color: var(--primary); }
+        .scenes button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+        .row { margin-bottom: 11px; }
+        .row:last-child { margin-bottom: 0; }
+
+        .row .lab { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+
+        .row .lab b { color: var(--primary); font: 600 12px/1 var(--font-mono); }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--hairline);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid var(--canvas);
+            cursor: pointer;
+        }
+
+        input[type=range]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid var(--canvas);
+            cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
+
+        .note { font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>拉格朗日流体模拟</h1>
+        <p class="subtitle">
+            基于 SPH（Smoothed Particle Hydrodynamics）的拉格朗日视角流体模拟。每个粒子携带自己的物理量（密度、压力、速度），
+            通过核函数 W(r, h) 与邻居相互作用。<br>
+            拖拽画布注入扰动力；单击粒子查看其物理量；双击粒子显示核函数作用范围。倾倒场景中可直接拖动杯子旋转。
+        </p>
+    </header>
+
+    <div class="wrap">
+        <div>
+            <div class="demo-area" id="stage">
+                <canvas id="cv"></canvas>
+                <div class="legend">
+                    <span>着色</span>
+                    <select id="colorMode">
+                        <option value="speed">速度 |v|</option>
+                        <option value="density">密度 ρ</option>
+                        <option value="pressure">压力 p</option>
+                    </select>
+                    <div class="bar" id="colorBar"></div>
+                    <span class="rng" id="colorRange">0 – 1</span>
+                </div>
+                <div class="hud" id="hud"></div>
+                <div class="hint" id="hint"></div>
+            </div>
+
+            <div class="toolbar">
+                <div class="seg">
+                    <button id="btnRun" type="button">▶ 连续模拟</button>
+                    <button id="btnStepMode" type="button">⏭ 分步模拟</button>
+                </div>
+                <button class="btn" id="btnStep" type="button">单步执行</button>
+                <button class="btn" id="btnForces" type="button">力箭头</button>
+                <button class="btn" id="btnReset" type="button">重置场景</button>
+                <button class="btn" id="btnAutoTilt" type="button">自动倾倒</button>
+                <span class="badge" id="modeBadge"></span>
+            </div>
+        </div>
+
+        <aside class="panel">
+            <section class="card">
+                <h2>场景</h2>
+                <div class="scenes" id="sceneList"></div>
+                <p class="note" id="sceneNote"></p>
+            </section>
+
+            <section class="card">
+                <h2>模拟控制</h2>
+                <div class="row">
+                    <div class="lab"><span>模拟速度</span><b id="oSpeed">1.0×</b></div>
+                    <input type="range" id="sSpeed" min="0.1" max="3" step="0.1" value="1">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>每帧子步数</span><b id="oSub">2</b></div>
+                    <input type="range" id="sSub" min="1" max="4" step="1" value="2">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>力箭头长度</span><b id="oArrow">1.0</b></div>
+                    <input type="range" id="sArrow" min="0.2" max="3" step="0.1" value="1">
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>物理参数</h2>
+                <div class="row">
+                    <div class="lab"><span>粒子数 N</span><b id="oN">700</b></div>
+                    <input type="range" id="sN" min="100" max="2500" step="50" value="700">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>平滑半径 h</span><b id="oH">14.0</b></div>
+                    <input type="range" id="sH" min="4" max="32" step="0.5" value="14">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>气体常数 k</span><b id="oK">2.00×10⁶</b></div>
+                    <input type="range" id="sK" min="0" max="100" step="1" value="62">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>粘度 μ（速度平滑）</span><b id="oMu">0.30</b></div>
+                    <input type="range" id="sMu" min="0" max="2" step="0.05" value="0.3">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>重力 g</span><b id="oG">300</b></div>
+                    <input type="range" id="sG" min="0" max="1000" step="10" value="300">
+                </div>
+                <p class="note">调整 h 会关闭「自动 h」；切换场景或改变 N 时，会按粒子间距自动匹配最佳 h。</p>
+            </section>
+
+            <section class="card hidden" id="stoneCard">
+                <h2>石子（刚体）</h2>
+                <div class="row">
+                    <div class="lab"><span>初始水平位置</span><b id="oStoneX">50%</b></div>
+                    <input type="range" id="sStoneX" min="0.08" max="0.92" step="0.01" value="0.5">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>初始高度</span><b id="oStoneY">16%</b></div>
+                    <input type="range" id="sStoneY" min="0.03" max="0.8" step="0.01" value="0.16">
+                </div>
+                <div class="row">
+                    <div class="lab"><span>密度（×水）</span><b id="oStoneM">2.60</b></div>
+                    <input type="range" id="sStoneM" min="1.05" max="8" step="0.05" value="2.6">
+                </div>
+                <p class="note">也可直接在画布上拖动石子调整初始位置。</p>
+            </section>
+
+            <section class="card hidden" id="pourCard">
+                <h2>倾倒（杯 → 杯）</h2>
+                <div class="row">
+                    <div class="lab"><span>杯子倾角</span><b id="oAngle">70°</b></div>
+                    <input type="range" id="sAngle" min="0" max="88" step="1" value="70">
+                </div>
+                <p class="note">在画布上按住杯身拖动即可自由旋转；开启「自动倾倒」会持续加大倾角。</p>
+            </section>
+        </aside>
+    </div>
+
+    <script>
+
+        /* ============================================================================
+         * 拉格朗日流体模拟 — SPH (Smoothed Particle Hydrodynamics)
+         *
+         * 核函数（Müller 2003，三维归一化常数，与既有回归测试脚本一致）：
+         *   Poly6   W(r)   = 315/(64π h⁹) · (h² − r²)³       （求密度）
+         *   Spiky   ∇W(r)  = −45/(π h⁶) · (h − r)² · r̂        （求压力梯度）
+         *   粘度    ∇²W(r) = 45/(π h⁶) · (h − r)             （求粘性力）
+         *
+         * 每步：建网格 → 算密度/压力 → 算合力（重力 + 压力 + 粘性）→ 积分 → 碰撞。
+         * 粒子质量按静止密度自动标定，因此 ρ 场不随 h 塌缩（见 scripts/sph-smoke.test.mjs）。
+         *
+         * 注意：本文件顶层不使用 IIFE —— 回归测试以 new Function 注入 shim 直接读取
+         * sim / Particle / W / H 等标识符，必须保持在同一函数作用域内。
+         * ========================================================================== */
+
+        'use strict';
+
+        // ---------------------------------------------------------------- 常量
+        var DT_BASE = 1 / 60;          // 连续模式基准帧时长（秒）
+        var VMAX = 1600;               // 速度上限 px/s（数值护栏）
+        var AMAX = 6e5;                // 加速度上限 px/s²（数值护栏）
+        var CFL = 0.25;                // CFL 系数：单子步位移不超过 0.25h
+        var MAX_SUB = 24;              // CFL 自适应细分上限
+        var FILL = 0.92;               // 格点填充系数（保证容量 ≥ 目标粒子数）
+        var K_MIN = 1e3, K_MAX = 3e7; // 气体常数 k 的对数量程
+        var K_SPAN = Math.log(K_MAX / K_MIN);
+
+        // k 以对数滑块呈现：位置 0..100 ↔ k ∈ [1e3, 3e7]
+        function kFromPos(pos) { return K_MIN * Math.pow(K_MAX / K_MIN, clamp(pos, 0, 100) / 100); }
+        function kPos(k) { return 100 * Math.log(clamp(k, K_MIN, K_MAX) / K_MIN) / K_SPAN; }
+        function fmtK(k) {
+            if (k >= 1e6) return (k / 1e6).toFixed(2) + '×10⁶';
+            if (k >= 1e3) return (k / 1e3).toFixed(1) + '×10³';
+            return k.toFixed(0);
+        }
+
+        var SCENES = {
+            dambreak: { label: '溃坝', n: 1400, k: 2.5e6, mu: 0.30, g: 300, note: '经典溃坝：左侧水柱在重力下崩塌、推进并翻卷。' },
+            drop: { label: '水滴滴落', n: 1400, k: 2.5e6, mu: 0.28, g: 300, note: '一团水落进底部水池，观察溅射与液面波动。' },
+            stone: { label: '石子入水', n: 1400, k: 2.5e6, mu: 0.30, g: 300, stoneX: 0.5, stoneY: 0.16, stoneM: 2.6, note: '刚体石子自由落体入水；可调初始位置与密度，观察溅射、空腔与浮力。' },
+            two: { label: '对撞', n: 1000, k: 2.5e6, mu: 0.25, g: 300, note: '两团水相向对撞，观察动量交换与液滴飞散。' },
+            block: { label: '方块下落', n: 1200, k: 2.5e6, mu: 0.28, g: 300, note: '方形水块整体下落入池，观察平整液面被击穿。' },
+            pouring: { label: '倾倒（杯→杯）', n: 500, k: 1.5e6, mu: 0.25, g: 300, angle: 70, note: '把水从一只杯子倒进另一只；可拖动杯子自由旋转倾角（倾角越大倒得越快）。' },
+            funnel: { label: '漏斗', n: 1200, k: 1.8e6, mu: 0.22, g: 320, note: '水柱落入漏斗，经漏斗颈收束成射流漏下。' }
+        };
+
+        // ---------------------------------------------------------------- 画布
+        var canvas = document.getElementById('cv');
+        var ctx = canvas.getContext('2d');
+        var hudEl = document.getElementById('hud');
+        var hintEl = document.getElementById('hint');
+        var colorBarEl = document.getElementById('colorBar');
+        var colorRangeEl = document.getElementById('colorRange');
+        var modeBadgeEl = document.getElementById('modeBadge');
+        var sceneNoteEl = document.getElementById('sceneNote');
+
+        var W = 1024, H = 768;         // 世界尺寸（CSS 像素），由 resizeCanvas 更新
+
+        // ---------------------------------------------------------------- 粒子与状态
+        function Particle(x, y) {
+            this.x = x; this.y = y;
+            this.vx = 0; this.vy = 0;
+            this.density = 0; this.pressure = 0;
+            this.fx = 0; this.fy = 0;   // 合加速度（力/质量），供箭头可视化
+        }
+
+        var sim = {
+            scene: 'drop',
+            particles: [],
+            params: {
+                n: 700, h: 14, k: 800, mu: 0.3, g: 300,
+                restDensity: 0.5,       // 静止密度 ρ₀（回归测试要求 ρ̄ ∈ (0.2, 0.8)）
+                mass: 1, massEff: 1,    // massEff 由 resetParticles 标定
+                speed: 1, substeps: 2, arrowScale: 1,
+                colorMode: 'speed', showForces: false,
+                autoH: true,
+                stoneX: 0.5, stoneY: 0.16, stoneM: 2.6,
+                angle: 70, autoTilt: false
+            },
+            walls: [],      // 碰撞线段 [x1,y1,x2,y2]
+            shapes: [],     // 需绘制的折线 [[x,y],...]
+            stone: null,    // 刚体石子
+            cup: null,      // 倾倒场景的杯子
+            spacing: 8,     // 场景格点间距（用于渲染半径与自动 h）
+            massPerArea: 1, // 流体质量面密度 = massEff / spacing²
+            t: 0,
+            vmax: 1, dmax: 1, pmax: 1
+        };
+
+        // 拖拽状态（回归测试 G 直接读取 accX/accY）
+        var dragState = { active: false, x: 0, y: 0, px: 0, py: 0, accX: 0, accY: 0, mode: 'stir' };
+
+        // ---------------------------------------------------------------- 数学工具
+        function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+        function num(v, d) { var f = parseFloat(v); return Number.isFinite(f) ? f : d; }
+        function kernelW0(h) { return 315 / (64 * Math.PI * Math.pow(h, 3)); }          // Poly6 在 r=0
+        function poly6(r2, h, h2) { var d = h2 - r2; return 315 / (64 * Math.PI * Math.pow(h, 9)) * d * d * d; }
+        function physR() { return clamp(sim.params.h * 0.3, 1, 6); }                    // 碰撞半径
+        function renderR() { return clamp(sim.spacing * 0.52, 1.2, 7); }
+
+        // ---------------------------------------------------------------- 空间网格
+        // 计数排序网格；cell = h，故 3×3 邻域必然覆盖半径 h 内所有粒子。
+        var grid = { gw: 0, gh: 0, cell: 0, counts: null, starts: null, items: null, ready: false };
+
+        function buildSpatialGrid() {
+            var h = Math.max(2, sim.params.h);
+            var gw = Math.max(1, Math.floor(W / h) + 3);
+            var gh = Math.max(1, Math.floor(H / h) + 3);
+            var n = sim.particles.length;
+            var nc = gw * gh;
+            if (!grid.counts || grid.counts.length < nc) {
+                grid.counts = new Int32Array(nc);
+                grid.starts = new Int32Array(nc + 1);
+                grid.fill = new Int32Array(nc);
+                grid.items = new Int32Array(Math.max(64, n));
+            } else {
+                grid.counts.fill(0, 0, nc);
+            }
+            if (grid.items.length < n) grid.items = new Int32Array(Math.max(64, n));
+            grid.gw = gw; grid.gh = gh; grid.cell = h;
+
+            var i, p, cx, cy, k;
+            for (i = 0; i < n; i++) {
+                p = sim.particles[i];
+                cx = clamp(Math.floor(p.x / h), 0, gw - 1);
+                cy = clamp(Math.floor(p.y / h), 0, gh - 1);
+                grid.counts[cy * gw + cx]++;
+            }
+            var acc = 0;
+            for (k = 0; k < nc; k++) { grid.starts[k] = acc; acc += grid.counts[k]; }
+            grid.starts[nc] = acc;
+            grid.fill.fill(0, 0, nc);
+            for (i = 0; i < n; i++) {
+                p = sim.particles[i];
+                cx = clamp(Math.floor(p.x / h), 0, gw - 1);
+                cy = clamp(Math.floor(p.y / h), 0, gh - 1);
+                k = cy * gw + cx;
+                grid.items[grid.starts[k] + grid.fill[k]] = i;
+                grid.fill[k]++;
+            }
+            grid.ready = true;
+        }
+
+        // 共享缓冲（仅用于热循环；外部 API gridNeighbors 返回新数组）
+        var _nb = [];
+
+        function collectNeighbors(x, y, out) {
+            out.length = 0;
+            if (!grid.ready) buildSpatialGrid();
+            var h = grid.cell, h2 = h * h;
+            var gw = grid.gw, gh = grid.gh;
+            var cx = clamp(Math.floor(x / h), 0, gw - 1);
+            var cy = clamp(Math.floor(y / h), 0, gh - 1);
+            var xs = cx > 0 ? cx - 1 : 0, xe = cx < gw - 1 ? cx + 1 : gw - 1;
+            var ys = cy > 0 ? cy - 1 : 0, ye = cy < gh - 1 ? cy + 1 : gh - 1;
+            for (var gy = ys; gy <= ye; gy++) {
+                for (var gx = xs; gx <= xe; gx++) {
+                    var k = gy * gw + gx;
+                    var s = grid.starts[k], e = grid.starts[k + 1];
+                    for (var t = s; t < e; t++) {
+                        var j = grid.items[t];
+                        var p = sim.particles[j];
+                        var dx = p.x - x, dy = p.y - y;
+                        if (dx * dx + dy * dy < h2) out.push(j);
+                    }
+                }
+            }
+            return out;
+        }
+
+        function gridNeighbors(x, y) { return collectNeighbors(x, y, []); }
+
+        // ---------------------------------------------------------------- 密度 / 压力
+        function computeDensityPressure() {
+            buildSpatialGrid();
+            var P = sim.params;
+            var h = Math.max(2, P.h), h2 = h * h;
+            var m = (P.massEff !== undefined && P.massEff !== null) ? P.massEff : P.mass;
+            var w0 = kernelW0(h);
+            var rho0 = P.restDensity, k = P.k;
+            var ps = sim.particles, n = ps.length, i, t, j, p, q, dx, dy, r2, rho;
+
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                rho = m * w0;                       // 自作用恰好计一次
+                collectNeighbors(p.x, p.y, _nb);
+                for (t = 0; t < _nb.length; t++) {
+                    j = _nb[t];
+                    if (j === i) continue;
+                    q = ps[j];
+                    dx = q.x - p.x; dy = q.y - p.y;
+                    r2 = dx * dx + dy * dy;
+                    if (r2 < h2) rho += m * poly6(r2, h, h2);
+                }
+                p.density = rho;
+                p.pressure = k * (rho - rho0);
+                if (p.pressure < 0) p.pressure = 0;              // 不允许负压（抗聚团、抗拉不稳定）
+                else if (p.pressure > 4 * k * rho0) p.pressure = 4 * k * rho0;   // 压缩比上限 5ρ₀
+            }
+        }
+
+        // ——— 石子与水的作用（双向耦合）———
+        // 接触：弹簧 + 阻尼，防止互穿并产生溅射；完全浸没时接触法向相互抵消，不产生虚假浮力。
+        // 浮力/阻力按「体积尺度」算，并使用石子周围的实际流体密度：
+        //   F_浮 = ρ_local · πR² · g                    （阿基米德，随浸没程度自动变化）
+        //   F_阻 = ½ · C_d · ρ_local · 2R · |v_rel| · v_rel
+        // 二者的反作用力平分给附近水粒子，保证动量守恒并带动水一起运动。
+        var STONE_K = 1500;     // 接触刚度
+        var STONE_D = 20;       // 接触阻尼
+        var STONE_CD = 1.0;     // 阻力系数
+
+        function stoneWaterForces(st) {
+            var P = sim.params;
+            var h = Math.max(2, P.h), m = P.massEff, pr = physR();
+            var R = st.r + pr, shell = st.r + h;
+            var ps = sim.particles, n = ps.length, i, p, dx, dy, d2, d, nx, ny, vn, acc, t;
+            st.fx = 0; st.fy = 0;
+
+            // 1) 接触约束，同时统计局部流体密度与速度
+            var rhoSum = 0, wSum = 0, vwx = 0, vwy = 0, near = 0;
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                dx = p.x - st.x; dy = p.y - st.y;
+                d2 = dx * dx + dy * dy;
+                if (d2 > shell * shell || d2 < 1e-9) continue;
+                d = Math.sqrt(d2);
+                nx = dx / d; ny = dy / d;
+                t = 1 - d / shell;
+                rhoSum += p.density * t; wSum += t;
+                vwx += p.vx * t; vwy += p.vy * t;
+                near++;
+                if (d < R) {
+                    vn = (p.vx - st.vx) * nx + (p.vy - st.vy) * ny;
+                    acc = STONE_K * (R - d) - STONE_D * vn;
+                    // 接触只作用在水粒子上（把水排开、形成空腔）；
+                    // 石子受到的支撑由上面的浮力项表达，避免同一份压强被计两次
+                    if (acc > 0) { p.fx += nx * acc; p.fy += ny * acc; }
+                }
+            }
+            if (near === 0) return;
+
+            // ρ_local 是数密度，换算成质量密度才能算浮力
+            var rhoL = (rhoSum / wSum) / P.restDensity * sim.massPerArea;
+            var wvx = vwx / wSum, wvy = vwy / wSum;
+
+            // 2) 浮力
+            var vol = Math.PI * st.r * st.r;
+            var fbx = 0, fby = -rhoL * vol * P.g;
+
+            // 3) 二次阻力
+            var rvx = st.vx - wvx, rvy = st.vy - wvy;
+            var rv = Math.sqrt(rvx * rvx + rvy * rvy);
+            var fd = 0.5 * STONE_CD * rhoL * (2 * st.r) * rv;
+            var fdx = -fd * rvx, fdy = -fd * rvy;
+
+            st.fx += fbx + fdx;
+            st.fy += fby + fdy;
+
+            // 4) 反作用力平分给附近的水
+            var ax = -(fbx + fdx) / (near * m), ay = -(fby + fdy) / (near * m);
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                dx = p.x - st.x; dy = p.y - st.y;
+                if (dx * dx + dy * dy > shell * shell) continue;
+                p.fx += ax; p.fy += ay;
+            }
+        }
+
+        // ---------------------------------------------------------------- 合力
+        function computeForces() {
+            buildSpatialGrid();
+            var P = sim.params;
+            var h = Math.max(2, P.h), h2 = h * h;
+            var m = (P.massEff !== undefined && P.massEff !== null) ? P.massEff : P.mass;
+            var g = P.g;
+            var spikyC = -45 / (Math.PI * Math.pow(h, 6));
+
+            var ps = sim.particles, n = ps.length, i, t, j, p, q, dx, dy, r2, r, gx, gy, coef;
+
+            for (i = 0; i < n; i++) { ps[i].fx = 0; ps[i].fy = g; }   // 先记重力（力箭头需含重力）
+
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                collectNeighbors(p.x, p.y, _nb);
+                for (t = 0; t < _nb.length; t++) {
+                    j = _nb[t];
+                    if (j <= i) continue;                 // 每对只算一次（成对累加）
+                    q = ps[j];
+                    dx = p.x - q.x; dy = p.y - q.y;
+                    r2 = dx * dx + dy * dy;
+                    if (r2 >= h2 || r2 < 1e-12) continue;
+                    r = Math.sqrt(r2);
+                    gx = spikyC * (h - r) * (h - r) * dx / r;
+                    gy = spikyC * (h - r) * (h - r) * dy / r;
+
+                    // 压力（对称形式，作用力等大反向）
+                    coef = p.pressure / (p.density * p.density) + q.pressure / (q.density * q.density);
+                    var cx2 = coef * gx * m, cy2 = coef * gy * m;
+                    p.fx -= cx2; p.fy -= cy2;
+                    q.fx += cx2; q.fy += cy2;
+
+                }
+            }
+
+            if (sim.stone) stoneWaterForces(sim.stone);
+
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                if (!Number.isFinite(p.fx)) p.fx = 0;
+                if (!Number.isFinite(p.fy)) p.fy = 0;
+                if (p.fx > AMAX) p.fx = AMAX; else if (p.fx < -AMAX) p.fx = -AMAX;
+                if (p.fy > AMAX) p.fy = AMAX; else if (p.fy < -AMAX) p.fy = -AMAX;
+            }
+        }
+
+        // ---------------------------------------------------------------- 碰撞
+        function collideSegment(p, r, x1, y1, x2, y2, rest, fric) {
+            var ex = x2 - x1, ey = y2 - y1;
+            var len2 = ex * ex + ey * ey;
+            var t = len2 > 1e-12 ? ((p.x - x1) * ex + (p.y - y1) * ey) / len2 : 0;
+            t = clamp(t, 0, 1);
+            var cx = x1 + ex * t, cy = y1 + ey * t;
+            var nx = p.x - cx, ny = p.y - cy;
+            var d = Math.sqrt(nx * nx + ny * ny);
+            if (d < 1e-9) { var L = Math.sqrt(len2) || 1; nx = -ey / L; ny = ex / L; d = 0; }
+            else { nx /= d; ny /= d; }
+            if (d < r) {
+                p.x += nx * (r - d); p.y += ny * (r - d);
+                var vn = p.vx * nx + p.vy * ny;
+                if (vn < 0) {
+                    p.vx -= (1 + rest) * vn * nx;
+                    p.vy -= (1 + rest) * vn * ny;
+                    var ndv = p.vx * nx + p.vy * ny;
+                    var tx = p.vx - ndv * nx, ty = p.vy - ndv * ny;
+                    p.vx -= tx * fric; p.vy -= ty * fric;
+                }
+            }
+        }
+
+        function collideWalls() {
+            var ps = sim.particles, n = ps.length;
+            var r = physR();
+            var walls = sim.walls, mw = walls.length;
+            var i, w, p, s;
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                for (w = 0; w < mw; w++) {
+                    s = walls[w];
+                    collideSegment(p, r, s[0], s[1], s[2], s[3], 0.08, 0.24);
+                }
+                // 兜底硬约束（回归测试要求粒子不越界）
+                if (p.x < r) { p.x = r; if (p.vx < 0) p.vx = 0; }
+                else if (p.x > W - r) { p.x = W - r; if (p.vx > 0) p.vx = 0; }
+                if (p.y < r) { p.y = r; if (p.vy < 0) p.vy = 0; }
+                else if (p.y > H - r) { p.y = H - r; if (p.vy > 0) p.vy = 0; }
+            }
+        }
+
+        function stoneStep(dt) {
+            var st = sim.stone;
+            if (!st) return;
+            var P = sim.params;
+            st.vy += P.g * dt;
+            st.vx += st.fx / st.mass * dt;
+            st.vy += st.fy / st.mass * dt;
+            if (!Number.isFinite(st.vx)) st.vx = 0;
+            if (!Number.isFinite(st.vy)) st.vy = 0;
+            var sp = Math.sqrt(st.vx * st.vx + st.vy * st.vy);
+            if (!(sp < VMAX)) { var s = sp > 1e-9 ? VMAX / sp : 0; st.vx *= s; st.vy *= s; }
+            if (!Number.isFinite(st.x)) st.x = W * 0.5;
+            if (!Number.isFinite(st.y)) st.y = H * 0.2;
+            st.x += st.vx * dt; st.y += st.vy * dt;
+            st.rot += st.vx / Math.max(6, st.r) * dt;
+
+            var walls = sim.walls, i, w;
+            for (i = 0; i < walls.length; i++) {
+                w = walls[i];
+                collideSegment(st, st.r, w[0], w[1], w[2], w[3], 0.25, 0.35);
+            }
+            st.x = clamp(st.x, st.r, W - st.r);
+            st.y = clamp(st.y, st.r, H - st.r);
+        }
+
+        // ---------------------------------------------------------------- XSPH 速度平滑（粘度）
+        // 粘性力项 ∇²W ∝ h⁻⁵，在本单位制下比重力小约两个数量级，等于没有耗散 ——
+        // 溅起的水会像气体一样永远弹跳。改用 XSPH 速度平滑：
+        //   v_i += ε · Σ_j V_j (v_j − v_i) W_ij / Σ_j V_j W_ij ,  ε 无量纲 ∈ [0, 1]
+        // 它把每个粒子的速度拉向邻域平均速度，是 SPH 中标准的粘度/内聚处理。
+        var _dvx = new Float64Array(0), _dvy = new Float64Array(0);
+
+        function xsphEps() { return clamp(sim.params.mu * 0.45, 0, 0.85); }
+
+        function xsphSmooth() {
+            var eps = xsphEps();
+            if (!(eps > 0)) return;
+            var P = sim.params;
+            var h = Math.max(2, P.h), h2 = h * h;
+            var m = (P.massEff !== undefined && P.massEff !== null) ? P.massEff : P.mass;
+            var ps = sim.particles, n = ps.length, i, t, j, p, q, dx, dy, r2, W, Vj, numx, numy, den;
+            if (_dvx.length < n) { _dvx = new Float64Array(n); _dvy = new Float64Array(n); }
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                collectNeighbors(p.x, p.y, _nb);
+                numx = 0; numy = 0; den = 0;
+                for (t = 0; t < _nb.length; t++) {
+                    j = _nb[t];
+                    if (j === i) continue;
+                    q = ps[j];
+                    dx = q.x - p.x; dy = q.y - p.y;
+                    r2 = dx * dx + dy * dy;
+                    if (r2 >= h2) continue;
+                    W = poly6(r2, h, h2);
+                    Vj = m / (q.density > 1e-9 ? q.density : 1e-9);
+                    numx += Vj * (q.vx - p.vx) * W;
+                    numy += Vj * (q.vy - p.vy) * W;
+                    den += Vj * W;
+                }
+                if (den > 1e-12) {
+                    _dvx[i] = eps * numx / den;      // 暂存，稍后统一施加（保持对称）
+                    _dvy[i] = eps * numy / den;
+                } else { _dvx[i] = 0; _dvy[i] = 0; }
+            }
+            for (i = 0; i < n; i++) { ps[i].vx += _dvx[i]; ps[i].vy += _dvy[i]; }
+        }
+
+        // ---------------------------------------------------------------- 单步积分
+        function substep(dt) {
+            computeDensityPressure();
+            computeForces();
+
+            var ps = sim.particles, n = ps.length, i, p, sp, s;
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                p.vx += p.fx * dt; p.vy += p.fy * dt;
+                if (!Number.isFinite(p.vx)) p.vx = 0;
+                if (!Number.isFinite(p.vy)) p.vy = 0;
+                sp = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                if (!(sp < VMAX)) { s = sp > 1e-9 ? VMAX / sp : 0; p.vx *= s; p.vy *= s; }
+            }
+            xsphSmooth();                       // 粘度：速度平滑（位置尚未更新，网格仍有效）
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                p.x += p.vx * dt; p.y += p.vy * dt;
+                if (!Number.isFinite(p.x)) p.x = W * 0.5;
+                if (!Number.isFinite(p.y)) p.y = H * 0.5;
+            }
+            collideWalls();
+            stoneStep(dt);
+            sim.t += dt;
+        }
+
+        function maxSpeed() {
+            var ps = sim.particles, mx = 0, i, p, s;
+            for (i = 0; i < ps.length; i++) {
+                p = ps[i];
+                s = Math.abs(p.vx) + Math.abs(p.vy);
+                if (s > mx) mx = s;
+            }
+            return mx;
+        }
+
+        // 公开：推进 dt 秒（含 CFL 自适应细分），回归测试直接调用
+        function stepPhysics(dt) {
+            if (!(dt > 0)) dt = DT_BASE;
+            // WCSPH 稳定条件：dt ≤ CFL·h /(c₀ + v_max)，c₀ = √k 为声速
+            var c0 = Math.sqrt(Math.max(1, sim.params.k));
+            var mv = maxSpeed() + (sim.stone ? Math.hypot(sim.stone.vx, sim.stone.vy) : 0);
+            var dtMax = CFL * Math.max(2, sim.params.h) / (c0 + mv + 1e-6);
+            var sub = 1;
+            if (dt > dtMax) sub = Math.min(MAX_SUB, Math.ceil(dt / dtMax));
+            var h = dt / sub;
+            for (var i = 0; i < sub; i++) substep(h);
+            return sub;
+        }
+
+        // ---------------------------------------------------------------- 拖拽 / 扰动
+        function applyDragForce() {
+            if (!dragState.active) { dragState.accX = 0; dragState.accY = 0; return; }
+            var ax = dragState.accX, ay = dragState.accY;
+            dragState.accX = 0; dragState.accY = 0;                   // 同一增量只消费一次
+            if (ax === 0 && ay === 0) return;
+            var R = Math.max(24, sim.params.h * 2.2);
+            var R2 = R * R, ps = sim.particles, i, p, dx, dy, d2, f;
+            for (i = 0; i < ps.length; i++) {
+                p = ps[i];
+                dx = p.x - dragState.x; dy = p.y - dragState.y;
+                d2 = dx * dx + dy * dy;
+                if (d2 > R2) continue;
+                f = 1 - Math.sqrt(d2) / R;
+                p.vx += ax * 0.5 * f;
+                p.vy += ay * 0.5 * f;
+            }
+        }
+
+        // ---------------------------------------------------------------- 质量标定
+        // 令初始构型的平均密度等于 ρ₀ ⇒ ρ 场与 h 无关（回归测试 E）。
+        function calibrateMass() {
+            var P = sim.params;
+            var n = sim.particles.length;
+            if (!n) { P.massEff = 1; return; }
+            P.massEff = 1;
+            computeDensityPressure();
+            // 自由表面粒子缺少邻居 ⇒ 密度天然偏低。若按全域平均标定，内部会整体过密而「炸开」；
+            // 因此按内部（密度最高的一成粒子）对齐 ρ₀，表面欠密处压力自然为 0。
+            var arr = [], i;
+            for (i = 0; i < n; i++) arr.push(sim.particles[i].density);
+            arr.sort(function (a, b) { return b - a; });
+            var top = Math.max(1, Math.floor(n * 0.1)), sum = 0;
+            for (i = 0; i < top; i++) sum += arr[i];
+            var ref = sum / top;
+            P.massEff = ref > 1e-12 ? P.restDensity / ref : 1;
+            computeDensityPressure();     // 用标定后的质量刷新一次显示状态
+            // 流体的质量面密度：ρ₀ 只是 SPH 数密度，浮力/石子质量必须用真实质量密度
+            sim.massPerArea = P.massEff / (sim.spacing * sim.spacing);
+            if (sim.stone) {
+                sim.stone.mass = Math.max(0.05, P.stoneM) * sim.massPerArea
+                    * Math.PI * sim.stone.r * sim.stone.r;
+            }
+        }
+
+        // ---------------------------------------------------------------- 格点生成
+        function rectLattice(x, y, w, h, sp) {
+            var cols = Math.max(1, Math.floor(w / sp) + 1);
+            var rows = Math.max(1, Math.floor(h / sp) + 1);
+            var ox = x + (w - (cols - 1) * sp) / 2;
+            var oy = y + (h - (rows - 1) * sp) / 2;
+            var pts = [];
+            for (var r = 0; r < rows; r++)
+                for (var c = 0; c < cols; c++)
+                    pts.push([ox + c * sp, oy + r * sp]);
+            return pts;
+        }
+
+        function discLattice(R, sp) {
+            var pts = [];
+            var nn = Math.ceil(R / sp);
+            for (var r = -nn; r <= nn; r++) {
+                for (var c = -nn; c <= nn; c++) {
+                    var x = c * sp, y = r * sp;
+                    var d2 = x * x + y * y;
+                    if (d2 <= R * R) pts.push([x, y, d2]);
+                }
+            }
+            pts.sort(function (a, b) { return a[2] - b[2]; });
+            return pts;
+        }
+
+        // 从 pts 中均匀抽取 count 个（保证恰好 count 个，且空缺均匀分布）
+        function takeEven(pts, count, out, xf, vx, vy) {
+            var n = Math.min(count | 0, pts.length);
+            if (n <= 0) return 0;
+            var stride = pts.length / n;
+            for (var i = 0; i < n; i++) {
+                var p = pts[Math.floor(i * stride)];
+                var X = p[0], Y = p[1];
+                if (xf) { var q = xf(X, Y); X = q[0]; Y = q[1]; }
+                var pt = new Particle(X, Y);
+                pt.vx = vx || 0; pt.vy = vy || 0;
+                out.push(pt);
+            }
+            return n;
+        }
+
+        // 在矩形内恰好放置 count 个粒子；返回实际间距
+        function fillRect(x, y, w, h, count, out, xf, vx, vy) {
+            if (count <= 0 || w <= 0 || h <= 0) return 0;
+            var sp = Math.sqrt(w * h / count) * FILL;
+            var pts = [];
+            for (var tries = 0; tries < 40; tries++) {
+                pts = rectLattice(x, y, w, h, sp);
+                if (pts.length >= count) break;
+                sp *= 0.94;
+            }
+            takeEven(pts, count, out, xf, vx, vy);
+            return sp;
+        }
+
+        // 以指定间距在矩形内恰好放置 count 个粒子（多区域场景共享间距，保证密度一致）
+        function fillRectSp(x, y, w, h, sp, count, out, xf, vx, vy) {
+            takeEven(rectLattice(x, y, w, h, sp), count, out, xf, vx, vy);
+        }
+
+        // 圆内恰好放置 count 个粒子（可按给定间距）
+        function fillDisc(cx, cy, count, out, sp, vx, vy) {
+            if (count <= 0) return 0;
+            if (!sp) sp = 4;
+            var R = Math.sqrt(count / Math.PI) * sp * 1.3;
+            var pts = [];
+            for (var tries = 0; tries < 40; tries++) {
+                pts = discLattice(R, sp);
+                if (pts.length >= count) break;
+                R *= 1.06;
+            }
+            var n = Math.min(count, pts.length);
+            if (n <= 0) return sp;
+            var stride = pts.length / n;
+            for (var i = 0; i < n; i++) {
+                var p = pts[Math.floor(i * stride)];
+                var pt = new Particle(cx + p[0], cy + p[1]);
+                pt.vx = vx || 0; pt.vy = vy || 0;
+                out.push(pt);
+            }
+            return sp;
+        }
+
+        // ---------------------------------------------------------------- 场景构建
+        function boundaryWalls() {
+            return [
+                [0, H, W, H],     // 地面
+                [0, 0, 0, H],     // 左墙
+                [W, 0, W, H]      // 右墙
+            ];
+        }
+
+        function groundShape() { return [[0, H], [W, H]]; }
+
+        function buildCup(cx, cy, cw, ch, ang) {
+            var ca = Math.cos(ang), sa = Math.sin(ang);
+            function T(lx, ly) { return [cx + lx * ca - ly * sa, cy + lx * sa + ly * ca]; }
+            var hw = cw / 2;
+            var bl = T(-hw, 0), br = T(hw, 0), tl = T(-hw, -ch), tr = T(hw, -ch);
+            return {
+                pivot: [cx, cy], cw: cw, ch: ch, angle: ang, T: T,
+                walls: [[bl[0], bl[1], br[0], br[1]], [tl[0], tl[1], bl[0], bl[1]], [tr[0], tr[1], br[0], br[1]]],
+                shape: [tl, bl, br, tr]
+            };
+        }
+
+        // 构建场景；返回粒子数组
+        function buildScene() {
+            var s = sim.scene, P = sim.params, N = Math.max(1, P.n | 0);
+            var pts = [], sp = 8, stone = null, cup = null;
+            var walls = boundaryWalls(), shapes = [groundShape()];
+            var tries, pool, np, nb;
+
+            if (s === 'dambreak') {
+                sp = fillRect(W * 0.05, H * 0.20, W * 0.30, H * 0.80 - 10, N, pts);
+
+            } else if (s === 'drop') {
+                // 底部水池 + 上方一团水（共享间距，保证密度一致）
+                var px = W * 0.06, pw = W * 0.88, ph = H * 0.17, py = H - ph - 8;
+                np = Math.max(1, Math.round(N * 0.62));
+                nb = N - np;
+                sp = Math.sqrt(pw * ph / np) * FILL;
+                pool = [];
+                for (tries = 0; tries < 40; tries++) {
+                    pool = rectLattice(px, py, pw, ph, sp);
+                    if (pool.length >= np) break;
+                    sp *= 0.94;
+                }
+                takeEven(pool, np, pts, null, 0, 0);
+                fillDisc(W * 0.5, H * 0.26, nb, pts, sp, 0, 0);
+
+            } else if (s === 'block') {
+                np = Math.max(1, Math.round(N * 0.38));
+                nb = N - np;
+                var bw3 = W * 0.34, bh3 = W * 0.21;
+                sp = Math.sqrt(bw3 * bh3 / nb) * FILL;
+                fillRectSp(W * 0.33, H * 0.08, bw3, bh3, sp, nb, pts, null, 0, 0);
+                fillRectSp(W * 0.05, H * 0.86, W * 0.90, H * 0.12, sp, np, pts, null, 0, 0);
+
+            } else if (s === 'two') {
+                var half = Math.floor(N / 2), rest = N - half;
+                var tw = W * 0.24, th = H * 0.42, ty = H * 0.34;
+                fillRect(W * 0.05, ty, tw, th, half, pts, null, 210, 0);
+                fillRect(W * 0.71, ty, tw, th, rest, pts, null, -210, 0);
+                sp = Math.sqrt(tw * th / Math.max(1, half)) * FILL;
+
+            } else if (s === 'stone') {
+                sp = fillRect(W * 0.04, H * 0.66, W * 0.92, H * 0.34 - 8, N, pts);
+                var R = clamp(Math.min(W, H) * 0.042, 10, 46);
+                stone = {
+                    x: clamp(P.stoneX * W, R, W - R),
+                    y: clamp(P.stoneY * H, R, H - R),
+                    vx: 0, vy: 0, r: R, rot: 0,
+                    mass: 0,            // 由 calibrateMass 用真实质量密度补算
+                    density: P.stoneM
+                };
+
+            } else if (s === 'pouring') {
+                var cw = clamp(W * 0.115, 54, 130), ch = clamp(H * 0.20, 60, 170);
+                cup = buildCup(W * 0.32, H * 0.28, cw, ch, P.angle * Math.PI / 180);
+                var m2 = 5.5;
+                sp = fillRect(-cw / 2 + m2, -ch + m2, cw - 2 * m2, ch - 2 * m2 - 4, N, pts, cup.T, 0, 0);
+                // 接水杯置于溢流点正下方（倾角 0..88° 内溢流 x 仅在 ~352..414 间移动）
+                var bw2 = clamp(W * 0.26, 90, 260), bh2 = clamp(H * 0.30, 70, 190);
+                var cupB = buildCup(W * 0.50, H - 8, bw2, bh2, 0);
+                walls = walls.concat(cup.walls, cupB.walls);
+                shapes = shapes.concat([cup.shape, cupB.shape]);
+
+            } else if (s === 'funnel') {
+                var gap = W * 0.055;
+                var fL0 = [W * 0.13, H * 0.20], fL1 = [W * 0.5 - gap, H * 0.58];
+                var fR0 = [W * 0.87, H * 0.20], fR1 = [W * 0.5 + gap, H * 0.58];
+                var neck = H * 0.09;
+                var nL = [fL1[0], fL1[1] + neck], nR = [fR1[0], fR1[1] + neck];
+                walls = walls.concat([
+                    [fL0[0], fL0[1], fL1[0], fL1[1]],
+                    [fR0[0], fR0[1], fR1[0], fR1[1]],
+                    [fL1[0], fL1[1], nL[0], nL[1]],
+                    [fR1[0], fR1[1], nR[0], nR[1]]
+                ]);
+                shapes = shapes.concat([[fL0, fL1, nL], [fR0, fR1, nR]]);
+                // 水柱必须完全位于漏斗口之上：否则边沿粒子会生成在斜壁内部，被碰撞推飞
+                var colX = W * 0.22, colW = W * 0.56;
+                sp = fillRect(colX, H * 0.01, colW, H * 0.17, N, pts);
+            }
+
+            sim.walls = walls;
+            sim.shapes = shapes;
+            sim.stone = stone;
+            sim.cup = cup;
+            sim.spacing = Math.max(2, sp || 8);
+            return pts;
+        }
+
+        function resetParticles() {
+            var pts = buildScene();
+            sim.particles = pts;
+            sim.t = 0;
+            sim.vmax = 1; sim.dmax = 1; sim.pmax = 1;
+            grid.ready = false;
+            calibrateMass();
+            return sim.particles.length;
+        }
+
+        // ---------------------------------------------------------------- 杯子旋转
+        function insideCupLocal(cup, x, y, margin) {
+            var ca = Math.cos(-cup.angle), sa = Math.sin(-cup.angle);
+            var dx = x - cup.pivot[0], dy = y - cup.pivot[1];
+            var lx = dx * ca - dy * sa, ly = dx * sa + dy * ca;
+            return Math.abs(lx) <= cup.cw / 2 + margin && ly <= margin && ly >= -cup.ch - margin;
+        }
+
+        // 旋转杯子：同时带动杯中的水（刚体旋转），保证「自由旋转」的直觉
+        function rotateCupTo(deg) {
+            var P = sim.params;
+            var next = clamp(deg, 0, 88) * Math.PI / 180;
+            P.angle = clamp(deg, 0, 88);
+            if (!sim.cup) return;
+            var cup = sim.cup;
+            var dth = next - cup.angle;
+            if (Math.abs(dth) > 1e-9) {
+                var cos = Math.cos(dth), sin = Math.sin(dth);
+                var cx = cup.pivot[0], cy = cup.pivot[1];
+                var ps = sim.particles;
+                for (var i = 0; i < ps.length; i++) {
+                    var p = ps[i];
+                    if (!insideCupLocal(cup, p.x, p.y, 7)) continue;   // 只带动杯中的水
+                    var dx = p.x - cx, dy = p.y - cy;
+                    p.x = cx + dx * cos - dy * sin;
+                    p.y = cy + dx * sin + dy * cos;
+                    var vx = p.vx * cos - p.vy * sin;
+                    var vy = p.vx * sin + p.vy * cos;
+                    p.vx = vx; p.vy = vy;
+                }
+            }
+            var rebuilt = buildCup(cup.pivot[0], cup.pivot[1], cup.cw, cup.ch, next);
+            // 替换旧杯子墙体/形状，保留其它场景墙体（接水杯、地面）
+            var walls = [], shapes = [], i2;
+            for (i2 = 0; i2 < sim.walls.length; i2++) {
+                var seg = sim.walls[i2];
+                if (seg === cup.walls[0] || seg === cup.walls[1] || seg === cup.walls[2]) continue;
+                walls.push(seg);
+            }
+            for (i2 = 0; i2 < sim.shapes.length; i2++) {
+                if (sim.shapes[i2] === cup.shape) continue;
+                shapes.push(sim.shapes[i2]);
+            }
+            var cupWallSet = rebuilt.walls;
+            sim.cup = rebuilt;
+            sim.walls = walls.concat(cupWallSet);
+            sim.shapes = shapes.concat([rebuilt.shape]);
+        }
+
+        // ---------------------------------------------------------------- 颜色
+        var VIRIDIS = [
+            [0.267, 0.005, 0.329], [0.283, 0.141, 0.458], [0.254, 0.265, 0.530],
+            [0.207, 0.372, 0.553], [0.164, 0.471, 0.558], [0.128, 0.567, 0.551],
+            [0.135, 0.659, 0.518], [0.267, 0.749, 0.441], [0.478, 0.821, 0.318],
+            [0.741, 0.873, 0.150], [0.993, 0.906, 0.144]
+        ];
+
+        function viridis(t) {
+            t = clamp(t, 0, 1) * (VIRIDIS.length - 1);
+            var i = Math.floor(t), f = t - i;
+            if (i >= VIRIDIS.length - 1) i = VIRIDIS.length - 2;
+            var a = VIRIDIS[i], b = VIRIDIS[i + 1];
+            return [
+                Math.round(255 * (a[0] + (b[0] - a[0]) * f)),
+                Math.round(255 * (a[1] + (b[1] - a[1]) * f)),
+                Math.round(255 * (a[2] + (b[2] - a[2]) * f))
+            ];
+        }
+
+        // 着色斜坡：viridis 低端偏暗，静止水在深色画板上会「隐身」，
+        // 故从 t=0.22 处起用（低端为可见的靛蓝），保持单调递增。
+        function ramp(t) { return viridis(0.22 + 0.78 * clamp(t, 0, 1)); }
+
+        function colorMetric(p) {
+            var P = sim.params;
+            if (P.colorMode === 'density') return p.density;
+            if (P.colorMode === 'pressure') return p.pressure;
+            return Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        }
+
+        // ---------------------------------------------------------------- 渲染
+        function drawScene() {
+            var P = sim.params;
+            ctx.clearRect(0, 0, W, H);
+
+            // 场景墙体（含杯子、漏斗）
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(233,228,216,0.75)';
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            var i, j, sh;
+            for (i = 0; i < sim.shapes.length; i++) {
+                sh = sim.shapes[i];
+                ctx.beginPath();
+                for (j = 0; j < sh.length; j++) {
+                    if (j === 0) ctx.moveTo(sh[j][0], sh[j][1]);
+                    else ctx.lineTo(sh[j][0], sh[j][1]);
+                }
+                ctx.globalAlpha = (i === 0) ? 0.35 : 1;   // 地面线淡一些
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+
+            // 粒子（按着色模式）
+            var ps = sim.particles, n = ps.length;
+            var r = renderR();
+            var mode = P.colorMode, mx = 0, v;
+            for (i = 0; i < n; i++) {
+                v = colorMetric(ps[i]);
+                if (v > mx) mx = v;
+            }
+            if (mode === 'speed') sim.vmax = Math.max(mx, sim.vmax * 0.965, 1);
+            else if (mode === 'density') sim.dmax = Math.max(mx, sim.dmax * 0.965, P.restDensity * 1.05);
+            else sim.pmax = Math.max(mx, sim.pmax * 0.965, 1e-6);
+            var scale = mode === 'speed' ? sim.vmax : (mode === 'density' ? sim.dmax : sim.pmax);
+            var base = mode === 'density' ? P.restDensity : 0;
+            var span = Math.max(1e-6, scale - base);
+
+            for (i = 0; i < n; i++) {
+                var p = ps[i];
+                var c = ramp((colorMetric(p) - base) / span);
+                ctx.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, r, 0, 6.283185307179586);
+                ctx.fill();
+            }
+
+            // 石子（刚体）
+            if (sim.stone) {
+                var st = sim.stone;
+                ctx.save();
+                ctx.translate(st.x, st.y);
+                ctx.rotate(st.rot);
+                ctx.beginPath();
+                ctx.arc(0, 0, st.r, 0, 6.283185307179586);
+                ctx.fillStyle = '#8c8578';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#d8d2c4';
+                ctx.stroke();
+                ctx.globalAlpha = 0.45;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(-st.r * 0.62, -st.r * 0.2); ctx.lineTo(st.r * 0.62, -st.r * 0.2);
+                ctx.moveTo(-st.r * 0.32, st.r * 0.42); ctx.lineTo(st.r * 0.32, st.r * 0.42);
+                ctx.stroke();
+                ctx.restore();
+                ctx.globalAlpha = 1;
+            }
+
+            if (P.showForces) drawForces();
+
+            // 选中粒子：核函数作用范围
+            if (inspect.on && inspect.p) {
+                var ip = inspect.p;
+                ctx.beginPath();
+                ctx.arc(ip.x, ip.y, P.h, 0, 6.283185307179586);
+                ctx.strokeStyle = 'rgba(93,184,166,0.9)';
+                ctx.lineWidth = 1.4;
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(ip.x, ip.y, 3.2, 0, 6.283185307179586);
+                ctx.fillStyle = '#5db8a6';
+                ctx.fill();
+            }
+        }
+
+        var _fmags = [];   // 箭头参考量的临时缓冲
+
+        // 力向量 → 箭头（含重力、压力、粘性合力）
+        function drawForces() {
+            var P = sim.params;
+            var ps = sim.particles, n = ps.length, i, p, mag;
+            _fmags.length = 0;
+            for (i = 0; i < n; i++) {
+                p = ps[i];
+                mag = Math.sqrt(p.fx * p.fx + p.fy * p.fy);
+                if (mag > 0) _fmags.push(mag);
+            }
+            if (!_fmags.length) return;
+            // 参考量取 80 分位：均值与最大值都会被个别冲击粒子污染，使全部箭头缩到不可见
+            _fmags.sort(function (a, b) { return a - b; });
+            var ref = Math.max(1e-9, _fmags[Math.floor(_fmags.length * 0.8)] * 1.1);
+            var stepN = Math.max(1, Math.ceil(n / 240));
+            ctx.save();
+            ctx.lineWidth = 1.2;
+            for (i = 0; i < n; i += stepN) {
+                p = ps[i];
+                mag = Math.sqrt(p.fx * p.fx + p.fy * p.fy);
+                if (!(mag > 1e-9)) continue;
+                var t = clamp(mag / ref, 0, 1);
+                var L = t * 34 * P.arrowScale;
+                if (L < 1.5) continue;
+                var ux = p.fx / mag, uy = p.fy / mag;
+                var ex = p.x + ux * L, ey = p.y + uy * L;
+                var col = 'rgba(' + Math.round(120 + 135 * t) + ',' + Math.round(215 - 95 * t) + ',255,0.88)';
+                ctx.strokeStyle = col;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(ex, ey);
+                ctx.stroke();
+                var hs = 3.4;
+                ctx.beginPath();
+                ctx.moveTo(ex, ey);
+                ctx.lineTo(ex - ux * hs - uy * hs * 0.55, ey - uy * hs + ux * hs * 0.55);
+                ctx.lineTo(ex - ux * hs + uy * hs * 0.55, ey - uy * hs - ux * hs * 0.55);
+                ctx.closePath();
+                ctx.fillStyle = col;
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function updateLegend() {
+            var P = sim.params, lo = P.colorMode === 'density' ? P.restDensity : 0, hi;
+            hi = P.colorMode === 'speed' ? sim.vmax : (P.colorMode === 'density' ? sim.dmax : sim.pmax);
+            var g = ctx.createLinearGradient(0, 0, 74, 0);
+            for (var i = 0; i <= 8; i++) {
+                var c = ramp(i / 8);
+                g.addColorStop(i / 8, 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')');
+            }
+            colorBarEl.style.background = g;
+            colorRangeEl.textContent = lo.toFixed(1) + ' – ' + (Number.isFinite(hi) ? hi : 0).toFixed(1);
+        }
+
+        function updateHud(fps) {
+            var ps = sim.particles, n = ps.length, sum = 0, i;
+            for (i = 0; i < n; i++) sum += ps[i].density;
+            var mean = n ? sum / n : 0;
+            var txt = 'FPS ' + String(fps).padStart(3, ' ') + '\n' +
+                't   ' + sim.t.toFixed(2) + ' s\n' +
+                'N   ' + n + '\n' +
+                'ρ̄ ' + mean.toFixed(2) + '   h ' + sim.params.h.toFixed(1);
+            if (inspect.on && inspect.p) {
+                var p = inspect.p;
+                txt += '\n─ 选中粒子 ─\n' +
+                    'ρ  ' + p.density.toFixed(3) + '\n' +
+                    'p  ' + p.pressure.toFixed(2) + '\n' +
+                    '|v| ' + Math.sqrt(p.vx * p.vx + p.vy * p.vy).toFixed(1);
+            }
+            hudEl.textContent = txt;
+        }
+
+        // ---------------------------------------------------------------- 交互
+        var inspect = { on: false, p: null };
+
+        function pickParticle(x, y) {
+            var ps = sim.particles, best = null, bd = 26 * 26, i, dx, dy, d2;
+            for (i = 0; i < ps.length; i++) {
+                dx = ps[i].x - x; dy = ps[i].y - y;
+                d2 = dx * dx + dy * dy;
+                if (d2 < bd) { bd = d2; best = ps[i]; }
+            }
+            return best;
+        }
+
+        function localPoint(ev) {
+            var r = canvas.getBoundingClientRect();
+            var t = (ev.touches && ev.touches[0]) ? ev.touches[0] : ev;
+            return [(t.clientX || 0) - r.left, (t.clientY || 0) - r.top];
+        }
+
+        function onPointerDown(ev) {
+            var pt = localPoint(ev);
+            dragState.active = true;
+            dragState.x = pt[0]; dragState.y = pt[1];
+            dragState.px = pt[0]; dragState.py = pt[1];
+            dragState.accX = 0; dragState.accY = 0;
+            dragState.mode = 'stir';
+            if (sim.scene === 'stone' && sim.stone) {
+                if (Math.sqrt(Math.pow(pt[0] - sim.stone.x, 2) + Math.pow(pt[1] - sim.stone.y, 2)) < sim.stone.r + 16) {
+                    dragState.mode = 'stone';
+                }
+            } else if (sim.cup && insideCupLocal(sim.cup, pt[0], pt[1], 16)) {
+                dragState.mode = 'cup';
+                dragState.baseAngle = sim.params.angle;
+                dragState.baseAt = Math.atan2(pt[1] - sim.cup.pivot[1], pt[0] - sim.cup.pivot[0]);
+            }
+            if (canvas.setPointerCapture && ev.pointerId !== undefined) {
+                try { canvas.setPointerCapture(ev.pointerId); } catch (e) { /* ignore */ }
+            }
+        }
+
+        function onPointerMove(ev) {
+            if (!dragState.active) return;
+            var pt = localPoint(ev);
+            if (dragState.mode === 'cup' && sim.cup) {
+                var ang = Math.atan2(pt[1] - sim.cup.pivot[1], pt[0] - sim.cup.pivot[0]);
+                rotateCupTo(dragState.baseAngle + (ang - dragState.baseAt) * 180 / Math.PI);
+                sim.params.autoTilt = false;
+                syncUI();
+                return;
+            }
+            if (dragState.mode === 'stone' && sim.stone) {
+                sim.stone.x = clamp(pt[0], sim.stone.r, W - sim.stone.r);
+                sim.stone.y = clamp(pt[1], sim.stone.r, H - sim.stone.r);
+                sim.stone.vx = 0; sim.stone.vy = 0;
+                sim.params.stoneX = clamp(sim.stone.x / W, 0, 1);
+                sim.params.stoneY = clamp(sim.stone.y / H, 0, 1);
+                syncUI();
+                return;
+            }
+            // 注入扰动力：累积指针位移，每帧只消费一次
+            dragState.accX += (pt[0] - dragState.px) * 1.6;
+            dragState.accY += (pt[1] - dragState.py) * 1.6;
+            dragState.x = pt[0]; dragState.y = pt[1];
+            dragState.px = pt[0]; dragState.py = pt[1];
+        }
+
+        function onPointerUp() { dragState.active = false; }
+
+        function onCanvasClick(ev) {
+            var pt = localPoint(ev);
+            var p = pickParticle(pt[0], pt[1]);
+            if (p) { inspect.on = true; inspect.p = p; }
+            else { inspect.on = false; inspect.p = null; }
+        }
+
+        function onCanvasDblClick(ev) {
+            var pt = localPoint(ev);
+            var p = pickParticle(pt[0], pt[1]);
+            if (!p) { inspect.on = false; inspect.p = null; return; }
+            if (inspect.on && inspect.p === p) { inspect.on = false; inspect.p = null; }
+            else { inspect.on = true; inspect.p = p; }
+        }
+
+        // ---------------------------------------------------------------- 主循环
+        var running = true;         // 连续模拟
+        var stepMode = false;       // 分步模拟（暂停 + 单步）
+        var needStep = false;       // 单步请求
+        var lastTime = 0, fps = 60, tiltAcc = 0;
+
+        function dtSub() {
+            var P = sim.params;
+            return DT_BASE * clamp(P.speed, 0.05, 4) / Math.max(1, P.substeps | 0);
+        }
+
+        function stepFrame() {
+            var P = sim.params;
+            var sub = Math.max(1, P.substeps | 0);
+            var dt = dtSub();
+            for (var i = 0; i < sub; i++) stepPhysics(dt);
+        }
+
+        function frame(now) {
+            requestAnimationFrame(frame);
+            if (lastTime) {
+                var d = now - lastTime;
+                if (d > 0 && d < 500) fps = Math.round(fps * 0.9 + (1000 / d) * 0.1);
+            }
+            lastTime = now;
+
+            var P = sim.params;
+            if (P.autoTilt && sim.cup) {
+                tiltAcc += 1;
+                if (tiltAcc % 2 === 0) {
+                    rotateCupTo(Math.min(88, P.angle + 0.55));
+                    syncUI();
+                }
+            }
+
+            if (dragState.active) applyDragForce();
+
+            if (needStep) { needStep = false; stepFrame(); }
+            else if (running && !stepMode) stepFrame();
+            else if (stepMode && P.showForces) {
+                // 分步模式：停住时也刷新力场，箭头始终是「当前状态」的力向量
+                computeDensityPressure();
+                computeForces();
+            }
+
+            drawScene();
+            updateLegend();
+            updateHud(fps);
+        }
+
+        // ---------------------------------------------------------------- UI
+        function el(id) { return document.getElementById(id); }
+
+        var sliderMap = [
+            ['sN', 'oN', function (v) { return String(Math.round(v)); }, 'n'],
+            ['sH', 'oH', function (v) { return v.toFixed(1); }, 'h'],
+            ['sK', 'oK', fmtK, 'k', kPos],
+            ['sMu', 'oMu', function (v) { return v.toFixed(2); }, 'mu'],
+            ['sG', 'oG', function (v) { return String(Math.round(v)); }, 'g'],
+            ['sSpeed', 'oSpeed', function (v) { return v.toFixed(1) + '×'; }, 'speed'],
+            ['sSub', 'oSub', function (v) { return String(Math.round(v)); }, 'substeps'],
+            ['sArrow', 'oArrow', function (v) { return v.toFixed(1); }, 'arrowScale'],
+            ['sStoneX', 'oStoneX', function (v) { return Math.round(v * 100) + '%'; }, 'stoneX'],
+            ['sStoneY', 'oStoneY', function (v) { return Math.round(v * 100) + '%'; }, 'stoneY'],
+            ['sStoneM', 'oStoneM', function (v) { return v.toFixed(2); }, 'stoneM'],
+            ['sAngle', 'oAngle', function (v) { return Math.round(v) + '°'; }, 'angle']
+        ];
+
+        function readSliders() {
+            var P = sim.params;
+            P.n = Math.round(clamp(num(el('sN').value, 700), 50, 4000));
+            P.h = clamp(num(el('sH').value, 14), 4, 32);
+            P.k = clamp(kFromPos(num(el('sK').value, 62)), K_MIN, K_MAX);
+            P.mu = clamp(num(el('sMu').value, 0.3), 0, 4);
+            P.g = clamp(num(el('sG').value, 300), 0, 3000);
+            P.speed = clamp(num(el('sSpeed').value, 1) || 1, 0.1, 3);
+            P.substeps = Math.round(clamp(num(el('sSub').value, 2) || 2, 1, 4));
+            P.arrowScale = clamp(num(el('sArrow').value, 1) || 1, 0.2, 3);
+            P.stoneX = clamp(num(el('sStoneX').value, 0.5), 0.02, 0.98);
+            P.stoneY = clamp(num(el('sStoneY').value, 0.16), 0.02, 0.95);
+            P.stoneM = Math.max(0.2, num(el('sStoneM').value, 2.6) || 2.6);
+            P.angle = clamp(num(el('sAngle').value, 70), 0, 88);
+        }
+
+        function syncUI() {
+            var P = sim.params, i, input, out, v;
+            for (i = 0; i < sliderMap.length; i++) {
+                input = el(sliderMap[i][0]); out = el(sliderMap[i][1]);
+                v = P[sliderMap[i][3]];
+                if (input && input.value !== undefined && document.activeElement !== input) {
+                    input.value = sliderMap[i][4] ? sliderMap[i][4](v) : v;
+                }
+                if (out) out.textContent = sliderMap[i][2](v);
+            }
+            el('btnForces').className = 'btn' + (P.showForces ? ' on' : '');
+            el('btnAutoTilt').className = 'btn' + (P.autoTilt ? ' on' : '');
+            el('btnRun').className = stepMode ? '' : (running ? 'on' : '');
+            el('btnRun').textContent = (running && !stepMode) ? '▶ 连续模拟' : '⏸ 已暂停';
+            el('btnStepMode').className = stepMode ? 'on' : '';
+            modeBadgeEl.textContent = stepMode
+                ? ('分步模式：点「单步执行」推进一步' + (P.showForces ? '，箭头即该步的力向量' : ''))
+                : (running ? '连续模拟中' : '已暂停');
+            el('stoneCard').className = 'card' + (sim.scene === 'stone' ? '' : ' hidden');
+            el('pourCard').className = 'card' + (sim.scene === 'pouring' ? '' : ' hidden');
+            hintEl.textContent = sim.scene === 'pouring'
+                ? '拖动杯身：旋转杯子 ｜ 拖拽其它区域：注入扰动力 ｜ 单击粒子：查看物理量 ｜ 双击粒子：核函数圈'
+                : '拖拽：注入扰动力 ｜ 单击粒子：查看物理量 ｜ 双击粒子：显示核函数圈';
+            sceneNoteEl.textContent = SCENES[sim.scene] ? SCENES[sim.scene].note : '';
+            var btns = document.querySelectorAll('#sceneList button');
+            for (i = 0; i < btns.length; i++) {
+                btns[i].className = (btns[i].dataset.scene === sim.scene) ? 'on' : '';
+            }
+        }
+
+        // 按当前粒子间距自动匹配 h（邻居数 ≈ π·(h/spacing)² ≈ 21）
+        function autoMatchH() {
+            if (!sim.params.autoH) return;
+            sim.params.h = clamp(Math.round(sim.spacing * 2.6 * 2) / 2, 4, 32);
+        }
+
+        function selectScene(name) {
+            if (!SCENES[name]) name = 'drop';
+            var P = sim.params, d = SCENES[name];
+            sim.scene = name;
+            P.n = d.n;
+            P.k = d.k;
+            P.mu = d.mu;
+            P.g = d.g;
+            P.autoH = true;
+            P.autoTilt = false;
+            if (d.angle !== undefined) P.angle = d.angle;
+            if (d.stoneX !== undefined) P.stoneX = d.stoneX;
+            if (d.stoneY !== undefined) P.stoneY = d.stoneY;
+            if (d.stoneM !== undefined) P.stoneM = d.stoneM;
+            resetParticles();          // 先构建，得到真实间距
+            autoMatchH();              // 再按间距匹配 h
+            calibrateMass();           // h 变了，重新标定质量
+            inspect.on = false; inspect.p = null;
+            running = true; stepMode = false;
+            syncUI();
+        }
+
+        function wireSlider(id, apply) {
+            var node = el(id);
+            if (!node || !node.addEventListener) return;
+            node.addEventListener('input', function () {
+                apply(num(node.value, 0));
+                syncUI();
+            });
+        }
+
+        function buildUI() {
+            var list = el('sceneList');
+            var keys = Object.keys(SCENES), i, b;
+            for (i = 0; i < keys.length; i++) {
+                b = document.createElement('button');
+                b.type = 'button';
+                b.textContent = SCENES[keys[i]].label;
+                b.dataset.scene = keys[i];
+                b.addEventListener('click', function (ev) {
+                    selectScene(ev.currentTarget.dataset.scene);
+                });
+                list.appendChild(b);
+            }
+
+            wireSlider('sN', function (v) {
+                sim.params.n = Math.round(v);
+                resetParticles();
+                autoMatchH();
+                calibrateMass();
+                syncUI();
+            });
+            wireSlider('sH', function (v) { sim.params.h = v; sim.params.autoH = false; calibrateMass(); });
+            wireSlider('sK', function (v) { sim.params.k = clamp(kFromPos(v), K_MIN, K_MAX); });
+            wireSlider('sMu', function (v) { sim.params.mu = v; });
+            wireSlider('sG', function (v) { sim.params.g = v; });
+            wireSlider('sSpeed', function (v) { sim.params.speed = v || 1; });
+            wireSlider('sSub', function (v) { sim.params.substeps = Math.max(1, Math.round(v)); });
+            wireSlider('sArrow', function (v) { sim.params.arrowScale = v || 1; });
+            wireSlider('sStoneX', function (v) {
+                sim.params.stoneX = v;
+                if (sim.stone) { sim.stone.x = clamp(v * W, sim.stone.r, W - sim.stone.r); sim.stone.vx = 0; }
+            });
+            wireSlider('sStoneY', function (v) {
+                sim.params.stoneY = v;
+                if (sim.stone) { sim.stone.y = clamp(v * H, sim.stone.r, H - sim.stone.r); sim.stone.vy = 0; }
+            });
+            wireSlider('sStoneM', function (v) {
+                sim.params.stoneM = v || 2.6;
+                if (sim.stone) sim.stone.mass = v * sim.massPerArea * Math.PI * sim.stone.r * sim.stone.r;
+            });
+            wireSlider('sAngle', function (v) {
+                sim.params.autoTilt = false;
+                rotateCupTo(v);
+            });
+
+            el('btnRun').addEventListener('click', function () {
+                if (stepMode) { stepMode = false; running = true; }
+                else running = !running;
+                syncUI();
+            });
+            el('btnStepMode').addEventListener('click', function () {
+                stepMode = !stepMode;
+                if (stepMode) { running = false; sim.params.showForces = true; }
+                syncUI();
+            });
+            el('btnStep').addEventListener('click', function () {
+                stepMode = true; running = false;
+                sim.params.showForces = true;
+                needStep = true;
+                syncUI();
+            });
+            el('btnForces').addEventListener('click', function () {
+                sim.params.showForces = !sim.params.showForces;
+                syncUI();
+            });
+            el('btnAutoTilt').addEventListener('click', function () {
+                sim.params.autoTilt = !sim.params.autoTilt;
+                syncUI();
+            });
+            el('btnReset').addEventListener('click', function () {
+                resetParticles();
+                autoMatchH();
+                calibrateMass();
+                inspect.on = false; inspect.p = null;
+                syncUI();
+            });
+            var cm = el('colorMode');
+            if (cm && cm.addEventListener) {
+                cm.value = sim.params.colorMode;
+                cm.addEventListener('change', function () { sim.params.colorMode = cm.value; });
+            }
+
+            canvas.addEventListener('pointerdown', onPointerDown);
+            canvas.addEventListener('pointermove', onPointerMove);
+            canvas.addEventListener('pointerup', onPointerUp);
+            canvas.addEventListener('pointercancel', onPointerUp);
+            canvas.addEventListener('click', onCanvasClick);
+            canvas.addEventListener('dblclick', onCanvasDblClick);
+        }
+
+        // ---------------------------------------------------------------- 尺寸 / 启动
+        function resizeCanvas() {
+            var r = canvas.getBoundingClientRect();
+            var dpr = (window && window.devicePixelRatio) ? window.devicePixelRatio : 1;
+            var nw = Math.max(320, Math.round((r && r.width) || 1024));
+            var nh = Math.max(240, Math.round((r && r.height) || 576));
+            var same = (nw === W && nh === H && sim.particles.length > 0);
+            W = nw; H = nh;
+            canvas.width = Math.round(W * dpr);
+            canvas.height = Math.round(H * dpr);
+            if (ctx.setTransform) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            if (same) return;
+            resetParticles();
+            autoMatchH();
+            calibrateMass();
+        }
+
+        function boot() {
+            buildUI();
+            readSliders();
+            selectScene(sim.scene);   // 套用该场景的推荐参数（含自动 h）
+            resizeCanvas();
+            syncUI();
+            requestAnimationFrame(frame);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+        } else {
+            boot();
+        }
+
+        if (window && window.addEventListener) {
+            var resizePending = false;
+            window.addEventListener('resize', function () {
+                if (resizePending) return;
+                resizePending = true;
+                requestAnimationFrame(function () {
+                    resizePending = false;
+                    resizeCanvas();
+                    syncUI();
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>
