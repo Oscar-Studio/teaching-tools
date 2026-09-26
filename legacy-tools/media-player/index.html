@@ -181,13 +181,21 @@
         .btn.active { color: var(--accent-amber); }
         .btn-main { font-size: 1.35rem; padding: 10px 14px; }
 
+        /* 播放模式是四态循环按钮，不是开关 —— 颜色恒定，只靠图标区分 */
+        .btn-mode { min-width: 52px; gap: 3px; color: var(--accent-amber); }
+
         .badge {
-            font-size: .55rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 7px;
+            background: var(--accent-amber);
+            color: #141413;
+            font-size: 9px;
             font-weight: 700;
             line-height: 1;
-            margin-left: -3px;
-            margin-top: -8px;
-            color: var(--accent-amber);
         }
         .badge[hidden] { display: none; }
 
@@ -451,7 +459,7 @@
                             <option value="2.5">2.5x</option>
                             <option value="3">3.0x</option>
                         </select>
-                        <button class="btn" id="modeBtn" title="播放模式：顺序播放（R）"><i class="fa-solid fa-list"></i><span class="badge" id="modeBadge" hidden>1</span></button>
+                        <button class="btn btn-mode" id="modeBtn" title="播放模式：顺序播放（R）"><i class="fa-solid fa-list-ol"></i><span class="badge" id="modeBadge" hidden>1</span></button>
                         <button class="btn" id="theaterBtn" title="网页全屏（T）"><i class="fa-solid fa-display"></i></button>
                         <button class="btn" id="fullscreenBtn" title="浏览器全屏（F）"><i class="fa-solid fa-expand"></i></button>
                     </div>
@@ -518,11 +526,11 @@
     var fileInput = el('fileInput');
     var toastEl = el('toast');
 
-    /* 播放模式：单击同一个按钮循环切换 */
+    /* 播放模式：单击同一个按钮循环切换（四种图标必须彼此可区分） */
     var MODES = [
-        { icon: 'fa-list', label: '顺序播放' },
+        { icon: 'fa-list-ol', label: '顺序播放' },
         { icon: 'fa-redo', label: '单曲循环', badge: true },
-        { icon: 'fa-redo', label: '列表循环' },
+        { icon: 'fa-repeat', label: '列表循环' },
         { icon: 'fa-shuffle', label: '随机播放' }
     ];
     var MODE_ONE = 1, MODE_SHUFFLE = 3;
@@ -587,7 +595,6 @@
         var m = MODES[modeIndex];
         setIcon(modeBtn, m.icon);
         modeBadge.hidden = !m.badge;
-        modeBtn.classList.toggle('active', modeIndex !== 0);
         modeBtn.title = '播放模式：' + m.label + '（R）';
     }
 
