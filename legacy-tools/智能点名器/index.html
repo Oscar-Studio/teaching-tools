@@ -25,28 +25,40 @@
         body {
             background-color: var(--light-color);
             min-height: 100vh;
-            display: flex
-            flex-direction: column;;
-            justify-content: center;
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            padding: 20px;
+            /* 底部留出备案号位置；视口过矮时允许纵向滚动，不裁内容 */
+            padding: 20px 20px 44px;
             color: var(--dark-color);
-            overflow: hidden;
-            /* Prevent scrolling during animation */
+            overflow-x: hidden;
         }
 
         .container {
             width: 100%;
             max-width: 800px;
+            /* auto 外边距 = 水平+垂直居中；内容超高时自动退回顶端对齐，不会被裁掉 */
+            margin: auto;
             background-color: var(--card-bg);
             border-radius: 15px;
             box-shadow: var(--card-shadow);
             padding: 30px;
             border: var(--card-border);
             position: relative;
-            min-height: 600px;
+            /* 高度确定：名单区自己伸缩滚动，短屏也不会把按钮挤出卡片 */
+            height: min(600px, calc(100vh - 160px));
             display: flex;
             flex-direction: column;
+        }
+
+        /* 备案号固定在页面底部，不参与居中计算 */
+        body>p {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 8px;
+            margin: 0;
+            text-align: center;
         }
 
         h1 {
@@ -134,12 +146,25 @@
 
         .student-list-container {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
             border: 1px solid var(--hairline);
             border-radius: 8px;
             padding: 10px;
             background-color: var(--surface-soft);
             max-height: 400px;
+        }
+
+        /* 窄屏：控件换行会占更多高度，改为内容撑开 + 整页滚动 */
+        @media (max-width: 640px) {
+            .container {
+                height: auto;
+                min-height: calc(100vh - 160px);
+            }
+
+            .student-list-container {
+                min-height: 180px;
+            }
         }
 
         .list-header {
@@ -200,11 +225,25 @@
             position: relative;
         }
 
-        .back-btn {
+        .back-btn,
+        .mute-btn {
             position: absolute;
             top: 0;
-            left: 0;
             z-index: 10;
+        }
+
+        .back-btn {
+            left: 0;
+        }
+
+        .mute-btn {
+            right: 0;
+        }
+
+        .mute-btn.is-muted {
+            color: var(--text-secondary);
+            border-color: var(--hairline);
+            opacity: 0.75;
         }
 
         .rolling-display {
@@ -213,12 +252,14 @@
             color: var(--secondary-color);
             text-align: center;
             margin: 50px 0;
-            height: 1.2em;
+            min-height: 1.2em;
             line-height: 1.2em;
             overflow: hidden;
             position: relative;
             width: 100%;
             perspective: 1000px;
+            /* 高度由 JS 按名字实际行数设置，这里只做平滑过渡 */
+            transition: height 0.25s ease;
         }
 
         /* Slot machine animation effect */
@@ -341,6 +382,7 @@
         <!-- Rolling View -->
         <div id="rollingView">
             <button class="btn btn-outline back-btn" id="backBtn">⬅ 返回</button>
+            <button class="btn btn-outline mute-btn" id="muteBtn" type="button" aria-pressed="false">🔊</button>
 
             <div class="status-message" id="statusMessage">准备就绪</div>
 
@@ -365,6 +407,8 @@
         let availableStudents = []; // For no-repeat mode
         let isRolling = false;
         let rollInterval = null;
+        const MUTE_KEY = 'roll-caller-muted';
+        let muted = readMuted(); // 静音状态：仅影响语音播报
 
         // Elements
         const settingsView = document.getElementById('settingsView');
@@ -383,12 +427,15 @@
         const resetBtn = document.getElementById('resetBtn');
         const roller = document.getElementById('roller');
         const displayedName = document.getElementById('displayedName');
+        const rollingDisplay = document.querySelector('.rolling-display');
         const statusMessage = document.getElementById('statusMessage');
+        const muteBtn = document.getElementById('muteBtn');
 
         // Initialization
         function init() {
             generateStudents(parseInt(studentCountInput.value) || 40);
-            updateUI();
+            updateCounts();
+            applyMuteUI();
         }
 
         function generateStudents(count) {
@@ -514,6 +561,7 @@
             // Reset state
             isRolling = false;
             displayedName.textContent = '???';
+            reserveDisplayHeight(activeStudents.map(s => s.name));
             displayedName.classList.remove('result-highlight');
             roller.classList.remove('rolling-active');
             actionBtn.textContent = '开始';
@@ -564,6 +612,53 @@
         function updateNoRepeatStatus() {
             const activeCount = students.filter(s => s.selected).length;
             statusMessage.textContent = `剩余未点: ${availableStudents.length} / ${activeCount}`;
+        }
+
+        // 静音开关
+        function readMuted() {
+            try {
+                return localStorage.getItem(MUTE_KEY) === '1';
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function applyMuteUI() {
+            muteBtn.textContent = muted ? '🔇' : '🔊';
+            muteBtn.classList.toggle('is-muted', muted);
+            muteBtn.setAttribute('aria-pressed', String(muted));
+            muteBtn.title = muted ? '已静音，点击恢复语音播报' : '语音播报中，点击静音';
+        }
+
+        muteBtn.addEventListener('click', () => {
+            muted = !muted;
+            try {
+                localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
+            } catch (e) { /* 忽略隐私模式下的写入失败 */ }
+            applyMuteUI();
+            if (muted && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+        });
+
+        // 显示区高度：按名字实际占用的行数动态计算，避免多行名字被裁掉
+        function measureNameHeight() {
+            roller.style.height = 'auto';
+            displayedName.style.height = 'auto';
+            const h = displayedName.offsetHeight;
+            roller.style.height = '';
+            displayedName.style.height = '';
+            return h;
+        }
+
+        function reserveDisplayHeight(names) {
+            rollingDisplay.style.height = '';
+            let max = 0;
+            names.forEach(name => {
+                displayedName.textContent = name;
+                max = Math.max(max, measureNameHeight());
+            });
+            displayedName.textContent = '???';
+            max = Math.max(max, measureNameHeight());
+            rollingDisplay.style.height = max + 'px';
         }
 
         function startRolling() {
@@ -633,6 +728,7 @@
         }
 
         function speak(text) {
+            if (muted) return;
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text + `被抽中了`);
