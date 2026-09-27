@@ -27,12 +27,13 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex
-            flex-direction: column;;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            box-sizing: border-box;
         }
 
         .calculator {
@@ -271,11 +272,6 @@
         let lastResult = '';
         let isCalculationDone = false;
         let isKeyboardDisabled = false;
-
-        // Focus display initially
-        window.onload = () => {
-            display.focus();
-        };
 
         // Keep focus on display after button clicks (unless it's a specific interaction)
         document.querySelector('.keypad').addEventListener('mousedown', (e) => {
@@ -645,17 +641,32 @@
 
             if (!isKeyboardDisabled) {
                 // Enable keyboard
+                display.readOnly = false;
+                display.removeAttribute('inputmode');
                 btn.classList.remove('disabled');
                 btn.title = "禁用键盘输入";
             } else {
                 // Disable keyboard
-                // We rely solely on JS keydown blocking to disable input.
-                // We do NOT set readonly or inputmode=none, as that hides the cursor on some systems.
+                // JS keydown 拦截只能挡物理键盘；移动端真正弹虚拟键盘的是「聚焦可编辑控件」，
+                // 所以必须用 readonly + inputmode=none 撤掉可编辑性，focus 本身仍然保留（光标可用）
+                display.readOnly = true;
+                display.setAttribute('inputmode', 'none');
                 btn.classList.add('disabled');
                 btn.title = "启用键盘输入";
             }
             // Always keep focus to show cursor
             display.focus();
+        }
+
+        // 页面加载时不自动聚焦，避免移动端一进页面就弹出虚拟键盘
+        function isTouchDevice() {
+            return window.matchMedia && window.matchMedia('(hover: none)').matches;
+        }
+
+        if (!isTouchDevice()) {
+            window.onload = () => {
+                display.focus();
+            };
         }
     </script>
     <p><a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2026012488号-1</a></p>

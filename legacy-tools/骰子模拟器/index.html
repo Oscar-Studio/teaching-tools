@@ -11,13 +11,11 @@
     <script defer src="https://cloud.umami.is/script.js"
         data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
     <style>
-        
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: var(--font-sans);
         }
 
         body {
@@ -52,89 +50,184 @@
             margin-bottom: 30px;
         }
 
+        /* =====================================================
+         * 真 3D 骰子
+         * 层级：.die（命中区/悬浮） > .die-shadow + .die-body（透视 + 抛掷位移）
+         *       > .die-cube（preserve-3d 旋转） > 6 个 .die-face
+         * perspective 放在 .die-body 上：位移/压扁是 2D 变换，
+         * 立方体自身再开 preserve-3d，面才有透视投影。
+         * ===================================================== */
+        :root {
+            --die-shadow: rgba(20, 20, 19, 0.42);
+        }
+
+        :root[data-theme="dark"] {
+            --die-shadow: rgba(0, 0, 0, 0.72);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                --die-shadow: rgba(0, 0, 0, 0.72);
+            }
+        }
+
         .dice-container {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin: 40px 0;
+            align-items: flex-end;
+            gap: 26px;
             flex-wrap: wrap;
+            /* 顶部留出抛掷空间：骰子会往上飞 150px */
+            padding: 155px 0 30px;
         }
 
-        .dice {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(145deg, #f0f0f0, #d0d0d0);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
-            font-weight: bold;
-            color: #333;
-            box-shadow: 
-                5px 5px 15px rgba(0, 0, 0, 0.3),
-                -2px -2px 10px rgba(255, 255, 255, 0.1);
+        .die {
+            --die-size: 92px;
+            --die-half: 46px;
+            position: relative;
+            /* 盒子比骰子大 26px：留给俯视投影溢出，否则相邻骰子的立体轮廓会挤在一起 */
+            width: calc(var(--die-size) + 26px);
+            height: calc(var(--die-size) + 26px);
             cursor: pointer;
-            transition: transform 0.3s ease;
             user-select: none;
+            touch-action: manipulation;
+            transition: transform 0.18s ease;
         }
 
-        .dice:hover {
-            transform: scale(1.05);
+        .die:hover {
+            transform: translateY(-4px) scale(1.04);
         }
 
-        .dice.rolling {
-            animation: roll 0.5s ease-out;
+        .die:active {
+            transform: scale(0.97);
         }
 
-        @keyframes roll {
-            0% { transform: rotate(0deg) scale(1); }
-            25% { transform: rotate(90deg) scale(0.8); }
-            50% { transform: rotate(180deg) scale(1.1); }
-            75% { transform: rotate(270deg) scale(0.9); }
-            100% { transform: rotate(360deg) scale(1); }
+        .die-body {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            z-index: 1;
+            width: var(--die-size);
+            height: var(--die-size);
+            margin: calc(var(--die-size) / -2) 0 0 calc(var(--die-size) / -2);
+            perspective: 640px;
         }
 
-        .dice-inner {
+        .die-cube {
             position: relative;
             width: 100%;
             height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transform-style: preserve-3d;
         }
 
-        .dot {
+        /* 6 个面：法向量依次为 顶/底/前/后/右/左
+         * 面必须用直角 + backface-visibility:hidden：
+         *   - 圆角会在相邻面的接缝处留出小缝，背面剔除后缝里会漏出背景黑缺口；
+         *   - 不做背面剔除则背面从缝里透出来，骰子中间出现一道亮缝。
+         * 直角面 + 背面剔除才能拼出一个严丝合缝的实心骰子。 */
+        .die-face {
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #333;
-            border-radius: 50%;
-            display: none;
+            inset: 0;
+            backface-visibility: hidden;
+            box-shadow: inset 0 0 0 1px rgba(20, 20, 19, 0.14);
         }
 
-        /* 骰子点数样式 */
-        .dice[data-face="1"] .dot:nth-child(1) { display: block; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .dice[data-face="2"] .dot:nth-child(1) { display: block; top: 20%; left: 20%; }
-        .dice[data-face="2"] .dot:nth-child(2) { display: block; top: 80%; left: 80%; }
-        .dice[data-face="3"] .dot:nth-child(1) { display: block; top: 20%; left: 20%; }
-        .dice[data-face="3"] .dot:nth-child(2) { display: block; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .dice[data-face="3"] .dot:nth-child(3) { display: block; top: 80%; left: 80%; }
-        .dice[data-face="4"] .dot:nth-child(1) { display: block; top: 20%; left: 20%; }
-        .dice[data-face="4"] .dot:nth-child(2) { display: block; top: 20%; left: 80%; }
-        .dice[data-face="4"] .dot:nth-child(3) { display: block; top: 80%; left: 20%; }
-        .dice[data-face="4"] .dot:nth-child(4) { display: block; top: 80%; left: 80%; }
-        .dice[data-face="5"] .dot:nth-child(1) { display: block; top: 20%; left: 20%; }
-        .dice[data-face="5"] .dot:nth-child(2) { display: block; top: 20%; left: 80%; }
-        .dice[data-face="5"] .dot:nth-child(3) { display: block; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .dice[data-face="5"] .dot:nth-child(4) { display: block; top: 80%; left: 20%; }
-        .dice[data-face="5"] .dot:nth-child(5) { display: block; top: 80%; left: 80%; }
-        .dice[data-face="6"] .dot:nth-child(1) { display: block; top: 20%; left: 20%; }
-        .dice[data-face="6"] .dot:nth-child(2) { display: block; top: 20%; left: 80%; }
-        .dice[data-face="6"] .dot:nth-child(3) { display: block; top: 50%; left: 20%; transform: translate(-50%, -50%); }
-        .dice[data-face="6"] .dot:nth-child(4) { display: block; top: 50%; left: 80%; transform: translate(-50%, -50%); }
-        .dice[data-face="6"] .dot:nth-child(5) { display: block; top: 80%; left: 20%; }
-        .dice[data-face="6"] .dot:nth-child(6) { display: block; top: 80%; left: 80%; }
+        .f-1 {
+            transform: rotateX(90deg) translateZ(var(--die-half));
+            background: linear-gradient(150deg, #fffdf6, #f2ebdc);
+        }
+
+        .f-2 {
+            transform: rotateX(-90deg) translateZ(var(--die-half));
+            background: linear-gradient(150deg, #e3dbcc, #cfc5b2);
+        }
+
+        .f-3 {
+            transform: translateZ(var(--die-half));
+            background: linear-gradient(150deg, #fdf9f0, #ebe3d2);
+        }
+
+        .f-4 {
+            transform: rotateY(180deg) translateZ(var(--die-half));
+            background: linear-gradient(150deg, #ddd5c5, #c7bdab);
+        }
+
+        .f-5 {
+            transform: rotateY(90deg) translateZ(var(--die-half));
+            background: linear-gradient(150deg, #f5efe3, #dcd3c0);
+        }
+
+        .f-6 {
+            transform: rotateY(-90deg) translateZ(var(--die-half));
+            background: linear-gradient(150deg, #d7cfbf, #c1b7a5);
+        }
+
+        /* 点数：3×3 槽位，按点数点亮对应格子 */
+        .pips {
+            position: absolute;
+            inset: 13%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 6%;
+        }
+
+        .pip {
+            place-self: center;
+            width: 76%;
+            height: 76%;
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(0.4);
+            background: radial-gradient(circle at 38% 32%, #56564f, #141413 72%);
+            box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.3), 0 1px 1px rgba(20, 20, 19, 0.18);
+        }
+
+        .pip:nth-child(1) { grid-area: 1 / 1; }
+        .pip:nth-child(2) { grid-area: 1 / 2; }
+        .pip:nth-child(3) { grid-area: 1 / 3; }
+        .pip:nth-child(4) { grid-area: 2 / 1; }
+        .pip:nth-child(5) { grid-area: 2 / 2; }
+        .pip:nth-child(6) { grid-area: 2 / 3; }
+        .pip:nth-child(7) { grid-area: 3 / 1; }
+        .pip:nth-child(8) { grid-area: 3 / 2; }
+        .pip:nth-child(9) { grid-area: 3 / 3; }
+
+        .p-1 .pip:nth-child(5),
+        .p-2 .pip:nth-child(1), .p-2 .pip:nth-child(9),
+        .p-3 .pip:nth-child(1), .p-3 .pip:nth-child(5), .p-3 .pip:nth-child(9),
+        .p-4 .pip:nth-child(1), .p-4 .pip:nth-child(3), .p-4 .pip:nth-child(7), .p-4 .pip:nth-child(9),
+        .p-5 .pip:nth-child(1), .p-5 .pip:nth-child(3), .p-5 .pip:nth-child(5), .p-5 .pip:nth-child(7), .p-5 .pip:nth-child(9),
+        .p-6 .pip:nth-child(1), .p-6 .pip:nth-child(3), .p-6 .pip:nth-child(4), .p-6 .pip:nth-child(6), .p-6 .pip:nth-child(7), .p-6 .pip:nth-child(9) {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .die-shadow {
+            position: absolute;
+            left: 50%;
+            bottom: -8px;
+            z-index: 0;
+            width: calc(var(--die-size) * 0.86);
+            height: 18px;
+            margin-left: calc(var(--die-size) * -0.43);
+            border-radius: 50%;
+            background: radial-gradient(ellipse at center, var(--die-shadow) 0%, transparent 70%);
+            transform: scale(1);
+            pointer-events: none;
+        }
+
+        @media (max-width: 480px) {
+            .die {
+                --die-size: 74px;
+                --die-half: 37px;
+            }
+
+            .dice-container {
+                gap: 18px;
+                padding-top: 130px;
+            }
+        }
 
         .settings {
             display: flex;
@@ -180,15 +273,21 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-3px);
             box-shadow: 0 5px 20px rgba(42, 92, 170, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .result {
             margin-top: 30px;
             padding: 20px;
-            background: rgba(0, 229, 255, 0.1);
+            background: var(--surface-soft);
+            border: 1px solid var(--hairline);
             border-radius: 10px;
             font-size: 1.5rem;
             display: none;
@@ -219,7 +318,8 @@
         .history {
             margin-top: 20px;
             padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
+            background: var(--surface-soft);
+            border: 1px solid var(--hairline);
             border-radius: 10px;
             max-height: 150px;
             overflow-y: auto;
@@ -259,8 +359,8 @@
                 <input type="number" id="diceCount" value="2" min="1" max="6">
             </div>
             <div class="setting-item">
-                <label>最大点数:</label>
-                <input type="number" id="maxPoint" value="6" min="2" max="20">
+                <label>骰子面数:</label>
+                <input type="number" id="maxPoint" value="6" min="2" max="6">
             </div>
         </div>
 
@@ -268,7 +368,7 @@
             <!-- 骰子会在这里生成 -->
         </div>
 
-        <button class="btn btn-primary" onclick="rollDice()">🎲 投掷骰子</button>
+        <button class="btn btn-primary" id="rollBtn" onclick="rollDice()">🎲 投掷骰子</button>
 
         <div class="result" id="result">
             <div>结果</div>
@@ -287,141 +387,263 @@
     </footer>
 
     <script>
+        // ============================================================
+        // 真 3D 骰子：CSS 3D 立方体 + 抛掷物理
+        // 关键：先掷出值，再反推"让这一面朝上"的旋转角作为落定姿态。
+        //       所以停稳后朝上的面永远等于显示的点数（不是翻转贴图糊弄）。
+        //
+        // CSS 坐标系：x 右 / y 下 / z 朝观察者。
+        // 面的法向量：顶(0,-1,0) 底(0,1,0) 前(0,0,1) 后(0,0,-1) 右(1,0,0) 左(-1,0,0)
+        // 令 M = rotateY(yaw)·rotateX(rx)·rotateY(ry)，先解出把该面法向量转到
+        // 朝上 (0,-1,0) 的 (rx, ry)，再整体绕竖直轴偏转 yaw —— yaw 不影响"朝上"。
+        // ============================================================
+
+        const POSE = {
+            1: [0, 0],    // 顶面本来就朝上
+            2: [180, 0],  // 底面翻上来
+            3: [90, 0],   // 前面翻上来
+            4: [90, 180],
+            5: [90, -90],
+            6: [90, 90]
+        };
+        const TOSS_MS = 950;    // 单颗骰子一次完整抛掷
+        const STAGGER_MS = 70;  // 多颗之间的抛起错峰
+        const LIFT_PX = 150;    // 抛起高度（同时决定 .dice-container 顶部留白）
+        const TILT = -20;       // 固定俯视角：屏幕正对镜头时顶面几乎侧对镜头看不见点数
+
+        // 绕竖直轴的落定偏航：必须取任意角度。取 90° 整数倍时骰子会"正对镜头"，
+        // 此时立方体只能看到一个面，看上去就退回成一张 2D 方块。
+        // 偏航只绕竖直轴，不改变哪个面朝上，所以不影响点数正确性。
+        const randomYaw = () => Math.round(Math.random() * 3600) / 10;
+
         let diceValues = [];
+        let dieRefs = [];    // [{ root, cube, body, shadow }]
+        let dieStates = [];  // [{ value, transform }]
         let history = [];
+        let rolling = false;
+
+        const byId = (id) => document.getElementById(id);
+
+        function intSetting(id, min, max, fallback) {
+            const el = byId(id);
+            const n = parseInt(String(el && el.value), 10);
+            if (isNaN(n)) return fallback;
+            return Math.min(max, Math.max(min, n));
+        }
+
+        const getCount = () => intSetting('diceCount', 1, 6, 2);
+        const getFaces = () => intSetting('maxPoint', 2, 6, 6);
+
+        function canAnimate() {
+            return typeof Element !== 'undefined'
+                && !!Element.prototype
+                && typeof Element.prototype.animate === 'function';
+        }
+
+        function reduceMotion() {
+            return typeof window !== 'undefined'
+                && typeof window.matchMedia === 'function'
+                && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+
+        // 最左侧的 rotateX(TILT) 是"摄像机俯视"，只是改变观察角度；
+        // 真正决定哪个面朝上的仍是后面三个 rotate。
+        function poseFor(value, yaw) {
+            const p = POSE[value] || POSE[1];
+            return 'rotateX(' + TILT + 'deg) rotateY(' + yaw + 'deg) rotateX(' + p[0] + 'deg) rotateY(' + p[1] + 'deg)';
+        }
 
         function createDice() {
-            const count = parseInt(document.getElementById('diceCount').value) || 2;
-            const container = document.getElementById('diceContainer');
+            const count = getCount();
+            const faces = getFaces();
+            const container = byId('diceContainer');
             container.innerHTML = '';
-            
+
+            dieRefs = [];
+            dieStates = [];
             diceValues = [];
-            
+
             for (let i = 0; i < count; i++) {
-                const dice = document.createElement('div');
-                dice.className = 'dice';
-                dice.id = `dice-${i}`;
-                dice.onclick = () => rollSingleDice(i);
-                
-                // 添加点数显示
-                const diceInnerDiv = document.createElement('div');
-                diceInnerDiv.className = 'dice-inner';
-                dice.appendChild(diceInnerDiv);
-                
-                // 添加6个点
-                for (let j = 0; j < 6; j++) {
-                    const dot = document.createElement('div');
-                    dot.className = 'dot';
-                    dice.appendChild(dot);
+                const root = document.createElement('div');
+                root.className = 'die';
+                root.title = '点击这颗骰子单独重掷';
+
+                const shadow = document.createElement('div');
+                shadow.className = 'die-shadow';
+
+                const body = document.createElement('div');
+                body.className = 'die-body';
+
+                const cube = document.createElement('div');
+                cube.className = 'die-cube';
+
+                for (let v = 1; v <= 6; v++) {
+                    const face = document.createElement('div');
+                    face.className = 'die-face f-' + v + (v <= faces ? ' p-' + v : '');
+                    const pips = document.createElement('div');
+                    pips.className = 'pips';
+                    pips.setAttribute('aria-hidden', 'true'); // 纯装饰，点数由结果区播报
+                    for (let k = 0; k < 9; k++) {
+                        const pip = document.createElement('div');
+                        pip.className = 'pip';
+                        pips.appendChild(pip);
+                    }
+                    face.appendChild(pips);
+                    cube.appendChild(face);
                 }
-                
-                container.appendChild(dice);
+
+                body.appendChild(cube);
+                root.appendChild(shadow);
+                root.appendChild(body);
+                root.onclick = () => rollSingleDie(i);
+                container.appendChild(root);
+
+                dieRefs.push({ root: root, cube: cube, body: body, shadow: shadow });
+                dieStates.push({ value: 1, transform: poseFor(1, 0) });
                 diceValues.push(1);
             }
-            
-            updateDiceDisplay();
+
+            // 初始展示：随机朝上的面，但姿态必须和值自洽
+            for (let i = 0; i < count; i++) {
+                restDie(i, 1 + Math.floor(Math.random() * faces), faces);
+            }
+            renderHistory();
         }
 
-        function updateDiceDisplay() {
-            const maxPoint = parseInt(document.getElementById('maxPoint').value) || 6;
-            
-            diceValues.forEach((value, index) => {
-                const dice = document.getElementById(`dice-${index}`);
-                const displayValue = (value - 1) % maxPoint + 1;
-                dice.setAttribute('data-face', displayValue);
-            });
+        // 直接落到某个值对应的姿态（无动画）
+        function restDie(index, value, faces) {
+            const ref = dieRefs[index];
+            if (!ref) return;
+
+            const transform = poseFor(value, randomYaw());
+            ref.cube.style.transform = transform;
+            dieStates[index] = { value: value, transform: transform };
+
+            // 面数变化时把用不上的面清空（D4 就没有 5、6 点）
+            for (let v = 1; v <= 6; v++) {
+                const face = ref.cube.children[v - 1];
+                if (face) face.className = 'die-face f-' + v + (v <= faces ? ' p-' + v : '');
+            }
         }
 
-        function rollSingleDice(index) {
-            const dice = document.getElementById(`dice-${index}`);
-            const maxPoint = parseInt(document.getElementById('maxPoint').value) || 6;
-            
-            dice.classList.add('rolling');
-            
-            // 动画
-            let rolls = 0;
-            const interval = setInterval(() => {
-                diceValues[index] = Math.floor(Math.random() * maxPoint) + 1;
-                updateDiceDisplay();
-                rolls++;
-                
-                if (rolls >= 10) {
-                    clearInterval(interval);
-                    diceValues[index] = Math.floor(Math.random() * maxPoint) + 1;
-                    updateDiceDisplay();
-                    dice.classList.remove('rolling');
-                    showResult();
-                }
-            }, 50);
+        // 抛一颗：位移/压扁用 .die-body，旋转用 .die-cube，阴影同步缩放
+        function animateDie(index, value, faces, delay) {
+            const prev = (dieStates[index] && dieStates[index].transform) || poseFor(1, 0);
+            restDie(index, value, faces); // 先把落定姿态写进 inline style
+
+            const ref = dieRefs[index];
+            if (!ref || !canAnimate() || reduceMotion()) return;
+
+            const p = POSE[value] || POSE[1];
+            const target = dieStates[index].transform;
+            // 中途姿态：叠加整圈旋转，翻滚看起来才是真的
+            const spin = 1 + Math.floor(Math.random() * 2);
+            const tilt = 'rotateX(' + TILT + 'deg) ';
+            const mid1 = tilt + 'rotateY(' + (spin * 360 * 0.55) + 'deg) rotateX(' + (p[0] + 360 * 0.9) + 'deg) rotateY(' + (p[1] + 180) + 'deg)';
+            const mid2 = tilt + 'rotateY(' + (spin * 360 * 0.85) + 'deg) rotateX(' + (p[0] + 360 * 2.1) + 'deg) rotateY(' + p[1] + 'deg)';
+
+            const common = { duration: TOSS_MS, delay: delay, fill: 'backwards' };
+
+            ref.cube.animate([
+                { transform: prev, offset: 0 },
+                { transform: mid1, offset: 0.32 },
+                { transform: mid2, offset: 0.66 },
+                { transform: target, offset: 1 }
+            ], Object.assign({ easing: 'cubic-bezier(0.22, 0.68, 0.24, 1)' }, common));
+
+            ref.body.animate([
+                { transform: 'translateY(0) scale(1, 1)', offset: 0, easing: 'cubic-bezier(0.1, 0.72, 0.32, 1)' },
+                { transform: 'translateY(' + -LIFT_PX + 'px) scale(0.93, 1.08)', offset: 0.14, easing: 'cubic-bezier(0.5, 0, 0.75, 0.6)' },
+                { transform: 'translateY(' + -LIFT_PX * 0.64 + 'px) scale(1, 1)', offset: 0.36, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' },
+                { transform: 'translateY(0) scale(1.12, 0.86)', offset: 0.56, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
+                { transform: 'translateY(-36px) scale(0.96, 1.05)', offset: 0.7, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
+                { transform: 'translateY(0) scale(1.07, 0.93)', offset: 0.83, easing: 'ease-out' },
+                { transform: 'translateY(-13px) scale(0.99, 1.02)', offset: 0.92, easing: 'ease-out' },
+                { transform: 'translateY(0) scale(1, 1)', offset: 1 }
+            ], Object.assign({ easing: 'linear' }, common));
+
+            ref.shadow.animate([
+                { transform: 'scale(1, 1)', opacity: 0.42, offset: 0 },
+                { transform: 'scale(0.42, 0.5)', opacity: 0.1, offset: 0.14 },
+                { transform: 'scale(1.06, 1)', opacity: 0.5, offset: 0.56 },
+                { transform: 'scale(0.86, 0.9)', opacity: 0.28, offset: 0.7 },
+                { transform: 'scale(1.02, 1)', opacity: 0.46, offset: 0.83 },
+                { transform: 'scale(0.97, 0.98)', opacity: 0.36, offset: 0.92 },
+                { transform: 'scale(1, 1)', opacity: 0.42, offset: 1 }
+            ], Object.assign({ easing: 'linear' }, common));
         }
 
         function rollDice() {
-            const maxPoint = parseInt(document.getElementById('maxPoint').value) || 6;
-            const diceElements = document.querySelectorAll('.dice');
-            
-            diceElements.forEach(dice => dice.classList.add('rolling'));
-            
-            // 动画
-            let rolls = 0;
-            const interval = setInterval(() => {
-                diceValues = diceValues.map(() => Math.floor(Math.random() * maxPoint) + 1);
-                updateDiceDisplay();
-                rolls++;
-                
-                if (rolls >= 10) {
-                    clearInterval(interval);
-                    diceValues = diceValues.map(() => Math.floor(Math.random() * maxPoint) + 1);
-                    updateDiceDisplay();
-                    diceElements.forEach(dice => dice.classList.remove('rolling'));
-                    showResult();
-                }
-            }, 50);
+            if (rolling) return;
+
+            const count = dieRefs.length;
+            if (!count) return;
+
+            const faces = getFaces();
+            const btn = byId('rollBtn');
+            rolling = true;
+            if (btn) btn.disabled = true;
+
+            diceValues = [];
+            for (let i = 0; i < count; i++) {
+                const value = 1 + Math.floor(Math.random() * faces);
+                diceValues.push(value);
+                animateDie(i, value, faces, i * STAGGER_MS);
+            }
+
+            setTimeout(() => {
+                rolling = false;
+                if (btn) btn.disabled = false;
+                showResult();
+            }, TOSS_MS + (count - 1) * STAGGER_MS + 40);
+        }
+
+        function rollSingleDie(index) {
+            if (rolling) return;
+
+            const value = 1 + Math.floor(Math.random() * getFaces());
+            diceValues[index] = value;
+            rolling = true;
+            animateDie(index, value, getFaces(), 0);
+
+            setTimeout(() => {
+                rolling = false;
+                showResult();
+            }, TOSS_MS + 40);
         }
 
         function showResult() {
-            const resultDiv = document.getElementById('result');
-            const resultNumber = document.getElementById('resultNumber');
-            const resultDetail = document.getElementById('resultDetail');
-            
             const total = diceValues.reduce((a, b) => a + b, 0);
-            
-            resultNumber.textContent = total;
-            resultDetail.textContent = diceValues.join(' + ');
-            
-            resultDiv.classList.add('show');
-            
-            // 添加到历史
+            byId('resultNumber').textContent = total;
+            byId('resultDetail').textContent = diceValues.join(' + ');
+            byId('result').classList.add('show');
             addToHistory(total);
         }
 
         function addToHistory(total) {
-            history.unshift({
-                value: total,
-                detail: [...diceValues],
-                time: new Date().toLocaleTimeString()
-            });
-            
-            if (history.length > 10) {
-                history.pop();
-            }
-            
+            history.unshift({ value: total, detail: diceValues.slice() });
+            if (history.length > 10) history.pop();
             renderHistory();
         }
 
         function renderHistory() {
-            const list = document.getElementById('historyList');
-            list.innerHTML = history.map(item => 
-                `<div class="history-item">${item.detail.join('+')} = ${item.value}</div>`
-            ).join('');
+            const list = byId('historyList');
+            list.innerHTML = '';
+            history.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'history-item';
+                row.textContent = item.detail.join(' + ') + ' = ' + item.value;
+                list.appendChild(row);
+            });
         }
 
         // 监听设置变化
-        document.getElementById('diceCount').addEventListener('change', createDice);
-        document.getElementById('maxPoint').addEventListener('change', updateDiceDisplay);
+        byId('diceCount').addEventListener('change', createDice);
+        byId('maxPoint').addEventListener('change', createDice);
 
         // 键盘快捷键
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
+            if (e.code === 'Space' && !e.repeat) {
                 e.preventDefault();
                 rollDice();
             }
