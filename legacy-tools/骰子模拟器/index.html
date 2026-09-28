@@ -121,14 +121,19 @@
         }
 
         /* 6 个面：法向量依次为 顶/底/前/后/右/左
-         * 面必须用直角 + backface-visibility:hidden：
-         *   - 圆角会在相邻面的接缝处留出小缝，背面剔除后缝里会漏出背景黑缺口；
-         *   - 不做背面剔除则背面从缝里透出来，骰子中间出现一道亮缝。
-         * 直角面 + 背面剔除才能拼出一个严丝合缝的实心骰子。 */
+         *
+         * 两处刻意的选择，都是为了避免渲染伪影：
+         *
+         * 1) 直角，不能加 border-radius —— 圆角会在相邻面接缝处留小缝，
+         *    背面剔除时缝里漏出背景黑缺口，不剔除时背面透出来形成亮缝。
+         * 2) 不加 backface-visibility:hidden —— 它会给每个面强制一个独立渲染面
+         *    并做背面剔除，动画过程中渲染面裁剪矩形偶尔算错，就会在骰子周围
+         *    闪出一块硬边矩形（米白色或半透明深色块）。
+         *    不加也一样是实心的：立方体是凸体，背面投影必然被放大的正面完全覆盖。
+         */
         .die-face {
             position: absolute;
             inset: 0;
-            backface-visibility: hidden;
             box-shadow: inset 0 0 0 1px rgba(20, 20, 19, 0.14);
         }
 
@@ -526,7 +531,7 @@
             }
         }
 
-        // 抛一颗：位移/压扁用 .die-body，旋转用 .die-cube，阴影同步缩放
+        // 抛一颗：位移用 .die-body，旋转用 .die-cube，阴影同步缩放
         function animateDie(index, value, faces, delay) {
             const prev = (dieStates[index] && dieStates[index].transform) || poseFor(1, 0);
             restDie(index, value, faces); // 先把落定姿态写进 inline style
@@ -551,22 +556,31 @@
                 { transform: target, offset: 1 }
             ], Object.assign({ easing: 'cubic-bezier(0.22, 0.68, 0.24, 1)' }, common));
 
+            // .die-body 是 perspective 根，这里只能做"纯位移"。
+            //
+            // 原因：给透视根加非等比 scale(x, y) 会让整个 preserve-3d 子树进入
+            // 合成器的非线性变换路径，Chromium 会把 3D 内容栅格化进一张带裁剪的
+            // 纹理。裁剪矩形算错时就会闪出一块硬边矩形（米白色/半透明深色块），
+            // 表现为掷骰子过程中骰子周围偶尔闪过一块方形阴影。
+            // 平移是仿射变换，走合成器快路径，不会产生这种伪影。
+            // 落地冲击感改由 .die-shadow 承担 —— 它是纯 2D 元素，不在 3D 路径上。
             ref.body.animate([
-                { transform: 'translateY(0) scale(1, 1)', offset: 0, easing: 'cubic-bezier(0.1, 0.72, 0.32, 1)' },
-                { transform: 'translateY(' + -LIFT_PX + 'px) scale(0.93, 1.08)', offset: 0.14, easing: 'cubic-bezier(0.5, 0, 0.75, 0.6)' },
-                { transform: 'translateY(' + -LIFT_PX * 0.64 + 'px) scale(1, 1)', offset: 0.36, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' },
-                { transform: 'translateY(0) scale(1.12, 0.86)', offset: 0.56, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
-                { transform: 'translateY(-36px) scale(0.96, 1.05)', offset: 0.7, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
-                { transform: 'translateY(0) scale(1.07, 0.93)', offset: 0.83, easing: 'ease-out' },
-                { transform: 'translateY(-13px) scale(0.99, 1.02)', offset: 0.92, easing: 'ease-out' },
-                { transform: 'translateY(0) scale(1, 1)', offset: 1 }
+                { transform: 'translateY(0)', offset: 0, easing: 'cubic-bezier(0.1, 0.72, 0.32, 1)' },
+                { transform: 'translateY(' + -LIFT_PX + 'px)', offset: 0.14, easing: 'cubic-bezier(0.5, 0, 0.75, 0.6)' },
+                { transform: 'translateY(' + -LIFT_PX * 0.64 + 'px)', offset: 0.36, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' },
+                { transform: 'translateY(0)', offset: 0.56, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
+                { transform: 'translateY(-36px)', offset: 0.7, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
+                { transform: 'translateY(0)', offset: 0.83, easing: 'ease-out' },
+                { transform: 'translateY(-13px)', offset: 0.92, easing: 'ease-out' },
+                { transform: 'translateY(0)', offset: 1 }
             ], Object.assign({ easing: 'linear' }, common));
 
+            // 阴影：落地瞬间放大 + 变深，替代原来骰子自身的压扁回弹
             ref.shadow.animate([
                 { transform: 'scale(1, 1)', opacity: 0.42, offset: 0 },
-                { transform: 'scale(0.42, 0.5)', opacity: 0.1, offset: 0.14 },
-                { transform: 'scale(1.06, 1)', opacity: 0.5, offset: 0.56 },
-                { transform: 'scale(0.86, 0.9)', opacity: 0.28, offset: 0.7 },
+                { transform: 'scale(0.38, 0.45)', opacity: 0.1, offset: 0.14 },
+                { transform: 'scale(1.3, 1.05)', opacity: 0.72, offset: 0.56 },
+                { transform: 'scale(0.8, 0.85)', opacity: 0.26, offset: 0.7 },
                 { transform: 'scale(1.02, 1)', opacity: 0.46, offset: 0.83 },
                 { transform: 'scale(0.97, 0.98)', opacity: 0.36, offset: 0.92 },
                 { transform: 'scale(1, 1)', opacity: 0.42, offset: 1 }
