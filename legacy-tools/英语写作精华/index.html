@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="英语写作精华 · Great Ideas 高分表达手册：四步逻辑链、三段框架与时态、21 条高分整句、15 条描述素材、12 个亮点短语，全部点击即复制。">
+<link rel="canonical" href="https://edu.oscarstudio.cn/%E8%8B%B1%E8%AF%AD%E5%86%99%E4%BD%9C%E7%B2%BE%E5%8D%8E/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Oscar Studio 教学工具">
+<meta property="og:title" content="英语写作精华 · Great Ideas 高分表达手册 | Oscar Studio 教学工具">
+<meta property="og:description" content="四步逻辑链 + 三段框架时态 + 21 条高分整句 + 15 条描述素材 + 12 个亮点短语，附万能模板与 110 词范文。">
+<meta property="og:url" content="https://edu.oscarstudio.cn/%E8%8B%B1%E8%AF%AD%E5%86%99%E4%BD%9C%E7%B2%BE%E5%8D%8E/">
+<meta property="og:image" content="https://edu.oscarstudio.cn/logo.png">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英语写作精华 · Great Ideas 高分表达手册 | Oscar Studio 教学工具</title>
+<link rel="stylesheet" href="../_shared/design-tokens.css">
+<script src="../_shared/tool-header.js"></script>
+<script src="../_shared/theme-tokens.js"></script>
+<script defer src="https://cloud.umami.is/script.js"
+    data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+<style>
+/* =====================================================
+ * 本页配色映射到 _shared/design-tokens.css 的共享变量，
+ * 以跟随 edu 的浅色 / 深色主题。
+ * 前缀 --gi-* 是为了不和共享令牌（--ink / --primary / --canvas…）
+ * 撞名 —— 撞名会把 tool-header.js 注入的共享顶栏一起改坏。
+ * ===================================================== */
+:root{
+  --gi-bg:var(--canvas);
+  --gi-card:var(--surface-card);
+  --gi-line:var(--hairline);
+  --gi-line-soft:var(--hairline-soft);
+  --gi-ink:var(--ink);
+  --gi-ink-2:var(--body);
+  --gi-ink-3:var(--muted);
+  --gi-primary:#2f6f5e;
+  --gi-primary-soft:color-mix(in srgb, #2f6f5e 9%, transparent);
+  --gi-primary-line:color-mix(in srgb, #2f6f5e 22%, transparent);
+  --gi-mark:color-mix(in srgb, #2f6f5e 10%, transparent);
+  --gi-hot-bg:#f6e9e0;
+  --gi-hot-ink:#a35a26;
+  --gi-toast:#14171e;
+  --gi-on-toast:#faf9f5;
+
+  --gi-serif:var(--font-serif);
+  --gi-sans:var(--font-sans);
+  --gi-mono:var(--font-mono);
+}
+:root[data-theme="dark"]{
+  --gi-primary:#5fbfa0;
+  --gi-primary-soft:color-mix(in srgb, #5fbfa0 16%, transparent);
+  --gi-primary-line:color-mix(in srgb, #5fbfa0 34%, transparent);
+  --gi-mark:color-mix(in srgb, #5fbfa0 18%, transparent);
+  --gi-hot-bg:rgba(224,150,90,.16);
+  --gi-hot-ink:#e8a55a;
+  --gi-toast:#1a1f24;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme]){
+    --gi-primary:#5fbfa0;
+    --gi-primary-soft:color-mix(in srgb, #5fbfa0 16%, transparent);
+    --gi-primary-line:color-mix(in srgb, #5fbfa0 34%, transparent);
+    --gi-mark:color-mix(in srgb, #5fbfa0 18%, transparent);
+    --gi-hot-bg:rgba(224,150,90,.16);
+    --gi-hot-ink:#e8a55a;
+    --gi-toast:#1a1f24;
+  }
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--gi-sans);
+  background:var(--gi-bg);
+  color:var(--gi-ink);
+  font-size:15px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+  background-image:
+    radial-gradient(760px 420px at 88% -8%, color-mix(in srgb, var(--gi-primary) 7%, transparent), transparent 60%),
+    radial-gradient(620px 380px at -6% 4%, color-mix(in srgb, #c97b3f 6%, transparent), transparent 60%);
+}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+
+/* ---------- top bar ---------- */
+/* 共享顶栏是 fixed 占 44px，本页导航吸顶时必须让开，否则会钻到它下面 */
+.topbar{
+  position:sticky;top:44px;z-index:50;
+  background:color-mix(in srgb, var(--gi-bg) 88%, transparent);
+  backdrop-filter:saturate(1.4) blur(12px);
+  -webkit-backdrop-filter:saturate(1.4) blur(12px);
+  border-bottom:1px solid var(--gi-line);
+}
+.topbar-in{
+  max-width:1000px;margin:0 auto;padding:9px 22px;
+  display:flex;align-items:center;gap:16px;
+}
+.brand{
+  font-family:var(--gi-serif);font-size:15px;letter-spacing:.01em;
+  color:var(--gi-primary);white-space:nowrap;flex-shrink:0;
+}
+.navlinks{
+  display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;
+  -ms-overflow-style:none;margin-left:auto;
+}
+.navlinks::-webkit-scrollbar{display:none}
+.navlinks a{
+  white-space:nowrap;font-size:12.5px;color:var(--gi-ink-3);text-decoration:none;
+  padding:5px 10px;border-radius:999px;border:1px solid transparent;transition:.2s;
+}
+.navlinks a:hover{color:var(--gi-primary);background:var(--gi-primary-soft);border-color:var(--gi-primary-line)}
+
+/* ---------- hero ---------- */
+.hero{padding:36px 0 40px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:7px;font-size:11.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--gi-primary);font-weight:500;margin-bottom:18px;
+}
+.eyebrow::before{content:"";width:22px;height:1px;background:var(--gi-primary)}
+h1{
+  font-family:var(--gi-serif);font-weight:400;
+  font-size:clamp(30px,5.2vw,42px);line-height:1.2;letter-spacing:-.005em;
+  max-width:16em;
+}
+h1 em{font-style:normal;color:var(--gi-primary)}
+.lede{margin-top:14px;font-size:15.5px;color:var(--gi-ink-2);max-width:44em}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.fact{
+  display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--gi-ink-2);
+  background:var(--gi-card);border:1px solid var(--gi-line);border-radius:999px;padding:5px 12px;
+  box-shadow:var(--card-shadow);
+}
+.fact svg{width:13px;height:13px;color:var(--gi-primary);flex-shrink:0}
+.fact b{color:var(--gi-ink);font-weight:600}
+
+/* ---------- section ---------- */
+/* 两层吸顶导航共约 90px，锚点跳转要多留出来才不会顶住标题 */
+section{padding-bottom:52px;scroll-margin-top:104px}
+.sec-head{display:flex;align-items:flex-start;gap:11px;margin-bottom:20px}
+.sec-ico{
+  width:32px;height:32px;border-radius:9px;flex-shrink:0;
+  background:var(--gi-primary-soft);color:var(--gi-primary);
+  display:flex;align-items:center;justify-content:center;margin-top:2px;
+}
+.sec-ico svg{width:17px;height:17px}
+h2{
+  font-family:var(--gi-serif);font-weight:400;font-size:24px;
+  letter-spacing:-.005em;line-height:1.3;
+}
+.sec-sub{font-size:13px;color:var(--gi-ink-3);margin-top:3px}
+
+.card{
+  background:var(--gi-card);border:1px solid var(--gi-line);border-radius:16px;
+  box-shadow:var(--card-shadow);
+}
+
+/* ---------- flow ---------- */
+.flow{display:grid;grid-template-columns:1fr 26px 1fr 26px 1fr 26px 1fr;align-items:stretch}
+.node{
+  background:var(--gi-card);border:1px solid var(--gi-line);border-radius:14px;
+  padding:15px 14px;display:flex;flex-direction:column;gap:7px;
+  transition:.2s;
+}
+.node:hover{transform:translateY(-2px);box-shadow:var(--card-shadow);border-color:var(--gi-primary-line)}
+.node .n-step{
+  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gi-primary);font-weight:600;
+}
+.node .n-en{font-size:15.5px;font-weight:600;letter-spacing:-.005em}
+.node .n-cn{font-size:12.5px;color:var(--gi-ink-3);line-height:1.5}
+.node .n-eg{
+  margin-top:auto;padding-top:9px;border-top:1px dashed var(--gi-line);
+  font-size:11.5px;color:var(--gi-ink-2);font-style:italic;line-height:1.45;
+}
+.arrow{display:flex;align-items:center;justify-content:center;color:var(--gi-primary-line)}
+.arrow svg{width:17px;height:17px}
+
+/* ---------- frame table ---------- */
+.tbl{border:1px solid var(--gi-line);border-radius:14px;overflow:hidden;background:var(--gi-card)}
+.trow{display:grid;grid-template-columns:118px 1.25fr 132px 1.7fr;border-bottom:1px solid var(--gi-line-soft)}
+.trow:last-child{border-bottom:none}
+.thead{
+  background:var(--gi-primary-soft);font-size:11.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--gi-primary);font-weight:600;
+}
+.thead>div{padding:9px 14px}
+.trow>div{padding:13px 14px;font-size:13px;color:var(--gi-ink-2);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.trow .c-part{font-weight:600;color:var(--gi-ink)}
+.pill{
+  font-size:11.5px;padding:2.5px 8px;border-radius:6px;
+  background:var(--gi-primary-soft);color:var(--gi-primary);font-weight:500;white-space:nowrap;
+}
+.tword{font-style:italic;color:var(--gi-ink);font-size:12.5px}
+.note{
+  margin-top:14px;display:flex;gap:10px;align-items:flex-start;
+  background:var(--gi-primary-soft);border-radius:12px;padding:13px 15px;
+}
+.note svg{width:15px;height:15px;color:var(--gi-primary);flex-shrink:0;margin-top:2px}
+.note p{font-size:13px;color:var(--gi-ink-2);line-height:1.6}
+.note b{color:var(--gi-ink)}
+
+/* ---------- slot groups ---------- */
+.slot{margin-bottom:22px}
+.slot:last-child{margin-bottom:0}
+.slot-head{
+  display:flex;align-items:baseline;gap:10px;margin-bottom:9px;flex-wrap:wrap;
+}
+.slot-head .sh-en{font-size:14.5px;font-weight:600}
+.slot-head .sh-cn{font-size:12.5px;color:var(--gi-ink-3)}
+.slot-head .sh-cnt{
+  margin-left:auto;font-size:11px;color:var(--gi-ink-3);
+  font-family:var(--gi-mono);
+}
+.ph{
+  background:var(--gi-card);border:1px solid var(--gi-line);border-radius:12px;
+  padding:12px 14px 12px 42px;position:relative;cursor:pointer;
+  transition:.18s;margin-bottom:7px;
+}
+.ph:hover{border-color:var(--gi-primary-line);transform:translateX(2px);box-shadow:var(--card-shadow)}
+.ph:active{transform:translateX(0) scale(.995)}
+.ph .ph-ico{
+  position:absolute;left:13px;top:13px;width:17px;height:17px;color:var(--gi-ink-3);
+  opacity:.5;transition:.18s;
+}
+.ph:hover .ph-ico{color:var(--gi-primary);opacity:1}
+.ph .en{font-size:14px;line-height:1.55;color:var(--gi-ink);font-weight:500;display:block;letter-spacing:-.003em}
+.ph .cn{font-size:12.5px;color:var(--gi-ink-3);margin-top:3px;line-height:1.5}
+.ph .tag{
+  display:inline-block;margin-top:7px;font-size:11px;color:var(--gi-primary);
+  background:var(--gi-primary-soft);border-radius:5px;padding:2px 7px;font-weight:500;
+}
+.ph .tag.hot{background:var(--gi-hot-bg);color:var(--gi-hot-ink)}
+.tip{
+  display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--gi-ink-3);
+  margin-top:12px;
+}
+.tip svg{width:13px;height:13px;color:var(--gi-primary)}
+
+/* ---------- traits ---------- */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tcol{padding:18px 18px 16px}
+.tcol h3{
+  font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:3px;
+}
+.tcol h3 span{font-size:11px;font-weight:500;color:var(--gi-ink-3);letter-spacing:.04em}
+.tcol .tbar{width:26px;height:2px;background:var(--gi-primary);border-radius:2px;margin:10px 0 12px}
+.titem{padding:9px 0;border-bottom:1px dashed var(--gi-line-soft)}
+.titem:last-child{border-bottom:none;padding-bottom:2px}
+.titem .te{font-size:13.5px;color:var(--gi-ink);font-weight:500;line-height:1.45;display:block}
+.titem .tc{font-size:12px;color:var(--gi-ink-3);margin-top:2px;line-height:1.5}
+
+/* ---------- chips ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;background:var(--gi-card);
+  border:1px solid var(--gi-line);border-radius:10px;padding:8px 12px;cursor:pointer;transition:.18s;
+}
+.chip:hover{border-color:var(--gi-primary-line);background:var(--gi-primary-soft);transform:translateY(-1px)}
+.chip .ce{font-size:13.5px;font-weight:500;color:var(--gi-ink)}
+.chip .cc{font-size:12px;color:var(--gi-ink-3)}
+.chip .cico{width:13px;height:13px;color:var(--gi-primary);opacity:0;transition:.18s;flex-shrink:0}
+.chip:hover .cico{opacity:.65}
+.chip.copied .cico{opacity:1}
+
+/* ---------- quote ---------- */
+.quote{
+  background:var(--gi-card);border:1px solid var(--gi-line);border-radius:16px;
+  padding:26px 26px 22px;text-align:center;
+}
+.quote .qm{font-family:var(--gi-serif);font-size:40px;color:var(--gi-primary);opacity:.28;line-height:.6}
+.quote p{
+  font-family:var(--gi-serif);font-size:clamp(17px,2.4vw,21px);
+  line-height:1.48;margin-top:14px;letter-spacing:-.003em;
+}
+.quote .qcn{font-size:13px;color:var(--gi-ink-3);margin-top:12px}
+.quote .qby{font-size:12px;color:var(--gi-primary);margin-top:8px;letter-spacing:.05em}
+.qmini{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.qmini>div{padding:16px 18px}
+.qmini .qe{font-size:14.5px;font-weight:600;line-height:1.45}
+.qmini .qc{font-size:12.5px;color:var(--gi-ink-3);margin-top:5px}
+
+/* ---------- template ---------- */
+/* 代码块两种主题下都保持深色，是刻意的「画板」观感 */
+.tpl{
+  background:#1e222b;border-radius:14px;padding:18px 20px;overflow-x:auto;
+  scrollbar-width:thin;
+}
+.tpl pre{
+  font-family:var(--gi-mono);font-size:12.5px;line-height:1.95;
+  color:#d7dae0;white-space:pre-wrap;
+}
+.tpl .cm{color:#8b93a2}
+.tpl .blank{color:#e8a87c}
+
+/* ---------- essay ---------- */
+.essay-h{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px;
+}
+.essay-h .et{font-family:var(--gi-serif);font-size:19px}
+.essay-h .ew{font-size:11.5px;color:var(--gi-ink-3);font-family:var(--gi-mono);margin-left:auto}
+.para{padding:16px 18px;margin-bottom:10px}
+.para .ph-label{
+  display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;
+}
+.para .num{
+  width:19px;height:19px;border-radius:50%;background:var(--gi-primary);color:#fff;
+  font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;
+}
+.para .pl-name{font-size:12.5px;font-weight:600}
+.para .pl-time{font-size:11px;color:var(--gi-primary);background:var(--gi-primary-soft);padding:2px 7px;border-radius:5px}
+.para .pe{font-size:14px;line-height:1.78;color:var(--gi-ink-2)}
+.para mark{
+  background:var(--gi-mark);color:var(--gi-ink);border-radius:3px;padding:0 3px;font-weight:500;
+}
+.para .pe[style*="--gi-ink-3"], .para .pe.migrate{font-size:13px}
+.plus{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;
+}
+.plus>div{padding:15px 16px}
+.plus .pn{
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gi-primary);font-weight:600;
+}
+.plus .pt{font-size:13.5px;font-weight:600;margin:5px 0 5px}
+.plus .pd{font-size:12.5px;color:var(--gi-ink-3);line-height:1.55}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);
+  background:var(--gi-toast);color:var(--gi-on-toast);border:1px solid var(--gi-line);
+  font-size:13px;padding:9px 16px;border-radius:999px;
+  display:flex;align-items:center;gap:7px;opacity:0;pointer-events:none;transition:.24s;z-index:99;
+  box-shadow:0 8px 24px -6px rgba(0,0,0,.35);
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast svg{width:14px;height:14px;color:var(--gi-primary)}
+
+footer{
+  border-top:1px solid var(--gi-line);padding:22px 0 40px;
+  font-size:12px;color:var(--gi-ink-3);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:820px){
+  .two,.qmini,.plus{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr}
+  .arrow{height:24px;transform:rotate(90deg)}
+  .trow{grid-template-columns:1fr;gap:2px;padding:12px 14px;border-bottom:1px solid var(--gi-line-soft)}
+  .trow>div{padding:0}
+  .trow>div::before{
+    content:attr(data-label);
+    display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--gi-ink-3);font-weight:600;margin-bottom:2px;
+  }
+  .trow>div.c-part::before{content:none}
+  .thead{display:none}
+  .hero{padding:24px 0 30px}
+  .sec-head{gap:9px}
+  .sec-ico{width:28px;height:28px}
+  h2{font-size:20px}
+  .essay-h .ew{margin-left:0}
+}
+@media (max-width:520px){
+  .topbar-in{padding:8px 16px}
+  .wrap{padding:0 16px}
+  .brand{font-size:14px}
+  .navlinks a{font-size:12px;padding:4px 8px}
+  .fact{font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-in">
+    <span class="brand">Great Ideas</span>
+    <div class="navlinks">
+      <a href="#chain">逻辑链</a>
+      <a href="#frame">框架时态</a>
+      <a href="#sentences">高分句</a>
+      <a href="#traits">素材库</a>
+      <a href="#phrases">短语</a>
+      <a href="#quotes">金句</a>
+      <a href="#template">模板范文</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="eyebrow">9AU2 · Unit 2 · 写作精华精选</div>
+    <h1>把「一个伟大的想法」写出<em>高级感</em>的表达手册</h1>
+    <p class="lede">从 Unit 2 写作讲义与课文表达清单中，精挑出可直接落笔的<strong>高分整句、人物描述素材、亮点短语</strong>三组，按写作环节重新编排，每条标注语法亮点与使用位置。</p>
+    <div class="facts">
+      <span class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg>字数 <b>80–120</b> 词</span>
+      <span class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>中考<b>叙事类说明文</b></span>
+      <span class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>精选表达 <b>48</b> 条</span>
+      <span class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>点击任意表达<b>一键复制</b></span>
+    </div>
+  </header>
+
+  <!-- ============ 1. 逻辑链 ============ -->
+  <section id="chain">
+    <div class="sec-head">
+      <div class="sec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></svg></div>
+      <div>
+        <h2>先立骨架：问题 — 想法 — 解决 — 影响</h2>
+        <p class="sec-sub">四个问题四步走，一段一问、不越级、不跳步。审题和结构都按这条链走。</p>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="node">
+        <span class="n-step">Step 1</span>
+        <span class="n-en">Problem</span>
+        <span class="n-cn">需要解决的问题是什么？先让读者感到痛。</span>
+        <span class="n-eg">a simple cut could lead to death</span>
+      </div>
+      <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+      <div class="node">
+        <span class="n-step">Step 2</span>
+        <span class="n-en">Idea</span>
+        <span class="n-cn">谁提出了这个绝妙的想法？抓住那个"不寻常"的瞬间。</span>
+        <span class="n-eg">noticed something unusual</span>
+      </div>
+      <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+      <div class="node">
+        <span class="n-step">Step 3</span>
+        <span class="n-en">Solution</span>
+        <span class="n-cn">问题是如何被解决的？写方法，也写试错与坚持。</span>
+        <span class="n-eg">kept testing different materials</span>
+      </div>
+      <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+      <div class="node">
+        <span class="n-step">Step 4</span>
+        <span class="n-en">Influence</span>
+        <span class="n-cn">对生活产生了什么影响？落到人身上，收得住。</span>
+        <span class="n-eg">millions of lives have been saved</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. 框架与时态 ============ -->
+  <section id="frame">
+    <div class="sec-head">
+      <div class="sec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg></div>
+      <div>
+        <h2>三段框架 × 时态 × 过渡语</h2>
+        <p class="sec-sub">时态本身就是得分点：过程用过去，影响用完成，结尾再回现在。</p>
+      </div>
+    </div>
+    <div class="tbl">
+      <div class="trow thead">
+        <div>段落</div><div>核心内容</div><div>推荐时态</div><div>连接词 / 过渡语</div>
+      </div>
+      <div class="trow">
+        <div class="c-part" data-label="段落">开头 · 总起</div>
+        <div data-label="功能">引出伟大想法，点明它解决的核心问题</div>
+        <div data-label="时态"><span class="pill">一般现在时</span></div>
+        <div data-label="过渡语"><span class="tword">One of the greatest ideas that...</span> <span class="tword">Many great ideas have come from...</span></div>
+      </div>
+      <div class="trow">
+        <div class="c-part" data-label="段落">中间 · 分述</div>
+        <div data-label="功能">问题的表现 → 想法的产生 → 解决的具体方法</div>
+        <div data-label="时态"><span class="pill">一般过去时</span></div>
+        <div data-label="过渡语"><span class="tword">At that time...</span> <span class="tword">One day...</span> <span class="tword">To his surprise...</span> <span class="tword">With this idea in mind...</span></div>
+      </div>
+      <div class="trow">
+        <div class="c-part" data-label="段落">结尾 · 总结</div>
+        <div data-label="功能">总结想法的影响，说明它如何改变了生活</div>
+        <div data-label="时态"><span class="pill">现在完成时 + 一般现在时</span></div>
+        <div data-label="过渡语"><span class="tword">Since then...</span> <span class="tword">Thanks to this idea...</span> <span class="tword">Now it is common to...</span> <span class="tword">... can still be seen today.</span></div>
+      </div>
+    </div>
+    <div class="note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+      <p><b>提分提示：</b>结尾不要只用一个时态。先用 <i>现在完成时</i>（has been widely used / have been saved）拉开"从那以后到现在"的时间跨度，再用 <i>一般现在时</i>（it is common to / can still be seen today）把视角拉回今天。两种时态一对比，文章的"时间纵深"就出来了。</p>
+    </div>
+  </section>
+
+  <!-- ============ 3. 高分句 ============ -->
+  <section id="sentences">
+    <div class="sec-head">
+      <div class="sec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></div>
+      <div>
+        <h2>21 条高分整句 · 按写作环节分组</h2>
+        <p class="sec-sub">整句可直接搬进正文。标签是真正的语法得分点：倒装、强调句、名词性从句。</p>
+      </div>
+    </div>
+
+    <!-- A 开篇 -->
+    <div class="slot">
+      <div class="slot-head"><span class="sh-en">Opening</span><span class="sh-cn">开篇定调</span><span class="sh-cnt">02</span></div>
+      <div class="ph" data-copy="One of the greatest ideas that changed the world is the invention of penicillin.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">One of the greatest ideas that changed the world is the invention of penicillin.</span>
+        <span class="cn">改变世界的最伟大想法之一，是青霉素的发明。</span>
+        <span class="tag">定语从句开篇点题 · 最稳的起手式</span>
+      </div>
+      <div class="ph" data-copy="Many great ideas have come from people's daily lives.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">Many great ideas have come from people's daily lives.</span>
+        <span class="cn">许多伟大的想法都来自人们的日常生活。</span>
+        <span class="tag">现在完成时 · 由大到小切入</span>
+      </div>
+    </div>
+
+    <!-- B 问题 -->
+    <div class="slot">
+      <div class="slot-head"><span class="sh-en">Problem</span><span class="sh-cn">铺陈问题</span><span class="sh-cnt">03</span></div>
+      <div class="ph" data-copy="In 1928, Alexander Fleming was studying bacteria in his laboratory.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">In 1928, Alexander Fleming was studying bacteria in his laboratory.</span>
+        <span class="cn">1928 年，亚历山大·弗莱明正在他的实验室里研究细菌。</span>
+        <span class="tag">过去进行时写"背景中的进行动作"</span>
+      </div>
+      <div class="ph" data-copy="Before penicillin, a simple cut or insect bite could lead to serious infection and even death.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">Before penicillin, a simple cut or insect bite could lead to serious infection and even death.</span>
+        <span class="cn">在青霉素出现之前，一个小小的伤口或虫咬，都可能导致严重感染，甚至死亡。</span>
+        <span class="tag">Before + could 弱化断言 · 不是事实判断而是当时的可能性</span>
+      </div>
+      <div class="ph" data-copy="At that time, people had no way to treat bacterial diseases effectively.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">At that time, people had no way to treat bacterial diseases effectively.</span>
+        <span class="cn">那时，人们没有办法有效治疗细菌性疾病。</span>
+        <span class="tag">had no way to do sth. · 高频"无奈"表达</span>
+      </div>
+    </div>
+
+    <!-- C 灵光 -->
+    <div class="slot">
+      <div class="slot-head"><span class="sh-en">Discovery</span><span class="sh-cn">灵光时刻</span><span class="sh-cnt">05</span></div>
+      <div class="ph" data-copy="One day, Alexander Fleming noticed something unusual in his laboratory.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">One day, Alexander Fleming noticed something unusual in his laboratory.</span>
+        <span class="cn">有一天，弗莱明在实验室里注意到一些不寻常的东西。</span>
+        <span class="tag">notice + adj. 宾语 · 悬念的起点</span>
+      </div>
+      <div class="ph" data-copy="To his surprise, there were no bacteria around the mould.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">To his surprise, there were no bacteria around the mould.</span>
+        <span class="cn">令他惊讶的是，霉菌周围没有细菌。</span>
+        <span class="tag">to one's surprise · 开头独立成分</span>
+      </div>
+      <div class="ph" data-copy="He realized that the mould was killing the bacteria.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">He realized that the mould was killing the bacteria.</span>
+        <span class="cn">他意识到，这种霉菌正在杀死细菌。</span>
+        <span class="tag">宾语从句 · 全文"想法成立"的转折核心</span>
+      </div>
+      <div class="ph" data-copy="Fleming's discovery of penicillin shows that a great mind can notice scientific value in what others may simply dismiss as an accident.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">Fleming's discovery of penicillin shows that a great mind can notice scientific value in <b>what</b> others may simply dismiss as an accident.</span>
+        <span class="cn">弗莱明发现青霉素这件事表明：伟大的头脑，能在别人当作偶然的现象中看出科学价值。</span>
+        <span class="tag hot">★ what 引导名词性从句 · 全篇格调最高的一句</span>
+      </div>
+      <div class="ph" data-copy="Suddenly, I had a brilliant idea.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">Suddenly, I had a brilliant idea.</span>
+        <span class="cn">突然，我冒出了一个绝妙的主意。</span>
+        <span class="tag">写"自己的生活小事"时，人物一换直接可用</span>
+      </div>
+    </div>
+
+    <!-- D 解决 -->
+    <div class="slot">
+      <div class="slot-head"><span class="sh-en">Solution</span><span class="sh-cn">攻克难关</span><span class="sh-cnt">04</span></div>
+      <div class="ph" data-copy="A useful idea often begins with observation, but it becomes convincing only when it is supported by clear reasoning.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">A useful idea often begins with observation, but it becomes convincing only when it is supported by clear reasoning.</span>
+        <span class="cn">一个有用的想法往往始于观察，但只有被清晰的推理支撑时，它才站得住脚。</span>
+        <span class="tag hot">but + only 双重递进 · 议论型句子，评卷老师一眼看到</span>
+      </div>
+      <div class="ph" data-copy="If one method leads nowhere, a good problem-solver changes the angle instead of repeating.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">If one method leads nowhere, a good problem-solver changes the angle instead of repeating.</span>
+        <span class="cn">一种方法走不通时，优秀的解题者会换一个角度，而不是原地重复。</span>
+        <span class="tag hot">★ 条件句 + instead of · 写"试错与坚持"最好用的一句</span>
+      </div>
+      <div class="ph" data-copy="Driven by intellectual curiosity, Edison kept testing different materials until electric lighting became practical for daily use.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">Driven by intellectual curiosity, Edison kept testing different materials until electric lighting became practical for daily use.</span>
+        <span class="cn">出于对知识的好奇，爱迪生不断测试不同的材料，直到电灯变得可以日常使用。</span>
+        <span class="tag hot">过去分词作状语 + until 时间链 · 换个人名即可复用</span>
+      </div>
+      <div class="ph" data-copy="A truly creative person is not only imaginative, but also careful enough to turn a bright idea into something useful.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">A truly creative person is not only imaginative, but also careful enough to turn a bright idea into something useful.</span>
+        <span class="cn">真正有创造力的人，不仅想象力丰富，还足够细心，能把一个亮眼的点子变成有用的东西。</span>
+        <span class="tag">not only... but also... · 总结人物"为什么伟大"</span>
+      </div>
+    </div>
+
+    <!-- E 影响 -->
+    <div class="slot">
+      <div class="slot-head"><span class="sh-en">Impact</span><span class="sh-cn">影响与升华</span><span class="sh-cnt">07</span></div>
+      <div class="ph" data-copy="Since then, antibiotics have been widely used to treat infections.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">Since then, antibiotics have been widely used to treat infections.</span>
+        <span class="cn">从那以后，抗生素被广泛用于治疗感染。</span>
+        <span class="tag">Since then + 现在完成时被动 · 结尾必备</span>
+      </div>
+      <div class="ph" data-copy="Thanks to this accidental discovery, millions of lives have been saved.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">Thanks to this accidental discovery, millions of lives have been saved.</span>
+        <span class="cn">多亏了这个意外的发现，数百万人的生命得以挽救。</span>
+        <span class="tag">accidental discovery 意外发现 · 点题"偶然中的伟大"</span>
+      </div>
+      <div class="ph" data-copy="Not only did the idea solve the problem, but it also changed the way we live.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">Not only did the idea solve the problem, but it also changed the way we live.</span>
+        <span class="cn">这个想法不仅解决了问题，还改变了我们的生活方式。</span>
+        <span class="tag hot">★★★ Not only 倒装句 · 中考作文的"结构分"开关</span>
+      </div>
+      <div class="ph" data-copy="It is diligence and curiosity that turn a small idea into a great invention.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">It is diligence and curiosity that turn a small idea into a great invention.</span>
+        <span class="cn">正是勤奋与好奇，让一个小想法变成了伟大的发明。</span>
+        <span class="tag hot">★★ 强调句 It is... that · 收尾升华首选</span>
+      </div>
+      <div class="ph" data-copy="Never underestimate the power of a small idea.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">Never underestimate the power of a small idea.</span>
+        <span class="cn">切勿低估一个小想法的力量。</span>
+        <span class="tag">祈使句收尾 · 独立成段，掷地有声</span>
+      </div>
+      <div class="ph" data-copy="A small idea can make a big difference.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">A small idea can make a big difference.</span>
+        <span class="cn">一个小想法，可以带来巨大的改变。</span>
+        <span class="tag">对比结构 small / big · 写感悟时最稳</span>
+      </div>
+      <div class="ph" data-copy="The influence of this idea can still be seen today.">
+        <svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span class="en">The influence of this idea can still be seen today.</span>
+        <span class="cn">这个想法的影响，直到今天依然可见。</span>
+        <span class="tag">情态动词被动 · 结尾最后一句</span>
+      </div>
+    </div>
+
+    <p class="tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+      点击任意卡片即可复制英文原句 · 标 ★ 的 6 句优先背
+    </p>
+  </section>
+
+  <!-- ============ 4. 素材库 ============ -->
+  <section id="traits">
+    <div class="sec-head">
+      <div class="sec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div>
+      <div>
+        <h2>15 条描述素材 · 写人物与思维过程</h2>
+        <p class="sec-sub">这些是<b>短语片段</b>而非整句，专门用来描述"发明者是什么样的人""他怎么想问题"，需要自己组装进句子。</p>
+      </div>
+    </div>
+    <div class="two">
+      <div class="card tcol">
+        <h3>Traits of Great Minds <span>伟大者的品质</span></h3>
+        <div class="tbar"></div>
+        <div class="titem"><span class="te">intellectual curiosity and keen observation</span><span class="tc">求知欲强、目光敏锐</span></div>
+        <div class="titem"><span class="te">driven by curiosity rather than external pressure</span><span class="tc">由好奇心驱动，而非外部压力</span></div>
+        <div class="titem"><span class="te">pursue precision instead of relying on rough guesses</span><span class="tc">追求精确，而不是靠粗略的猜测</span></div>
+        <div class="titem"><span class="te">with the courage to question conventional ideas</span><span class="tc">有勇气质疑公认观念</span></div>
+        <div class="titem"><span class="te">perseverance in the face of repeated failures</span><span class="tc">面对一次次失败仍坚持不懈</span></div>
+        <div class="titem"><span class="te">an observant eye for details others may miss</span><span class="tc">一双能捕捉他人忽略细节的眼睛</span></div>
+        <div class="titem"><span class="te">logical, creative, self-motivated, flexible and open-minded</span><span class="tc">逻辑清晰、有创造力、自我驱动、灵活且开放</span></div>
+        <div class="titem"><span class="te">combine creative ideas with disciplined thinking</span><span class="tc">把创意与严谨的思维结合起来</span></div>
+      </div>
+      <div class="card tcol">
+        <h3>Ways of Thinking <span>思考与解决问题的方式</span></h3>
+        <div class="tbar"></div>
+        <div class="titem"><span class="te">identify the real problem before looking for a solution</span><span class="tc">先找准真正的问题，再找方法</span></div>
+        <div class="titem"><span class="te">look beyond the surface of a problem</span><span class="tc">看到问题的表层之外</span></div>
+        <div class="titem"><span class="te">reason from evidence rather than appearances</span><span class="tc">依据证据推理，而非凭表面现象</span></div>
+        <div class="titem"><span class="te">turn an accidental observation into scientific evidence</span><span class="tc">把偶然的观察转化为科学证据</span></div>
+        <div class="titem"><span class="te">test an idea against evidence</span><span class="tc">用证据检验一个想法</span></div>
+        <div class="titem"><span class="te">revise one's explanation when the evidence does not fit</span><span class="tc">当证据对不上时，修正自己的解释</span></div>
+        <div class="titem"><span class="te">develop a solution through observation and reasoning</span><span class="tc">通过观察与推理，逐步形成解决方案</span></div>
+      </div>
+    </div>
+    <div class="note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+      <p><b>怎么用：</b>这些短语自带高级词汇（<i>perseverance、evidence、disciplined</i>），但不能单独成句。最省力的做法是套进 <i>He was the kind of person who...</i> 或 <i>What made it work was that...</i>，立刻变成漂亮的定语从句。</p>
+    </div>
+  </section>
+
+  <!-- ============ 5. 短语 ============ -->
+  <section id="phrases">
+    <div class="sec-head">
+      <div class="sec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg></div>
+      <div>
+        <h2>12 个亮点短语 · 小词块，大效果</h2>
+        <p class="sec-sub">这些短句撑不起结构，但它们决定读起来是"学生作文"还是"地道英语"。</p>
+      </div>
+    </div>
+    <div class="chips">
+      <span class="chip" data-copy="lead to"><span class="ce">lead to</span><span class="cc">导致</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="to one's surprise"><span class="ce">to one's surprise</span><span class="cc">令某人惊讶</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="by accident"><span class="ce">by accident</span><span class="cc">偶然地</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="accidental discovery"><span class="ce">accidental discovery</span><span class="cc">意外的发现</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="widely used"><span class="ce">widely used</span><span class="cc">被广泛使用</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="face a problem"><span class="ce">face a problem</span><span class="cc">面临问题</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="nothing worked"><span class="ce">nothing worked</span><span class="cc">什么办法都不管用</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="make a big difference"><span class="ce">make a big difference</span><span class="cc">带来巨大改变</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="come up with"><span class="ce">come up with</span><span class="cc">想出、提出</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="with this idea in mind"><span class="ce">with this idea in mind</span><span class="cc">带着这个想法</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="now it is common to..."><span class="ce">now it is common to...</span><span class="cc">如今……已很常见</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="chip" data-copy="save lives"><span class="ce">save lives</span><span class="cc">拯救生命</span><svg class="cico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+    </div>
+  </section>
+
+  <!-- ============ 6. 金句 ============ -->
+  <section id="quotes">
+    <div class="sec-head">
+      <div class="sec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg></div>
+      <div>
+        <h2>金句 · 用于标题与首尾呼应</h2>
+        <p class="sec-sub">写作时不必全用，但用一句在开头或结尾，整篇的格调会明显不同。</p>
+      </div>
+    </div>
+    <div class="quote">
+      <div class="qm">&ldquo;</div>
+      <p>Daring ideas are like chessmen moved forward.<br>They may be beaten, but they may start a winning game.</p>
+      <p class="qcn">大胆的想法就像向前推进的棋子。它们可能会被击败，但可能开启一场胜利的棋局。</p>
+      <p class="qby">— Johann Wolfgang von Goethe</p>
+    </div>
+    <div class="qmini">
+      <div class="card">
+        <p class="qe">Necessity is the mother of invention.</p>
+        <p class="qc">需要是发明之母。· 写"问题如何催生想法"时最贴题</p>
+      </div>
+      <div class="card">
+        <p class="qe">Never underestimate the power of a small idea.</p>
+        <p class="qc">切勿低估一个小想法的力量。· 直接当结尾句</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7. 模板与范文 ============ -->
+  <section id="template">
+    <div class="sec-head">
+      <div class="sec-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></div>
+      <div>
+        <h2>万能模板 + 范文标注</h2>
+        <p class="sec-sub">先照着模板写满三段，再把高分句替换进去——顺序反过来会卡壳。</p>
+      </div>
+    </div>
+
+    <div class="tpl">
+<pre><span class="cm">// 开头 · 一般现在时</span>
+One of the greatest ideas that changed the world is <span class="blank">(伟大想法/发明)</span>.
+It has solved the problem of <span class="blank">(解决的问题)</span>.
+
+<span class="cm">// 中间 · 一般过去时</span>
+At that time, <span class="blank">(问题的具体表现)</span>. One day, <span class="blank">(人物)</span> <span class="blank">(发现/想到了什么)</span>.
+He/She realized that <span class="blank">(核心想法)</span>. With this idea in mind, he/she <span class="blank">(解决问题的方法)</span>.
+
+<span class="cm">// 结尾 · 现在完成时 + 一般现在时</span>
+Since then, <span class="blank">(想法的影响)</span>. Thanks to this idea, <span class="blank">(对生活的改变)</span>.
+The influence of this idea can still be seen today.</pre>
+    </div>
+
+    <div style="margin-top:26px">
+      <div class="essay-h">
+        <span class="et">Penicillin: An Accidental Discovery That Changed the World</span>
+        <span class="ew">约 110 词 · 符合 80–120 要求</span>
+      </div>
+
+      <div class="card para">
+        <div class="ph-label"><span class="num">1</span><span class="pl-name">开头 · 点题</span><span class="pl-time">一般现在时</span></div>
+        <p class="pe">One of the greatest ideas that changed the world is the discovery of <mark>penicillin</mark>. It has solved the problem of <mark>treating bacterial infections</mark>.</p>
+      </div>
+      <div class="card para">
+        <div class="ph-label"><span class="num">2</span><span class="pl-name">中间 · 问题 → 发现 → 领悟</span><span class="pl-time">一般过去时</span></div>
+        <p class="pe"><mark>Before penicillin</mark>, a simple cut or insect bite could <mark>lead to</mark> serious infection and even death. In 1928, Alexander Fleming was studying bacteria in his laboratory. When he came back from holiday, he noticed that mould was growing in some dishes. <mark>To his surprise</mark>, there were no bacteria around the mould. He realized that the mould was killing the bacteria. He called this substance penicillin.</p>
+      </div>
+      <div class="card para">
+        <div class="ph-label"><span class="num">3</span><span class="pl-name">结尾 · 影响</span><span class="pl-time">现在完成时</span></div>
+        <p class="pe"><mark>Since then</mark>, penicillin has been <mark>widely used</mark> to treat infections. <mark>Thanks to</mark> this <mark>accidental discovery</mark>, millions of lives have been saved.</p>
+      </div>
+
+      <div class="plus">
+        <div class="card">
+          <p class="pn">Point 01</p>
+          <p class="pt">结构不越级</p>
+          <p class="pd">严格走完"问题—想法—解决—影响"四步，一段只答一个问题，不跳跃、不回头补充。</p>
+        </div>
+        <div class="card">
+          <p class="pn">Point 02</p>
+          <p class="pt">时态有层次</p>
+          <p class="pd">中间段用过去时讲过程（was studying / noticed / realized），结尾用完成时讲影响（have been used / have been saved）。</p>
+        </div>
+        <div class="card">
+          <p class="pn">Point 03</p>
+          <p class="pt">短语撑高级感</p>
+          <p class="pd">lead to / to his surprise / widely used / accidental discovery 四个词块，加上 Before... 与 Since then... 的时间对比。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card para" style="margin-top:16px">
+      <div class="ph-label">
+        <span class="num" style="background:#a35a26">变</span>
+        <span class="pl-name">A Brilliant Idea That Solved My Problem · 同一框架的记叙文迁移</span>
+        <span class="pl-time">80–120 词</span>
+      </div>
+      <p class="pe" style="margin-bottom:10px">Last month, I faced a big problem. My cat always scratched my new sofa, and I didn't know what to do.<br>I tried many ways to stop her, but <b>nothing worked</b>. One day, I remembered that cats don't like the smell of oranges. <b>Suddenly, I had a brilliant idea.</b> I made a spray with orange peel and water. Then I sprayed it on the sofa. To my surprise, the cat never scratched the sofa again!<br>This experience taught me that we should think creatively when we face problems. <b>A small idea can make a big difference.</b></p>
+      <p class="pe migrate">迁移要点：把"科学发现"换成"生活小事"，四步链条照旧 —— 遇到问题 → 反复失败（nothing worked）→ 灵光一闪（a brilliant idea）→ 验证成功 + 感悟。同一批短语可以整套复用。</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Unit 2 · Great ideas — 写作表达精选手册</span>
+    <span>48 条表达 · 21 高分整句 + 15 描述素材 + 12 亮点短语</span>
+  </footer>
+
+</main>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span id="toastTxt">已复制</span></div>
+
+<script>
+(function(){
+  var toast = document.getElementById('toast');
+  var txt = document.getElementById('toastTxt');
+  var timer = null;
+  function show(msg){
+    txt.textContent = msg;
+    toast.classList.add('on');
+    clearTimeout(timer);
+    timer = setTimeout(function(){ toast.classList.remove('on'); }, 1500);
+  }
+  function copy(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ show('已复制：' + (text.length>42 ? text.slice(0,42)+'…' : text)); },
+      function(){ fallback(text); });
+    } else { fallback(text); }
+  }
+  function fallback(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly','');
+    ta.style.cssText = 'position:fixed;top:-9999px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); show('已复制：' + (text.length>42 ? text.slice(0,42)+'…' : text)); }
+    catch(e){ show('复制失败，请手动选择'); }
+    document.body.removeChild(ta);
+  }
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('[data-copy]');
+    if(!el) return;
+    var raw = el.getAttribute('data-copy');
+    copy(raw);
+    if(el.classList.contains('chip')){
+      el.classList.add('copied');
+      setTimeout(function(){ el.classList.remove('copied'); }, 1200);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
