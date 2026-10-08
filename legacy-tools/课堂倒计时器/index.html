@@ -418,9 +418,9 @@
             transition: opacity 0.4s ease;
         }
 
-        /* 落沙只在"正在走"时可见：暂停要冻结，结束要收干，
-         而告警色下 phase 已经不是 running，所以不能按 phase 判断 */
-        body.is-running .hg-stream {
+        /* 落沙只在"正在走"时可见：暂停要冻结，结束要收干，翻转中途也别出现
+         （沙漏侧躺时一条竖直沙线会变成一条横线，很怪） */
+        body.is-running:not(.flipping) .hg-stream {
             opacity: 1;
         }
 
@@ -503,6 +503,58 @@
 
         .digits .seg {
             display: inline-block;
+        }
+
+        .digits .seg[hidden],
+        .digits .sep[hidden] {
+            display: none;
+        }
+
+        /* 带小时位时（8 个字符）自动降一档字号，免得顶到容器边缘 */
+        .digits.has-h {
+            font-size: clamp(2.4rem, 9.5vw, 4.4rem);
+        }
+
+        /* ---------- 时长微调（夹在数字上下） ---------- */
+        .nudge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--muted);
+            background: var(--surface-soft);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-pill);
+            padding: 6px 15px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease,
+                transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .nudge:hover:not([disabled]) {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--surface-card);
+        }
+
+        .nudge:active:not([disabled]) {
+            transform: scale(0.94);
+        }
+
+        .nudge .caret {
+            font-size: 8px;
+            line-height: 1;
+            opacity: 0.75;
+        }
+
+        .nudge[disabled] {
+            opacity: 0.32;
+            cursor: not-allowed;
         }
 
         @keyframes seg-pop {
@@ -1089,8 +1141,8 @@
 
                         <!-- 沙 -->
                         <g clip-path="url(#glassClip)">
-                            <path class="sand" id="sandTop" fill="url(#sandGrad)" d=""></path>
-                            <path class="sand" id="sandBot" fill="url(#sandGrad)" d=""></path>
+                            <path class="sand" id="sandDrain" fill="url(#sandGrad)" d=""></path>
+                            <path class="sand" id="sandCollect" fill="url(#sandGrad)" d=""></path>
                         </g>
 
                         <!-- 落沙流 -->
@@ -1120,9 +1172,18 @@
         </div>
 
         <div class="readout">
+            <button class="nudge" id="incBtn" type="button" aria-label="增加 1 分钟">
+                <span class="caret">▲</span>加 1 分
+            </button>
+
             <div class="digits" id="digits" role="timer" aria-label="剩余时间 5 分 00 秒">
+                <span class="seg" id="segH" hidden>00</span><span class="sep" id="sepH" hidden>:</span>
                 <span class="seg" id="segM">05</span><span class="sep">:</span><span class="seg" id="segS">00</span>
             </div>
+
+            <button class="nudge" id="decBtn" type="button" aria-label="减少 1 分钟">
+                <span class="caret">▼</span>减 1 分
+            </button>
 
             <div class="track">
                 <div class="track-ticks" id="ticks"></div>
@@ -1136,11 +1197,9 @@
         </div>
 
         <div class="controls">
-            <button class="ctrl" id="decBtn" type="button" title="减少 1 分钟（↓）">−1 分</button>
             <button class="ctrl primary" id="playBtn" type="button">
                 <span class="ico" id="playIco">▶</span><span id="playText">开始</span>
             </button>
-            <button class="ctrl" id="incBtn" type="button" title="增加 1 分钟（↑）">+1 分</button>
         </div>
 
         <div class="controls-sub">
@@ -1169,9 +1228,7 @@
                 <span class="row-hint">也可在上方预设中一键选择</span>
             </div>
             <div class="row-control">
-                <button class="mini-btn" id="durDown" type="button">−</button>
-                <input type="range" id="durRange" min="10" max="3600" step="10" value="300">
-                <button class="mini-btn" id="durUp" type="button">+</button>
+                <input type="range" id="durRange" min="10" max="36000" step="10" value="300">
                 <span class="duration-val" id="durVal">5:00</span>
             </div>
         </div>
@@ -1241,13 +1298,15 @@
          * 常量
          * ===================================================== */
         var STORE_KEY = 'tt-class-timer-v1';
-        var MIN_MS = 10000, MAX_MS = 3600000;
+        var MIN_MS = 10000, MAX_MS = 10 * 3600000;  // 10 秒 ~ 10 小时
         var RING_LEN = 2 * Math.PI * 168;          // 进度环周长
 
-        // 沙漏内部几何（SVG 用户坐标，与 viewBox 中 path 一致）
-        var G_TOP = 34, G_NECK = 152, G_BOT = 248, G_WAIST = 141;
-        var G_SPAN_TOP = G_NECK - G_TOP;            // 116：上壶净高
-        var G_SPAN_BOT = G_BOT - G_NECK - 6;        // 90 ：下壶净高
+        /* 沙漏内部几何（SVG 用户坐标）
+         * 关键：整组在翻转时旋转 180°，于是"局部 y 越大 = 屏幕上越高"。
+         * 局部 [34,141] 是下壶球体，[141,248] 是上壶球体。 */
+        var G_TOP = 34;        // 玻璃上沿
+        var G_NECK = 141;      // 漏斗颈口
+        var G_BOT = 248;       // 玻璃下沿
 
         var PRESETS = [
             { ms: 30 * 1000, label: '30 秒' },
@@ -1306,13 +1365,14 @@
         var presetBtns = [];
         var hgFlip = $('hgFlip');
         var ringFill = $('ringFill');
-        var sandTop = $('sandTop');
-        var sandBot = $('sandBot');
+        var sandDrain = $('sandDrain');
+        var sandCollect = $('sandCollect');
         var streamPath = $('streamPath');
         var streamGlow = $('streamGlow');
         var grainsGroup = $('grains');
         var impact = $('impact');
-        var segM = $('segM'), segS = $('segS');
+        var segH = $('segH'), sepH = $('sepH'), segM = $('segM'), segS = $('segS');
+        var digits = $('digits');
         var trackFill = $('trackFill'), ticksBox = $('ticks');
         var chip = $('chip');
         var playBtn = $('playBtn'), playIco = $('playIco'), playText = $('playText');
@@ -1461,29 +1521,53 @@
 
         /* =====================================================
          * 沙漏绘制
+         *
+         * 沙堆用同一个生成器 heapPath(lo, hi, fill)：
+         *   基底固定在 lo，向 hi 方向堆出 fill 的高度，堆面中间微微隆起。
+         * lo/hi 谁大谁小都行，方向自动跟着翻。
+         *
+         *   待机（未旋转）  局部 [141,248] = 屏幕下部，坐落在 248（玻璃底板）  → 已漏尽
+         *   计时（已旋转）  局部 [141,248] = 屏幕上壶，坐落在 141（颈口）      → 正在漏
+         *                  局部 [34,141]  = 屏幕下壶，坐落在 34（屏幕底部）   → 正在堆
+         *
+         * 翻转动画在 t=0.5 交换这两种画法；此刻 ratio 恰为 1，两种画法都把
+         * [141,248] 填满，形状完全一致，所以看不出接缝。
          * ===================================================== */
-        function upperSandPath(fill) {
+        function heapPath(lo, hi, fill) {
             fill = Math.max(0, Math.min(1, fill));
-            var y = G_NECK - G_SPAN_TOP * fill;
-            var bulge = Math.min(11, 5 + 26 * fill);
+            if (fill <= 0.0001) return '';
+            var dir = hi > lo ? -1 : 1;              // 往 y 变小堆就朝 +y 鼓，反之亦然
+            var y = lo + (hi - lo) * fill;           // 堆面
+            var bulge = Math.min(14, 5 + 26 * fill);
             return 'M 20 ' + y.toFixed(2) +
-                ' Q 100 ' + (y - bulge).toFixed(2) + ' 180 ' + y.toFixed(2) +
-                ' L 180 ' + (G_NECK + 8) + ' L 20 ' + (G_NECK + 8) + ' Z';
+                ' Q 100 ' + (y + dir * bulge).toFixed(2) + ' 180 ' + y.toFixed(2) +
+                ' L 180 ' + lo.toFixed(2) + ' L 20 ' + lo.toFixed(2) + ' Z';
         }
 
-        function lowerSandPath(fill) {
-            fill = Math.max(0, Math.min(1, fill));
-            var side = G_BOT - G_SPAN_BOT * fill;
-            var peak = side - Math.min(18, 6 + 34 * fill);
-            return 'M 20 ' + side.toFixed(2) +
-                ' Q 100 ' + peak.toFixed(2) + ' 180 ' + side.toFixed(2) +
-                ' L 180 ' + G_BOT + ' L 20 ' + G_BOT + ' Z';
-        }
+        function paintSand(ratio) {
+            var drain, collect;
+            if (renderFlip) {
+                drain = heapPath(G_NECK, G_BOT, ratio);        // 上壶：坐在颈口往上堆
+                collect = heapPath(G_TOP, G_NECK, 1 - ratio);  // 下壶：坐在玻璃底板往上堆
+            } else {
+                drain = '';                                    // 待机时上壶本来就是空的
+                collect = heapPath(G_BOT, G_NECK, 1);          // 沙已全部漏尽，堆在下壶底板
+            }
+            sandDrain.setAttribute('d', drain);
+            sandCollect.setAttribute('d', collect);
 
-        /** 下壶沙堆的堆顶 y —— 落沙流终止于此 */
-        function pileTop(fill) {
-            fill = Math.max(0, Math.min(1, fill));
-            return G_BOT - G_SPAN_BOT * fill - Math.min(18, 6 + 34 * fill) * 0.5;
+            // 落沙流：颈口 → 下方沙堆的堆面
+            var surface = G_TOP + (G_NECK - G_TOP) * (1 - ratio);
+            var from = G_NECK - 3;
+            var len = from - surface;
+            var d = len > 0.5
+                ? 'M 100 ' + from + ' C 100 ' + (from - len * 0.45) +
+                ' 100 ' + (from - len * 0.72) + ' 100 ' + surface.toFixed(2)
+                : 'M 100 ' + from + ' L 100 ' + from;
+            streamPath.setAttribute('d', d);
+            streamGlow.setAttribute('d', d);
+            impact.setAttribute('cy', surface.toFixed(1));
+            grainsGroup.style.setProperty('--fall', Math.max(0, len).toFixed(1) + 'px');
         }
 
         function buildGrains() {
@@ -1498,23 +1582,6 @@
                 c.style.setProperty('--dx', (Math.random() * 9 - 4.5).toFixed(1) + 'px');
                 grainsGroup.appendChild(c);
             }
-        }
-
-        function paintSand(ratio) {
-            // ratio = 剩余比例。未翻转时上壶存沙；翻转后逻辑上下互换（整组旋转 180°）
-            var top = renderFlip ? 1 - ratio : ratio;
-            var bot = renderFlip ? ratio : 1 - ratio;
-
-            sandTop.setAttribute('d', upperSandPath(top));
-            sandBot.setAttribute('d', lowerSandPath(bot));
-
-            var drop = Math.max(0, pileTop(bot) - (G_NECK + 6));
-            var d = 'M 100 ' + (G_NECK + 4) + ' C 100 ' + (G_NECK + drop * 0.45) +
-                ' 100 ' + (G_NECK + drop * 0.7) + ' 100 ' + (G_NECK + drop);
-            streamPath.setAttribute('d', d);
-            streamGlow.setAttribute('d', d);
-            impact.setAttribute('cy', (G_NECK + drop).toFixed(1));
-            grainsGroup.style.setProperty('--fall', drop.toFixed(1) + 'px');
         }
 
         /* =====================================================
@@ -1572,15 +1639,19 @@
                 if (phase === 'done') return paintDone();
             }
 
-            // 读数
+            // 读数（不足 1 小时不显示小时位，超过 1 小时自动补上）
             var clock = fmtClock(S.remain);
-            var parts = clock.split(':');
-            var mm = parts.length === 3 ? parts[1] + ':' + parts[2] : clock;
-            var segs = mm.split(':');
+            var segs = clock.split(':');
+            var showH = segs.length === 3;
+            segH.hidden = sepH.hidden = !showH;
+            digits.classList.toggle('has-h', showH);
+            var mTxt = showH ? segs[1] : segs[0];
+            var sTxt = segs[segs.length - 1];
             var wholeSec = Math.max(0, Math.ceil(S.remain / 1000));
 
-            if (segM.textContent !== segs[0]) { segM.textContent = segs[0]; if (wholeSec !== S.lastSec) pop(segM); }
-            if (segS.textContent !== segs[1]) { segS.textContent = segs[1]; pop(segS); }
+            if (showH && segH.textContent !== segs[0]) { segH.textContent = segs[0]; pop(segH); }
+            if (segM.textContent !== mTxt) { segM.textContent = mTxt; pop(segM); }
+            if (segS.textContent !== sTxt) { segS.textContent = sTxt; pop(segS); }
             S.lastSec = wholeSec;
 
             // 沙漏
@@ -1607,6 +1678,8 @@
             paintSand(0);
             ringFill.setAttribute('stroke-dashoffset', RING_LEN.toFixed(2));
             trackFill.style.transform = 'scaleX(0)';
+            segH.hidden = sepH.hidden = true;
+            digits.classList.remove('has-h');
             segM.textContent = '00'; segS.textContent = '00';
             metaUsed.textContent = '已结束';
             playIco.textContent = '▶';
@@ -1623,15 +1696,20 @@
             playIco.textContent = S.running ? '❚❚' : '▶';
             playText.textContent = S.running ? '暂停' : (S.finished ? '再来一次' : '开始');
             body.classList.toggle('is-running', S.running);
+            // 时长只在待机时可调：运行中改总长会让"沙量 = 剩余时间"当场失效
             var locked = S.running;
             durRange.disabled = locked;
-            $('durUp').disabled = locked;
-            $('durDown').disabled = locked;
+            decBtn.disabled = locked;
+            incBtn.disabled = locked;
             for (var i = 0; i < presetBtns.length; i++) presetBtns[i].disabled = locked;
         }
 
         /* =====================================================
          * 翻转
+         *
+         * 动画途中继续按旧朝向画沙，到中点（旋转最快、剪影最窄）再交换。
+         * 此时 ratio 恰为 1，新旧两种画法都把 [G_NECK, G_BOT] 填满，
+         * 形状完全一致，所以换得毫无痕迹。
          * ===================================================== */
         function flip(on) {
             clearTimeout(flipTimer);
@@ -1647,10 +1725,11 @@
                 return;
             }
 
-            // 动画途中继续按旧朝向画沙，到中点（旋转最快、剪影最窄）再交换
             renderFlip = !on;
+            body.classList.add('flipping');
             flipTimer = setTimeout(function () {
                 renderFlip = on;
+                body.classList.remove('flipping');
                 paintSand(S.total ? Math.max(0, Math.min(1, S.remain / S.total)) : 0);
             }, 360);
         }
@@ -1747,20 +1826,44 @@
             save();
         }
 
-        /** 增减当前倒计时（总长同步变化，进度环与沙量才会一致） */
+        /** 微调总时长。只在待机时生效：运行中改总长会让"沙量 = 剩余时间"当场失效。 */
         function adjust(deltaMs) {
+            if (S.running) return;
+            var before = S.total;
             S.total = Math.max(MIN_MS, Math.min(MAX_MS, S.total + deltaMs));
-            S.remain = Math.max(0, Math.min(S.total, S.remain + deltaMs));
-            if (S.finished || S.remain <= 0) {
-                S.finished = false;
-                if (S.phase === 'done') { body.setAttribute('data-phase', 'running'); S.phase = 'running'; chip.textContent = PHASE_TEXT.running; }
-            }
-            if (S.running) S.endAt = performance.now() + S.remain;
+            if (S.total === before) return;
+            S.remain = S.total;
+            S.finished = false;
             S.lastSec = -1;
             syncDuration();
             paint();
             save();
-            live.textContent = deltaMs > 0 ? '已增加 ' + fmtLong(deltaMs) : '已减少 ' + fmtLong(-deltaMs);
+        }
+
+        /** 微调按钮：点一下走一格，按住则连续走 */
+        function bindNudge(btn, deltaMs) {
+            var holdTimer = null, iv = null;
+            function stop() {
+                if (holdTimer !== null) { clearTimeout(holdTimer); holdTimer = null; }
+                if (iv !== null) { clearInterval(iv); iv = null; }
+            }
+            btn.addEventListener('pointerdown', function (e) {
+                e.preventDefault();
+                if (btn.disabled) return;
+                adjust(deltaMs);
+                // 先清掉上一次可能没被 pointerup 收走的定时器，否则连点会叠加出多个孤儿 interval
+                stop();
+                holdTimer = setTimeout(function () {
+                    holdTimer = null;
+                    iv = setInterval(function () { adjust(deltaMs); }, 55);
+                }, 400);
+            });
+            ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
+                btn.addEventListener(ev, stop);
+            });
+            btn.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); adjust(deltaMs); }
+            });
         }
 
         /* =====================================================
@@ -1879,8 +1982,8 @@
          * ===================================================== */
         playBtn.addEventListener('click', toggle);
         $('resetBtn').addEventListener('click', reset);
-        decBtn.addEventListener('click', function () { adjust(-60000); });
-        incBtn.addEventListener('click', function () { adjust(60000); });
+        bindNudge(decBtn, -60000);
+        bindNudge(incBtn, 60000);
         $('fullBtn').addEventListener('click', toggleFullscreen);
         $('focusBtn').addEventListener('click', toggleFocus);
 
@@ -1890,8 +1993,6 @@
         });
 
         durRange.addEventListener('input', function () { setDuration(Number(durRange.value) * 1000); });
-        $('durDown').addEventListener('click', function () { setDuration(S.total - 10000); });
-        $('durUp').addEventListener('click', function () { setDuration(S.total + 10000); });
 
         taskInput.addEventListener('input', function () {
             cfg.task = taskInput.value.slice(0, 24);
