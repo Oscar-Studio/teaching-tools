@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="英语人物写作 · Great People 精选表达思维导图：36 条高级表达按六条主线分类，10 组升级替换对照，5 个亮点句模版，全部点击即可复制。">
+  <link rel="canonical" href="https://edu.oscarstudio.cn/%E8%8B%B1%E8%AF%AD%E4%BA%BA%E7%89%A9%E5%86%99%E4%BD%9C/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Oscar Studio 教学工具">
+  <meta property="og:title" content="英语人物写作 · 精选表达思维导图 | Oscar Studio 教学工具">
+  <meta property="og:description" content="36 条高级表达 + 10 组升级替换 + 5 个亮点句模版，一张图看懂人物作文怎么挑、怎么用。">
+  <meta property="og:url" content="https://edu.oscarstudio.cn/%E8%8B%B1%E8%AF%AD%E4%BA%BA%E7%89%A9%E5%86%99%E4%BD%9C/">
+  <meta property="og:image" content="https://edu.oscarstudio.cn/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语人物写作 · 精选表达思维导图 | Oscar Studio 教学工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+  <style>
+  /* =====================================================
+   * 本页配色：映射到 _shared/design-tokens.css 的共享变量，
+   * 以跟随 edu 的浅色 / 深色主题。
+   * 前缀 --gp-* 是为了不和共享令牌（--ink / --primary / --canvas…）
+   * 撞名 —— 撞名会把 tool-header.js 注入的共享顶栏一起改坏。
+   * ===================================================== */
+  :root{
+    --gp-bg:var(--canvas);
+    --gp-card:var(--surface-card);
+    --gp-shell:var(--surface-soft);
+    --gp-line:var(--hairline);
+    --gp-line-soft:var(--hairline-soft);
+    --gp-ink:var(--ink);
+    --gp-ink2:var(--body);
+    --gp-ink3:var(--muted);
+    --gp-ink4:var(--muted-soft);
+    --gp-primary:#2f6f5e;
+    --gp-primary-l:#4a8e7c;
+    --gp-accent:#c97b3f;
+    --gp-accent-ink:#a9632c;
+    --gp-tint:#faf8f3;
+    --gp-tint-2:#f2f8f5;
+    --gp-ring:#e2dbcb;
+    --gp-toast:#14171e;
+    --gp-on-toast:#faf9f5;
+
+    --gp-sans:var(--font-sans);
+    --gp-serif:var(--font-serif);
+    --gp-mono:var(--font-mono);
+  }
+  :root[data-theme="dark"]{
+    --gp-primary:#5fbfa0;
+    --gp-primary-l:#8fd6bd;
+    --gp-accent:#e8a55a;
+    --gp-accent-ink:#e8a55a;
+    --gp-tint:rgba(255,255,255,.05);
+    --gp-tint-2:rgba(95,191,160,.10);
+    --gp-ring:#3a3633;
+    --gp-toast:#1a1f24;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme]){
+      --gp-primary:#5fbfa0;
+      --gp-primary-l:#8fd6bd;
+      --gp-accent:#e8a55a;
+      --gp-accent-ink:#e8a55a;
+      --gp-tint:rgba(255,255,255,.05);
+      --gp-tint-2:rgba(95,191,160,.10);
+      --gp-ring:#3a3633;
+      --gp-toast:#1a1f24;
+    }
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--gp-bg);
+    color:var(--gp-ink);
+    font-family:var(--gp-sans);
+    font-size:15px;
+    line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(560px 380px at 12% -6%, color-mix(in srgb, var(--gp-primary) 9%, transparent), transparent 70%),
+      radial-gradient(520px 360px at 92% 8%, color-mix(in srgb, var(--gp-accent) 8%, transparent), transparent 70%);
+  }
+  .wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:0 24px 96px}
+  @media(max-width:768px){.wrap{padding:0 18px 64px}}
+
+  /* ---------- HERO ---------- */
+  header{padding:40px 0 44px;border-bottom:1px solid var(--gp-line)}
+  .kicker{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--gp-primary);font-weight:600;margin-bottom:18px;
+  }
+  .kicker .dot{width:6px;height:6px;border-radius:50%;background:var(--gp-accent)}
+  h1{
+    font-family:var(--gp-serif);font-weight:400;
+    font-size:clamp(30px,4.4vw,42px);line-height:1.22;letter-spacing:-0.01em;
+  }
+  h1 em{font-style:normal;color:var(--gp-primary)}
+  .lede{margin-top:16px;max-width:660px;color:var(--gp-ink2);font-size:15.5px}
+  .stats{display:flex;flex-wrap:wrap;gap:0;margin-top:30px;border-top:1px solid var(--gp-line)}
+  .stat{flex:1 1 120px;padding:16px 18px 14px 0;border-right:1px solid var(--gp-line)}
+  .stat:last-child{border-right:0}
+  .stat b{display:block;font-family:var(--gp-serif);font-size:26px;font-weight:400;line-height:1;color:var(--gp-primary)}
+  .stat span{display:block;margin-top:7px;font-size:12px;color:var(--gp-ink3);letter-spacing:.04em}
+
+  /* ---------- SECTION ---------- */
+  section{margin-top:56px}
+  .sec-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:22px}
+  .sec-head svg{flex:none;margin-top:3px;color:var(--gp-primary)}
+  h2{font-family:var(--gp-serif);font-weight:400;font-size:25px;line-height:1.3;letter-spacing:-0.005em}
+  .sec-sub{margin-top:6px;color:var(--gp-ink3);font-size:13.5px;max-width:620px}
+
+  /* ---------- MINDMAP ---------- */
+  .map-shell{
+    background:var(--gp-shell);border:1px solid var(--gp-line);border-radius:20px;
+    box-shadow:var(--card-shadow);
+    padding:8px 8px 4px;overflow:hidden;
+  }
+  .map{display:block;width:100%;height:auto}
+  .node{cursor:pointer}
+  .node .nbox{fill:var(--gp-card);stroke:var(--gp-ring);stroke-width:1.5;transition:all .22s cubic-bezier(.2,.7,.3,1)}
+  .node .nt-cn{font-family:var(--gp-sans);font-size:17px;font-weight:500;fill:var(--gp-ink);transition:fill .2s}
+  .node .nt-en{font-family:var(--gp-sans);font-size:9.5px;font-weight:600;letter-spacing:1.5px;fill:var(--gp-ink4);transition:fill .2s}
+  .node .nnum{font-family:var(--gp-sans);font-weight:700;font-size:11px;fill:var(--gp-card)}
+  .node .nring{fill:var(--gp-primary);transition:all .22s}
+  .node:hover .nbox{stroke:var(--gp-primary);fill:var(--gp-tint-2)}
+  .node:hover .nt-cn{fill:var(--gp-primary)}
+  .node.on .nbox{stroke:var(--gp-primary);stroke-width:2.5;fill:var(--gp-tint-2)}
+  /* SVG 文本要改 fill，改 color 不生效 */
+  .node.on .nt-cn{fill:var(--gp-primary)}
+  .node.on .nt-en{fill:var(--gp-primary-l)}
+  .link{fill:none;stroke:var(--gp-ring);stroke-width:2;stroke-linecap:round;transition:all .25s}
+  .link.on{stroke:var(--gp-primary);stroke-width:3.5}
+  .core-box{fill:var(--gp-primary)}
+  .core-cn{font-family:var(--gp-sans);font-size:19px;font-weight:700;fill:#fff}
+  .core-en{font-family:var(--gp-sans);font-size:9.5px;font-weight:600;letter-spacing:2px;fill:rgba(255,255,255,.62)}
+  .map-hint{text-align:center;font-size:12px;color:var(--gp-ink3);padding:2px 0 14px}
+
+  /* ---------- CONTROLS ---------- */
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:20px 0 18px}
+  .chip{
+    font-family:var(--gp-sans);font-size:12.5px;font-weight:500;
+    padding:7px 14px;border-radius:999px;cursor:pointer;
+    background:transparent;border:1px solid var(--gp-line);color:var(--gp-ink2);
+    transition:all .18s;display:inline-flex;align-items:center;gap:7px;
+  }
+  .chip:hover{border-color:var(--gp-primary);color:var(--gp-primary);background:var(--gp-tint-2)}
+  .chip.on{background:var(--gp-primary);border-color:var(--gp-primary);color:#fff}
+  .chip .n{font-family:var(--gp-mono);font-size:11px;opacity:.6}
+  .chip.on .n{opacity:.75}
+  .search{
+    margin-left:auto;position:relative;display:flex;align-items:center;
+  }
+  .search svg{position:absolute;left:11px;color:var(--gp-ink4);pointer-events:none}
+  .search input{
+    font-family:var(--gp-sans);font-size:13px;padding:8px 12px 8px 32px;
+    border:1px solid var(--gp-line);border-radius:999px;background:var(--gp-card);
+    color:var(--gp-ink);width:210px;outline:none;transition:all .18s;
+  }
+  .search input:focus{border-color:var(--gp-primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--gp-primary) 14%, transparent)}
+  .search input::placeholder{color:var(--gp-ink4)}
+  @media(max-width:768px){.search{margin-left:0;width:100%}.search input{width:100%}}
+
+  /* ---------- CARDS ---------- */
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{
+    background:var(--gp-card);border:1px solid var(--gp-line);border-radius:16px;
+    padding:17px 19px 16px;box-shadow:var(--card-shadow);
+    transition:all .2s cubic-bezier(.2,.7,.3,1);
+  }
+  .card:hover{transform:translateY(-2px);box-shadow:var(--card-shadow);border-color:var(--gp-ring)}
+  .card.hide{display:none}
+  .card-top{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+  .tier{font-size:10.5px;font-weight:600;letter-spacing:.06em;padding:3px 8px;border-radius:5px}
+  .tier.hot{background:color-mix(in srgb, var(--gp-primary) 14%, transparent);color:var(--gp-primary)}
+  .tier.mid{background:color-mix(in srgb, var(--gp-accent) 14%, transparent);color:var(--gp-accent-ink)}
+  .from{font-family:var(--gp-mono);font-size:10px;color:var(--gp-ink4);letter-spacing:.03em}
+  .phrase{
+    font-size:16.5px;font-weight:600;line-height:1.42;letter-spacing:-0.005em;
+    cursor:copy;transition:color .16s;position:relative;
+  }
+  .phrase:hover{color:var(--gp-primary)}
+  .phrase::after{
+    content:"";position:absolute;right:0;top:50%;width:14px;height:1px;
+    background:var(--gp-primary);opacity:0;transition:opacity .16s;
+  }
+  .gloss{margin-top:5px;color:var(--gp-ink2);font-size:13.5px}
+  .eg{
+    margin-top:12px;padding:9px 12px;border-radius:9px;
+    background:var(--gp-tint);border-left:2px solid var(--gp-ring);
+    font-size:12.5px;line-height:1.55;color:var(--gp-ink2);font-style:italic;
+  }
+  .eg b{font-style:normal;font-family:var(--gp-mono);font-size:10px;color:var(--gp-ink4);margin-right:6px;letter-spacing:.05em}
+  .empty{padding:34px;text-align:center;color:var(--gp-ink3);font-size:13.5px;display:none}
+
+  /* ---------- UPGRADE TABLE ---------- */
+  .tbl{background:var(--gp-card);border:1px solid var(--gp-line);border-radius:18px;overflow:hidden;box-shadow:var(--card-shadow)}
+  .tr{display:grid;grid-template-columns:1fr 26px 1.35fr 1fr;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--gp-line-soft)}
+  .tr:last-child{border-bottom:0}
+  .tr.hd{background:var(--gp-tint);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gp-ink3);font-weight:600;padding:11px 20px}
+  .old{font-size:13.5px;color:var(--gp-ink4);text-decoration:line-through;text-decoration-color:var(--gp-ring)}
+  .new{font-size:14.5px;font-weight:600;color:var(--gp-ink);line-height:1.45}
+  .why{font-size:12.5px;color:var(--gp-ink3);line-height:1.5}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--gp-accent)}
+  @media(max-width:820px){
+    .tr{grid-template-columns:1fr;gap:6px;padding:15px 18px}
+    .tr.hd{display:none}
+    .arrow{display:none}
+    .old{font-size:12.5px}
+  }
+
+  /* ---------- TEMPLATES ---------- */
+  .tpl{
+    background:var(--gp-card);border:1px solid var(--gp-line);border-radius:18px;
+    padding:22px 24px;box-shadow:var(--card-shadow);
+    transition:all .2s;position:relative;overflow:hidden;
+  }
+  .tpl:hover{box-shadow:var(--card-shadow);border-color:var(--gp-ring)}
+  .tpl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gp-primary);opacity:.3}
+  .tpl-h{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .tpl-n{font-family:var(--gp-mono);font-size:11px;font-weight:500;color:#fff;background:var(--gp-primary);width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center}
+  .tpl-t{font-size:13px;font-weight:600;color:var(--gp-ink);letter-spacing:.01em}
+  .slot{
+    font-family:var(--gp-mono);font-size:12.5px;color:#fff;background:var(--gp-ink2);
+    padding:2.5px 7px;border-radius:5px;white-space:nowrap;
+  }
+  .model{
+    margin-top:14px;padding:13px 15px;border-radius:11px;background:var(--gp-tint-2);
+    font-size:14px;line-height:1.6;color:var(--gp-ink);cursor:copy;transition:background .18s;
+  }
+  .model:hover{background:color-mix(in srgb, var(--gp-primary) 18%, transparent)}
+  .model .k{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+  .model .k b{font-family:var(--gp-mono);font-size:9.5px;letter-spacing:.14em;color:var(--gp-primary);font-weight:500}
+  .copy-tip{font-size:11px;color:var(--gp-ink4);font-family:var(--gp-mono)}
+  .pattern{font-size:14px;line-height:1.85;color:var(--gp-ink2)}
+
+  /* ---------- PITFALL ---------- */
+  .pits{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:820px){.pits{grid-template-columns:1fr}}
+  .pit{background:var(--gp-card);border:1px solid var(--gp-line);border-radius:14px;padding:16px 18px;display:flex;gap:12px}
+  .pit svg{flex:none;margin-top:3px;color:var(--gp-accent)}
+  .pit h4{font-size:13.5px;font-weight:600;margin-bottom:5px}
+  .pit p{font-size:12.8px;color:var(--gp-ink2);line-height:1.6}
+  .pit code{font-family:var(--gp-mono);font-size:11.5px;background:var(--gp-tint);padding:1px 5px;border-radius:4px;color:var(--gp-ink2)}
+
+  /* ---------- TOAST ---------- */
+  #toast{
+    position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);
+    background:var(--gp-toast);color:var(--gp-on-toast);font-size:13px;padding:9px 18px;border-radius:999px;
+    border:1px solid var(--gp-line);
+    opacity:0;pointer-events:none;transition:all .26s;z-index:99;font-weight:500;
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--gp-line);color:var(--gp-ink3);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker"><span class="dot"></span>9AU1 · Great People · 素材精选</div>
+    <h1>人物写作的 <em>36</em> 条高级表达<br>一张图看懂怎么挑、怎么用</h1>
+    <p class="lede">从两份素材里交叉比对后留下的部分：<b>框架稳、成分地道、句子能直接迁移</b>。左边是人物描写的六条主线，点任意一个分支，下方卡片会对应高亮；所有表达点击即可复制。</p>
+    <div class="stats">
+      <div class="stat"><b>36</b><span>精选表达</span></div>
+      <div class="stat"><b>6</b><span>写作主线</span></div>
+      <div class="stat"><b>10</b><span>升级替换</span></div>
+      <div class="stat"><b>5</b><span>亮点句模版</span></div>
+    </div>
+  </header>
+
+  <!-- 1. MINDMAP -->
+  <section id="map">
+    <div class="sec-head">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M12 7.5v3.5M12 11H5v4.5M12 11h7v4.5"/></svg>
+      <div>
+        <h2>精选思维导图 · 六条主线</h2>
+        <p class="sec-sub">一篇人物作文的结构就是这六块。缺哪块，分数就卡在哪块 —— 每条主线下的语块按「亮点句 / 地道块」分级，亮点句一篇放 1–2 个就够。</p>
+      </div>
+    </div>
+
+    <div class="map-shell">
+      <svg class="map" viewBox="0 0 1000 720" role="img" aria-label="Great People 写作六条主线思维导图">
+        <g id="links">
+          <path class="link" data-l="1" d="M500 380 C617 380 617 245 734 245"/>
+          <path class="link" data-l="2" d="M500 380 C617 380 617 515 734 515"/>
+          <path class="link" data-l="3" d="M500 380 C500 443 500 587 500 650"/>
+          <path class="link" data-l="4" d="M500 380 C383 380 383 515 266 515"/>
+          <path class="link" data-l="5" d="M500 380 C383 380 383 245 266 245"/>
+          <path class="link" data-l="6" d="M500 380 C500 317 500 173 500 110"/>
+        </g>
+
+        <g class="core">
+          <rect class="core-box" x="398" y="340" width="204" height="80" rx="20"/>
+          <text class="core-cn" x="500" y="375" text-anchor="middle">Great People</text>
+          <text class="core-en" x="500" y="397" text-anchor="middle">人物描写 · 六大板块</text>
+        </g>
+
+        <g class="node" data-b="1" transform="translate(734,245)">
+          <rect class="nbox" x="-92" y="-30" width="184" height="60" rx="16"/>
+          <circle class="nring" cx="-64" cy="0" r="11"/>
+          <text class="nnum" x="-64" y="3.5" text-anchor="middle">1</text>
+          <text class="nt-cn" x="-44" y="-3">开篇定调</text>
+          <text class="nt-en" x="-44" y="15">INTRODUCING</text>
+        </g>
+        <g class="node" data-b="2" transform="translate(734,515)">
+          <rect class="nbox" x="-92" y="-30" width="184" height="60" rx="16"/>
+          <circle class="nring" cx="-64" cy="0" r="11"/>
+          <text class="nnum" x="-64" y="3.5" text-anchor="middle">2</text>
+          <text class="nt-cn" x="-44" y="-3">早年求学</text>
+          <text class="nt-en" x="-44" y="15">EARLY LIFE</text>
+        </g>
+        <g class="node" data-b="3" transform="translate(500,650)">
+          <rect class="nbox" x="-92" y="-30" width="184" height="60" rx="16"/>
+          <circle class="nring" cx="-64" cy="0" r="11"/>
+          <text class="nnum" x="-64" y="3.5" text-anchor="middle">3</text>
+          <text class="nt-cn" x="-44" y="-3">成就突破</text>
+          <text class="nt-en" x="-44" y="15">ACHIEVEMENTS</text>
+        </g>
+        <g class="node" data-b="4" transform="translate(266,515)">
+          <rect class="nbox" x="-92" y="-30" width="184" height="60" rx="16"/>
+          <circle class="nring" cx="-64" cy="0" r="11"/>
+          <text class="nnum" x="-64" y="3.5" text-anchor="middle">4</text>
+          <text class="nt-cn" x="-44" y="-3">社会价值</text>
+          <text class="nt-en" x="-44" y="15">SOCIAL VALUE</text>
+        </g>
+        <g class="node" data-b="5" transform="translate(266,245)">
+          <rect class="nbox" x="-92" y="-30" width="184" height="60" rx="16"/>
+          <circle class="nring" cx="-64" cy="0" r="11"/>
+          <text class="nnum" x="-64" y="3.5" text-anchor="middle">5</text>
+          <text class="nt-cn" x="-44" y="-3">行动品质</text>
+          <text class="nt-en" x="-44" y="15">QUALITIES</text>
+        </g>
+        <g class="node" data-b="6" transform="translate(500,110)">
+          <rect class="nbox" x="-92" y="-30" width="184" height="60" rx="16"/>
+          <circle class="nring" cx="-64" cy="0" r="11"/>
+          <text class="nnum" x="-64" y="3.5" text-anchor="middle">6</text>
+          <text class="nt-cn" x="-44" y="-3">我们的收获</text>
+          <text class="nt-en" x="-44" y="15">LESSONS</text>
+        </g>
+      </svg>
+      <p class="map-hint">点击任一分支，筛选下方表达卡片</p>
+    </div>
+
+    <div class="controls" id="chips">
+      <button class="chip on" data-b="0">全部 <span class="n">36</span></button>
+      <button class="chip" data-b="1">1 开篇定调 <span class="n">6</span></button>
+      <button class="chip" data-b="2">2 早年求学 <span class="n">6</span></button>
+      <button class="chip" data-b="3">3 成就突破 <span class="n">6</span></button>
+      <button class="chip" data-b="4">4 社会价值 <span class="n">6</span></button>
+      <button class="chip" data-b="5">5 行动品质 <span class="n">6</span></button>
+      <button class="chip" data-b="6">6 我们的收获 <span class="n">6</span></button>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="搜索表达 / 关键词…" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="grid" id="grid">
+
+      <!-- 1 -->
+      <article class="card" data-b="1">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">one of the leading minds of his / her time</p>
+        <p class="gloss">他 / 她那个时代最卓越的头脑之一</p>
+        <p class="eg"><b>e.g.</b>Einstein is regarded as one of the leading minds of his time.</p>
+      </article>
+      <article class="card" data-b="1">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">be remembered not only for A, but also for B</p>
+        <p class="gloss">不仅因 A 而被铭记，更因 B 而被铭记</p>
+        <p class="eg"><b>e.g.</b>Lu Xun is remembered not only for his literary works, but also for the way he awakened people's thoughts.</p>
+      </article>
+      <article class="card" data-b="1">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">from an ordinary background to an extraordinary life</p>
+        <p class="gloss">从平凡的出身，走向非凡的人生</p>
+        <p class="eg"><b>e.g.</b>She moved from an ordinary background to an extraordinary life.</p>
+      </article>
+      <article class="card" data-b="1">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">not just successful, but truly valuable to society</p>
+        <p class="gloss">不只在于成功，更在于对社会真正有价值</p>
+        <p class="eg"><b>e.g.</b>A great person is not just successful, but truly valuable to society.</p>
+      </article>
+      <article class="card" data-b="1">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">a name still remembered across generations</p>
+        <p class="gloss">一个被几代人铭记至今的名字</p>
+        <p class="eg"><b>e.g.</b>Qian Xuesen is a name still remembered across generations.</p>
+      </article>
+      <article class="card" data-b="1">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">known for both achievement and social value</p>
+        <p class="gloss">以学术成就与社会价值双重闻名</p>
+        <p class="eg"><b>e.g.</b>Tu Youyou is known for both achievement and social value.</p>
+      </article>
+
+      <!-- 2 -->
+      <article class="card" data-b="2">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">from a young age, with more questions than answers</p>
+        <p class="gloss">从小就不缺问题，反而比答案多</p>
+        <p class="eg"><b>e.g.</b>From a young age, Wang Zhenyi read with more questions than answers.</p>
+      </article>
+      <article class="card" data-b="2">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">with limited opportunities but a deep love of learning</p>
+        <p class="gloss">条件有限，却依然深深热爱学习</p>
+        <p class="eg"><b>e.g.</b>With limited opportunities but a deep love of learning, he taught himself in the evenings.</p>
+      </article>
+      <article class="card" data-b="2">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">Instead of learning only from books, she also tried to…</p>
+        <p class="gloss">她不只从书本学习，还亲自去观察、去验证</p>
+        <p class="eg"><b>e.g.</b>Instead of learning only from books, she also tried to understand eclipses through observation and reasoning.</p>
+      </article>
+      <article class="card" data-b="2">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">a strong desire to explore how things work</p>
+        <p class="gloss">强烈的、想弄明白事物如何运转的欲望</p>
+        <p class="eg"><b>e.g.</b>He had a strong desire to explore how things work.</p>
+      </article>
+      <article class="card" data-b="2">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">加油包</span></div>
+        <p class="phrase">grow up in a family that valued education</p>
+        <p class="gloss">成长在一个重视教育的家庭中</p>
+        <p class="eg"><b>e.g.</b>She grew up in a family that valued education and encouraged her to ask why.</p>
+      </article>
+      <article class="card" data-b="2">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">early training in independent and careful thinking</p>
+        <p class="gloss">早期受到的独立而审慎的思考训练</p>
+        <p class="eg"><b>e.g.</b>Her early training in independent and careful thinking shaped all her later work.</p>
+      </article>
+
+      <!-- 3 -->
+      <article class="card" data-b="3">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">加油包</span></div>
+        <p class="phrase">turn years of research into a useful discovery</p>
+        <p class="gloss">把多年的研究，转化为一项有用的发现</p>
+        <p class="eg"><b>e.g.</b>She turned years of research into a discovery the whole world could use.</p>
+      </article>
+      <article class="card" data-b="3">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">with evidence rather than guesswork</p>
+        <p class="gloss">凭证据说话，而不是靠猜测</p>
+        <p class="eg"><b>e.g.</b>Every conclusion he drew was supported with evidence rather than guesswork.</p>
+      </article>
+      <article class="card" data-b="3">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">加油包</span></div>
+        <p class="phrase">A significant milestone in her life was when…</p>
+        <p class="gloss">她人生中的一个重要里程碑，是当……的时候</p>
+        <p class="eg"><b>e.g.</b>A significant milestone in her life was when she and her team found an effective treatment for malaria.</p>
+      </article>
+      <article class="card" data-b="3">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">a practical solution to a long-standing problem</p>
+        <p class="gloss">针对一个长期难题给出的实用解法</p>
+        <p class="eg"><b>e.g.</b>Hybrid rice offered a practical solution to a long-standing problem.</p>
+      </article>
+      <article class="card" data-b="3">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">a breakthrough recognized at home and abroad</p>
+        <p class="gloss">一项获得国内外共同认可的突破</p>
+        <p class="eg"><b>e.g.</b>Finding qinghaosu was a breakthrough recognized at home and abroad.</p>
+      </article>
+      <article class="card" data-b="3">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">research findings with real-world value</p>
+        <p class="gloss">具备真实世界价值的研究成果</p>
+        <p class="eg"><b>e.g.</b>He is known for research findings with real-world value.</p>
+      </article>
+
+      <!-- 4 -->
+      <article class="card" data-b="4">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">make difficult knowledge accessible to ordinary people</p>
+        <p class="gloss">让艰深难懂的知识，成为普通人也能获取的东西</p>
+        <p class="eg"><b>e.g.</b>He spent his life making difficult knowledge accessible to ordinary people.</p>
+      </article>
+      <article class="card" data-b="4">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">practical benefits beyond the laboratory</p>
+        <p class="gloss">超出实验室之外的实际益处</p>
+        <p class="eg"><b>e.g.</b>Her research brought practical benefits far beyond the laboratory.</p>
+      </article>
+      <article class="card" data-b="4">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">A's work reshaped B: it changed the way…, opening up new directions…</p>
+        <p class="gloss">某人的工作重塑了某领域：改变了人们……的方式，并开辟了新的方向</p>
+        <p class="eg"><b>e.g.</b>Einstein's theories reshaped modern physics: they changed the way scientists understand space and time, opening up new directions for later research.</p>
+      </article>
+      <article class="card" data-b="4">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">help feed millions of people and reduce the threat of hunger</p>
+        <p class="gloss">让数百万人有饭吃，降低了饥饿的威胁</p>
+        <p class="eg"><b>e.g.</b>His hybrid rice helped feed millions of people and reduce the threat of hunger.</p>
+      </article>
+      <article class="card" data-b="4">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">加油包</span></div>
+        <p class="phrase">open a new path / lay the foundation for later researchers</p>
+        <p class="gloss">为后来的研究者开辟新路 / 奠定基础</p>
+        <p class="eg"><b>e.g.</b>He helped lay the foundation for China's space technology and opened a new path for those who followed.</p>
+      </article>
+      <article class="card" data-b="4">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">leave a lasting influence across generations</p>
+        <p class="gloss">留下跨越几代而长存的影响</p>
+        <p class="eg"><b>e.g.</b>The effect of her teaching has left a lasting influence across generations.</p>
+      </article>
+
+      <!-- 5 -->
+      <article class="card" data-b="5">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">a questioning mind and a careful eye</p>
+        <p class="gloss">一颗不断追问的头脑，和一双足够细致的眼睛</p>
+        <p class="eg"><b>e.g.</b>Great scientists share a questioning mind and a careful eye.</p>
+      </article>
+      <article class="card" data-b="5">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">not satisfied with easy answers</p>
+        <p class="gloss">不满足于那些轻易得来的答案</p>
+        <p class="eg"><b>e.g.</b>He was never satisfied with easy answers.</p>
+      </article>
+      <article class="card" data-b="5">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">strong enough to face doubt and failure</p>
+        <p class="gloss">强大到足以直面质疑与失败</p>
+        <p class="eg"><b>e.g.</b>She was strong enough to face doubt and failure without changing her mind.</p>
+      </article>
+      <article class="card" data-b="5">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">A's dedication can be seen in a small but unforgettable detail:…</p>
+        <p class="gloss">他的奉献藏在一个微小却难忘的细节里</p>
+        <p class="eg"><b>e.g.</b>Chen Wangdao's dedication can be seen in a small but unforgettable detail: while translating The Communist Manifesto, he was so focused that he mistook ink for brown sugar sauce.</p>
+      </article>
+      <article class="card" data-b="5">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">a sense of responsibility for people beyond oneself</p>
+        <p class="gloss">一种对自身之外的人也负责的意识</p>
+        <p class="eg"><b>e.g.</b>What drove him was a sense of responsibility for people beyond himself.</p>
+      </article>
+      <article class="card" data-b="5">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">careful with evidence and data / calm under pressure</p>
+        <p class="gloss">对证据与数据审慎 / 压力之下依然冷静</p>
+        <p class="eg"><b>e.g.</b>In the lab he stayed calm under pressure and was careful with evidence and data.</p>
+      </article>
+
+      <!-- 6 -->
+      <article class="card" data-b="6">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">加油包</span></div>
+        <p class="phrase">turn interest into steady effort</p>
+        <p class="gloss">把一时的兴趣，转化为稳定的努力</p>
+        <p class="eg"><b>e.g.</b>The first step for a student is to turn interest into steady effort.</p>
+      </article>
+      <article class="card" data-b="6">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">evidence before conclusions</p>
+        <p class="gloss">先有证据，再下结论</p>
+        <p class="eg"><b>e.g.</b>He taught us to put evidence before conclusions.</p>
+      </article>
+      <article class="card" data-b="6">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">steady effort instead of short excitement</p>
+        <p class="gloss">持续的努力，而不是三分钟热度</p>
+        <p class="eg"><b>e.g.</b>Real progress comes from steady effort instead of short excitement.</p>
+      </article>
+      <article class="card" data-b="6">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">talent is important, but steady effort matters more</p>
+        <p class="gloss">天赋很重要，但持久的努力更重要</p>
+        <p class="eg"><b>e.g.</b>Great people show us that talent is important, but steady effort matters more.</p>
+      </article>
+      <article class="card" data-b="6">
+        <div class="card-top"><span class="tier hot">亮点句</span><span class="from">句子.md</span></div>
+        <p class="phrase">When a topic interests us, we can… instead of stopping at curiosity.</p>
+        <p class="gloss">当我们对某件事感兴趣时，可以……而不只是停在好奇上</p>
+        <p class="eg"><b>e.g.</b>When a topic interests us, we can read beyond the textbook, record our questions and try a small project instead of stopping at curiosity.</p>
+      </article>
+      <article class="card" data-b="6">
+        <div class="card-top"><span class="tier mid">地道块</span><span class="from">句子.md</span></div>
+        <p class="phrase">reading beyond the textbook</p>
+        <p class="gloss">读到课本之外的地方</p>
+        <p class="eg"><b>e.g.</b>As students, we can start by reading beyond the textbook.</p>
+      </article>
+
+    </div>
+    <p class="empty" id="empty">没有匹配的表达式，换个关键词试试。</p>
+  </section>
+
+  <!-- 2. UPGRADE -->
+  <section id="up">
+    <div class="sec-head">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <div>
+        <h2>升级替换表 · 这才是提分的地方</h2>
+        <p class="sec-sub">同样一件事，左边是「能写但很平」，右边是「读起来像范文」。语料基本一样，差别在于<b>抽象程度</b>和<b>画面感</b>。</p>
+      </div>
+    </div>
+
+    <div class="tbl">
+      <div class="tr hd"><div>平替</div><div></div><div>升级表达</div><div>差在哪</div></div>
+      <div class="tr"><div class="old">He is very famous.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">He is one of the leading minds of his time.</div><div class="why">从「有名」升到「有地位」</div></div>
+      <div class="tr"><div class="old">She was interested in science from a young age.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">From a young age, she had more questions than answers.</div><div class="why">从陈述句变成一个画面</div></div>
+      <div class="tr"><div class="old">He worked very hard for many years.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">He kept trying despite failure and doubt, turning years of research into a useful discovery.</div><div class="why">形容词 → 因果链</div></div>
+      <div class="tr"><div class="old">His discovery helped many people.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">His discovery brought practical benefits beyond the laboratory.</div><div class="why">从「多少人」升到「哪一层」</div></div>
+      <div class="tr"><div class="old">He changed science.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">His theories reshaped modern physics, opening up new directions for later research.</div><div class="why">从结果 → 用分词展开过程</div></div>
+      <div class="tr"><div class="old">He came from a poor family.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">He came from an ordinary background.</div><div class="why">中式直译 → 地道英文</div></div>
+      <div class="tr"><div class="old">He was a careful person.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">He was careful with evidence and data.</div><div class="why">形容词 → 具体落点</div></div>
+      <div class="tr"><div class="old">In order to help people, he wrote books.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">To raise public awareness, he wrote books.</div><div class="why">in order to 永远换成 To…</div></div>
+      <div class="tr"><div class="old">We can learn a lot from him.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">Just as Einstein said, "…". This reminds me to become not just successful, but valuable.</div><div class="why">从口号 → 落到自己</div></div>
+      <div class="tr"><div class="old">Many people like him today.</div><div class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="new">He is remembered across generations.</div><div class="why">换时态、换叙述视角</div></div>
+    </div>
+  </section>
+
+  <!-- 3. TEMPLATES -->
+  <section id="tpl">
+    <div class="sec-head">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h11M4 19h7"/><path d="M18.5 15.5l2 2 3-3.5"/></svg>
+      <div>
+        <h2>五个亮点句模版 · 填空即用</h2>
+        <p class="sec-sub">这五个结构基本能撑起一篇 80 词的范文。方括号里换成你的内容，整句就是高级表达。</p>
+      </div>
+    </div>
+
+    <div class="space-y-14" style="display:flex;flex-direction:column;gap:14px">
+
+      <div class="tpl">
+        <div class="tpl-h"><span class="tpl-n">1</span><span class="tpl-t">身份 + 定语从句 · 用来开篇</span></div>
+        <p class="pattern"><span class="slot">[Name]</span> is often introduced as <span class="slot">a/an + 身份</span> who <span class="slot">[具体贡献]</span>, and is still remembered as <span class="slot">[名词短语]</span>.</p>
+        <div class="model copyable"><div class="k"><b>MODEL</b><span class="copy-tip">click to copy</span></div>Qian Xuesen is often introduced as a leading scientist who helped lay the foundation for China's space technology, and his name is still remembered across generations.</div>
+      </div>
+
+      <div class="tpl">
+        <div class="tpl-h"><span class="tpl-n">2</span><span class="tpl-t">成果 → 影响 · 用来写成就段落</span></div>
+        <p class="pattern"><span class="slot">[Name]</span>'s research on <span class="slot">[课题]</span> helped <span class="slot">[improve / solve]</span> <span class="slot">[现实问题]</span>, and showed how <span class="slot">[a field]</span> could respond to real needs.</p>
+        <div class="model copyable"><div class="k"><b>MODEL</b><span class="copy-tip">click to copy</span></div>Yuan Longping's research on hybrid rice helped improve food production, and showed how science could respond to real needs.</div>
+      </div>
+
+      <div class="tpl">
+        <div class="tpl-h"><span class="tpl-n">3</span><span class="tpl-t">冒号 + 分词 · 用来写「影响深远」</span></div>
+        <p class="pattern"><span class="slot">[Name]</span>'s <span class="slot">[work]</span> reshaped <span class="slot">[field]</span>: it changed the way <span class="slot">[people]</span> <span class="slot">[understand X]</span>, opening up new directions for later research.</p>
+        <div class="model copyable"><div class="k"><b>MODEL</b><span class="copy-tip">click to copy</span></div>Einstein's theories reshaped modern physics: they changed the way scientists understand space and time, opening up new directions for later research.</div>
+      </div>
+
+      <div class="tpl">
+        <div class="tpl-h"><span class="tpl-n">4</span><span class="tpl-t">小细节见大品质 · 最容易出彩</span></div>
+        <p class="pattern"><span class="slot">[Name]</span>'s <span class="slot">[quality]</span> can be seen in a small but unforgettable detail: <span class="slot">[一个具体动作]</span>.</p>
+        <div class="model copyable"><div class="k"><b>MODEL</b><span class="copy-tip">click to copy</span></div>Chen Wangdao's dedication can be seen in a small but unforgettable detail: while translating The Communist Manifesto, he was so focused that he mistook ink for brown sugar sauce.</div>
+      </div>
+
+      <div class="tpl">
+        <div class="tpl-h"><span class="tpl-n">5</span><span class="tpl-t">名言收尾 · 结尾升华</span></div>
+        <p class="pattern">Just as <span class="slot">[Name]</span> said, <span class="slot">"…"</span>. This reminds me to <span class="slot">[做什么]</span>, not just <span class="slot">[successful]</span>, but <span class="slot">[valuable]</span>.</p>
+        <div class="model copyable"><div class="k"><b>MODEL</b><span class="copy-tip">click to copy</span></div>Just as Albert Einstein said, "Try not to become a man of success. Rather become a man of value." This reminds me to become not just successful, but someone who brings value to others.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 4. PITFALLS -->
+  <section id="pit">
+    <div class="sec-head">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2.4 17.5A2 2 0 004.1 20.5h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+      <div>
+        <h2>避坑 · 五条</h2>
+        <p class="sec-sub">素材里有些句子能写但不出彩，有些则是翻译残留 —— 一起标出来。</p>
+      </div>
+    </div>
+
+    <div class="pits">
+      <div class="pit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div><h4>能写但偏平的句子</h4><p><code>have a great influence on later generations</code> 没错，但太安全。优先用 <code>reshape</code> / <code>open a new path</code> / <code>leave a lasting influence</code>。</p></div>
+      </div>
+      <div class="pit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div><h4>少用 very + 形容词</h4><p><code>very important</code> / <code>very good</code> 一律换掉：remarkable、significant、far-reaching、little-known。</p></div>
+      </div>
+      <div class="pit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div><h4>别整段都是 because…so…</h4><p>换一个句式呼吸：<code>Instead of…,</code> / <code>With…,</code> / <code>Not only…but also…</code> / 结尾用冒号 + 分词。</p></div>
+      </div>
+      <div class="pit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div><h4>亮点句要限量</h4><p>80 词短文放 <b>1–2 句</b>亮点句最稳，其余用简单句保准确率。炫技过多反而被挑语法错。</p></div>
+      </div>
+      <div class="pit" style="grid-column:1/-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div><h4>翻译残留，直接丢弃</h4><p>加油包里的「这当人们谈到中国伟大的科学家时……」以及 <code>have a great influence on later generations</code> 这类直译句，中文一读就露馅，别当素材背。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>精选自 加油包.md × 句子.md · 9AU1 Great People</span>
+    <span>36 条表达 · 10 组替换 · 5 个模版</span>
+  </footer>
+</div>
+
+<div id="toast">已复制</div>
+
+<script>
+(function(){
+  var cards = Array.prototype.slice.call(document.querySelectorAll('#grid .card'));
+  var chips = Array.prototype.slice.call(document.querySelectorAll('#chips .chip'));
+  var nodes = Array.prototype.slice.call(document.querySelectorAll('.node'));
+  var links = Array.prototype.slice.call(document.querySelectorAll('.link'));
+  var q = document.getElementById('q');
+  var empty = document.getElementById('empty');
+  var active = 0;
+
+  function apply(){
+    var kw = (q.value || '').trim().toLowerCase();
+    var shown = 0;
+    cards.forEach(function(c){
+      var okB = (active === 0 || +c.dataset.b === active);
+      var okQ = !kw || c.textContent.toLowerCase().indexOf(kw) > -1;
+      var show = okB && okQ;
+      c.classList.toggle('hide', !show);
+      if(show) shown++;
+    });
+    empty.style.display = shown ? 'none' : 'block';
+
+    chips.forEach(function(ch){ ch.classList.toggle('on', +ch.dataset.b === active); });
+    nodes.forEach(function(n){ n.classList.toggle('on', +n.dataset.b === active); });
+    links.forEach(function(l){ l.classList.toggle('on', +l.dataset.l === active); });
+  }
+
+  function setBranch(b){
+    active = (active === b) ? 0 : b;
+    apply();
+    if(active !== 0){
+      var y = document.getElementById('chips').getBoundingClientRect().top + window.pageYOffset - 20;
+      window.scrollTo({top:y, behavior:'smooth'});
+    }
+  }
+
+  chips.forEach(function(ch){ ch.addEventListener('click', function(){ active = +ch.dataset.b; apply(); }); });
+  nodes.forEach(function(n){ n.addEventListener('click', function(){ setBranch(+n.dataset.b); }); });
+  q.addEventListener('input', apply);
+
+  // copy
+  var toast = document.getElementById('toast'), tid;
+  function flash(){
+    toast.classList.add('show');
+    clearTimeout(tid);
+    tid = setTimeout(function(){ toast.classList.remove('show'); }, 1500);
+  }
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('.phrase, .model');
+    if(!el) return;
+    var text = el.classList.contains('model') ? el.lastChild.textContent.trim() : el.textContent.trim();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(flash, function(){});
+    }
+  });
+
+  apply();
+})();
+</script>
+</body>
+</html>
