@@ -1072,6 +1072,18 @@
             }).join('\n');
         }
 
+        /* ---------- 纯函数：抽后移除 ---------- */
+
+        /**
+         * 去掉已抽中的选项，权重原样保留
+         * 按标签比对，不依赖下标 —— 移除会让后面的选项整体前移
+         */
+        function removePicked(options, winners) {
+            var hit = {};
+            (winners || []).forEach(function (w) { hit[w.label] = true; });
+            return (options || []).filter(function (o) { return !hit[o.label]; });
+        }
+
         /* ---------- 纯函数：扇区几何 ---------- */
 
         /**
@@ -1192,7 +1204,7 @@
             removeAfter: false,
             sound: true,
             confetti: true,
-            lastWinners: [],
+            lastResult: [],    /* 上次抽中的选项本体（label + weight）；转盘高亮/复制/播报全用它，按标签匹配，不受下标位移影响 */
             history: []
         };
 
@@ -1254,7 +1266,7 @@
             els.spinBtn.disabled = empty || state.spinning;
             els.wheelCanvas.setAttribute('aria-label',
                 '幸运转盘，当前有 ' + state.options.length + ' 个选项' +
-                (state.lastWinners.length ? '，上次结果是 ' + state.lastWinners.join('、') : ''));
+                (state.lastResult.length ? '，上次结果是 ' + state.lastResult.map(function (o) { return o.label; }).join('、') : ''));
 
             drawWheel();
             syncRemoveSwitch();
@@ -1280,7 +1292,9 @@
             var cy = size / 2;
             var r = size / 2 - 6;
             var segs = state.segments;
-            var winners = state.lastWinners;
+            /* 高亮按「标签」匹配，不按下标：抽后移除会让整个选项数组前移，
+             * 存下来的下标会指向别的选项（高亮到别人头上就是这么来的）。*/
+            var winners = state.lastResult.map(function (o) { return o.label; });
             var hasWinner = !state.spinning && winners.length > 0;
 
             // 外圈底盘
@@ -1303,8 +1317,8 @@
 
             for (var i = 0; i < segs.length; i++) {
                 var seg = segs[i];
-                var base = colorAt(i);
-                var dim = hasWinner && winners.indexOf(seg.index) === -1;
+                var base = colorAt(seg.index);   // 用选项自身的下标取色，跟位置无关
+                var dim = hasWinner && winners.indexOf(seg.label) === -1;
 
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
@@ -1482,7 +1496,7 @@
             var target = targetRotationFor(state.rotation, primary);
 
             state.spinning = true;
-            state.lastWinners = [];
+            state.lastResult = [];
             els.spinBtn.disabled = true;
             els.spinBtn.textContent = '转动中';
             els.winnerList.textContent = '';
@@ -1521,8 +1535,8 @@
         }
 
         function finishSpin(picks) {
-            state.lastWinners = picks.slice();
             var winners = picks.map(function (i) { return state.options[i]; }).filter(Boolean);
+            state.lastResult = winners.map(function (w) { return { label: w.label, weight: w.weight }; });
 
             els.winnerList.textContent = '';
             winners.forEach(function (item, i) {
@@ -1535,20 +1549,17 @@
                 els.winnerList.appendChild(chip);
             });
 
-            pushHistory(winners);
             els.spinBtn.disabled = false;
             els.spinBtn.textContent = '再转一次';
             drawWheel();
 
-            if (state.confetti) celebrate();
-            chime();
-
+            // 抽后移除：抽中的项离开转盘。高亮按标签匹配，所以移除后自然不会有人被误标
+            var removed = false;
             if (state.removeAfter && winners.length) {
-                var rest = state.options.filter(function (o) {
-                    return !winners.some(function (w) { return w.label === o.label; });
-                });
+                var rest = removePicked(state.options, winners);
                 if (rest.length) {
                     els.optionsInput.value = serializeOptions(rest);
+                    removed = rest.length !== state.options.length;
                 } else {
                     state.removeAfter = false;
                     els.optionsInput.value = '';
@@ -1556,15 +1567,21 @@
                 }
                 render();
             }
+
+            pushHistory(state.lastResult, removed);
+
+            if (state.confetti) celebrate();
+            chime();
         }
 
         /* ---------- 历史 ---------- */
 
-        function pushHistory(winners) {
+        function pushHistory(winners, removed) {
             state.history.unshift({
                 time: new Date(),
                 // 连权重一起存，放回转盘时才能还原「甲*3」而不是拍平成「甲」
-                items: winners.map(function (w) { return { label: w.label, weight: w.weight }; })
+                items: winners.map(function (w) { return { label: w.label, weight: w.weight }; }),
+                removed: !!removed   // 只有真的移除过选项，这一行才需要「放回转盘」
             });
             if (state.history.length > MAX_HISTORY) state.history.length = MAX_HISTORY;
             renderHistory();
@@ -1590,12 +1607,15 @@
                 labels.textContent = row.items.map(function (it) { return it.label; }).join('、');
                 li.appendChild(labels);
 
-                var restore = document.createElement('button');
-                restore.className = 'history-restore';
-                restore.type = 'button';
-                restore.textContent = '放回转盘';
-                restore.addEventListener('click', function () { restoreItems(row.items); });
-                li.appendChild(restore);
+                // 只有那一次真的把选项移出过转盘，才需要「放回转盘」
+                if (row.removed) {
+                    var restore = document.createElement('button');
+                    restore.className = 'history-restore';
+                    restore.type = 'button';
+                    restore.textContent = '放回转盘';
+                    restore.addEventListener('click', function () { restoreItems(row.items); });
+                    li.appendChild(restore);
+                }
 
                 list.appendChild(li);
             });
@@ -1758,7 +1778,6 @@
                 btn.textContent = preset.name;
                 btn.addEventListener('click', function () {
                     els.optionsInput.value = preset.items.join('\n');
-                    state.lastWinners = [];
                     render();
                     toast('已填入「' + preset.name + '」');
                 });
@@ -1837,7 +1856,6 @@
         function bindEvents() {
             var debounce = 0;
             els.optionsInput.addEventListener('input', function () {
-                state.lastWinners = [];
                 clearTimeout(debounce);
                 debounce = setTimeout(render, 180);
             });
@@ -1865,14 +1883,12 @@
 
             els.btnSample.addEventListener('click', function () {
                 els.optionsInput.value = DEFAULT_OPTIONS.join('\n');
-                state.lastWinners = [];
                 render();
                 toast('已载入示例选项');
             });
 
             els.btnClear.addEventListener('click', function () {
                 els.optionsInput.value = '';
-                state.lastWinners = [];
                 render();
                 els.optionsInput.focus();
             });
@@ -1886,12 +1902,11 @@
             });
 
             els.btnCopyResult.addEventListener('click', function () {
-                if (!state.lastWinners.length) {
+                if (!state.lastResult.length) {
                     toast('还没有结果可以复制', 'warn');
                     return;
                 }
-                var labels = state.lastWinners.map(function (i) { return state.options[i] ? state.options[i].label : ''; });
-                copyText(labels.filter(Boolean).join('、'), '结果已复制');
+                copyText(state.lastResult.map(function (o) { return o.label; }).join('、'), '结果已复制');
             });
 
             els.btnClearHistory.addEventListener('click', function () {
