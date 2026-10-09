@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="幸运转盘 — 从任意一组选项中随机抽取一个或多个；支持加权、抽后移除、结果历史、分享链接与音效">
+    <link rel="canonical" href="https://edu.oscarstudio.cn/%E5%B9%B8%E8%BF%90%E8%BD%AC%E7%9B%98/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Oscar Studio 教学工具">
+    <meta property="og:title" content="幸运转盘 | Oscar Studio 教学工具">
+    <meta property="og:description" content="幸运转盘 — 从任意一组选项中随机抽取一个或多个；支持加权、抽后移除、结果历史、分享链接与音效">
+    <meta property="og:url" content="https://edu.oscarstudio.cn/%E5%B9%B8%E8%BF%90%E8%BD%AC%E7%9B%98/">
+    <meta property="og:image" content="https://edu.oscarstudio.cn/logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>幸运转盘 | Oscar Studio 教学工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="d6ee6da5-3779-4551-a754-7f63fdf95dbb"></script>
+    <style>
+        /* =====================================================
+         * 幸运转盘 — 从任意一组选项中随机抽取
+         *
+         * 设计基座：_shared/design-tokens.css（Claude 色板 + 浅/深双主题）
+         * 本文件负责：
+         *   1. 双栏工作台（选项台 / 转盘台）
+         *   2. Canvas 转盘渲染 + 指针/轮毂交互
+         *   3. 结果面板 / 历史记录 / 吐司 / 彩带
+         * ===================================================== */
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--canvas);
+            color: var(--body);
+            min-height: 100vh;
+            padding: 28px 20px 60px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color .3s ease, color .3s ease;
+        }
+
+        ::selection {
+            background: color-mix(in srgb, var(--primary) 26%, transparent);
+        }
+
+        .icon-sprite {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .icon {
+            width: 15px;
+            height: 15px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .icon-sm {
+            width: 12px;
+            height: 12px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 1220px;
+            margin: 0 auto;
+        }
+
+        /* ---------- 页头 ---------- */
+        .app-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .app-eyebrow {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .app-title {
+            font-family: var(--font-serif);
+            font-weight: 400;
+            font-size: 1.7rem;
+            line-height: 1.2;
+            letter-spacing: -.3px;
+            color: var(--ink);
+        }
+
+        .app-sub {
+            font-size: 13.5px;
+            color: var(--muted);
+            margin-top: 6px;
+            max-width: 62ch;
+        }
+
+        .head-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ---------- 通用按钮 ---------- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--ink);
+            background: var(--surface-card);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-md);
+            padding: 9px 15px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+        }
+
+        .btn:hover {
+            background: var(--surface-cream-strong);
+            border-color: var(--muted-soft);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn:disabled {
+            opacity: .42;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-active);
+            border-color: var(--primary-active);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border-color: transparent;
+            color: var(--muted);
+            padding: 7px 10px;
+        }
+
+        .btn-ghost:hover {
+            color: var(--ink);
+            background: var(--surface-soft);
+            border-color: transparent;
+        }
+
+        .btn-ghost.is-on {
+            color: var(--primary);
+            background: color-mix(in srgb, var(--primary) 12%, transparent);
+        }
+
+        /* ---------- 工作台 ---------- */
+        .layout {
+            display: grid;
+            grid-template-columns: 372px minmax(0, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--surface-card);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-xl);
+            padding: 20px;
+        }
+
+        .panel-sticky {
+            position: sticky;
+            top: 62px;
+        }
+
+        .panel-title {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title .icon {
+            color: var(--primary);
+        }
+
+        .field+.field {
+            margin-top: 18px;
+        }
+
+        .field-label {
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--ink);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        /* ---------- 选项输入 ---------- */
+        .options-input {
+            width: 100%;
+            min-height: 210px;
+            resize: vertical;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.95;
+            color: var(--ink);
+            background: var(--canvas);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-lg);
+            padding: 13px 15px;
+            outline: none;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .options-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+        }
+
+        .options-input::placeholder {
+            color: var(--muted-soft);
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted);
+            background: var(--surface-soft);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-pill);
+            padding: 5px 11px;
+            white-space: nowrap;
+        }
+
+        .pill strong {
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .pill-accent {
+            color: var(--primary);
+            background: color-mix(in srgb, var(--primary) 11%, transparent);
+            border-color: color-mix(in srgb, var(--primary) 26%, transparent);
+        }
+
+        .pill-accent strong {
+            color: var(--primary);
+        }
+
+        .hint {
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--muted);
+            margin-top: 10px;
+        }
+
+        .hint code {
+            font-family: var(--font-mono);
+            font-size: 11.5px;
+            background: var(--surface-soft);
+            border: 1px solid var(--hairline);
+            border-radius: 5px;
+            padding: 1px 5px;
+            color: var(--ink);
+        }
+
+        /* ---------- 预设 ---------- */
+        .preset-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+
+        .preset {
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            color: var(--muted);
+            background: var(--canvas);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-pill);
+            padding: 6px 12px;
+            cursor: pointer;
+            transition: background .15s ease, color .15s ease, border-color .15s ease;
+        }
+
+        .preset:hover {
+            color: var(--primary);
+            border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+            background: color-mix(in srgb, var(--primary) 8%, transparent);
+        }
+
+        /* ---------- 分段控件（抽几个 / 开关组） ---------- */
+        .seg {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: var(--surface-soft);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-pill);
+            padding: 3px;
+        }
+
+        .seg-btn {
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--muted);
+            background: transparent;
+            border: 0;
+            border-radius: var(--r-pill);
+            padding: 7px 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color .18s ease, background .18s ease;
+        }
+
+        .seg-btn:hover {
+            color: var(--ink);
+        }
+
+        .seg-btn.active {
+            color: var(--on-graph);
+            background: var(--graph-card);
+        }
+
+        /* ---------- 开关行 ---------- */
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0;
+            border-top: 1px solid var(--hairline-soft);
+        }
+
+        .switch-row:first-of-type {
+            border-top: 0;
+        }
+
+        .switch-text {
+            font-size: 13px;
+            color: var(--body);
+            line-height: 1.4;
+        }
+
+        .switch-text small {
+            display: block;
+            font-size: 11.5px;
+            color: var(--muted-soft);
+            margin-top: 2px;
+        }
+
+        .switch {
+            position: relative;
+            flex-shrink: 0;
+            width: 42px;
+            height: 24px;
+            border-radius: var(--r-pill);
+            border: 1px solid var(--hairline);
+            background: var(--surface-soft);
+            cursor: pointer;
+            transition: background .2s ease, border-color .2s ease;
+        }
+
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--surface-card);
+            box-shadow: 0 1px 3px rgba(20, 20, 19, .25);
+            transition: transform .2s cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        .switch.on {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .switch.on::after {
+            transform: translateX(18px);
+        }
+
+        /* ---------- 转盘台 ---------- */
+        .stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .wheel-stage {
+            position: relative;
+            width: 100%;
+            background: var(--graph-card);
+            border: 1px solid var(--graph-card-border);
+            border-radius: var(--r-xl);
+            padding: 28px;
+            box-shadow: var(--graph-card-shadow);
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            transition: background-color .3s ease;
+        }
+
+        .wheel-holder {
+            position: relative;
+            width: 100%;
+            max-width: 460px;
+            aspect-ratio: 1 / 1;
+        }
+
+        .wheel-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 50%;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 26px;
+            height: 32px;
+            z-index: 3;
+            filter: drop-shadow(0 2px 3px rgba(20, 20, 19, .35));
+        }
+
+        .hub {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 27%;
+            height: 27%;
+            min-width: 84px;
+            min-height: 84px;
+            border-radius: 50%;
+            border: 1px solid var(--hairline);
+            background: var(--surface-card);
+            color: var(--ink);
+            font-family: var(--font-sans);
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: .5px;
+            cursor: pointer;
+            z-index: 4;
+            box-shadow: 0 2px 10px rgba(20, 20, 19, .22);
+            transition: transform .15s ease, background .2s ease, color .2s ease, opacity .2s ease;
+        }
+
+        .hub:hover:not(:disabled) {
+            background: var(--primary);
+            color: #fff;
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        .hub:active:not(:disabled) {
+            transform: translate(-50%, -50%) scale(.97);
+        }
+
+        .hub:disabled {
+            cursor: not-allowed;
+            color: var(--muted);
+        }
+
+        .stage-empty {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            color: var(--on-graph-soft);
+            font-size: 13.5px;
+            pointer-events: none;
+        }
+
+        /* ---------- 结果 ---------- */
+        .result-panel {
+            width: 100%;
+            max-width: 560px;
+            background: var(--surface-card);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-xl);
+            padding: 18px 20px;
+        }
+
+        .result-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .result-label {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-label .icon {
+            color: var(--primary);
+        }
+
+        .winner-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            min-height: 46px;
+            align-items: center;
+        }
+
+        .winner-chip {
+            font-size: clamp(17px, 2.6vw, 23px);
+            font-weight: 600;
+            line-height: 1.2;
+            border-radius: var(--r-lg);
+            padding: 10px 20px;
+            animation: chipPop .38s cubic-bezier(.34, 1.56, .64, 1) backwards;
+        }
+
+        @keyframes chipPop {
+            from {
+                opacity: 0;
+                transform: scale(.82) translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .result-idle {
+            font-size: 13px;
+            color: var(--muted-soft);
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        /* ---------- 历史 ---------- */
+        .history {
+            list-style: none;
+            margin-top: 14px;
+            border-top: 1px solid var(--hairline-soft);
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 210px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12.5px;
+            color: var(--body);
+            padding: 6px 8px;
+            border-radius: var(--r-md);
+            transition: background .15s ease;
+        }
+
+        .history-item:hover {
+            background: var(--surface-soft);
+        }
+
+        .history-time {
+            font-family: var(--font-mono);
+            font-size: 11.5px;
+            color: var(--muted-soft);
+            flex-shrink: 0;
+        }
+
+        .history-labels {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--ink);
+        }
+
+        .history-restore {
+            font-family: var(--font-sans);
+            font-size: 11.5px;
+            color: var(--primary);
+            background: transparent;
+            border: 0;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 5px;
+            flex-shrink: 0;
+        }
+
+        .history-restore:hover {
+            background: color-mix(in srgb, var(--primary) 12%, transparent);
+        }
+
+        /* ---------- 吐司 ---------- */
+        .toast-wrap {
+            position: fixed;
+            left: 50%;
+            bottom: 26px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            z-index: 9998;
+            pointer-events: none;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 13.5px;
+            color: var(--ink);
+            background: var(--surface-card);
+            border: 1px solid var(--hairline);
+            border-radius: var(--r-pill);
+            box-shadow: 0 10px 30px rgba(20, 20, 19, .18);
+            padding: 10px 18px;
+            animation: toastIn .26s cubic-bezier(.34, 1.4, .64, 1);
+        }
+
+        .toast .icon {
+            color: var(--primary);
+        }
+
+        .toast.is-out {
+            animation: toastOut .22s ease forwards;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes toastOut {
+            to {
+                opacity: 0;
+                transform: translateY(8px) scale(.97);
+            }
+        }
+
+        .confetti-canvas {
+            position: fixed;
+            inset: 0;
+            display: none;
+            pointer-events: none;
+            z-index: 9997;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 34px;
+            font-size: 12px;
+            color: var(--muted-soft);
+        }
+
+        /* ---------- 响应式 ---------- */
+        @media (max-width: 980px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .panel-sticky {
+                position: static;
+            }
+
+            .wheel-stage {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            body {
+                padding: 20px 14px 48px;
+            }
+
+            .app-title {
+                font-size: 1.4rem;
+            }
+
+            .wheel-stage {
+                padding: 16px;
+            }
+
+            .head-actions .btn {
+                padding: 8px 11px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .winner-chip,
+            .toast {
+                animation: none;
+            }
+        }
+
+        @media print {
+
+            .head-actions,
+            .panel,
+            .hub,
+            .pointer,
+            .result-actions,
+            footer {
+                display: none !important;
+            }
+        }
+    </style>
+<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+<script>LA.init({id:"3ObMo9NLgqBCvJ53",ck:"3ObMo9NLgqBCvJ53"})</script>
+</head>
+
+<body>
+    <svg class="icon-sprite" aria-hidden="true" focusable="false">
+        <defs>
+            <symbol id="i-spark" viewBox="0 0 24 24">
+                <path d="M12 4.5 13.7 9l4.5 1.7-4.5 1.7L12 17l-1.7-4.6L5.8 10.7 10.3 9z" />
+                <path d="M18.5 15.5 19.2 17.6l2.1.7-2.1.7-.7 2.1-.7-2.1-2.1-.7 2.1-.7z" />
+            </symbol>
+            <symbol id="i-share" viewBox="0 0 24 24">
+                <circle cx="17.5" cy="6" r="2.5" />
+                <circle cx="6.5" cy="12" r="2.5" />
+                <circle cx="17.5" cy="18" r="2.5" />
+                <path d="m8.8 10.8 6.4-3.5M8.8 13.2l6.4 3.5" />
+            </symbol>
+            <symbol id="i-trash" viewBox="0 0 24 24">
+                <path d="M4.5 6.5h15M9.5 6.5V5h5v1.5M6.5 6.5 7.4 19h9.2l.9-12.5" />
+            </symbol>
+            <symbol id="i-list" viewBox="0 0 24 24">
+                <path d="M9 6.5h11M9 12h11M9 17.5h11" />
+                <path d="M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01" />
+            </symbol>
+            <symbol id="i-copy" viewBox="0 0 24 24">
+                <rect x="9" y="9" width="11" height="11" rx="2" />
+                <path d="M15 6.5A2.5 2.5 0 0 0 12.5 4H6a2 2 0 0 0-2 2v6.5A2.5 2.5 0 0 0 6.5 15" />
+            </symbol>
+            <symbol id="i-undo" viewBox="0 0 24 24">
+                <path d="M4 10h11a5 5 0 0 1 0 10h-4" />
+                <path d="m8 6-4 4 4 4" />
+            </symbol>
+            <symbol id="i-check" viewBox="0 0 24 24">
+                <path d="m5 12.5 4.5 4.5L19 7.5" />
+            </symbol>
+            <symbol id="i-x" viewBox="0 0 24 24">
+                <path d="m6 6 12 12M18 6 6 18" />
+            </symbol>
+        </defs>
+    </svg>
+
+    <div class="app">
+        <header class="app-head">
+            <div>
+                <div class="app-eyebrow">Lucky Wheel · 随机选择</div>
+                <h1 class="app-title">幸运转盘</h1>
+                <p class="app-sub">把任何一组选项丢进转盘，随机转出一个结果 —— 课堂提问、活动安排、决定顺序、随手做个小决定都行。</p>
+            </div>
+            <div class="head-actions">
+                <button class="btn" id="btnShare" type="button">
+                    <svg class="icon"><use href="#i-share"></use></svg>分享链接
+                </button>
+                <button class="btn" id="btnSample" type="button">
+                    <svg class="icon"><use href="#i-spark"></use></svg>示例选项
+                </button>
+                <button class="btn btn-ghost" id="btnClear" type="button">
+                    <svg class="icon"><use href="#i-trash"></use></svg>清空
+                </button>
+            </div>
+        </header>
+
+        <div class="layout">
+            <!-- ---------- 左：选项台 ---------- -->
+            <aside class="panel panel-sticky">
+                <div class="panel-title">
+                    <svg class="icon"><use href="#i-list"></use></svg>选项
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="optionsInput">
+                        <span>每行一个选项</span>
+                    </label>
+                    <textarea class="options-input" id="optionsInput" spellcheck="false"
+                        placeholder="方案 A&#10;方案 B&#10;方案 C"></textarea>
+                    <div class="meta-row">
+                        <span class="pill">共 <strong id="statCount">0</strong> 项</span>
+                        <span class="pill">加权 <strong id="statWeight">0</strong> 项</span>
+                        <span class="pill pill-accent" id="statPickPill">每次抽 <strong>1</strong> 个</span>
+                    </div>
+                    <p class="hint">
+                        支持用<code>*</code>加权：写 <code>甲*3</code> 表示它的机会是别人的 3 倍，转盘扇区也会按比例变大。
+                        也可用 <code>、</code> 或逗号分隔。最多 60 项。
+                    </p>
+                </div>
+
+                <div class="field">
+                    <div class="field-label"><span>快速填入</span></div>
+                    <div class="preset-grid" id="presetGrid"></div>
+                </div>
+
+                <div class="field">
+                    <div class="field-label"><span>每次抽几个</span></div>
+                    <div class="seg" id="countSeg" role="group" aria-label="每次抽取数量">
+                        <button class="seg-btn active" type="button" data-count="1">1 个</button>
+                        <button class="seg-btn" type="button" data-count="2">2 个</button>
+                        <button class="seg-btn" type="button" data-count="3">3 个</button>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="switch-row">
+                        <span class="switch-text">抽后移除<small>中过的选项自动离开转盘</small></span>
+                        <button class="switch" id="swRemove" type="button" role="switch" aria-checked="false"
+                            aria-label="抽后移除"></button>
+                    </div>
+                    <div class="switch-row">
+                        <span class="switch-text">音效<small>转动与停下的提示音</small></span>
+                        <button class="switch on" id="swSound" type="button" role="switch" aria-checked="true"
+                            aria-label="音效"></button>
+                    </div>
+                    <div class="switch-row">
+                        <span class="switch-text">彩带<small>抽出结果时撒花庆祝</small></span>
+                        <button class="switch on" id="swConfetti" type="button" role="switch" aria-checked="true"
+                            aria-label="彩带"></button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ---------- 右：转盘台 ---------- -->
+            <section class="stage">
+                <div class="wheel-stage">
+                    <div class="wheel-holder" id="wheelHolder">
+                        <canvas class="wheel-canvas" id="wheelCanvas" role="img"
+                            aria-label="幸运转盘，当前有 0 个选项"></canvas>
+                        <svg class="pointer" viewBox="0 0 24 30" aria-hidden="true">
+                            <path d="M12 28.5 2.6 5.4A10 10 0 0 1 21.4 5.4Z" fill="#cc785c" stroke="#faf9f5"
+                                stroke-width="2" stroke-linejoin="round" />
+                        </svg>
+                        <button class="hub" id="spinBtn" type="button" aria-label="开始旋转">开始</button>
+                        <div class="stage-empty" id="stageEmpty" hidden>先在左侧填几个选项吧</div>
+                    </div>
+                </div>
+
+                <div class="result-panel">
+                    <div class="result-head">
+                        <span class="result-label">
+                            <svg class="icon"><use href="#i-spark"></use></svg>结果
+                        </span>
+                        <div class="head-actions">
+                            <button class="btn btn-ghost" id="btnCopyResult" type="button">
+                                <svg class="icon"><use href="#i-copy"></use></svg>复制
+                            </button>
+                            <button class="btn btn-ghost" id="btnClearHistory" type="button">
+                                <svg class="icon"><use href="#i-trash"></use></svg>清空记录
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="winner-list" id="winnerList" aria-live="polite">
+                        <span class="result-idle" id="resultIdle">转一下，看看谁是今天的幸运儿</span>
+                    </div>
+
+                    <ul class="history" id="historyList" hidden></ul>
+                </div>
+            </section>
+        </div>
+
+        <footer>幸运转盘 &copy; 2026 — Designed by Oscar</footer>
+    </div>
+
+    <canvas class="confetti-canvas" id="confettiCanvas" aria-hidden="true"></canvas>
+    <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+    <script>
+        /* =====================================================
+         * 幸运转盘 — 逻辑
+         *
+         * 纯函数（可被 Tests/teaching-tools/lucky-wheel.test.mjs 直接调用）：
+         *   parseOptions / buildSegments / pickWeighted /
+         *   targetRotationFor / indexAtRotation / formatShareUrl
+         * 其余为 DOM 装配层。
+         * ===================================================== */
+
+        var TAU = Math.PI * 2;
+        var POINTER_ANGLE = -Math.PI / 2;   /* 指针固定在正上方（12 点方向） */
+        var MAX_OPTIONS = 60;
+        var MAX_HISTORY = 30;
+        var SPIN_MS = 4200;
+        var LS_KEY = 'oscar-lucky-wheel-v1';
+
+        var PALETTE = [
+            '#cc785c', '#e0a458', '#5db8a6', '#4a86b8',
+            '#8a72c4', '#c96a8f', '#7fa64a', '#d2694a',
+            '#3f9aa8', '#b2873f', '#6b7fd7', '#c2576b'
+        ];
+
+        var PRESETS = [
+            { name: '是 / 否', items: ['是', '否'] },
+            { name: '星期', items: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] },
+            { name: '1–20', items: range(1, 20).map(function (n) { return String(n); }) },
+            { name: '月份', items: range(1, 12).map(function (n) { return n + ' 月'; }) },
+            {
+                name: '颜色', items: ['红', '橙', '黄', '绿', '青', '蓝', '紫', '黑白灰']
+            },
+            {
+                name: '天气', items: ['晴', '多云', '阴', '小雨', '大雨', '雪', '风']
+            }
+        ];
+
+        var DEFAULT_OPTIONS = ['方案 A', '方案 B', '方案 C', '掷骰决定', '再想想'];
+
+        function range(a, b) {
+            var out = [];
+            for (var i = a; i <= b; i++) out.push(i);
+            return out;
+        }
+
+        /* ---------- 纯函数：选项解析 ---------- */
+
+        /**
+         * 文本 → [{ label, weight }]
+         * - 按换行 / 顿号 / 逗号切分（\r 一并清掉）
+         * - 支持「标签*数字」加权，权重上限 99
+         * - 同名合并（权重累加），标签截断到 40 字，上限 60 项
+         */
+        function parseOptions(text) {
+            var out = [];
+            var index = Object.create(null);
+            var limit = MAX_OPTIONS;
+            var raw = (typeof text === 'string') ? text : '';
+            if (!raw) return out;
+
+            var lines = raw.split(/[\r\n]+/);
+            for (var i = 0; i < lines.length; i++) {
+                var parts = lines[i].split(/[、,，]/);
+                for (var j = 0; j < parts.length; j++) {
+                    var label = parts[j].trim();
+                    if (!label) continue;
+
+                    var weight = 1;
+                    var m = label.match(/^(.*?)\s*[*x×X]\s*(\d+(?:\.\d+)?)$/);
+                    if (m) {
+                        var head = m[1].trim();
+                        var w = parseFloat(m[2]);
+                        if (head && isFinite(w) && w > 0) {
+                            label = head;
+                            weight = Math.min(99, w);
+                        }
+                    }
+                    if (label.length > 40) label = label.slice(0, 40);
+
+                    var key = label.toLowerCase();
+                    if (key in index) {
+                        out[index[key]].weight = Math.min(99, out[index[key]].weight + weight);
+                        continue;
+                    }
+                    if (out.length >= limit) continue;
+                    index[key] = out.length;
+                    out.push({ label: label, weight: weight });
+                }
+            }
+            return out;
+        }
+
+        /* ---------- 纯函数：选项序列化 ---------- */
+
+        /**
+         * 选项数组 → 文本框内容，必须保留 *权重 后缀
+         * （抽后移除 / 放回转盘都会重写文本框，漏掉权重就会把「甲*3」拍平成「甲」）
+         */
+        function serializeOptions(options) {
+            return (options || []).map(function (o) {
+                return o.weight === 1 ? o.label : o.label + '*' + o.weight;
+            }).join('\n');
+        }
+
+        /* ---------- 纯函数：扇区几何 ---------- */
+
+        /**
+         * 按权重把选项铺成扇区（角度制，0 在 3 点方向，顺时针增长）
+         * 权重 ≤ 0 或非法的项视为「不参与」：不占扇区，也不会被抽中
+         * 空输入 / 全部不参与 → 返回空数组
+         */
+        function buildSegments(options) {
+            var segs = [];
+            if (!options || !options.length) return segs;
+
+            var total = 0;
+            for (var i = 0; i < options.length; i++) {
+                var w = Number(options[i].weight);
+                if (isFinite(w) && w > 0) total += w;
+            }
+            if (total <= 0) return segs;
+
+            var acc = 0;
+            for (var k = 0; k < options.length; k++) {
+                var item = options[k];
+                var weight = Number(item.weight);
+                if (!(isFinite(weight) && weight > 0)) continue;
+                var span = (weight / total) * TAU;
+                segs.push({
+                    index: k,
+                    label: String(item.label),
+                    weight: weight,
+                    start: acc,
+                    end: acc + span,
+                    mid: acc + span / 2,
+                    span: span
+                });
+                acc += span;
+            }
+            return segs;
+        }
+
+        /* ---------- 纯函数：加权抽取 ---------- */
+
+        /**
+         * 不重复地抽 n 个（按权重），返回 options 的下标数组
+         * 权重 ≤ 0 的项视为「不参与」：没有正权重项时返回空数组
+         */
+        function pickWeighted(options, n, rng) {
+            var rand = (typeof rng === 'function') ? rng : Math.random;
+            var picked = [];
+            if (!options || !options.length) return picked;
+
+            var pool = [];
+            for (var i = 0; i < options.length; i++) {
+                var w = Number(options[i].weight);
+                if (isFinite(w) && w > 0) pool.push({ index: i, weight: w });
+            }
+            if (!pool.length) return picked;
+
+            var want = Math.max(1, Math.min(n | 0 || 1, pool.length));
+            for (var k = 0; k < want; k++) {
+                var sum = 0;
+                for (var a = 0; a < pool.length; a++) sum += pool[a].weight;
+                var t = rand() * sum;
+                var chosen = pool.length - 1;
+                for (var b = 0; b < pool.length; b++) {
+                    t -= pool[b].weight;
+                    if (t <= 0) { chosen = b; break; }
+                }
+                picked.push(pool[chosen].index);
+                pool.splice(chosen, 1);
+            }
+            return picked;
+        }
+
+        /* ---------- 纯函数：角度 ↔ 结果 ---------- */
+
+        /**
+         * 给定当前角度与目标扇区，算出最终角度（顺时针多转 5~7 圈后停在扇区中点附近）
+         */
+        function targetRotationFor(currentRotation, segment, turns, rng) {
+            var rand = (typeof rng === 'function') ? rng : Math.random;
+            var spin = (typeof turns === 'number') ? turns : 5 + Math.floor(rand() * 3);
+            var jitter = (rand() * 2 - 1) * segment.span * 0.32;
+            var desired = POINTER_ANGLE - segment.mid - jitter;
+            var cur = ((currentRotation % TAU) + TAU) % TAU;
+            var delta = ((desired - cur) % TAU + TAU) % TAU;
+            return currentRotation + spin * TAU + delta;
+        }
+
+        /**
+         * 反查：某个旋转角度下，指针压在哪个扇区上
+         * 这是「转出来的」和「显示的」保持一致的关键 —— 结果由最终角度反推，而不是预先编好
+         */
+        function indexAtRotation(segments, rotation) {
+            if (!segments || !segments.length) return -1;
+            var theta = (((POINTER_ANGLE - rotation) % TAU) + TAU) % TAU;
+            for (var i = 0; i < segments.length; i++) {
+                if (theta >= segments[i].start && theta < segments[i].end) return segments[i].index;
+            }
+            return segments[segments.length - 1].index;
+        }
+
+        /* ---------- 纯函数：分享链接 ---------- */
+
+        function formatShareUrl(text, base) {
+            var origin = base || (window.location.origin + window.location.pathname);
+            return origin + '?options=' + encodeURIComponent(String(text || ''));
+        }
+
+        /* =====================================================
+         * 状态 + DOM 装配
+         * ===================================================== */
+
+        var state = {
+            options: [],
+            segments: [],
+            rotation: 0,
+            spinning: false,
+            count: 1,
+            removeAfter: false,
+            sound: true,
+            confetti: true,
+            lastWinners: [],
+            history: []
+        };
+
+        var els = {};
+        var audioCtx = null;
+        var rafId = 0;
+        var lastTickAt = 0;
+        var lastTickIndex = -1;
+        var tokens = {};
+
+        function $(id) { return document.getElementById(id); }
+
+        /* ---------- 主题色（canvas 读不到 CSS 变量，这里缓存一份） ---------- */
+
+        function readTokens() {
+            var cs = window.getComputedStyle(document.documentElement);
+            function v(name) { return cs.getPropertyValue(name).trim(); }
+            tokens = {
+                graphBg: v('--graph-card'),
+                graphElevated: v('--graph-card-elevated'),
+                onGraphSoft: v('--on-graph-soft'),
+                ink: v('--ink'),
+                surface: v('--surface-card'),
+                primary: v('--primary')
+            };
+        }
+
+        /* ---------- 颜色可读性 ---------- */
+
+        function luminance(hex) {
+            var c = hex.replace('#', '');
+            if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+            var r = parseInt(c.slice(0, 2), 16) / 255;
+            var g = parseInt(c.slice(2, 4), 16) / 255;
+            var b = parseInt(c.slice(4, 6), 16) / 255;
+            function lin(v) { return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+            return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+        }
+
+        function inkOn(hex) {
+            return luminance(hex) > 0.42 ? '#241f1c' : '#ffffff';
+        }
+
+        function colorAt(i) { return PALETTE[i % PALETTE.length]; }
+
+        /* ---------- 渲染 ---------- */
+
+        function render() {
+            var text = els.optionsInput.value;
+            state.options = parseOptions(text);
+            state.segments = buildSegments(state.options);
+
+            els.statCount.textContent = state.options.length;
+            els.statWeight.textContent = state.options.filter(function (o) { return o.weight !== 1; }).length;
+            els.statPickPill.querySelector('strong').textContent = state.count;
+
+            var empty = state.options.length === 0;
+            els.stageEmpty.hidden = !empty;
+            els.spinBtn.disabled = empty || state.spinning;
+            els.wheelCanvas.setAttribute('aria-label',
+                '幸运转盘，当前有 ' + state.options.length + ' 个选项' +
+                (state.lastWinners.length ? '，上次结果是 ' + state.lastWinners.join('、') : ''));
+
+            drawWheel();
+            syncRemoveSwitch();
+            persist();
+        }
+
+        function drawWheel() {
+            if (!tokens.ink) readTokens();
+            var canvas = els.wheelCanvas;
+            var box = canvas.getBoundingClientRect();
+            var size = Math.max(160, Math.round(Math.min(box.width, box.height) || 400));
+            var dpr = Math.min(window.devicePixelRatio || 1, 3);
+            if (canvas.width !== size * dpr) {
+                canvas.width = size * dpr;
+                canvas.height = size * dpr;
+            }
+            var ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, size, size);
+
+            var cx = size / 2;
+            var cy = size / 2;
+            var r = size / 2 - 6;
+            var segs = state.segments;
+            var winners = state.lastWinners;
+            var hasWinner = !state.spinning && winners.length > 0;
+
+            // 外圈底盘
+            ctx.beginPath();
+            ctx.arc(cx, cy, r + 4, 0, TAU);
+            ctx.fillStyle = tokens.graphBg || '#181715';
+            ctx.fill();
+
+            if (!segs.length) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r - 1, 0, TAU);
+                ctx.fillStyle = tokens.graphElevated || '#252320';
+                ctx.fill();
+                return;
+            }
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(state.rotation);
+
+            for (var i = 0; i < segs.length; i++) {
+                var seg = segs[i];
+                var base = colorAt(i);
+                var dim = hasWinner && winners.indexOf(seg.index) === -1;
+
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, r, seg.start, seg.end);
+                ctx.closePath();
+                ctx.fillStyle = dim ? mix(base, '#2a2724', 0.45) : base;
+                ctx.fill();
+
+                // 扇区分隔线
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(seg.start) * r, Math.sin(seg.start) * r);
+                ctx.strokeStyle = 'rgba(20,20,19,0.22)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // 命中扇区高亮
+                if (hasWinner && !dim) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.arc(0, 0, r, seg.start, seg.end);
+                    ctx.closePath();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = 'rgba(255,255,255,0.55)';
+                    ctx.shadowBlur = 12;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                drawLabel(ctx, seg, r, dim);
+            }
+
+            // 内圈压暗，做出轮毂的立体感
+            var hubR = r * 0.14;
+            var grad = ctx.createRadialGradient(0, 0, hubR * 0.4, 0, 0, r);
+            grad.addColorStop(0, 'rgba(20,20,19,0)');
+            grad.addColorStop(1, 'rgba(20,20,19,0.22)');
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, TAU);
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            ctx.restore();
+
+            // 外描边
+            ctx.beginPath();
+            ctx.arc(cx, cy, r + 3, 0, TAU);
+            ctx.strokeStyle = tokens.onGraphSoft || '#a09d96';
+            ctx.globalAlpha = .35;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        function mix(a, b, ratio) {
+            function part(hex, i) { return parseInt(hex.replace('#', '').slice(i, i + 2), 16); }
+            var out = '#';
+            for (var i = 0; i < 3; i++) {
+                var v = Math.round(part(a, i * 2) * (1 - ratio) + part(b, i * 2) * ratio);
+                out += ('0' + v.toString(16)).slice(-2);
+            }
+            return out;
+        }
+
+        function drawLabel(ctx, seg, r, dim) {
+            var deg = seg.span * 180 / Math.PI;
+            if (deg < 3.4) return;   // 太窄写不下，宁可不写
+
+            // 可用文字带：轮毂外沿 (~0.34r) 到外圈内侧 (~0.92r)
+            var band = r * 0.58;
+            var size = Math.max(9, Math.min(19, deg * 0.42));
+            if (seg.label.length * size > band) {           // 长标签自动缩字号，而不是硬截断
+                size = Math.max(9, band / seg.label.length);
+            }
+            var maxChars = Math.max(2, Math.floor(band / (size * 1.06)));
+            var text = seg.label.length > maxChars ? seg.label.slice(0, maxChars - 1) + '…' : seg.label;
+            var ink = inkOn(colorAt(seg.index));
+
+            ctx.save();
+            ctx.rotate(seg.mid);
+
+            /* 左半边的文字要翻转，否则是倒着读的。
+             * 注意翻转后要把落点也镜像到 -x —— 直接 rotate(π) 再画 +x
+             * 会把标签甩到对面那个扇区上去（标签和色块对不上的经典坑）。*/
+            var norm = ((seg.mid * 180 / Math.PI) % 360 + 360) % 360;
+            var flip = norm > 90 && norm < 270;
+            if (flip) ctx.rotate(Math.PI);
+
+            ctx.font = '600 ' + size.toFixed(1) + 'px -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif';
+            ctx.fillStyle = dim ? 'rgba(255,255,255,0.45)' : ink;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, flip ? -r * 0.64 : r * 0.64, 0);
+            ctx.restore();
+        }
+
+        /* ---------- 音效（AudioContext 全局复用，只创建一次） ---------- */
+
+        function ensureAudio() {
+            if (!state.sound) return null;
+            try {
+                if (!audioCtx) {
+                    var AC = window.AudioContext || window.webkitAudioContext;
+                    if (!AC) return null;
+                    audioCtx = new AC();
+                }
+                if (audioCtx.state === 'suspended' && audioCtx.resume) audioCtx.resume();
+                return audioCtx;
+            } catch (e) {
+                audioCtx = null;
+                return null;
+            }
+        }
+
+        function tick() {
+            var ctx = ensureAudio();
+            if (!ctx) return;
+            var t = ctx.currentTime;
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(1400, t);
+            gain.gain.setValueAtTime(0.05, t);
+            gain.gain.exponentialRampToValueAtTime(0.0008, t + 0.045);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.05);
+        }
+
+        function chime() {
+            var ctx = ensureAudio();
+            if (!ctx) return;
+            var t = ctx.currentTime;
+            var notes = [784, 1046.5, 1318.5];
+            for (var i = 0; i < notes.length; i++) {
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(notes[i], t + i * 0.085);
+                gain.gain.setValueAtTime(0.0001, t + i * 0.085);
+                gain.gain.exponentialRampToValueAtTime(0.16, t + i * 0.085 + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.085 + 0.55);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(t + i * 0.085);
+                osc.stop(t + i * 0.085 + 0.6);
+            }
+        }
+
+        /* ---------- 旋转 ---------- */
+
+        function spin() {
+            if (state.spinning) return;
+            if (!state.segments.length) {
+                toast('先填几个选项再转吧', 'warn');
+                els.optionsInput.focus();
+                return;
+            }
+
+            var segs = state.segments;
+            var picks = pickWeighted(state.options, state.count);
+            if (!picks.length) {
+                toast('没有可参与抽取的选项', 'warn');
+                return;
+            }
+            // segments 可能跳过了「不参与」的项，数组下标 ≠ 选项下标，必须按 index 找
+            var primary = null;
+            for (var i = 0; i < segs.length; i++) {
+                if (segs[i].index === picks[0]) { primary = segs[i]; break; }
+            }
+            if (!primary) return;
+            var target = targetRotationFor(state.rotation, primary);
+
+            state.spinning = true;
+            state.lastWinners = [];
+            els.spinBtn.disabled = true;
+            els.spinBtn.textContent = '转动中';
+            els.winnerList.textContent = '';
+            drawWheel();
+
+            var from = state.rotation;
+            var start = performance.now();
+            lastTickIndex = indexAtRotation(segs, from);
+            lastTickAt = 0;
+
+            function frame(now) {
+                var t = Math.min(1, (now - start) / SPIN_MS);
+                var eased = 1 - Math.pow(1 - t, 4);                     // 长尾减速
+                var wobble = Math.sin(t * Math.PI * 3.2) * Math.pow(1 - t, 3) * 0.045;
+                state.rotation = from + (target - from) * eased + wobble;
+
+                var under = indexAtRotation(segs, state.rotation);
+                if (under !== lastTickIndex && now - lastTickAt > 42) {
+                    lastTickIndex = under;
+                    lastTickAt = now;
+                    tick();
+                }
+
+                drawWheel();
+
+                if (t < 1) {
+                    rafId = requestAnimationFrame(frame);
+                } else {
+                    state.rotation = target;                            // 精确落位，结果由角度反推
+                    state.spinning = false;
+                    rafId = 0;
+                    finishSpin(picks);
+                }
+            }
+            rafId = requestAnimationFrame(frame);
+        }
+
+        function finishSpin(picks) {
+            state.lastWinners = picks.slice();
+            var winners = picks.map(function (i) { return state.options[i]; }).filter(Boolean);
+
+            els.winnerList.textContent = '';
+            winners.forEach(function (item, i) {
+                var chip = document.createElement('span');
+                chip.className = 'winner-chip';
+                chip.textContent = item.label;
+                chip.style.background = colorAt(i);
+                chip.style.color = inkOn(colorAt(i));
+                chip.style.animationDelay = (i * 90) + 'ms';
+                els.winnerList.appendChild(chip);
+            });
+
+            pushHistory(winners);
+            els.spinBtn.disabled = false;
+            els.spinBtn.textContent = '再转一次';
+            drawWheel();
+
+            if (state.confetti) celebrate();
+            chime();
+
+            if (state.removeAfter && winners.length) {
+                var rest = state.options.filter(function (o) {
+                    return !winners.some(function (w) { return w.label === o.label; });
+                });
+                if (rest.length) {
+                    els.optionsInput.value = serializeOptions(rest);
+                } else {
+                    state.removeAfter = false;
+                    els.optionsInput.value = '';
+                    toast('选项已全部抽完，记得补充新的', 'warn');
+                }
+                render();
+            }
+        }
+
+        /* ---------- 历史 ---------- */
+
+        function pushHistory(winners) {
+            state.history.unshift({
+                time: new Date(),
+                // 连权重一起存，放回转盘时才能还原「甲*3」而不是拍平成「甲」
+                items: winners.map(function (w) { return { label: w.label, weight: w.weight }; })
+            });
+            if (state.history.length > MAX_HISTORY) state.history.length = MAX_HISTORY;
+            renderHistory();
+        }
+
+        function renderHistory() {
+            var list = els.historyList;
+            list.textContent = '';
+            list.hidden = state.history.length === 0;
+            state.history.forEach(function (row) {
+                var li = document.createElement('li');
+                li.className = 'history-item';
+
+                var time = document.createElement('span');
+                time.className = 'history-time';
+                var hh = row.time.getHours();
+                var mm = row.time.getMinutes();
+                time.textContent = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+                li.appendChild(time);
+
+                var labels = document.createElement('span');
+                labels.className = 'history-labels';
+                labels.textContent = row.items.map(function (it) { return it.label; }).join('、');
+                li.appendChild(labels);
+
+                var restore = document.createElement('button');
+                restore.className = 'history-restore';
+                restore.type = 'button';
+                restore.textContent = '放回转盘';
+                restore.addEventListener('click', function () { restoreItems(row.items); });
+                li.appendChild(restore);
+
+                list.appendChild(li);
+            });
+        }
+
+        function restoreItems(items) {
+            var current = parseOptions(els.optionsInput.value);
+            var seen = {};
+            current.forEach(function (o) { seen[o.label] = true; });
+            items.forEach(function (it) {
+                if (!seen[it.label]) current.push({ label: it.label, weight: it.weight });
+            });
+            els.optionsInput.value = serializeOptions(current);
+            render();
+            toast('已把「' + items.map(function (it) { return it.label; }).join('、') + '」放回转盘');
+        }
+
+        /* ---------- 彩带 ---------- */
+
+        function celebrate() {
+            var canvas = els.confettiCanvas;
+            var dpr = Math.min(window.devicePixelRatio || 1, 2);
+            var w = window.innerWidth;
+            var h = window.innerHeight;
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            canvas.style.display = 'block';
+            var ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            var colors = PALETTE.concat(['#f2d49b', '#e8a0a0']);
+            var bits = [];
+            for (var i = 0; i < 110; i++) {
+                bits.push({
+                    x: w / 2 + (Math.random() - 0.5) * w * 0.5,
+                    y: h * 0.34 + (Math.random() - 0.5) * 60,
+                    vx: (Math.random() - 0.5) * 11,
+                    vy: -7 - Math.random() * 9,
+                    w: 5 + Math.random() * 6,
+                    h: 8 + Math.random() * 8,
+                    rot: Math.random() * TAU,
+                    vr: (Math.random() - 0.5) * 0.35,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+
+            var start = performance.now();
+            function frame(now) {
+                var life = now - start;
+                ctx.clearRect(0, 0, w, h);
+                for (var i = 0; i < bits.length; i++) {
+                    var b = bits[i];
+                    b.vy += 0.32;
+                    b.vx *= 0.995;
+                    b.x += b.vx;
+                    b.y += b.vy;
+                    b.rot += b.vr;
+                    ctx.save();
+                    ctx.translate(b.x, b.y);
+                    ctx.rotate(b.rot);
+                    ctx.globalAlpha = life > 1900 ? Math.max(0, 1 - (life - 1900) / 500) : 1;
+                    ctx.fillStyle = b.color;
+                    ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+                    ctx.restore();
+                }
+                if (life < 2400) {
+                    requestAnimationFrame(frame);
+                } else {
+                    ctx.clearRect(0, 0, w, h);
+                    canvas.style.display = 'none';
+                }
+            }
+            requestAnimationFrame(frame);
+        }
+
+        /* ---------- 复制 / 分享 ---------- */
+
+        function copyText(text, okMsg) {
+            var done = function () { toast(okMsg); };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, okMsg); });
+            } else {
+                fallbackCopy(text, okMsg);
+            }
+        }
+
+        function fallbackCopy(text, okMsg) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) { /* noop */ }
+            document.body.removeChild(ta);
+            toast(okMsg);
+        }
+
+        /* ---------- 吐司 ---------- */
+
+        function toast(msg, kind) {
+            var el = document.createElement('div');
+            el.className = 'toast';
+            var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'icon');
+            var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+            use.setAttribute('href', kind === 'warn' ? '#i-x' : '#i-check');
+            svg.appendChild(use);
+            el.appendChild(svg);
+            var span = document.createElement('span');
+            span.textContent = msg;
+            el.appendChild(span);
+            els.toastWrap.appendChild(el);
+            setTimeout(function () {
+                el.classList.add('is-out');
+                setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 240);
+            }, 2200);
+        }
+
+        /* ---------- 持久化 ---------- */
+
+        function persist() {
+            try {
+                localStorage.setItem(LS_KEY, JSON.stringify({
+                    raw: els.optionsInput.value,
+                    count: state.count,
+                    removeAfter: state.removeAfter,
+                    sound: state.sound,
+                    confetti: state.confetti
+                }));
+            } catch (e) { /* 隐私模式等，忽略 */ }
+        }
+
+        function restore() {
+            var saved = null;
+            try { saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { saved = null; }
+            if (!saved) return;
+
+            state.count = [1, 2, 3].indexOf(saved.count) >= 0 ? saved.count : 1;
+            state.removeAfter = !!saved.removeAfter;
+            state.sound = saved.sound !== false;
+            state.confetti = saved.confetti !== false;
+            if (typeof saved.raw === 'string') els.optionsInput.value = saved.raw;
+        }
+
+        function syncRemoveSwitch() {
+            var enough = state.options.length > state.count;
+            els.swRemove.setAttribute('aria-disabled', enough ? 'false' : 'true');
+            els.swRemove.style.opacity = enough ? '' : '.45';
+        }
+
+        /* ---------- 预设 ---------- */
+
+        function buildPresets() {
+            PRESETS.forEach(function (preset) {
+                var btn = document.createElement('button');
+                btn.className = 'preset';
+                btn.type = 'button';
+                btn.textContent = preset.name;
+                btn.addEventListener('click', function () {
+                    els.optionsInput.value = preset.items.join('\n');
+                    state.lastWinners = [];
+                    render();
+                    toast('已填入「' + preset.name + '」');
+                });
+                els.presetGrid.appendChild(btn);
+            });
+        }
+
+        /* ---------- URL 预填 ---------- */
+
+        function optionsFromUrl() {
+            var q = new URLSearchParams(window.location.search);
+            // options 是新参数；namesInput 是旧版「抽签器」留下的，保留兼容
+            var raw = q.get('options');
+            if (raw === null) raw = q.get('namesInput');
+            if (raw === null) raw = q.get('names');
+            return raw;
+        }
+
+        /* ---------- 初始化 ---------- */
+
+        function init() {
+            els = {
+                optionsInput: $('optionsInput'),
+                wheelCanvas: $('wheelCanvas'),
+                wheelHolder: $('wheelHolder'),
+                spinBtn: $('spinBtn'),
+                stageEmpty: $('stageEmpty'),
+                presetGrid: $('presetGrid'),
+                countSeg: $('countSeg'),
+                statCount: $('statCount'),
+                statWeight: $('statWeight'),
+                statPickPill: $('statPickPill'),
+                swRemove: $('swRemove'),
+                swSound: $('swSound'),
+                swConfetti: $('swConfetti'),
+                winnerList: $('winnerList'),
+                historyList: $('historyList'),
+                toastWrap: $('toastWrap'),
+                confettiCanvas: $('confettiCanvas'),
+                btnShare: $('btnShare'),
+                btnSample: $('btnSample'),
+                btnClear: $('btnClear'),
+                btnCopyResult: $('btnCopyResult'),
+                btnClearHistory: $('btnClearHistory')
+            };
+
+            readTokens();
+            restore();
+            var fromUrl = optionsFromUrl();
+            if (fromUrl !== null) els.optionsInput.value = fromUrl;
+            else if (!els.optionsInput.value.trim()) els.optionsInput.value = DEFAULT_OPTIONS.join('\n');
+
+            buildPresets();
+            syncSwitchUI();
+            syncCountUI();
+            render();
+            bindEvents();
+        }
+
+        function syncSwitchUI() {
+            els.swRemove.classList.toggle('on', state.removeAfter);
+            els.swSound.classList.toggle('on', state.sound);
+            els.swConfetti.classList.toggle('on', state.confetti);
+            els.swRemove.setAttribute('aria-checked', state.removeAfter ? 'true' : 'false');
+            els.swSound.setAttribute('aria-checked', state.sound ? 'true' : 'false');
+            els.swConfetti.setAttribute('aria-checked', state.confetti ? 'true' : 'false');
+        }
+
+        function syncCountUI() {
+            var btns = els.countSeg.querySelectorAll('.seg-btn');
+            for (var i = 0; i < btns.length; i++) {
+                btns[i].classList.toggle('active', Number(btns[i].dataset.count) === state.count);
+            }
+        }
+
+        function bindEvents() {
+            var debounce = 0;
+            els.optionsInput.addEventListener('input', function () {
+                state.lastWinners = [];
+                clearTimeout(debounce);
+                debounce = setTimeout(render, 180);
+            });
+
+            els.spinBtn.addEventListener('click', spin);
+
+            els.countSeg.addEventListener('click', function (e) {
+                var btn = e.target.closest ? e.target.closest('.seg-btn') : null;
+                if (!btn) return;
+                state.count = Number(btn.dataset.count);
+                syncCountUI();
+                render();
+            });
+
+            function toggle(btn, key) {
+                btn.addEventListener('click', function () {
+                    state[key] = !state[key];
+                    syncSwitchUI();
+                    persist();
+                });
+            }
+            toggle(els.swRemove, 'removeAfter');
+            toggle(els.swSound, 'sound');
+            toggle(els.swConfetti, 'confetti');
+
+            els.btnSample.addEventListener('click', function () {
+                els.optionsInput.value = DEFAULT_OPTIONS.join('\n');
+                state.lastWinners = [];
+                render();
+                toast('已载入示例选项');
+            });
+
+            els.btnClear.addEventListener('click', function () {
+                els.optionsInput.value = '';
+                state.lastWinners = [];
+                render();
+                els.optionsInput.focus();
+            });
+
+            els.btnShare.addEventListener('click', function () {
+                if (!state.options.length) {
+                    toast('先填几个选项再分享', 'warn');
+                    return;
+                }
+                copyText(formatShareUrl(els.optionsInput.value), '分享链接已复制，打开就是这组选项');
+            });
+
+            els.btnCopyResult.addEventListener('click', function () {
+                if (!state.lastWinners.length) {
+                    toast('还没有结果可以复制', 'warn');
+                    return;
+                }
+                var labels = state.lastWinners.map(function (i) { return state.options[i] ? state.options[i].label : ''; });
+                copyText(labels.filter(Boolean).join('、'), '结果已复制');
+            });
+
+            els.btnClearHistory.addEventListener('click', function () {
+                if (!state.history.length) {
+                    toast('记录已经是空的', 'warn');
+                    return;
+                }
+                state.history = [];
+                renderHistory();
+                toast('已清空抽取记录');
+            });
+
+            // 空格键开转（输入框内不拦截）
+            document.addEventListener('keydown', function (e) {
+                if (e.code !== 'Space') return;
+                var t = e.target;
+                var tag = (t && t.tagName) ? t.tagName.toUpperCase() : '';
+                if (tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT' || tag === 'BUTTON') return;
+                if (t && t.isContentEditable) return;
+                e.preventDefault();
+                spin();
+            });
+
+            window.addEventListener('resize', drawWheel);
+            document.addEventListener('themechange', function () {
+                readTokens();
+                drawWheel();
+            });
+        }
+
+        if (typeof document !== 'undefined' && document.getElementById('optionsInput')) init();
+    </script>
+</body>
+
+</html>

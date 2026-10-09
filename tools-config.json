@@ -313,9 +313,9 @@
       "demoFile": "骰子模拟器/index.html"
     },
     {
-      "id": "lottery",
-      "name": "抽签器",
-      "description": "转盘抽签工具，可用于随机抽取学生回答问题",
+      "id": "lucky-wheel",
+      "name": "幸运转盘",
+      "description": "从任意一组选项中随机抽取一个或多个；支持加权、抽后移除、结果历史与分享链接",
       "tags": [
         "随机",
         "课堂"
@@ -323,14 +323,14 @@
       "subject": [
         "通用"
       ],
-      "icon": "🎯",
+      "icon": "🎡",
       "featured": false,
-      "demoFile": "抽签器/index.html",
+      "demoFile": "幸运转盘/index.html",
       "prefill": {
         "params": [
-          "namesInput"
+          "optionsInput"
         ],
-        "description": "换行分隔的姓名列表"
+        "description": "换行分隔的选项列表"
       }
     },
     {
