@@ -755,6 +755,8 @@
             padding: 6px 13px 14px;
             min-height: 62px;
             align-content: flex-start;
+            border-radius: var(--r-md);
+            transition: outline-color 0.15s ease, background 0.15s ease;
         }
 
         .member {
@@ -858,6 +860,34 @@
         .pool.drop-hover {
             border-color: var(--primary);
             background: color-mix(in srgb, var(--primary) 8%, var(--surface-soft));
+        }
+
+        /* ---------- 拖拽中的落点提示 ----------
+         * 拖起来时把所有可放置区域都描出来（含待分配池），
+         * 锁定的组不描边，鼠标扫过去也不会高亮。 */
+        body.is-dragging .group-body {
+            outline: 1.5px dashed color-mix(in srgb, var(--gc, var(--primary)) 42%, transparent);
+            outline-offset: 2px;
+        }
+
+        body.is-dragging .group-card.is-locked .group-body {
+            outline-color: transparent;
+        }
+
+        body.is-dragging .pool {
+            border-color: var(--primary);
+            border-style: dashed;
+        }
+
+        body.is-dragging .group-body.drop-hover {
+            outline: 2px solid var(--gc, var(--primary));
+            outline-offset: 2px;
+            background: color-mix(in srgb, var(--gc, var(--primary)) 9%, transparent);
+        }
+
+        body.is-dragging .pool.drop-hover {
+            border-style: solid;
+            background: color-mix(in srgb, var(--primary) 12%, var(--surface-soft));
         }
 
         .pool-head {
@@ -1866,21 +1896,30 @@
 
             var dragName = null;
 
-            els.groups.addEventListener('dragstart', function (e) {
+            /* dragstart 必须挂在两个区域共同的祖先上：
+             * 只挂 #groups 的话，从待分配池里起拖拿不到 dragName，池 → 组就拖不动了。 */
+            var dragRoot = document.querySelector('.layout');
+            dragRoot.addEventListener('dragstart', function (e) {
                 var chip = e.target.closest('.member');
                 if (!chip) return;
                 dragName = chip.dataset.name;
                 chip.classList.add('dragging');
+                document.body.classList.add('is-dragging');
                 try { e.dataTransfer.setData('text/plain', dragName); } catch (err) { /* noop */ }
                 e.dataTransfer.effectAllowed = 'move';
             });
 
-            els.groups.addEventListener('dragend', function (e) {
+            dragRoot.addEventListener('dragend', function (e) {
                 var chip = e.target.closest('.member');
                 if (chip) chip.classList.remove('dragging');
-                dragName = null;
-                clearDropHint();
+                endDrag();
             });
+
+            function endDrag() {
+                dragName = null;
+                document.body.classList.remove('is-dragging');
+                clearDropHint();
+            }
 
             function clearDropHint() {
                 Array.prototype.forEach.call(document.querySelectorAll('.drop-hover'), function (n) {
@@ -1888,14 +1927,26 @@
                 });
             }
 
+            /* 当前落点：组卡正文 → 该组；待分配池 → 池子（gi = -1） */
+            function dropTargetFor(e, zone) {
+                var body = e.target.closest('.group-body');
+                if (body) return { node: body, gi: Number(body.dataset.drop) };
+                if (zone === els.pool && els.pool.contains(e.target)) return { node: els.pool, gi: -1 };
+                return null;
+            }
+
             [els.groups, els.pool].forEach(function (zone) {
                 zone.addEventListener('dragover', function (e) {
                     if (!dragName) return;
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
-                    var target = e.target.closest('.group-body') || (zone === els.pool ? els.pool : null);
+
+                    var hit = dropTargetFor(e, zone);
                     clearDropHint();
-                    if (target) target.classList.add('drop-hover');
+                    if (!hit) return;
+                    /* 锁定组不可作为落点，和"从锁定组拖走"的校验保持一致 */
+                    if (hit.gi !== -1 && state.locked[hit.gi]) return;
+                    hit.node.classList.add('drop-hover');
                 });
 
                 zone.addEventListener('dragleave', function (e) {
@@ -1906,14 +1957,21 @@
                 zone.addEventListener('drop', function (e) {
                     if (!dragName) return;
                     e.preventDefault();
-                    var body = e.target.closest('.group-body');
-                    var gi = body ? Number(body.dataset.drop) : -1;
+                    var hit = dropTargetFor(e, zone);
                     var name = dragName;
-                    dragName = null;
-                    clearDropHint();
-                    moveMember(name, gi);
+                    endDrag();
+                    if (!hit) return;
+                    if (hit.gi !== -1 && state.locked[hit.gi]) {
+                        toast('「' + (state.groupNames[hit.gi] || '该组') + '」已锁定，先解锁再移入', 'warn');
+                        return;
+                    }
+                    moveMember(name, hit.gi);
                 });
             });
+
+            /* 拖到窗口外松手也要收尾，否则 body.is-dragging 会一直挂着 */
+            window.addEventListener('dragend', endDrag);
+            window.addEventListener('drop', endDrag);
 
             /* 点击成员 → 选中，再点任意组卡空白处即可移动（移动端友好） */
             els.groups.addEventListener('click', function (e) {
