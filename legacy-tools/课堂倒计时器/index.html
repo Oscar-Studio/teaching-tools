@@ -1380,6 +1380,7 @@
         /* 沙堆渲染所用的朝向。与 S.inverted 分开，是为了在翻转动画进行中
          * 继续按旧朝向画沙 —— 否则一 flip() 就会瞬间换堆，接缝暴露在正中。 */
         var renderFlip = false;
+        var doneTimer = null;       // 结束闪屏 → 自动退回待机的延时
 
         /* =====================================================
          * DOM
@@ -1716,8 +1717,9 @@
             playIco.textContent = S.running ? '❚❚' : '▶';
             playText.textContent = S.running ? '暂停' : (S.finished ? '再来一次' : '开始');
             body.classList.toggle('is-running', S.running);
-            // 时长只在待机时可调：运行中改总长会让"沙量 = 剩余时间"当场失效
-            var locked = S.running;
+            // 时长只在待机时可调：运行中改总长会让"沙量 = 剩余时间"当场失效；
+            // 结束闪屏那一瞬同样锁住，免得刚敲完就把"时间到"的读数改掉
+            var locked = S.running || S.finished;
             for (var i = 0; i < readoutSteps.length; i++) readoutSteps[i].disabled = locked;
             for (var i = 0; i < presetBtns.length; i++) presetBtns[i].disabled = locked;
         }
@@ -1750,6 +1752,21 @@
                 body.classList.remove('flipping');
                 paintSand(S.total ? Math.max(0, Math.min(1, S.remain / S.total)) : 0);
             }, 360);
+        }
+
+        /**
+         * 不播动画地摆正。给"重置"用：
+         * 让人眼看着沙漏转 180° 再转回去很奇怪，沙子会被带着"飞上去"一次。
+         * 这里一步到位：摘掉翻转类，沙堆直接落到下壶。
+         * 之所以不会有瞬移感 —— 摆正前 remain 已被 reset() 设成 total（ratio = 1），
+         * 而 ratio = 1 时两种朝向画出的沙堆落在同一段局部坐标上，只是玻璃换了朝向。
+         */
+        function snapUpright() {
+            clearTimeout(flipTimer);
+            S.inverted = false;
+            renderFlip = false;
+            body.classList.remove('flipping');
+            hgFlip.classList.remove('inverted');
         }
 
         /* =====================================================
@@ -1805,7 +1822,9 @@
 
         function toggle() { S.running ? pause() : play(); }
 
-        function reset() {
+        function reset(msg) {
+            clearTimeout(doneTimer);
+            doneTimer = null;
             stopLoop();
             releaseWake();
             S.running = false;
@@ -1813,14 +1832,14 @@
             S.remain = S.total;
             S.lastSec = -1;
             S.lastTickSec = -1;
-            flip(false);
+            snapUpright();
             body.setAttribute('data-phase', 'idle');
             S.phase = 'idle';
             chip.textContent = PHASE_TEXT.idle;
             playIco.textContent = '▶';
             playText.textContent = '开始';
             paint();
-            live.textContent = '已重置为 ' + fmtLong(S.total);
+            live.textContent = msg || ('已重置为 ' + fmtLong(S.total));
         }
 
         function finish() {
@@ -1842,11 +1861,21 @@
             }
             notify();
             save();
+
+            // 时间到先保持"已结束"闪一下（绿色闪光和光晕都挂在 data-phase="done" 上），
+            // 闪完自动退回待机：读数恢复成设定的时长、小时位重新出现、± 恢复可点，
+            // 不必停在"再来一次"上再多点一次才能接着调小时。
+            // 顺带也就不用"先转回来再转过去"了 —— 按开始只有一次翻沙。
+            clearTimeout(doneTimer);
+            doneTimer = setTimeout(function () {
+                doneTimer = null;
+                reset('时间到，已重置为 ' + fmtLong(S.total));
+            }, 900);
         }
 
         /** 微调总时长。只在待机时生效：运行中改总长会让"沙量 = 剩余时间"当场失效。 */
         function adjust(deltaMs) {
-            if (S.running) return;
+            if (S.running || S.finished) return;
             var before = S.total;
             S.total = Math.max(MIN_MS, Math.min(MAX_MS, S.total + deltaMs));
             if (S.total === before) return;
@@ -1932,7 +1961,7 @@
         }
 
         function setDuration(ms) {
-            if (S.running) return;
+            if (S.running || S.finished) return;
             S.total = Math.max(MIN_MS, Math.min(MAX_MS, ms));
             S.remain = S.total;
             S.finished = false;
