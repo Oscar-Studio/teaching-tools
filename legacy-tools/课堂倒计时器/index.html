@@ -1322,7 +1322,7 @@
          * 常量
          * ===================================================== */
         var STORE_KEY = 'tt-class-timer-v1';
-        var MIN_MS = 10000, MAX_MS = 10 * 3600000;  // 10 秒 ~ 10 小时
+        var MIN_MS = 1000, MAX_MS = 10 * 3600000;    // 1 秒 ~ 10 小时
         var RING_LEN = 2 * Math.PI * 168;          // 进度环周长
 
         /* 沙漏内部几何（SVG 用户坐标）
@@ -1924,7 +1924,7 @@
          * 十位一次就是"走 10"，所以进位和借位不必单独写——加减法自己会处理：
          * 分十位 − 落在 01:00:00 上 → 00:50:00（借位）；
          * 秒个位 + 落在 00:05:09 上 → 00:05:10（进位）。
-         * 越界的由 setDuration 按 10 秒 ~ 10 小时 clamp。
+         * 越界的由 setDuration 按 1 秒 ~ 10 小时 clamp。
          */
         function bumpDigit(place, delta) {
             if (S.running) return;
