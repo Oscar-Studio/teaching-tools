@@ -486,7 +486,7 @@
             font-variant-numeric: tabular-nums;
             font-feature-settings: "tnum" 1;
             display: flex;
-            align-items: baseline;
+            align-items: center;
             transition: color 0.4s ease;
         }
 
@@ -515,19 +515,32 @@
             font-size: clamp(2.4rem, 9.5vw, 4.4rem);
         }
 
-        /* ---------- 时长微调（夹在数字上下） ---------- */
-        .nudge {
+        /* ---------- 时长步进：每个数字上下各一个 ± ---------- */
+        .digits .digit {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 7px;
+        }
+
+        .digits .digit[hidden] {
+            display: none;
+        }
+
+        .digits .step {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            width: 100%;
+            min-width: 1.15em;
+            height: clamp(1.55rem, 4.2vw, 2rem);
             font-family: var(--font-sans);
-            font-size: 12.5px;
-            font-weight: 500;
+            font-size: clamp(0.9rem, 2.4vw, 1.1rem);
+            line-height: 1;
             color: var(--muted);
             background: var(--surface-soft);
             border: 1px solid var(--hairline);
-            border-radius: var(--r-pill);
-            padding: 6px 15px;
+            border-radius: 9px;
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
@@ -536,25 +549,32 @@
                 transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .nudge:hover:not([disabled]) {
+        .digits .step:hover:not([disabled]) {
             color: var(--primary);
             border-color: var(--primary);
             background: var(--surface-card);
         }
 
-        .nudge:active:not([disabled]) {
-            transform: scale(0.94);
+        .digits .step:active:not([disabled]) {
+            transform: scale(0.92);
         }
 
-        .nudge .caret {
-            font-size: 8px;
-            line-height: 1;
-            opacity: 0.75;
-        }
-
-        .nudge[disabled] {
-            opacity: 0.32;
+        /* 计时中不能改总长，沙量会当场和剩余时间对不上 */
+        .digits .step[disabled] {
+            opacity: 0.28;
             cursor: not-allowed;
+        }
+
+        .dur-hint {
+            margin: 14px 0 0;
+            font-size: 12.5px;
+            color: var(--muted-soft);
+            text-align: center;
+        }
+
+        .dur-hint b {
+            font-weight: 500;
+            color: var(--muted);
         }
 
         @keyframes seg-pop {
@@ -771,7 +791,7 @@
         }
 
         .settings.open {
-            max-height: 640px;
+            max-height: 560px;
             opacity: 1;
             padding: 22px;
         }
@@ -871,80 +891,6 @@
             transform: translateX(17px);
         }
 
-        /* ---------- 时长步进器（时/分/秒 各两位，每位上下各一个 ±） ---------- */
-        .dur-stepper {
-            display: flex;
-            align-items: flex-start;
-            gap: 5px;
-        }
-
-        .dur-unit {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .dur-arrow {
-            width: 48px;
-            height: 22px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            line-height: 1;
-            color: var(--ink);
-            background: var(--surface-soft);
-            border: 1px solid var(--hairline);
-            border-radius: 7px;
-            cursor: pointer;
-            user-select: none;
-            -webkit-user-select: none;
-            transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
-        }
-
-        .dur-arrow:hover:not([disabled]) {
-            background: var(--surface-card);
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .dur-arrow:active:not([disabled]) {
-            transform: scale(0.92);
-        }
-
-        .dur-arrow[disabled] {
-            opacity: 0.32;
-            cursor: not-allowed;
-        }
-
-        .dur-digits {
-            width: 48px;
-            text-align: center;
-            font-family: var(--font-mono);
-            font-variant-numeric: tabular-nums;
-            font-size: 21px;
-            font-weight: 500;
-            line-height: 31px;
-            color: var(--ink);
-            background: var(--surface-card);
-            border: 1px solid var(--hairline);
-            border-radius: 7px;
-        }
-
-        .dur-cap {
-            font-size: 11px;
-            line-height: 1.2;
-            color: var(--muted);
-        }
-
-        .dur-colon {
-            font-size: 17px;
-            line-height: 31px;
-            color: var(--muted-soft);
-            margin-top: 25px;              /* 让冒号与数字那一行对齐 */
-        }
-
         .keys {
             display: flex;
             flex-wrap: wrap;
@@ -1025,6 +971,11 @@
 
         body.focus .meta {
             font-size: 14px;
+        }
+
+        /* 投影时不留操作提示 */
+        body.focus .dur-hint {
+            display: none;
         }
 
         body.focus .controls {
@@ -1232,18 +1183,27 @@
         </div>
 
         <div class="readout">
-            <button class="nudge" id="incBtn" type="button" aria-label="增加 1 分钟">
-                <span class="caret">▲</span>加 1 分
-            </button>
-
             <div class="digits" id="digits" role="timer" aria-label="剩余时间 5 分 00 秒">
-                <span class="seg" id="segH" hidden>00</span><span class="sep" id="sepH" hidden>:</span>
-                <span class="seg" id="segM">05</span><span class="sep">:</span><span class="seg" id="segS">00</span>
+                <div class="digit" id="unitH">
+                    <button class="step" type="button" data-unit="h" data-delta="1" aria-label="小时加一">+</button>
+                    <span class="seg" id="segH">00</span>
+                    <button class="step" type="button" data-unit="h" data-delta="-1" aria-label="小时减一">−</button>
+                </div>
+                <span class="sep" id="sepH">:</span>
+                <div class="digit">
+                    <button class="step" type="button" data-unit="m" data-delta="1" aria-label="分钟加一">+</button>
+                    <span class="seg" id="segM">05</span>
+                    <button class="step" type="button" data-unit="m" data-delta="-1" aria-label="分钟减一">−</button>
+                </div>
+                <span class="sep">:</span>
+                <div class="digit">
+                    <button class="step" type="button" data-unit="s" data-delta="1" aria-label="秒加一">+</button>
+                    <span class="seg" id="segS">00</span>
+                    <button class="step" type="button" data-unit="s" data-delta="-1" aria-label="秒减一">−</button>
+                </div>
             </div>
 
-            <button class="nudge" id="decBtn" type="button" aria-label="减少 1 分钟">
-                <span class="caret">▼</span>减 1 分
-            </button>
+            <p class="dur-hint">点数字上下的 <b>＋</b> <b>−</b> 调时长，只调对应的那一位</p>
 
             <div class="track">
                 <div class="track-ticks" id="ticks"></div>
@@ -1279,37 +1239,6 @@
             </div>
             <div class="row-control">
                 <input type="text" id="taskInput" placeholder="例如：限时答题" maxlength="24">
-            </div>
-        </div>
-
-        <div class="row">
-            <div>
-                <span class="row-label">时长</span>
-                <span class="row-hint">也可在上方预设中一键选择</span>
-            </div>
-            <div class="row-control">
-                <div class="dur-stepper" id="durStepper" role="group" aria-label="设置时长">
-                    <div class="dur-unit">
-                        <button class="dur-arrow" type="button" data-unit="h" data-delta="1" aria-label="小时加一">+</button>
-                        <div class="dur-digits" id="durH">00</div>
-                        <button class="dur-arrow" type="button" data-unit="h" data-delta="-1" aria-label="小时减一">−</button>
-                        <span class="dur-cap">时</span>
-                    </div>
-                    <span class="dur-colon">:</span>
-                    <div class="dur-unit">
-                        <button class="dur-arrow" type="button" data-unit="m" data-delta="1" aria-label="分钟加一">+</button>
-                        <div class="dur-digits" id="durM">05</div>
-                        <button class="dur-arrow" type="button" data-unit="m" data-delta="-1" aria-label="分钟减一">−</button>
-                        <span class="dur-cap">分</span>
-                    </div>
-                    <span class="dur-colon">:</span>
-                    <div class="dur-unit">
-                        <button class="dur-arrow" type="button" data-unit="s" data-delta="1" aria-label="秒加一">+</button>
-                        <div class="dur-digits" id="durS">00</div>
-                        <button class="dur-arrow" type="button" data-unit="s" data-delta="-1" aria-label="秒减一">−</button>
-                        <span class="dur-cap">秒</span>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -1452,18 +1381,16 @@
         var grainsGroup = $('grains');
         var impact = $('impact');
         var segH = $('segH'), sepH = $('sepH'), segM = $('segM'), segS = $('segS');
+        var unitH = $('unitH');
         var digits = $('digits');
+        var readoutSteps = [].slice.call(digits.querySelectorAll('.step'));
         var trackFill = $('trackFill'), ticksBox = $('ticks');
         var chip = $('chip');
         var playBtn = $('playBtn'), playIco = $('playIco'), playText = $('playText');
-        var decBtn = $('decBtn'), incBtn = $('incBtn');
         var metaTotal = $('metaTotal'), metaUsed = $('metaUsed');
         var titleText = $('titleText');
         var presetsBox = $('presets');
         var settingsBox = $('settings'), settingsBtn = $('settingsBtn');
-        var durStepper = $('durStepper');
-        var durDigits = { h: $('durH'), m: $('durM'), s: $('durS') };
-        var durArrows = [].slice.call(durStepper.querySelectorAll('.dur-arrow'));
         var taskInput = $('taskInput');
         var soundSel = $('soundSel');
         var tickSwitch = $('tickSwitch'), wakeSwitch = $('wakeSwitch');
@@ -1671,14 +1598,6 @@
          * ===================================================== */
         function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
-        function fmtClock(ms) {
-            var s = Math.max(0, Math.ceil(ms / 1000));
-            var h = Math.floor(s / 3600);
-            var m = Math.floor((s % 3600) / 60);
-            var sec = s % 60;
-            return h > 0 ? pad(h) + ':' + pad(m) + ':' + pad(sec) : pad(m) + ':' + pad(sec);
-        }
-
         function fmtLong(ms) {
             ms = Math.max(0, ms);                 // 已用时长不该出现负数
             var s = Math.round(ms / 1000);
@@ -1721,20 +1640,21 @@
                 if (phase === 'done') return paintDone();
             }
 
-            // 读数（不足 1 小时不显示小时位，超过 1 小时自动补上）
-            var clock = fmtClock(S.remain);
-            var segs = clock.split(':');
-            var showH = segs.length === 3;
-            segH.hidden = sepH.hidden = !showH;
-            digits.classList.toggle('has-h', showH);
-            var mTxt = showH ? segs[1] : segs[0];
-            var sTxt = segs[segs.length - 1];
-            var wholeSec = Math.max(0, Math.ceil(S.remain / 1000));
+            // 读数：只要没在跑（待机或暂停）就留着小时位，哪怕是 00，不然没法按 ± 调小时；
+            // 开跑后改看"总长"是否够 1 小时，这样倒计时跨过 59 分那一刻数字不会突然少一位
+            var showH = !S.running || S.total >= 3600000;
+            var rs = Math.max(0, Math.ceil(S.remain / 1000));
+            var hTxt = pad(Math.floor(rs / 3600));
+            var mTxt = pad(Math.floor((rs % 3600) / 60));
+            var sTxt = pad(rs % 60);
 
-            if (showH && segH.textContent !== segs[0]) { segH.textContent = segs[0]; pop(segH); }
+            unitH.hidden = sepH.hidden = !showH;
+            digits.classList.toggle('has-h', showH);
+
+            if (showH && segH.textContent !== hTxt) { segH.textContent = hTxt; pop(segH); }
             if (segM.textContent !== mTxt) { segM.textContent = mTxt; pop(segM); }
             if (segS.textContent !== sTxt) { segS.textContent = sTxt; pop(segS); }
-            S.lastSec = wholeSec;
+            S.lastSec = rs;
 
             // 沙漏
             paintSand(ratio);
@@ -1748,8 +1668,8 @@
             metaUsed.textContent = S.finished ? '已结束' : '已用 ' + fmtLong(S.total - S.remain);
 
             // 提示音：最后 10 秒滴答
-            if (S.running && cfg.tick && wholeSec <= 10 && wholeSec !== S.lastTickSec) {
-                S.lastTickSec = wholeSec;
+            if (S.running && cfg.tick && rs <= 10 && rs !== S.lastTickSec) {
+                S.lastTickSec = rs;
                 playTick();
             }
 
@@ -1760,7 +1680,7 @@
             paintSand(0);
             ringFill.setAttribute('stroke-dashoffset', RING_LEN.toFixed(2));
             trackFill.style.transform = 'scaleX(0)';
-            segH.hidden = sepH.hidden = true;
+            unitH.hidden = sepH.hidden = true;
             digits.classList.remove('has-h');
             segM.textContent = '00'; segS.textContent = '00';
             metaUsed.textContent = '已结束';
@@ -1780,9 +1700,7 @@
             body.classList.toggle('is-running', S.running);
             // 时长只在待机时可调：运行中改总长会让"沙量 = 剩余时间"当场失效
             var locked = S.running;
-            decBtn.disabled = locked;
-            incBtn.disabled = locked;
-            for (var i = 0; i < durArrows.length; i++) durArrows[i].disabled = locked;
+            for (var i = 0; i < readoutSteps.length; i++) readoutSteps[i].disabled = locked;
             for (var i = 0; i < presetBtns.length; i++) presetBtns[i].disabled = locked;
         }
 
@@ -1973,11 +1891,7 @@
          * 时长控件
          * ===================================================== */
         function syncDuration() {
-            // 时长总是写成 时:分:秒 三组两位，小时位为 0 时也留着，方便直接按 ± 调
-            var t = Math.round(S.total / 1000);
-            durDigits.h.textContent = pad(Math.floor(t / 3600));
-            durDigits.m.textContent = pad(Math.floor((t % 3600) / 60));
-            durDigits.s.textContent = pad(t % 60);
+            // 读数本身由 paint() 从 S.remain 渲染，这里只管"总长"相关的外围信息
             metaTotal.textContent = '共 ' + fmtLong(S.total);
 
             for (var i = 0; i < presetBtns.length; i++) {
@@ -2096,9 +2010,7 @@
          * ===================================================== */
         playBtn.addEventListener('click', toggle);
         $('resetBtn').addEventListener('click', reset);
-        bindNudge(decBtn, function () { adjust(-60000); });
-        bindNudge(incBtn, function () { adjust(60000); });
-        durArrows.forEach(function (btn) {
+        readoutSteps.forEach(function (btn) {
             var unit = btn.dataset.unit, delta = Number(btn.dataset.delta);
             bindNudge(btn, function () { bumpDur(unit, delta); });
         });
