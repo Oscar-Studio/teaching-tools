@@ -532,7 +532,7 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            min-width: 1.15em;
+            min-width: 2rem;
             height: clamp(1.55rem, 4.2vw, 2rem);
             font-family: var(--font-sans);
             font-size: clamp(0.9rem, 2.4vw, 1.1rem);
@@ -1184,26 +1184,41 @@
 
         <div class="readout">
             <div class="digits" id="digits" role="timer" aria-label="剩余时间 5 分 00 秒">
-                <div class="digit" id="unitH">
-                    <button class="step" type="button" data-unit="h" data-delta="1" aria-label="小时加一">+</button>
-                    <span class="seg" id="segH">00</span>
-                    <button class="step" type="button" data-unit="h" data-delta="-1" aria-label="小时减一">−</button>
+                <div class="digit">
+                    <button class="step" type="button" data-place="36000000" data-delta="1" aria-label="加 10 小时">+</button>
+                    <span class="seg" id="d0">0</span>
+                    <button class="step" type="button" data-place="36000000" data-delta="-1" aria-label="减 10 小时">−</button>
+                </div>
+                <div class="digit">
+                    <button class="step" type="button" data-place="3600000" data-delta="1" aria-label="加 1 小时">+</button>
+                    <span class="seg" id="d1">0</span>
+                    <button class="step" type="button" data-place="3600000" data-delta="-1" aria-label="减 1 小时">−</button>
                 </div>
                 <span class="sep" id="sepH">:</span>
                 <div class="digit">
-                    <button class="step" type="button" data-unit="m" data-delta="1" aria-label="分钟加一">+</button>
-                    <span class="seg" id="segM">05</span>
-                    <button class="step" type="button" data-unit="m" data-delta="-1" aria-label="分钟减一">−</button>
+                    <button class="step" type="button" data-place="600000" data-delta="1" aria-label="加 10 分钟">+</button>
+                    <span class="seg" id="d2">0</span>
+                    <button class="step" type="button" data-place="600000" data-delta="-1" aria-label="减 10 分钟">−</button>
+                </div>
+                <div class="digit">
+                    <button class="step" type="button" data-place="60000" data-delta="1" aria-label="加 1 分钟">+</button>
+                    <span class="seg" id="d3">5</span>
+                    <button class="step" type="button" data-place="60000" data-delta="-1" aria-label="减 1 分钟">−</button>
                 </div>
                 <span class="sep">:</span>
                 <div class="digit">
-                    <button class="step" type="button" data-unit="s" data-delta="1" aria-label="秒加一">+</button>
-                    <span class="seg" id="segS">00</span>
-                    <button class="step" type="button" data-unit="s" data-delta="-1" aria-label="秒减一">−</button>
+                    <button class="step" type="button" data-place="10000" data-delta="1" aria-label="加 10 秒">+</button>
+                    <span class="seg" id="d4">0</span>
+                    <button class="step" type="button" data-place="10000" data-delta="-1" aria-label="减 10 秒">−</button>
+                </div>
+                <div class="digit">
+                    <button class="step" type="button" data-place="1000" data-delta="1" aria-label="加 1 秒">+</button>
+                    <span class="seg" id="d5">0</span>
+                    <button class="step" type="button" data-place="1000" data-delta="-1" aria-label="减 1 秒">−</button>
                 </div>
             </div>
 
-            <p class="dur-hint">点数字上下的 <b>＋</b> <b>−</b> 调时长，只调对应的那一位</p>
+            <p class="dur-hint">每个数字位独立调：十位的 ＋ − 一次走 10，个位的 ＋ − 一次走 1</p>
 
             <div class="track">
                 <div class="track-ticks" id="ticks"></div>
@@ -1380,9 +1395,11 @@
         var streamGlow = $('streamGlow');
         var grainsGroup = $('grains');
         var impact = $('impact');
-        var segH = $('segH'), sepH = $('sepH'), segM = $('segM'), segS = $('segS');
-        var unitH = $('unitH');
+        var sepH = $('sepH');
         var digits = $('digits');
+        // 6 个数字位，从高位到低位：时十位 / 时个位 / 分十位 / 分个位 / 秒十位 / 秒个位
+        var digitSegs = [$('d0'), $('d1'), $('d2'), $('d3'), $('d4'), $('d5')];
+        var hourSegs = [digitSegs[0], digitSegs[1]];
         var readoutSteps = [].slice.call(digits.querySelectorAll('.step'));
         var trackFill = $('trackFill'), ticksBox = $('ticks');
         var chip = $('chip');
@@ -1641,19 +1658,20 @@
             }
 
             // 读数：只要没在跑（待机或暂停）就留着小时位，哪怕是 00，不然没法按 ± 调小时；
-            // 开跑后改看"总长"是否够 1 小时，这样倒计时跨过 59 分那一刻数字不会突然少一位
+            // 开跑后改看"总长"是否够 1 小时，这样倒计时跨过 59 分那一刻数字不会突然少两位
             var showH = !S.running || S.total >= 3600000;
             var rs = Math.max(0, Math.ceil(S.remain / 1000));
-            var hTxt = pad(Math.floor(rs / 3600));
-            var mTxt = pad(Math.floor((rs % 3600) / 60));
-            var sTxt = pad(rs % 60);
+            var txt = pad(Math.floor(rs / 3600)) +
+                pad(Math.floor((rs % 3600) / 60)) + pad(rs % 60);
 
-            unitH.hidden = sepH.hidden = !showH;
+            hourSegs[0].hidden = hourSegs[1].hidden = sepH.hidden = !showH;
             digits.classList.toggle('has-h', showH);
 
-            if (showH && segH.textContent !== hTxt) { segH.textContent = hTxt; pop(segH); }
-            if (segM.textContent !== mTxt) { segM.textContent = mTxt; pop(segM); }
-            if (segS.textContent !== sTxt) { segS.textContent = sTxt; pop(segS); }
+            for (var i = 0; i < 6; i++) {
+                if ((i < 2 && !showH) || digitSegs[i].textContent === txt[i]) continue;
+                digitSegs[i].textContent = txt[i];
+                pop(digitSegs[i]);
+            }
             S.lastSec = rs;
 
             // 沙漏
@@ -1680,9 +1698,9 @@
             paintSand(0);
             ringFill.setAttribute('stroke-dashoffset', RING_LEN.toFixed(2));
             trackFill.style.transform = 'scaleX(0)';
-            unitH.hidden = sepH.hidden = true;
+            hourSegs[0].hidden = hourSegs[1].hidden = sepH.hidden = true;
             digits.classList.remove('has-h');
-            segM.textContent = '00'; segS.textContent = '00';
+            for (var i = 2; i < 6; i++) digitSegs[i].textContent = '0';
             metaUsed.textContent = '已结束';
             playIco.textContent = '▶';
             playText.textContent = '再来一次';
@@ -1900,33 +1918,17 @@
             buildTicks();
         }
 
-        /** 步进时长里的某一位（h/m/s）：满 60 进到上一位，不足则从上一位借。 */
-        function bumpDur(unit, delta) {
+        /**
+         * 步进单个数字位。place 就是这一位的权重：
+         * 时十位 10h / 时个位 1h / 分十位 10min / 分个位 1min / 秒十位 10s / 秒个位 1s。
+         * 十位一次就是"走 10"，所以进位和借位不必单独写——加减法自己会处理：
+         * 分十位 − 落在 01:00:00 上 → 00:50:00（借位）；
+         * 秒个位 + 落在 00:05:09 上 → 00:05:10（进位）。
+         * 越界的由 setDuration 按 10 秒 ~ 10 小时 clamp。
+         */
+        function bumpDigit(place, delta) {
             if (S.running) return;
-            var t = Math.round(S.total / 1000);
-            var h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
-
-            function carryMin() {
-                if (m > 59) { m -= 60; h += 1; }
-                else if (m < 0) { m += 60; h -= 1; }
-            }
-
-            if (unit === 'h') {
-                h += delta;
-            } else if (unit === 'm') {
-                m += delta;
-                carryMin();
-            } else {
-                s += delta;
-                if (s > 59) { s -= 60; m += 1; }
-                else if (s < 0) { s += 60; m -= 1; }
-                carryMin();                    // 秒进位跨过 59 分时继续往上进
-            }
-
-            h = Math.max(0, Math.min(10, h));  // 上限 10 小时，与 MAX_MS 一致
-            m = Math.max(0, Math.min(59, m));
-            s = Math.max(0, Math.min(59, s));
-            setDuration((h * 3600 + m * 60 + s) * 1000);
+            setDuration(S.total + place * delta);
         }
 
         function setDuration(ms) {
@@ -2011,8 +2013,8 @@
         playBtn.addEventListener('click', toggle);
         $('resetBtn').addEventListener('click', reset);
         readoutSteps.forEach(function (btn) {
-            var unit = btn.dataset.unit, delta = Number(btn.dataset.delta);
-            bindNudge(btn, function () { bumpDur(unit, delta); });
+            var place = Number(btn.dataset.place), delta = Number(btn.dataset.delta);
+            bindNudge(btn, function () { bumpDigit(place, delta); });
         });
         $('fullBtn').addEventListener('click', toggleFullscreen);
         $('focusBtn').addEventListener('click', toggleFocus);
