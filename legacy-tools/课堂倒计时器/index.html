@@ -1716,8 +1716,6 @@
             digits.classList.remove('has-h');
             for (var i = 2; i < 6; i++) digitSegs[i].textContent = '0';
             metaUsed.textContent = '已结束';
-            playIco.textContent = '▶';
-            playText.textContent = '再来一次';
             syncControls();
             if (!reduceMotion) {
                 flash.classList.remove('go');
@@ -1728,7 +1726,7 @@
 
         function syncControls() {
             playIco.textContent = S.running ? '❚❚' : '▶';
-            playText.textContent = S.running ? '暂停' : (S.finished ? '再来一次' : '开始');
+            playText.textContent = S.running ? '暂停' : (S.started ? '继续' : '开始');
             body.classList.toggle('is-running', S.running);
             // 时长只在待机时可调：运行中改总长会让"沙量 = 剩余时间"当场失效；
             // 结束闪屏那一瞬同样锁住，免得刚敲完就把"时间到"的读数改掉
@@ -1813,6 +1811,7 @@
          * ===================================================== */
         function play() {
             if (S.finished) reset();
+            var resume = S.started;            // 暂停后继续 vs 从头开始
             if (S.remain <= 0) S.remain = S.total;
 
             S.running = true;
@@ -1820,12 +1819,13 @@
             S.endAt = performance.now() + S.remain;
             S.lastTickSec = -1;
 
-            flip(!S.inverted);                        // 每次开始都翻一次
+            // 只有"从头开始"才翻沙漏；暂停后继续保持原状，沙子接着往下漏就行
+            if (!resume) flip(!S.inverted);
             startLoop();
             acquireWake();
             askNotify();
             paint();
-            live.textContent = '倒计时开始，还剩 ' + fmtLong(S.remain);
+            live.textContent = (resume ? '倒计时继续，还剩 ' : '倒计时开始，还剩 ') + fmtLong(S.remain);
         }
 
         function pause() {
@@ -1902,6 +1902,7 @@
             S.remain = S.total;
             S.finished = false;
             S.lastSec = -1;
+            if (S.started) S.sand = 1;       // 暂停中改时长：沙也回到满，和读数对上
             syncDuration();
             paint();
             save();
@@ -1986,6 +1987,7 @@
             S.remain = S.total;
             S.finished = false;
             S.lastSec = -1;
+            if (S.started) S.sand = 1;
             if (S.phase !== 'idle') {
                 S.phase = 'idle';
                 body.setAttribute('data-phase', 'idle');
