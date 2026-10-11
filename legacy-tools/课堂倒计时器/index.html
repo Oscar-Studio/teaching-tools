@@ -549,20 +549,21 @@
                 transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .digits .step:hover:not([disabled]) {
+        .digits .step:hover {
             color: var(--primary);
             border-color: var(--primary);
             background: var(--surface-card);
         }
 
-        .digits .step:active:not([disabled]) {
+        .digits .step:active {
             transform: scale(0.92);
         }
 
-        /* 计时中不能改总长，沙量会当场和剩余时间对不上 */
-        .digits .step[disabled] {
-            opacity: 0.28;
-            cursor: not-allowed;
+        /* 计时中不能改总长（沙量会和剩余时间对不上），索性连 ± 和提示一起收掉，
+         * 让投影时的大字独占整块，读数也更居中 */
+        .readout.is-locked .step,
+        .readout.is-locked .dur-hint {
+            display: none;
         }
 
         .dur-hint {
@@ -1182,7 +1183,7 @@
             </svg>
         </div>
 
-        <div class="readout">
+        <div class="readout" id="readout">
             <div class="digits" id="digits" role="timer" aria-label="剩余时间 5 分 00 秒">
                 <div class="digit">
                     <button class="step" type="button" data-place="36000000" data-delta="1" aria-label="加 10 小时">+</button>
@@ -1401,6 +1402,7 @@
         // 6 个数字位，从高位到低位：时十位 / 时个位 / 分十位 / 分个位 / 秒十位 / 秒个位
         var digitSegs = [$('d0'), $('d1'), $('d2'), $('d3'), $('d4'), $('d5')];
         var hourSegs = [digitSegs[0], digitSegs[1]];
+        var readout = $('readout');
         var readoutSteps = [].slice.call(digits.querySelectorAll('.step'));
         var trackFill = $('trackFill'), ticksBox = $('ticks');
         var chip = $('chip');
@@ -1720,7 +1722,7 @@
             // 时长只在待机时可调：运行中改总长会让"沙量 = 剩余时间"当场失效；
             // 结束闪屏那一瞬同样锁住，免得刚敲完就把"时间到"的读数改掉
             var locked = S.running || S.finished;
-            for (var i = 0; i < readoutSteps.length; i++) readoutSteps[i].disabled = locked;
+            readout.classList.toggle('is-locked', locked);
             for (var i = 0; i < presetBtns.length; i++) presetBtns[i].disabled = locked;
         }
 
