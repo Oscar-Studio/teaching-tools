@@ -1386,6 +1386,7 @@
         var renderFlip = false;
         var doneTimer = null;       // 结束闪屏 → 自动退回待机的延时
         var settleRaf = null;      // 重置时沙子加速漏完的动画句柄
+        var flipping = false;      // 翻转动画进行中：沙堆由 flip() 接管
 
         /* =====================================================
          * DOM
@@ -1661,8 +1662,9 @@
 
         function paint() {
             var phase = computePhase();
-            // 沙量只在计时中跟随剩余比例；待机和重置后由 settleSand() 单独管
-            if (S.running && S.total) S.sand = Math.max(0, Math.min(1, S.remain / S.total));
+            // 沙量只在计时中跟随剩余比例；待机和重置后由 settleSand() 管，
+            // 翻转动画进行中则交给 flip()，别把沙提前画到上壶去
+            if (S.running && S.total && !flipping) S.sand = Math.max(0, Math.min(1, S.remain / S.total));
 
             if (phase !== S.phase) {
                 S.phase = phase;
@@ -1738,9 +1740,8 @@
         /* =====================================================
          * 翻转
          *
-         * 动画途中继续按旧朝向画沙，到中点（旋转最快、剪影最窄）再交换。
-         * 此时 ratio 恰为 1，新旧两种画法都把 [G_NECK, G_BOT] 填满，
-         * 形状完全一致，所以换得毫无痕迹。
+         * 沙堆画在旋转组内部，所以只要翻转期间不改它画在哪一段局部坐标上，
+         * 玻璃就会带着沙一起转，到位后再切到"上壶满"，沙自然就落在上面了。
          * ===================================================== */
         function flip(on) {
             clearTimeout(flipTimer);
@@ -1755,14 +1756,18 @@
                 return;
             }
 
-            // 翻转的每一帧都把沙画在"当前在上的那一侧"，于是玻璃转到一半时
-            // 沙子始终待在原来那段局部坐标里，不会跳；翻完之后它自然落在上壶准备漏。
+            // 关键：翻转全程把沙堆钉在原来那段局部坐标里（sand=0 → 画"下壶满"），
+            // 让玻璃带着沙一起转；转到 360ms 才换成"上壶满"（sand=1）。
+            // 之前这里按 renderFlip 反推 sand，等于 t=0 就把沙重画到了屏幕上方，
+            // 于是变成"沙先飘上去、瓶子再转"。
+            flipping = true;
             renderFlip = !on;
-            S.sand = renderFlip === on ? 0 : 1;
+            S.sand = 0;
             body.classList.add('flipping');
             flipTimer = setTimeout(function () {
                 renderFlip = on;
                 S.sand = 1;
+                flipping = false;
                 body.classList.remove('flipping');
                 paintSand(S.sand);
             }, 360);
@@ -1771,6 +1776,12 @@
         /** 不翻转，只让剩下的沙加速漏到下壶。给"重置"用。 */
         function settleSand() {
             if (settleRaf !== null) cancelAnimationFrame(settleRaf);
+            if (flipping) {                 // 正在翻转：就地收尾，别停在半路
+                clearTimeout(flipTimer);
+                flipping = false;
+                renderFlip = S.inverted;
+                body.classList.remove('flipping');
+            }
             if (S.sand <= 0) { S.sand = 0; return; }
             var from = S.sand, t0 = performance.now();
             body.classList.add('is-settling');   // 显出落沙线，"流下去"才看得见
