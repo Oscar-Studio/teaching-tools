@@ -420,7 +420,8 @@
 
         /* 落沙只在"正在走"时可见：暂停要冻结，结束要收干，翻转中途也别出现
          （沙漏侧躺时一条竖直沙线会变成一条横线，很怪） */
-        body.is-running:not(.flipping) .hg-stream {
+        body.is-running:not(.flipping) .hg-stream,
+        body.is-settling .hg-stream {
             opacity: 1;
         }
 
@@ -1363,7 +1364,9 @@
             endAt: 0,
             running: false,
             finished: false,
-            inverted: false,   // 沙漏是否已翻转
+            inverted: false,   // 沙漏朝向（只有开始计时才会动，每次开始翻一次）
+            started: false,    // 本轮是否开始过；重置后回到 false
+            sand: 0,           // 上壶里还剩多少沙：待机 0，开跑前 1，运行时 1→0
             phase: 'idle',
             lastSec: -1,
             lastTickSec: -1
@@ -1382,6 +1385,7 @@
          * 继续按旧朝向画沙 —— 否则一 flip() 就会瞬间换堆，接缝暴露在正中。 */
         var renderFlip = false;
         var doneTimer = null;       // 结束闪屏 → 自动退回待机的延时
+        var settleRaf = null;      // 重置时沙子加速漏完的动画句柄
 
         /* =====================================================
          * DOM
@@ -1573,14 +1577,20 @@
                 ' L 180 ' + lo.toFixed(2) + ' L 20 ' + lo.toFixed(2) + ' Z';
         }
 
+        /**
+         * ratio = 上壶里还剩多少沙（0 = 全部已漏到下壶）。
+         * 玻璃朝哪边是另一回事：两个分支都按"当前在上的那一侧"画，
+         * 于是待机(0)和开跑前(1)落在同一段局部坐标上，
+         * 翻转动画在中点交换时不会出现沙子瞬移。
+         */
         function paintSand(ratio) {
             var drain, collect;
             if (renderFlip) {
-                drain = heapPath(G_NECK, G_BOT, ratio);        // 上壶：坐在颈口往上堆
-                collect = heapPath(G_TOP, G_NECK, 1 - ratio);  // 下壶：坐在玻璃底板往上堆
+                drain = heapPath(G_NECK, G_BOT, ratio);        // 局部 [141,248] 此刻在上壶
+                collect = heapPath(G_TOP, G_NECK, 1 - ratio);  // 局部 [34,141] 此刻在下壶
             } else {
-                drain = '';                                    // 待机时上壶本来就是空的
-                collect = heapPath(G_BOT, G_NECK, 1);          // 沙已全部漏尽，堆在下壶底板
+                drain = heapPath(G_TOP, G_NECK, ratio);        // 局部 [34,141] 此刻在上壶
+                collect = heapPath(G_BOT, G_NECK, 1 - ratio);  // 局部 [141,248] 此刻在下壶
             }
             sandDrain.setAttribute('d', drain);
             sandCollect.setAttribute('d', collect);
@@ -1641,7 +1651,7 @@
          * ===================================================== */
         function computePhase() {
             if (S.finished) return 'done';
-            if (!S.inverted) return 'idle';               // 还没开始
+            if (!S.started) return 'idle';                // 还没开始过（重置后也算待机）
             // 暂停后仍按剩余比例保留告警色：停在最后 3 秒就该一直是红的
             var r = S.total ? S.remain / S.total : 0;
             if (r <= 0.1) return 'urgent';
@@ -1650,8 +1660,9 @@
         }
 
         function paint() {
-            var ratio = S.total ? Math.max(0, Math.min(1, S.remain / S.total)) : 0;
             var phase = computePhase();
+            // 沙量只在计时中跟随剩余比例；待机和重置后由 settleSand() 单独管
+            if (S.running && S.total) S.sand = Math.max(0, Math.min(1, S.remain / S.total));
 
             if (phase !== S.phase) {
                 S.phase = phase;
@@ -1678,11 +1689,11 @@
             S.lastSec = rs;
 
             // 沙漏
-            paintSand(ratio);
+            paintSand(S.sand);
 
             // 环 + 条
-            ringFill.setAttribute('stroke-dashoffset', (RING_LEN * (1 - ratio)).toFixed(2));
-            trackFill.style.transform = 'scaleX(' + ratio.toFixed(5) + ')';
+            ringFill.setAttribute('stroke-dashoffset', (RING_LEN * (1 - S.sand)).toFixed(2));
+            trackFill.style.transform = 'scaleX(' + S.sand.toFixed(5) + ')';
 
             // 说明
             metaTotal.textContent = '共 ' + fmtLong(S.total);
@@ -1739,36 +1750,40 @@
             S.inverted = on;
             hgFlip.classList.toggle('inverted', on);
 
-            var ratio = S.total ? Math.max(0, Math.min(1, S.remain / S.total)) : 0;
-
             if (reduceMotion) {
                 renderFlip = on;
-                paintSand(ratio);
+                S.sand = 1;
+                paintSand(S.sand);
                 return;
             }
 
+            // 翻转的每一帧都把沙画在"当前在上的那一侧"，于是玻璃转到一半时
+            // 沙子始终待在原来那段局部坐标里，不会跳；翻完之后它自然落在上壶准备漏。
             renderFlip = !on;
+            S.sand = renderFlip === on ? 0 : 1;
             body.classList.add('flipping');
             flipTimer = setTimeout(function () {
                 renderFlip = on;
+                S.sand = 1;
                 body.classList.remove('flipping');
-                paintSand(S.total ? Math.max(0, Math.min(1, S.remain / S.total)) : 0);
+                paintSand(S.sand);
             }, 360);
         }
 
-        /**
-         * 不播动画地摆正。给"重置"用：
-         * 让人眼看着沙漏转 180° 再转回去很奇怪，沙子会被带着"飞上去"一次。
-         * 这里一步到位：摘掉翻转类，沙堆直接落到下壶。
-         * 之所以不会有瞬移感 —— 摆正前 remain 已被 reset() 设成 total（ratio = 1），
-         * 而 ratio = 1 时两种朝向画出的沙堆落在同一段局部坐标上，只是玻璃换了朝向。
-         */
-        function snapUpright() {
-            clearTimeout(flipTimer);
-            S.inverted = false;
-            renderFlip = false;
-            body.classList.remove('flipping');
-            hgFlip.classList.remove('inverted');
+        /** 不翻转，只让剩下的沙加速漏到下壶。给"重置"用。 */
+        function settleSand() {
+            if (settleRaf !== null) cancelAnimationFrame(settleRaf);
+            if (S.sand <= 0) { S.sand = 0; return; }
+            var from = S.sand, t0 = performance.now();
+            body.classList.add('is-settling');   // 显出落沙线，"流下去"才看得见
+            function step(now) {
+                var k = Math.min(1, (now - t0) / 380);
+                S.sand = from * (1 - k);
+                paintSand(S.sand);
+                if (k < 1) settleRaf = requestAnimationFrame(step);
+                else { S.sand = 0; settleRaf = null; body.classList.remove('is-settling'); }
+            }
+            settleRaf = requestAnimationFrame(step);
         }
 
         /* =====================================================
@@ -1801,10 +1816,11 @@
             if (S.remain <= 0) S.remain = S.total;
 
             S.running = true;
+            S.started = true;
             S.endAt = performance.now() + S.remain;
             S.lastTickSec = -1;
 
-            flip(true);
+            flip(!S.inverted);                        // 每次开始都翻一次
             startLoop();
             acquireWake();
             askNotify();
@@ -1830,11 +1846,12 @@
             stopLoop();
             releaseWake();
             S.running = false;
+            S.started = false;
             S.finished = false;
             S.remain = S.total;
             S.lastSec = -1;
             S.lastTickSec = -1;
-            snapUpright();
+            settleSand();                        // 玻璃不动，只让剩下的沙漏下去
             body.setAttribute('data-phase', 'idle');
             S.phase = 'idle';
             chip.textContent = PHASE_TEXT.idle;
@@ -1850,6 +1867,7 @@
             S.finished = true;
             stopLoop();
             releaseWake();
+            S.sand = 0;                           // 沙已经漏完停在下面，不必翻
 
             body.setAttribute('data-phase', 'done');
             S.phase = 'done';
