@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description"
+        content="初中物理电路画板：画实物图与电路图，一键互转；自动识别串并联、检查电流表电压表接法，可导出 PNG/SVG。">
+    <link rel="canonical" href="https://edu.oscarstudio.cn/%E7%94%B5%E8%B7%AF%E7%94%BB%E6%9D%BF/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Oscar Studio 教学工具">
+    <meta property="og:title" content="电路画板 | Oscar Studio 教学工具">
+    <meta property="og:description"
+        content="初中物理电路画板：画实物图与电路图，一键互转；自动识别串并联、检查电流表电压表接法，可导出 PNG/SVG。">
+    <meta property="og:url" content="https://edu.oscarstudio.cn/%E7%94%B5%E8%B7%AF%E7%94%BB%E6%9D%BF/">
+    <meta property="og:image" content="https://edu.oscarstudio.cn/logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电路画板 | Oscar Studio 教学工具</title>
+    <link rel="stylesheet" href="../_shared/design-tokens.css">
+    <script src="../_shared/tool-header.js"></script>
+    <script src="../_shared/theme-tokens.js"></script>
+    <!-- 本工具完全在本地运行，不需要登录；这里只装载守卫不拦截，留给后续扩展 -->
+    <script src="../_shared/auth-guard.js"></script>
+    <style>
+        :root {
+            --wire: #1c1f24;
+            --wire-soft: rgba(28, 31, 36, .28);
+            --panel: var(--surface-soft);
+            --sel: #2f81f7;
+            /* 导线按节点电位着色。负极那根原本写死近黑，深色底下等于消失，
+               这里做成变量，深色主题换成看得见的浅灰蓝 */
+            --wire-pos: #e04a4a;
+            --wire-neg: #2b2f36;
+            --wire-mid: #6b7280;
+        }
+
+        [data-theme="dark"] {
+            --wire: #e6e6e3;
+            --wire-soft: rgba(230, 230, 227, .26);
+            --wire-neg: #aab2bd;
+            --wire-mid: #8b929e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            background: var(--surface-card);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+                "Microsoft YaHei", sans-serif;
+            font-size: 13px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 头部栏由 _shared/tool-header.js 注入（高 44px）。把主体钉死在它下方，
+           不用 height:100vh + padding-top —— 那会和注入的栏叠加出一个不确定的总高，
+           把底部状态栏挤到视口外。 */
+        #app {
+            position: fixed;
+            inset: 44px 0 0 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ---------- 工具栏 ---------- */
+        #toolbar {
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+            padding: 6px 10px; background: var(--panel);
+            border-bottom: 1px solid var(--border); flex-shrink: 0;
+        }
+        #toolbar .sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+        #toolbar .spacer { flex: 1; }
+
+        button {
+            font: inherit; color: var(--text); background: var(--surface-card);
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 5px 10px; cursor: pointer; transition: background .12s, border-color .12s;
+        }
+        button:hover { background: var(--surface-soft); border-color: var(--text-3); }
+        button:active { transform: translateY(1px); }
+        button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+        button.primary:hover { filter: brightness(1.08); }
+        button.danger { color: #c64545; border-color: rgba(198, 69, 69, .4); }
+        button:disabled { opacity: .45; cursor: not-allowed; }
+
+        .viewgroup { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .viewbtn { border: none; border-radius: 0; padding: 5px 14px; background: var(--surface-card); }
+        .viewbtn + .viewbtn { border-left: 1px solid var(--border); }
+        .viewbtn.on { background: var(--primary); color: #fff; }
+
+        /* ---------- 主体 ---------- */
+        #main { display: flex; flex: 1; min-height: 0; }
+
+        #sidebar {
+            width: 172px; background: var(--panel); border-right: 1px solid var(--border);
+            overflow-y: auto; overflow-x: hidden; flex-shrink: 0; padding-bottom: 12px;
+        }
+        #sidebar::-webkit-scrollbar { width: 8px; }
+        #sidebar::-webkit-scrollbar-thumb { background: var(--text-3); border-radius: 4px; }
+
+        .ptitle {
+            font-size: 11px; color: var(--text-3); letter-spacing: .08em;
+            padding: 10px 12px 5px; font-weight: 600;
+        }
+        .pbtn {
+            display: flex; align-items: center; gap: 8px; width: calc(100% - 12px);
+            margin: 2px 6px; padding: 6px 8px; text-align: left; background: transparent;
+        }
+        .pbtn:hover { background: var(--surface-card); }
+        .pico { font-size: 15px; width: 20px; text-align: center; }
+
+        .sec {
+            font-size: 11px; color: var(--text-3); letter-spacing: .08em; font-weight: 600;
+            padding: 12px 12px 5px; border-top: 1px solid var(--border); margin-top: 8px;
+        }
+        #inspector { padding: 4px 12px 10px; }
+        #inspector .muted { color: var(--text-3); font-size: 12px; padding: 4px 0 8px; }
+        #inspector .ins-title { font-weight: 600; padding: 6px 0; }
+        #inspector .row {
+            display: flex; align-items: center; gap: 6px; padding: 5px 0;
+            font-size: 12px; color: var(--text-2);
+        }
+        #inspector input[type=range] { flex: 1; }
+        #inspector select { flex: 1; font: inherit; padding: 3px; }
+        #inspector .danger { width: 100%; margin-top: 8px; padding: 5px; }
+
+        #issues { padding: 6px 12px 14px; font-size: 12px; line-height: 1.6; }
+        #issues .ok { color: var(--success, #2f9e44); }
+        #issues .issue { padding: 3px 0; }
+        #issues .issue.error { color: #c64545; }
+        #issues .issue.warn { color: var(--accent-amber, #d08c00); }
+
+        /* ---------- 画布 ---------- */
+        #canvasWrap {
+            flex: 1; position: relative; min-width: 0; min-height: 0;
+            display: flex; flex-direction: column;
+        }
+        #canvas {
+            flex: 1; position: relative; min-height: 0; overflow: hidden;
+            background:
+                radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0) 0 0 / 24px 24px,
+                var(--surface-card);
+            touch-action: none; cursor: crosshair;
+        }
+        #stage {
+            display: block;
+            /* 必须脱离文档流：否则 svg 的宽高反过来撑大 #canvas，
+               而 render() 又按 #canvas 的尺寸设置 svg，形成无限增长的反馈环 */
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        /* 线色走 --wc 变量而不是内联 stroke：内联样式优先级高于类规则，
+           会把下面 .wire.sel 的选中高亮盖掉，选中时看起来就没反应 */
+        .wire { fill: none; stroke: var(--wc, var(--wire)); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+        .wire.sel { stroke: var(--sel); stroke-width: 3.6; }
+
+        /* 导线命中区：透明粗描边，比可见线宽 12px，好点中 */
+        .wire-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
+        .wire-hit:hover { stroke: var(--sel); stroke-opacity: .3; }
+
+        .comp .hit { fill: transparent; stroke: none; }
+        .comp:hover .hit { fill: var(--wire-soft); }
+        .comp.sel .hit { fill: none; stroke: var(--sel); stroke-width: 2; stroke-dasharray: 5 4; }
+        .comp .art { pointer-events: none; }
+        .sym-text { fill: var(--wire); }
+        .comp-label { font-size: 10px; fill: var(--text-3); pointer-events: none; }
+        .ghost-schematic .comp-label { display: none; }
+
+        .pin-hit { fill: transparent; stroke: none; cursor: crosshair; }
+        .comp:hover .pin-hit { fill: var(--wire-soft); }
+        /* 连线中选中的接线柱：画成空心圈，不要实心 —— 里面是红/黑的接线柱，
+           填实了就看不出选的是哪一柱 */
+        .pin-active { fill: none; stroke: var(--sel); stroke-width: 3; }
+
+        #hint {
+            position: absolute; left: 12px; bottom: 12px; right: 12px;
+            background: var(--surface-card); border: 1px solid var(--border);
+            border-radius: 6px; padding: 7px 11px; font-size: 12px; color: var(--text-2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .08); pointer-events: none;
+        }
+
+        /* 选中项上方的悬浮工具条（旋转 + 删除）。用 HTML 覆盖层而非 SVG：
+           按钮要保持屏幕尺寸恒定，跟画布一起缩放的话缩小后就点不中了。
+           工具条本身不吃指针事件，只让里面的按钮吃 —— 两个按钮之间的空隙
+           还得能正常拖动画布平移。 */
+        #float-tools {
+            position: absolute; z-index: 5; transform: translate(-50%, -100%);
+            display: inline-flex; align-items: center; gap: 6px; pointer-events: none;
+        }
+        #float-tools[hidden] { display: none; }
+        #float-tools > button {
+            pointer-events: auto;
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; font-size: 12px; line-height: 1.2;
+            border-radius: 999px; color: #fff; border-color: transparent;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .24); cursor: pointer;
+        }
+        #float-rot { background: #2f6fbd; touch-action: none; }
+        #float-del { background: #c64545; }
+        #float-del:hover, #float-rot:hover { filter: brightness(1.12); }
+        #float-rot[hidden] { display: none; }
+
+        #status {
+            display: flex; gap: 12px; align-items: center;
+            padding: 5px 10px; background: var(--panel); border-top: 1px solid var(--border);
+            font-size: 11px; color: var(--text-3); flex-shrink: 0;
+        }
+        #help { color: var(--text-3); }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div id="toolbar">
+            <div class="viewgroup">
+                <button class="viewbtn" data-view="pictorial" title="实物图（接线柱面板上的实物）">实物图</button>
+                <button class="viewbtn" data-view="schematic" title="电路图（GB/T 4728 符号）">电路图</button>
+            </div>
+            <div class="sep"></div>
+            <button id="btn-convert" class="primary" title="实物图 ⇄ 电路图，基于同一份连通关系互转">⇄ 一键转换</button>
+            <button id="btn-tidy" title="按规范重新排布当前视图">↺ 自动排布</button>
+            <div class="sep"></div>
+            <button id="btn-undo" title="撤销 ⌘/Ctrl+Z">撤销</button>
+            <button id="btn-redo" title="重做 ⌘/Ctrl+Shift+Z">重做</button>
+            <div class="sep"></div>
+            <button id="btn-demo" title="载入示例电路">示例</button>
+            <button id="btn-clear">清空</button>
+            <div class="spacer"></div>
+            <button id="btn-fit" title="缩放到合适大小">适应画布</button>
+            <button id="btn-reset-view" title="重置缩放">1:1</button>
+            <div class="sep"></div>
+            <button id="btn-png" title="导出 PNG">PNG</button>
+            <button id="btn-svg" title="导出 SVG">SVG</button>
+            <button id="btn-json" title="导出 JSON">JSON</button>
+            <button id="btn-import" title="导入 JSON">导入</button>
+            <button id="btn-share" title="复制分享链接">分享</button>
+            <input type="file" id="file-input" accept="application/json,.json" hidden>
+        </div>
+
+        <div id="main">
+            <div id="sidebar">
+                <div id="palette"></div>
+                <div class="sec">元件属性</div>
+                <div id="inspector"></div>
+                <div class="sec">电路检查</div>
+                <div id="issues"></div>
+            </div>
+
+            <div id="canvasWrap">
+                <div id="canvas">
+                    <svg id="stage" xmlns="http://www.w3.org/2000/svg"></svg>
+                    <div id="float-tools" hidden>
+                        <button id="float-rot" title="按住拖动旋转元件（按住 Shift 做 1° 微调）">⟳ 旋转</button>
+                        <button id="float-del" title="删除选中项（也可按 Delete）">✕ 删除</button>
+                    </div>
+                    <div id="hint"></div>
+                </div>
+                <div id="status">
+                    <span id="status-left"></span>
+                    <span class="spacer" style="flex:1"></span>
+                    <span id="help">单击引脚连线 · 单击选中（上方可旋转/删除） · 双击旋转 · Delete 删除 · 滚轮缩放 · 拖空白平移</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="parts.js"></script>
+    <script src="netlist.js"></script>
+    <script src="layout.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
