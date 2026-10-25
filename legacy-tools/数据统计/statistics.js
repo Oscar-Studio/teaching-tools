@@ -111,9 +111,20 @@ async function renderCharts(groups) {
       note.textContent = `组距 ${format(bins.width)}，起点 ${format(bins.edges[0])}。各组共用区间；左闭右开，最后一个区间包含右端点。`;
     } else if (type === 'bar' || type === 'line') {
       title.textContent = `${multi}${type === 'bar' ? '条形' : '折线'}统计图`;
-      xTitle = frequencyMode ? '数值' : '数据序号'; yTitle = frequencyMode ? '频数' : '数据值'; frequencyAxis = frequencyMode;
-      traces = groups.map((g, i) => ({ ...traceBase(g, i), type: type === 'bar' ? 'bar' : 'scatter', mode: 'lines+markers', x: frequencyMode ? values.map(String) : g.data.map((_, j) => j + 1), y: frequencyMode ? values.map(value => g.stats.frequencies.get(value) || 0) : g.data }));
-      note.textContent = frequencyMode ? '相同数值合并计数；某组未出现的数值频数为 0。' : '按输入顺序展示；各组长度可以不同，不会补 0 或重新排序。';
+      xTitle = frequencyMode ? '数值' : type === 'bar' ? '排序后序号' : '数据序号'; yTitle = frequencyMode ? '频数' : '数据值'; frequencyAxis = frequencyMode;
+      traces = groups.map((g, i) => ({ ...traceBase(g, i), type: type === 'bar' ? 'bar' : 'scatter', mode: 'lines+markers', x: frequencyMode ? values.map(String) : g.data.map((_, j) => j + 1), y: frequencyMode ? values.map(value => g.stats.frequencies.get(value) || 0) : type === 'bar' ? g.stats.sorted : g.data }));
+      note.textContent = frequencyMode ? '相同数值合并计数；某组未出现的数值频数为 0。' : type === 'bar' ? '每组数据从小到大排序，横轴为排序后的序号；同色虚线表示该组平均值。各组长度可以不同。' : '按输入顺序展示；各组长度可以不同，不会补 0 或重新排序。';
+      if (type === 'bar' && !frequencyMode) {
+        traces.forEach(trace => { trace.marker.opacity = .65; });
+        const lastIndex = groups.reduce((max, g) => Math.max(max, g.data.length), 0);
+        traces.push(...groups.map((g, i) => ({
+          ...traceBase(g, i), type: 'scatter', mode: 'lines',
+          name: `${escapeLabel(g.name)} 平均值：${format(g.stats.mean)}`,
+          x: [.5, lastIndex + .5], y: [g.stats.mean, g.stats.mean],
+          line: { color: colors[i % colors.length], dash: 'dash', width: 2 },
+          hovertemplate: '平均值：%{y}<extra>%{fullData.name}</extra>',
+        })));
+      }
     } else if (type === 'box') {
       title.textContent = `${multi}箱线图`; xTitle = '数据组'; yTitle = '数值';
       const rule = $('whiskerRule').value;
@@ -137,10 +148,10 @@ async function renderCharts(groups) {
     const layout = {
       paper_bgcolor: 'transparent', plot_bgcolor: 'transparent', font: { color: ink },
       margin: { t: 12, b: 65, l: 60, r: 20 },
-      xaxis: { ...axis, title: xTitle, ...(type === 'histogram' || (frequencyMode && ['bar', 'line'].includes(type)) || type === 'box' ? { type: 'category' } : {}) },
+      xaxis: { ...axis, title: xTitle, ...(type === 'bar' && !frequencyMode ? { tick0: 1, dtick: 1 } : {}), ...(type === 'histogram' || (frequencyMode && ['bar', 'line'].includes(type)) || type === 'box' ? { type: 'category' } : {}) },
       yaxis: { ...axis, title: yTitle, ...(frequencyAxis ? { rangemode: 'tozero', ...(tick ? { dtick: tick } : { dtick: Math.max(1, Math.ceil(traces.reduce((max, trace) => trace.y.reduce((m, value) => Math.max(m, value), max), 0) / 6)) }) } : {}), ...(type === 'cumulative' ? { tickformat: '.0%', range: [0, 1.05] } : {}) },
       barmode: 'group', bargap: type === 'histogram' ? 0 : .2, bargroupgap: type === 'histogram' ? .02 : .05,
-      legend: { orientation: 'h', y: 1.15 }, showlegend: groups.length > 1,
+      legend: { orientation: 'h', y: 1.15 }, showlegend: groups.length > 1 || (type === 'bar' && !frequencyMode),
     };
     jobs.push(window.Plotly.newPlot(chart, traces, layout, { responsive: true, displaylogo: false, toImageButtonOptions: { filename: title.textContent, format: 'png', scale: 2 } }));
   }
