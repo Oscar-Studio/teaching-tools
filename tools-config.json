@@ -18,15 +18,17 @@
     {
       "id": "data-stats",
       "name": "数据统计",
-      "description": "根据输入的数据计算平均数、离散平方和、方差和标准差",
+      "description": "多组数据统计：自定义频数直方图、条形图、折线图、箱线图与累计频率图，含核心统计量和分位数表",
       "tags": [
-        "统计"
+        "统计",
+        "图像",
+        "分位数"
       ],
       "subject": [
         "数学"
       ],
       "icon": "📊",
-      "featured": false,
+      "featured": true,
       "demoFile": "数据统计/index.html"
     },
     {
@@ -43,21 +45,6 @@
       "icon": "📊",
       "featured": false,
       "demoFile": "勾股树/index.html"
-    },
-    {
-      "id": "boxplot",
-      "name": "箱线图与分位数",
-      "description": "根据输入数据显示9个分位数和箱线图",
-      "tags": [
-        "统计",
-        "图像"
-      ],
-      "subject": [
-        "数学"
-      ],
-      "icon": "📊",
-      "featured": false,
-      "demoFile": "箱线图与分位数/index.html"
     },
     {
       "id": "convex-lens",
@@ -148,21 +135,6 @@
         ],
         "description": "要分析的中文句子"
       }
-    },
-    {
-      "id": "data-stats-pro",
-      "name": "数据统计PRO",
-      "description": "更高级的数据统计功能",
-      "tags": [
-        "统计",
-        "图像"
-      ],
-      "subject": [
-        "数学"
-      ],
-      "icon": "📊",
-      "featured": true,
-      "demoFile": "数据统计PRO/index.html"
     },
     {
       "id": "chem-balance",
