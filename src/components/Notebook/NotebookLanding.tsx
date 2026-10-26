@@ -1,3 +1,4 @@
+import { BackgroundCover } from '../BackgroundCover';
 import type { Tool } from '../../types';
 import { NotebookHero } from './NotebookHero';
 import { NotebookCardGrid } from './NotebookCardGrid';
@@ -13,7 +14,7 @@ interface Props {
 export function NotebookLanding({ tools }: Props) {
   return (
     <div className="notebook-landing">
-      <NotebookHero total={tools.length} />
+      <BackgroundCover variant="edu" label="02 / NOTEBOOK — 知识之外，也有风景。"><NotebookHero total={tools.length} /></BackgroundCover>
       <NotebookCardGrid tools={tools} />
     </div>
   );

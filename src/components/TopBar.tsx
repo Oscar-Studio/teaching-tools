@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
-import { useHomeTheme } from '../hooks/useHomeTheme';
 
 interface TopBarProps {
   section: string;
+  onSearch: (value: string) => void;
 }
 
-export function TopBar({ section }: TopBarProps) {
+export function TopBar({ section, onSearch }: TopBarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
-  const [eduTheme, setEduTheme] = useHomeTheme();
 
   // 加载 user-button.js（共享认证）
   useEffect(() => {
@@ -58,6 +57,8 @@ export function TopBar({ section }: TopBarProps) {
         <input
           type="text"
           id="searchInput"
+          aria-label="搜索名称、介绍或标签"
+          onChange={event => onSearch(event.target.value)}
           placeholder="搜索工具…"
           autoComplete="off"
           onBlur={() => setSearchOpen(false)}
@@ -65,24 +66,6 @@ export function TopBar({ section }: TopBarProps) {
       </div>
 
       <div className="top-bar-actions">
-        <div className="theme-mode-toggle" role="group" aria-label="主题">
-          <button
-            type="button"
-            className={eduTheme === 'classic' ? 'active' : ''}
-            onClick={() => setEduTheme('classic')}
-            aria-pressed={eduTheme === 'classic'}
-          >
-            Classic
-          </button>
-          <button
-            type="button"
-            className={eduTheme === 'notebook' ? 'active' : ''}
-            onClick={() => setEduTheme('notebook')}
-            aria-pressed={eduTheme === 'notebook'}
-          >
-            Notebook
-          </button>
-        </div>
         <button
           type="button"
           className="icon-button search-toggle"

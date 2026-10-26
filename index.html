@@ -37,14 +37,9 @@
           document.documentElement.setAttribute('data-theme', resolved);
         } catch (e) { /* ignore */ }
       })();
-      // 渲染前应用 edu 主题（classic / notebook），避免闪烁
-      (function() {
-        try {
-          var et = localStorage.getItem('oscar-edu-theme');
-          if (et !== 'classic' && et !== 'notebook') et = 'notebook';
-          document.documentElement.setAttribute('data-edu-theme', et);
-        } catch (e) { /* ignore */ }
-      })();
+      // The landing page has one design; normalize retired cached preferences.
+      document.documentElement.setAttribute('data-edu-theme', 'notebook');
+      try { localStorage.setItem('oscar-edu-theme', 'notebook'); } catch (e) { /* storage may be unavailable */ }
     </script>
 
 </head>

@@ -1,80 +1,16 @@
-import { useRef, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { TopBar } from './components/TopBar';
-import { Hero } from './components/Hero';
-import { CardGrid } from './components/CardGrid';
-import { MorphCard } from './components/MorphCard';
-import { useToolsConfig } from './hooks/useToolsConfig';
-import { useUserBackground } from './components/GlassProvider';
-import { useHomeTheme } from './hooks/useHomeTheme';
 import { NotebookLanding } from './components/Notebook/NotebookLanding';
-import type { Tool } from './types';
-
-export type Phase = 'idle' | 'opening' | 'open' | 'closing';
-
-function AppContent() {
-  useUserBackground();
-  const { tools, loading, error } = useToolsConfig();
-  const [selected, setSelected] = useState<{ tool: Tool; rect: DOMRect } | null>(null);
-  const [phase, setPhase] = useState<Phase>('idle');
-  const [eduTheme] = useHomeTheme();
-  const lockRef = useRef(false);
-  const rectsRef = useRef<Record<string, DOMRect>>({});
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
-
-
-  const handleSelect = useCallback((tool: Tool, rect: DOMRect) => {
-    if (lockRef.current) return;
-    lockRef.current = true;
-    rectsRef.current[tool.id] = rect;
-    setSelected({ tool, rect });
-    setPhase('opening');
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setPhase('closing');
-  }, []);
-
-  const handlePhaseChange = useCallback((next: Phase) => {
-    setPhase(next);
-    if (next === 'idle') {
-      setSelected(null);
-      rectsRef.current = {};
-      lockRef.current = false;
-    }
-  }, []);
-
-  return (
-    <>
-      <TopBar section="教学工具" />
-      {/* Classic 主题：原版卡片网格。Notebook 主题下用 .classic-only 隐藏 */}
-      <div className="classic-only">
-        <Hero />
-        <CardGrid
-          tools={tools}
-          loading={loading}
-          error={error}
-          selectedId={selected?.tool.id ?? null}
-          phase={phase}
-          rects={rectsRef.current}
-          onSelect={handleSelect}
-        />
-      </div>
-      {/* Notebook 主题：落地页（点击直接跳转，无 MorphCard）。Classic 主题下不渲染（节省 JS） */}
-      {!loading && !error && eduTheme === 'notebook' && (
-        <NotebookLanding tools={tools} />
-      )}
-      {/* MorphCard 复用：两个主题共用工具开启动画 */}
-      <MorphCard
-        tool={selected?.tool ?? null}
-        sourceRect={selected?.rect ?? null}
-        phase={phase}
-        onClose={handleClose}
-        onPhaseChange={handlePhaseChange}
-      />
-    </>
-  );
-}
+import { useToolsConfig } from './hooks/useToolsConfig';
 
 export default function App() {
-  return <AppContent />;
+  const { tools, loading, error } = useToolsConfig();
+  const [query, setQuery] = useState('');
+  const keyword = query.trim().toLocaleLowerCase();
+  const results = tools.filter(tool => [tool.name, tool.description, ...(tool.tags || [])].join(' ').toLocaleLowerCase().includes(keyword));
+  return <>
+    <TopBar section="教学工具" onSearch={setQuery} />
+    <NotebookLanding tools={results} />
+    {(loading || error || (keyword && !results.length)) && <p className="landing-status" role="status">{loading ? '正在加载…' : error ? '加载失败，请刷新重试。' : '暂时没有匹配的内容，试试其他关键词。'}</p>}
+  </>;
 }
