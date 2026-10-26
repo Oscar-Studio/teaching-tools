@@ -4,7 +4,6 @@ import { Hero } from './components/Hero';
 import { CardGrid } from './components/CardGrid';
 import { MorphCard } from './components/MorphCard';
 import { useToolsConfig } from './hooks/useToolsConfig';
-import { useOpilot } from './hooks/useOpilot';
 import { useUserBackground } from './components/GlassProvider';
 import { useHomeTheme } from './hooks/useHomeTheme';
 import { NotebookLanding } from './components/Notebook/NotebookLanding';
@@ -22,7 +21,6 @@ function AppContent() {
   const rectsRef = useRef<Record<string, DOMRect>>({});
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  useOpilot(searchInputRef.current, tools, 'edu');
 
   const handleSelect = useCallback((tool: Tool, rect: DOMRect) => {
     if (lockRef.current) return;

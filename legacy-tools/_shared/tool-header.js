@@ -1,6 +1,6 @@
 /* =====================================================
  * 教学工具 — 共享页面头 + 主题切换
- * 注入：顶部导航条（返回 + 主题切换按钮）+ Opilot 预填
+ * 注入：顶部导航条（返回 + 主题切换按钮）
  *
  * 用法：<script src="../_shared/tool-header.js" defer></script>
  *
@@ -82,10 +82,7 @@
           'background:var(--surface-soft);color:var(--ink);' +
           'font-size:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;' +
           'transition:background .2s,border-color .2s,color .2s}' +
-        '.tt-sh-theme:hover{background:var(--surface-card);border-color:var(--primary);color:var(--primary)}' +
-        // 兼容：把 opilot-prefill-banner 往下挪（避开 44px 共享头）
-        '.opilot-prefill-banner{top:140px!important}' +
-        '@media(max-width:640px){.opilot-prefill-banner{top:120px!important}}';
+        '.tt-sh-theme:hover{background:var(--surface-card);border-color:var(--primary);color:var(--primary)}';
       document.head.appendChild(style);
     }
     var bar = document.createElement('div');
@@ -140,22 +137,6 @@
     else mq.addListener(handler);
   }
 
-  /* ---------- Opilot 预填（保留旧行为） ---------- */
-  function loadPrefill() {
-    if (!document.querySelector('link[href*="opilot.css"]')) {
-      var l = document.createElement('link');
-      l.rel = 'stylesheet';
-      l.href = 'https://ai.oscarstudio.cn/opilot.css';
-      document.head.appendChild(l);
-    }
-    if (document.querySelector('script[data-tt-prefill]')) return;
-    var s = document.createElement('script');
-    s.src = 'https://ai.oscarstudio.cn/opilot-prefill.js';
-    s.dataset.ttPrefill = '1';
-    s.defer = true;
-    document.head.appendChild(s);
-  }
-
   /* ---------- 入口 ---------- */
   // 立即同步设置主题（防白闪）
   applyTheme(resolved(readMode()));
@@ -164,6 +145,5 @@
     injectBar();
     setupToggle();
     setupSystemListener();
-    loadPrefill();
   });
 })();
