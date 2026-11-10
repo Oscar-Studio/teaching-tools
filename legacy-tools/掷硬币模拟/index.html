@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="模拟同时掷两枚公平硬币，用折线图观察两正、两反和一正一反的累计次数与实验概率。">
+  <title>掷硬币模拟 | Oscar Studio 教学工具</title>
+  <link rel="stylesheet" href="../_shared/design-tokens.css">
+  <link rel="stylesheet" href="./style.css">
+  <script src="../_shared/tool-header.js"></script>
+  <script defer src="./simulation.js"></script>
+</head>
+<body>
+  <main class="experiment">
+    <header class="intro">
+      <p class="eyebrow">数学 · 概率实验</p>
+      <h1>掷硬币模拟</h1>
+      <p>每轮同时掷两枚公平硬币，观察三种结果的出现频率如何随实验推进而变化。</p>
+    </header>
+
+    <div class="layout">
+      <section class="panel controls" aria-labelledby="controls-title">
+        <h2 id="controls-title">实验台</h2>
+        <div class="coin-tray">
+          <div class="coin-slot"><span class="coin" id="coin-a">·</span><span>硬币 1</span></div>
+          <div class="coin-slot"><span class="coin" id="coin-b">·</span><span>硬币 2</span></div>
+        </div>
+        <p class="latest" id="latest">等待第一次投掷</p>
+        <div class="total"><span>累计实验轮数</span><strong id="total">0</strong></div>
+
+        <div class="speed">
+          <label for="speed">模拟速度</label>
+          <output id="speed-value" for="speed">5 轮/秒</output>
+          <input id="speed" type="range" min="0" max="8" step="1" value="2" aria-valuetext="5 轮/秒">
+          <div class="speed-range" aria-hidden="true"><span>1 轮/秒</span><span>5,000 轮/秒</span></div>
+        </div>
+        <div class="actions">
+          <button type="button" id="run" class="primary">开始模拟</button>
+          <button type="button" id="step">掷一次</button>
+          <button type="button" id="reset">重置</button>
+        </div>
+        <span class="sr-only" id="announcement" role="status"></span>
+      </section>
+
+      <section class="panel results" aria-labelledby="results-title">
+        <header class="results-head">
+          <h2 id="results-title">结果趋势</h2>
+          <div class="switches">
+            <div class="switch" role="group" aria-label="统计方式">
+              <button type="button" data-mode="count" aria-pressed="false">次数</button>
+              <button type="button" data-mode="probability" aria-pressed="true">概率</button>
+            </div>
+            <div class="switch" role="group" aria-label="图表视图">
+              <button type="button" data-view="overview" aria-pressed="false">全览</button>
+              <button type="button" data-view="focus" aria-pressed="true">聚焦</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="chart">
+          <canvas id="chart" role="img" aria-label="三种投掷结果随实验轮数变化的折线图" aria-describedby="chart-note"></canvas>
+          <p id="empty" class="empty">开始模拟或掷一次，查看结果趋势</p>
+        </div>
+        <p class="chart-note" id="chart-note">聚焦显示最近 120 轮，概率按累计次数除以累计轮数计算。</p>
+
+        <div class="stats" aria-label="累计统计">
+          <article class="stat heads">
+            <h3>两正</h3>
+            <strong class="stat-count">0</strong><span class="unit"> 次</span>
+            <span class="stat-rate">—</span>
+            <p>理论概率 25%</p>
+          </article>
+          <article class="stat tails">
+            <h3>两反</h3>
+            <strong class="stat-count">0</strong><span class="unit"> 次</span>
+            <span class="stat-rate">—</span>
+            <p>理论概率 25%</p>
+          </article>
+          <article class="stat mixed">
+            <h3>一正一反</h3>
+            <strong class="stat-count">0</strong><span class="unit"> 次</span>
+            <span class="stat-rate">—</span>
+            <p>理论概率 50%</p>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

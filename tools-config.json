@@ -270,6 +270,22 @@
       "demoFile": "随机分组器/index.html"
     },
     {
+      "id": "coin-toss",
+      "name": "掷硬币模拟",
+      "description": "模拟同时掷两枚公平硬币，用折线图观察两正、两反和一正一反的累计次数与实验概率。",
+      "tags": [
+        "概率",
+        "统计",
+        "实验"
+      ],
+      "subject": [
+        "数学"
+      ],
+      "icon": "🪙",
+      "featured": false,
+      "demoFile": "掷硬币模拟/index.html"
+    },
+    {
       "id": "dice-sim",
       "name": "骰子模拟器",
       "description": "模拟掷骰子，可用于随机抽取或课堂互动",
