@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="../_shared/design-tokens.css">
   <link rel="stylesheet" href="./style.css">
   <script src="../_shared/tool-header.js"></script>
+  <script defer src="./coin-motion.js"></script>
   <script defer src="./simulation.js"></script>
 </head>
 <body>
@@ -21,23 +22,43 @@
     <div class="layout">
       <section class="panel controls" aria-labelledby="controls-title">
         <h2 id="controls-title">实验台</h2>
-        <div class="coin-tray">
-          <div class="coin-slot"><span class="coin" id="coin-a">·</span><span>硬币 1</span></div>
-          <div class="coin-slot"><span class="coin" id="coin-b">·</span><span>硬币 2</span></div>
-        </div>
-        <p class="latest" id="latest">等待第一次投掷</p>
-        <div class="total"><span>累计实验轮数</span><strong id="total">0</strong></div>
-
-        <div class="speed">
-          <label for="speed">模拟速度</label>
-          <output id="speed-value" for="speed">5 轮/秒</output>
-          <input id="speed" type="range" min="0" max="8" step="1" value="2" aria-valuetext="5 轮/秒">
-          <div class="speed-range" aria-hidden="true"><span>1 轮/秒</span><span>5,000 轮/秒</span></div>
-        </div>
-        <div class="actions">
-          <button type="button" id="run" class="primary">开始模拟</button>
-          <button type="button" id="step">掷一次</button>
-          <button type="button" id="reset">重置</button>
+        <div class="bench">
+          <div class="coin-tray" aria-label="硬币投掷区">
+            <div class="tray-head"><span>投掷区</span><span>1 元 · 菊花版</span></div>
+            <div class="coin-pair">
+              <div class="coin-slot">
+                <div class="coin-pad" aria-hidden="true"><div class="shadow"></div><div class="coin"></div></div>
+                <span class="coin-label">硬币 1</span>
+              </div>
+              <div class="coin-slot">
+                <div class="coin-pad" aria-hidden="true"><div class="shadow"></div><div class="coin is-tail"></div></div>
+                <span class="coin-label">硬币 2</span>
+              </div>
+            </div>
+            <p class="latest" id="latest">等待第一次投掷</p>
+          </div>
+          <div class="bench-controls">
+            <div class="total"><span>累计实验轮数</span><strong id="total">0</strong></div>
+            <div class="speed">
+              <label for="speed">模拟速度</label>
+              <output id="speed-value" for="speed">5 轮/秒</output>
+              <input id="speed" type="range" min="0" max="8" step="1" value="2" aria-valuetext="5 轮/秒">
+              <div class="speed-range" aria-hidden="true"><span>1 轮/秒</span><span>5,000 轮/秒</span></div>
+            </div>
+            <div class="motion-control">
+              <label for="motion">投掷方式</label>
+              <select id="motion" aria-describedby="motion-note">
+                <option value="animation">轻量动画</option>
+                <option value="physics">3D 物理</option>
+              </select>
+              <p id="motion-note">10 轮/秒起自动使用轻量动画。</p>
+            </div>
+            <div class="actions">
+              <button type="button" id="run" class="primary">开始模拟</button>
+              <button type="button" id="step">掷一次</button>
+              <button type="button" id="reset">重置</button>
+            </div>
+          </div>
         </div>
         <span class="sr-only" id="announcement" role="status"></span>
       </section>

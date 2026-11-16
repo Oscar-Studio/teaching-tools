@@ -7,7 +7,15 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const speeds = [1, 2, 5, 10, 25, 60, 250, 1000, 5000];
 const labels = ['两正', '两反', '一正一反'];
 const dashes = [[], [7, 4], [2, 4]];
-const coins = [$('#coin-a'), $('#coin-b')];
+const tray = $('.coin-tray');
+const motion = $('#motion');
+const motionNote = $('#motion-note');
+const shadows = [...tray.querySelectorAll('.shadow')];
+const coinLabels = [...tray.querySelectorAll('.coin-label')];
+const coins = [...tray.querySelectorAll('.coin')];
+for (const coin of coins) {
+  coin.innerHTML = '<span class="coin-face coin-front"></span><span class="coin-face coin-back"></span>';
+}
 const counts = document.querySelectorAll('.stat-count');
 const rates = document.querySelectorAll('.stat-rate');
 const modeButtons = document.querySelectorAll('[data-mode]');
@@ -45,6 +53,13 @@ let frameId = 0;
 let credit = 0;
 let lastReadout = -Infinity;
 let needsRedraw = true;
+let lastDraw = -Infinity;
+let pending;
+let nextThrow = 0;
+let shownPair = 2;
+let animations = [];
+const physicsLimit = 5;
+const canAnimate = typeof coins[0].animate === 'function';
 
 // A sample stores the round followed by the three exact cumulative totals.
 // Old buckets retain their endpoints and each series' probability extrema.
@@ -86,48 +101,118 @@ function updateExtrema(bucket, series, low, high) {
   if (high[column] * max[0] > max[column] * high[0]) bucket.max[series] = high;
 }
 
-function toss(batch) {
-  for (let i = 0; i < batch; i++) {
-    // The four equiprobable values encode the two independent coin faces.
-    lastPair = Math.floor(Math.random() * 4);
-    tally[lastPair === 0 ? 0 : lastPair === 3 ? 1 : 2]++;
-    record([++rounds, ...tally]);
+const outcome = (pair) => pair === 0 ? 0 : pair === 3 ? 1 : 2;
+const randomPair = () => Math.floor(Math.random() * 4);
+const tailAt = (pair, index) => Boolean(pair & (1 << index));
+
+function recordPair(pair) {
+  lastPair = pair;
+  tally[outcome(pair)]++;
+  record([++rounds, ...tally]);
+}
+
+function showPair(pair, round, paths) {
+  shownPair = round ? pair : 2;
+  coins.forEach((coin, index) => {
+    const tail = tailAt(shownPair, index);
+    coin.classList.toggle('is-tail', tail);
+    coin.style.setProperty('--yaw', (paths?.[index].yaw ?? 0) + 'deg');
+    coinLabels[index].textContent = '硬币 ' + (index + 1) + (round ? (tail ? ' · 反面' : ' · 正面') : '');
+  });
+  latest.textContent = round ? '第 ' + number.format(round) + ' 轮 · ' + labels[outcome(pair)] : '等待第一次投掷';
+}
+
+function clearThrow() {
+  for (const animation of animations) animation.cancel();
+  animations = [];
+  pending = undefined;
+  nextThrow = 0;
+}
+
+function startThrow(now, duration, { physics = false, single = false, preview = false } = {}) {
+  const pair = preview ? lastPair : physics ? 0 : randomPair();
+  const paths = coins.map((_, i) => physics ? coinMotion.physicalToss()
+    : coinMotion.animatedToss(tailAt(shownPair, i), tailAt(pair, i), preview));
+  pending = {
+    pair: physics ? Number(paths[0].tail) + 2 * Number(paths[1].tail) : pair,
+    paths, single, preview, round: rounds, end: now + duration,
+  };
+  if (!preview) {
+    latest.textContent = '第 ' + number.format(rounds + 1) + ' 轮 · 投掷中';
+    coins.forEach((_, i) => { coinLabels[i].textContent = '硬币 ' + (i + 1); });
+  }
+  if (!duration) return;
+  const options = { duration, fill: 'both' };
+  paths.forEach(({ path, yaw }, i) => {
+    const lift = (y) => Math.max(0, y - coinMotion.halfThickness);
+    animations.push(coins[i].animate(path.map(({ angle, y }) => ({
+      transform: 'translateY(calc(var(--radius) * ' + (-1.03 * lift(y)) + ')) rotateX(30deg) rotateZ('
+        + yaw + 'deg) rotateX(' + angle + 'rad)',
+    })), options));
+    animations.push(shadows[i].animate(path.map(({ y }) => ({
+      transform: 'scale(' + (1 + .16 * lift(y)) + ')',
+      opacity: 1 / (1 + .48 * lift(y)),
+    })), options));
+  });
+}
+
+function finishThrow() {
+  const { pair, paths, round, preview, single } = pending;
+  if (!preview) {
+    recordPair(pair);
+    updateReadout();
+  }
+  showPair(pair, preview ? round : rounds, paths);
+  for (const animation of animations) animation.cancel();
+  animations = [];
+  pending = undefined;
+  if (single) {
+    stepButton.disabled = false;
+    $('#announcement').textContent = '第 ' + rounds + ' 轮，' + labels[outcome(pair)];
   }
 }
 
-function updateReadout(animate = false) {
-  if (rounds) {
-    for (let i = 0; i < coins.length; i++) {
-      const tail = Boolean(lastPair & (1 << i));
-      coins[i].textContent = tail ? '反' : '正';
-      coins[i].dataset.tail = tail;
-      if (animate && !reducedMotion.matches) {
-        coins[i].animate([
-          { transform: 'translateY(0) rotateX(0)' },
-          { transform: 'translateY(-9px) rotateX(180deg)' },
-          { transform: 'translateY(0) rotateX(360deg)' },
-        ], { duration: 170, delay: i * 22, easing: 'ease-out' });
+function activePhysics() {
+  return speed <= physicsLimit && motion.value === 'physics';
+}
+
+// Keep a readable preview at high speeds while recording every round.
+const previewInterval = () => Math.max(125, 190 - Math.log2(speed / 10) * 16);
+
+function updateMotion() {
+  const forced = speed > physicsLimit;
+  motion.disabled = forced;
+  if (forced) {
+    motion.value = 'animation';
+  } else {
+    motion.value = preferredMotion;
+  }
+  const fullModel = activePhysics();
+  tray.classList.toggle('physical', fullModel);
+  if (fullModel && !coins[0].querySelector('.coin-edge')) {
+    for (const coin of coins) {
+      for (let i = 0; i < 24; i++) {
+        const edge = document.createElement('span');
+        edge.className = 'coin-edge';
+        edge.style.setProperty('--edge-angle', (15 * i) + 'deg');
+        coin.append(edge);
       }
     }
-    latest.textContent = '最近一轮 · ' + resultLabel();
-  } else {
-    for (const coin of coins) {
-      coin.textContent = '·';
-      delete coin.dataset.tail;
-    }
-    latest.textContent = '等待第一次投掷';
   }
+  motionNote.textContent = !canAnimate || reducedMotion.matches
+    ? '已减少动态效果，直接显示落定结果。'
+    : forced ? '高速档使用轻量动画，画面抽样，统计逐轮记录。'
+    : fullModel ? '根据抛起、触桌回弹和落定的朝向计数。'
+    : '10 轮/秒起自动使用轻量动画。';
+}
 
+function updateReadout() {
   total.textContent = number.format(rounds);
   for (let s = 0; s < 3; s++) {
     counts[s].textContent = number.format(tally[s]);
     rates[s].textContent = rounds ? (100 * tally[s] / rounds).toFixed(1) + '%' : '—';
   }
   empty.hidden = rounds > 0;
-}
-
-function resultLabel() {
-  return labels[lastPair === 0 ? 0 : lastPair === 3 ? 1 : 2];
 }
 
 function updateNote() {
@@ -225,10 +310,9 @@ function draw() {
   const formatRound = span < 10000 || span < end / 5 ? number.format : compact.format;
   const labelWidth = ctx.measureText(formatRound(Math.floor(end))).width;
   const tickIntervals = Math.min(7, Math.max(1, Math.floor((right - left) / (labelWidth + 18))));
-  const tickSteps = [1, 2, 5];
   const tickIdeal = Math.max(1, span / tickIntervals);
   const tickOrder = 10 ** Math.floor(Math.log10(tickIdeal));
-  const tickUnit = tickSteps.findLast((unit) => unit * tickOrder <= tickIdeal);
+  const tickUnit = tickIdeal >= 5 * tickOrder ? 5 : tickIdeal >= 2 * tickOrder ? 2 : 1;
   const tickStep = tickOrder * tickUnit;
   const coarserStep = tickOrder * (tickUnit === 5 ? 10 : tickUnit === 2 ? 5 : 2);
   const tickMix = Math.log(tickIdeal / tickStep) / Math.log(coarserStep / tickStep);
@@ -326,16 +410,30 @@ function frame(now) {
   const elapsed = previousFrame ? Math.min(50, now - previousFrame) : 16;
   previousFrame = now;
 
+  if (pending && now >= pending.end) finishThrow();
   if (running) {
-    credit += elapsed * speed / 1000;
-    const batch = Math.floor(credit);
-    credit -= batch;
-    if (batch) {
-      toss(batch);
-      // Fast runs update the readouts at most ten times per second.
-      if (now - lastReadout >= 100) {
-        updateReadout(speed <= 5);
+    const animated = canAnimate && !reducedMotion.matches;
+    if (speed <= physicsLimit) {
+      const period = 1000 / speed;
+      if (!pending && now >= nextThrow) {
+        nextThrow = now + period - Math.min(elapsed, Math.max(0, now - nextThrow));
+        startThrow(now, animated ? period * .9 : 0, { physics: activePhysics() });
+        if (!animated) finishThrow();
+      }
+    } else {
+      credit += elapsed * speed / 1000;
+      const batch = Math.floor(credit);
+      credit -= batch;
+      for (let i = 0; i < batch; i++) recordPair(randomPair());
+      if (batch && now - lastReadout >= 100) {
+        updateReadout();
+        if (!animated) showPair(lastPair, rounds);
         lastReadout = now;
+      }
+      if (batch && animated && !pending && now >= nextThrow) {
+        const interval = previewInterval();
+        startThrow(now, interval * .78, { preview: true });
+        nextThrow = now + interval;
       }
     }
   }
@@ -358,11 +456,15 @@ function frame(now) {
     probabilityMix = nextProbability;
     focusMix = nextFocus;
     countRange = nextRange;
-    draw();
-    needsRedraw = false;
+    needsRedraw = true;
+    if (!running || speed <= physicsLimit || now - lastDraw >= 30) {
+      draw();
+      lastDraw = now;
+      needsRedraw = false;
+    }
   }
 
-  if (running || visibleRound !== rounds || probabilityMix !== probabilityTarget ||
+  if (running || pending || visibleRound !== rounds || probabilityMix !== probabilityTarget ||
       focusMix !== focusTarget || countRange !== countTarget) {
     requestFrame();
   } else {
@@ -370,27 +472,43 @@ function frame(now) {
   }
 }
 
-function setRunning(next) {
-  running = next;
+function syncThrowState() {
+  clearThrow();
+  showPair(lastPair, rounds);
+  updateReadout();
   credit = 0;
   previousFrame = 0;
-  runButton.textContent = running ? '暂停模拟' : '开始模拟';
   stepButton.disabled = running;
-  if (!running) updateReadout();
   requestFrame();
 }
 
+function setRunning(next) {
+  running = next;
+  syncThrowState();
+  runButton.textContent = running ? '暂停模拟' : '开始模拟';
+}
+
+let preferredMotion = motion.value;
 $('#speed').addEventListener('input', (event) => {
   speed = speeds[Number(event.target.value)];
   const label = number.format(speed) + ' 轮/秒';
   $('#speed-value').textContent = label;
   event.target.setAttribute('aria-valuetext', label);
+  updateMotion();
+  syncThrowState();
+});
+motion.addEventListener('change', () => {
+  preferredMotion = motion.value;
+  updateMotion();
+  syncThrowState();
 });
 runButton.addEventListener('click', () => setRunning(!running));
 stepButton.addEventListener('click', () => {
-  toss(1);
-  updateReadout(true);
-  $('#announcement').textContent = `第 ${rounds} 轮，${resultLabel()}`;
+  stepButton.disabled = true;
+  const duration = speed <= physicsLimit ? Math.max(440, 900 / speed) : previewInterval() * .78;
+  const animated = canAnimate && !reducedMotion.matches;
+  startThrow(performance.now(), animated ? duration : 0, { physics: activePhysics(), single: true });
+  if (!animated) finishThrow();
   requestFrame();
 });
 $('#reset').addEventListener('click', () => {
@@ -404,9 +522,6 @@ $('#reset').addEventListener('click', () => {
   bucketSize = 1;
   countRange = 5;
   lastReadout = -Infinity;
-  for (const coin of coins) {
-    for (const animation of coin.getAnimations()) animation.cancel();
-  }
   setRunning(false);
   $('#announcement').textContent = '实验已重置';
 });
@@ -430,6 +545,13 @@ for (const button of viewButtons) {
 
 document.addEventListener('visibilitychange', () => { previousFrame = 0; });
 document.documentElement.addEventListener('themechange', updatePalette);
-reducedMotion.addEventListener('change', requestFrame);
+function onMotionPreference() {
+  updateMotion();
+  if (pending && reducedMotion.matches) finishThrow();
+  requestFrame();
+}
+if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', onMotionPreference);
+else reducedMotion.addListener(onMotionPreference);
+updateMotion();
 new ResizeObserver(resize).observe(canvas);
 updatePalette();

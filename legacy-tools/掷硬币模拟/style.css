@@ -26,7 +26,7 @@ body {
 h1 { margin: 6px 0; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.15; }
 h2 { margin: 0; font-size: 1.15rem; }
 
-.layout { display: grid; grid-template-columns: 282px minmax(0, 1fr); gap: 16px; align-items: start; }
+.layout { display: grid; gap: 16px; }
 .panel {
   min-width: 0;
   padding: 18px;
@@ -35,47 +35,106 @@ h2 { margin: 0; font-size: 1.15rem; }
   background: var(--surface-soft);
 }
 
-.coin-tray {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  padding: 22px 8px 12px;
-  margin-top: 14px;
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  background: var(--canvas);
+.bench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 20px;
+  margin-top: 12px;
 }
 
-.coin-slot { display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: .75rem; }
-.coin {
+.coin-tray {
+  --felt-ink: #e5f2eb;
+  --felt-muted: #b5d7c8;
+  --radius: clamp(30px, 5.2vw, 43px);
   display: grid;
-  place-items: center;
-  width: 65px;
-  aspect-ratio: 1;
-  border: 5px double #9e6626;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  min-height: calc(125px + 5.25 * var(--radius));
+  padding: 12px 15px 10px;
+  border: 1px solid #436457;
+  border-radius: 13px;
+  color: var(--felt-ink);
+  background: radial-gradient(ellipse at 46% 40%, #346252, #203f36 72%);
+  box-shadow: inset 0 0 22px #102a2180;
+}
+.tray-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--felt-muted);
+  font-size: .75rem;
+  letter-spacing: .08em;
+}
+.coin-pair { display: flex; align-items: end; justify-content: center; gap: clamp(22px, 9vw, 110px); }
+.coin-slot { display: grid; justify-items: center; gap: 5px; min-width: 86px; font-size: .75rem; }
+.coin-label { color: var(--felt-muted); }
+.coin-pad {
+  --half-depth: calc(var(--radius) * .08315);
+  position: relative;
+  width: calc(2 * var(--radius));
+  height: calc(2 * var(--radius));
+  perspective: 700px;
+}
+.shadow {
+  position: absolute;
+  inset: 46% -6% 5%;
   border-radius: 50%;
-  background: radial-gradient(circle at 33% 25%, #fff1bd, #efb758 83%);
-  box-shadow: 0 4px 0 #92561e, 0 7px 9px #61422033;
-  color: #634016;
-  font: 700 1.65rem/1 var(--font-serif);
+  background: radial-gradient(ellipse, #071a12b3 4%, #071a1200 73%);
 }
-.coin[data-tail="true"] {
-  border-color: #8d733b;
-  background: radial-gradient(circle at 33% 25%, #fff5d2, #d9bc79 83%);
+.coin, .coin-face, .coin::before { position: absolute; inset: 0; }
+.coin {
+  transform-style: preserve-3d;
+  transform: rotateX(30deg) rotateZ(var(--yaw, 0deg)) rotateX(var(--angle, 0deg));
 }
-.latest { margin: 8px 0 16px; text-align: center; color: var(--muted); font-size: .85rem; }
+.coin.is-tail { --angle: 180deg; }
+.coin::before {
+  content: "";
+  border-radius: 50%;
+  background: #7f8d94;
+}
+.coin-face {
+  border-radius: 50%;
+  backface-visibility: hidden;
+  background: #c4ccd1 center / 100% 100% no-repeat;
+}
+.coin-front { transform: translateZ(var(--half-depth)); background-image: url("./yuan-heads.svg"); }
+.coin-back { transform: rotateX(180deg) translateZ(var(--half-depth)); background-image: url("./yuan-tails.svg"); }
+.coin-edge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--radius) * .267);
+  height: calc(var(--half-depth) * 2);
+  background: linear-gradient(90deg, #75838b, #bac2c7);
+  backface-visibility: hidden;
+  transform: translate(-50%, -50%) rotateZ(var(--edge-angle)) translateY(calc(var(--radius) * -.9914)) rotateX(90deg);
+}
+.coin-tray:not(.physical) .coin-edge { display: none; }
+.latest {
+  margin: 9px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid #b5d7c842;
+  text-align: center;
+  color: var(--felt-ink);
+  font-size: .85rem;
+}
 .total, .speed, .stat { font-variant-numeric: tabular-nums; }
-.total { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 12px 0; border-block: 1px solid var(--hairline); }
+.total { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 0 6px; border-bottom: 1px solid var(--hairline); }
 .total span { color: var(--muted); font-size: .85rem; }
 .total strong { font-size: 1.3rem; overflow-wrap: anywhere; }
-.speed { display: grid; grid-template-columns: 1fr auto; gap: 5px; margin: 16px 0; }
+.speed { display: grid; grid-template-columns: 1fr auto; gap: 2px 5px; margin: 10px 0; }
 .speed label { font-weight: 650; }
 .speed output { font-weight: 650; color: var(--heads); }
 .speed input, .speed-range { grid-column: 1 / -1; }
 .speed input { width: 100%; height: 24px; margin: 0; accent-color: var(--heads); cursor: pointer; }
 .speed-range { display: flex; justify-content: space-between; color: var(--muted); font-size: .75rem; }
 
-button {
+.motion-control { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3px 8px; margin-bottom: 10px; }
+.motion-control label { font-weight: 650; }
+.motion-control p { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: .75rem; }
+.motion-control select { max-width: 100%; padding: 5px 7px; }
+
+button, select {
   padding: 8px 11px;
   border: 1px solid var(--hairline);
   border-radius: 8px;
@@ -89,8 +148,8 @@ button {
   transition: background-color 180ms, color 180ms, border-color 180ms;
 }
 button:enabled:hover { border-color: var(--heads); }
-button:focus-visible, input:focus-visible { outline: 2px solid var(--heads); outline-offset: 3px; }
-button:disabled { opacity: .48; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--heads); outline-offset: 3px; }
+button:disabled, select:disabled { opacity: .48; cursor: default; }
 .actions { display: grid; grid-template-columns: 1.35fr 1fr auto; gap: 6px; }
 .primary { background: var(--heads); color: var(--canvas); border-color: var(--heads); }
 
@@ -141,14 +200,10 @@ button:disabled { opacity: .48; cursor: default; }
 @media (max-width: 760px) {
   .experiment { padding: 22px 12px 26px; }
   .intro { margin-bottom: 16px; }
-  .layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .layout { gap: 12px; }
   .panel { padding: 12px; }
-  .controls { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); column-gap: 10px; }
-  .controls h2, .latest, .speed, .actions { grid-column: 1 / -1; }
-  .coin-tray { gap: 10px; margin-top: 10px; padding: 12px 5px 8px; }
-  .coin { width: 52px; font-size: 1.25rem; }
-  .latest { margin-bottom: 5px; }
-  .total { grid-area: 2 / 2; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 0; }
+  .bench { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .coin-tray { --radius: 34px; }
   .stat { padding: 7px; }
   .stat strong { font-size: 1rem; }
   .stat p { font-size: .65rem; }

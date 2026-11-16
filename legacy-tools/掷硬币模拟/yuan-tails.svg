@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="metal" x2=".86" y2="1"><stop stop-color="#f7f8fa"/><stop offset=".37" stop-color="#c8cfd3"/><stop offset=".56" stop-color="#eef0ef"/><stop offset="1" stop-color="#9ba7ae"/></linearGradient>
+    <path id="arch" d="M 19,64 A 45,45 0 0 1 109,64"/>
+    <path id="petal" d="M0 4C-10-4-16-25-8-32Q-3-37 4-31C-3-29-4-23 1-17Q11-8 0 4Z"/>
+    <g id="ring"><use href="#petal"/><use href="#petal" transform="rotate(36)"/><use href="#petal" transform="rotate(72)"/><use href="#petal" transform="rotate(108)"/><use href="#petal" transform="rotate(144)"/><use href="#petal" transform="rotate(180)"/><use href="#petal" transform="rotate(216)"/><use href="#petal" transform="rotate(252)"/><use href="#petal" transform="rotate(288)"/><use href="#petal" transform="rotate(324)"/></g>
+  </defs>
+  <circle cx="64" cy="64" r="63" fill="url(#metal)" stroke="#697780" stroke-width="2"/>
+  <circle cx="64" cy="64" r="59" fill="none" stroke="#fafcfc" stroke-width="1.5"/>
+  <circle cx="64" cy="64" r="55" fill="none" stroke="#828f96" stroke-width=".8"/>
+  <text fill="#445159" font-family="sans-serif" font-size="8" letter-spacing=".7" text-anchor="middle"><textPath href="#arch" startOffset="50%">ZHONGGUO RENMIN YINHANG</textPath></text>
+  <g fill="#a4afb5" stroke="#626e75" stroke-width="1" stroke-linejoin="round">
+    <path d="M62 72Q66 86 51 105M63 91Q74 81 91 90L85 92 88 95Q75 101 63 94M57 100Q45 86 32 91L36 95 34 99Q47 105 57 100Z"/>
+    <g transform="translate(65 63) rotate(-12)">
+      <use href="#ring" fill="#b1bcc1"/>
+      <use href="#ring" transform="rotate(20) scale(.72)" fill="#c5cdd0"/>
+      <use href="#ring" transform="rotate(9) scale(.45)" fill="#e2e6e7"/>
+      <circle r="5" fill="#9ca9ae" stroke="#edf0ef"/>
+    </g>
+  </g>
+</svg>
