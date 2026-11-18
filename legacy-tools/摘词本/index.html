@@ -23,503 +23,329 @@
     <script defer src="https://analytics.oscarstudio.cn/script.js"
         data-website-id="6a75f3bd-26d3-4d27-acbf-282f408254da"></script>
     <style>
-        
+        /* =====================================================
+         * 摘词本 — 单页工作台
+         * 设计基座：_shared/design-tokens.css（Claude 色板 + 浅/深双主题）
+         * 布局：桌面 1280px 两栏（录入 / 词表+学习卡），1080px 以下单列
+         * 业务逻辑（FSRS / API / 登录守卫）保持原样
+         * ===================================================== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        [hidden] { display: none !important; }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Arial, sans-serif;
+        :root {
+            --danger: #d9534f;
+            --warn: #e0983f;
+            --info: #4a90d9;
         }
 
         body {
-            background: var(--bg-color);
-            color: var(--text-color);
+            font-family: var(--font-sans);
+            background: var(--canvas);
+            color: var(--body);
             min-height: 100vh;
+            padding: calc(44px + 26px) 24px 60px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color .3s ease, color .3s ease;
         }
 
-        /* 旧的本地顶栏已弃用：被 _shared/tool-header.js 注入的顶栏（z-index 9999）盖住。
-           这里 display:none 避免残留半截深色条。导航交给 .submode-bar。 */
-        .top-bar { display: none; }
-        /* 子模式顶栏：固定在注入顶栏（44px）下方 */
-        .submode-bar {
-            position: fixed;
-            top: 44px;
-            left: 0;
-            right: 0;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            background: var(--surface-card);
-            border-bottom: 1px solid var(--hairline);
-            z-index: 100;
+        ::selection { background: color-mix(in srgb, var(--primary) 26%, transparent); }
+
+        /* 旧导航节点保留（JS 引用），工作台下不显示 */
+        .top-bar, .submode-bar, .floating-settings { display: none !important; }
+
+        .workbench { width: 100%; max-width: 1280px; margin: 0 auto; }
+
+        /* ---------- 页头 ---------- */
+        .page-hero { margin-bottom: 22px; }
+        .page-hero__head {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            gap: 20px; flex-wrap: wrap;
         }
-        .submode-back {
-            color: var(--muted);
-            background: none;
-            border: none;
-            font-size: 1.3rem;
-            cursor: pointer;
-            padding: 6px 14px;
-            margin-right: 4px;
-            border-radius: 6px;
-            transition: all 0.15s;
-            line-height: 1;
-        }
-        .submode-back:hover { color: var(--ink); background: var(--surface-soft); }
-        .submode-title {
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: var(--ink);
-        }
-
-        .back-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .back-btn:hover { background: var(--surface-soft); color: var(--text-color); }
-
-        .page-title { flex: 1; text-align: center; font-size: 1rem; font-weight: 500; }
-
-        .settings-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .settings-btn:hover { background: var(--surface-soft); color: var(--secondary-color); }
-
-        .page-hero {
-            text-align: center;
-            padding: 88px 20px 24px;
-            width: 100%;
-            max-width: min(90vw, 500px);
-            margin: 0 auto;
+        .wb-eyebrow {
+            font-size: 11px; font-weight: 500; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
         }
         .page-hero__title {
-            font-size: clamp(1.8rem, 5vmin, 2.4rem);
-            font-weight: 600;
-            font-family: var(--font-serif, Georgia, serif);
-            color: var(--ink);
-            margin: 0 0 8px;
-            letter-spacing: -0.01em;
+            font-family: var(--font-serif); font-weight: 400; font-size: 1.9rem;
+            line-height: 1.2; letter-spacing: -.3px; color: var(--ink);
         }
-        .page-hero__desc {
-            font-size: clamp(0.88rem, 2.3vmin, 0.98rem);
-            color: var(--muted);
-            line-height: 1.5;
-            margin: 0;
+        .page-hero__desc { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+        .wb-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+        .wb-stat {
+            flex: 1 1 0; min-width: 116px; background: var(--surface-card);
+            border: 1px solid var(--hairline); border-radius: var(--r-lg);
+            padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .wb-stat__num {
+            font-family: var(--font-serif); font-size: 1.6rem; line-height: 1;
+            color: var(--ink); font-variant-numeric: tabular-nums;
+        }
+        .wb-stat__label { font-size: 11.5px; letter-spacing: .5px; color: var(--muted); }
+        .wb-stat--due .wb-stat__num { color: var(--primary); }
+        .wb-stat--mastered .wb-stat__num { color: var(--success-color); }
+
+        /* ---------- 两栏工作台 ---------- */
+        .wb-grid {
+            display: grid; grid-template-columns: 380px minmax(0, 1fr);
+            gap: 20px; align-items: start;
+        }
+        .wb-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+        .panel, .container {
+            background: var(--surface-card); border: 1px solid var(--hairline);
+            border-radius: var(--r-xl); padding: 20px;
+        }
+        .panel-title {
+            font-size: 12px; font-weight: 600; letter-spacing: 1.2px;
+            text-transform: uppercase; color: var(--muted); margin-bottom: 14px;
+        }
+        .panel .mode-panel .container {
+            background: transparent; border: none; padding: 0;
         }
 
-        .main-menu {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            padding: 0 20px 20px;
-            width: 100%;
-            max-width: min(90vw, 500px);
-            margin: 0 auto;
-        }
-
+        /* ---------- 快捷操作 ---------- */
+        .main-menu { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .mode-card {
-            background: var(--card-bg);
-            border: var(--card-border);
-            border-radius: 16px;
-            padding: clamp(28px, 6vmin, 45px) clamp(18px, 4vmin, 30px);
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s;
-            animation: float 3s ease-in-out infinite;
+            display: flex; align-items: center; gap: 10px; cursor: pointer;
+            text-align: left; color: var(--ink); font-family: var(--font-sans);
+            background: var(--surface-soft); border: 1px solid var(--hairline);
+            border-radius: var(--r-md); padding: 12px; transition: .15s;
         }
-
-        .mode-card:nth-child(2) { animation-delay: 0.5s; }
-        .mode-card:nth-child(3) { animation-delay: 1s; }
-        .mode-card:nth-child(4) { animation-delay: 1.5s; }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
-        }
-
         .mode-card:hover {
-            background: var(--surface-soft);
             border-color: var(--primary);
-            transform: translateY(-8px);
-            animation: none;
+            background: color-mix(in srgb, var(--primary) 8%, var(--surface-card));
+            transform: translateY(-1px);
         }
+        .mode-card .icon { font-size: 1.2rem; line-height: 1; }
+        .mode-card .name { font-size: 13.5px; font-weight: 500; }
 
-        .mode-card .icon { font-size: clamp(1.8rem, 5vmin, 2.8rem); margin-bottom: clamp(8px, 2vmin, 14px); }
-        .mode-card .name { font-size: clamp(0.9rem, 2.5vmin, 1.15rem); font-weight: 500; }
-
-        .mode-panel { display: none; padding: 80px 20px 20px; max-width: 500px; margin: 0 auto; }
+        /* 面板显隐：录入/总览常驻，背诵/复习由 tab 切换 */
+        .mode-panel { display: none; }
         .mode-panel.active { display: block; }
 
-        .container {
-            background: var(--card-bg);
-            border: var(--card-border);
-            border-radius: 12px;
-            padding: 20px;
+        /* ---------- 表单 ---------- */
+        .input-group { margin-bottom: 14px; }
+        .input-group label {
+            display: block; font-size: 12px; font-weight: 500;
+            color: var(--muted); margin-bottom: 6px;
         }
-
-        .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
-        .input-group input {
-            width: 100%;
-            padding: 12px 14px;
-            border: var(--card-border);
-            border-radius: 8px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            font-size: 0.95rem;
+        .input-group input, .input-group textarea, .filter-bar select {
+            width: 100%; padding: 10px 12px; font-family: var(--font-sans);
+            font-size: 13.5px; color: var(--ink); background: var(--canvas);
+            border: 1px solid var(--hairline); border-radius: var(--r-md);
+            transition: border-color .15s, box-shadow .15s;
         }
-
-        .input-group input:focus, .input-group textarea:focus { outline: none; border-color: var(--secondary-color); }
-        .input-group textarea {
-            width: 100%;
-            min-height: 78px;
-            resize: vertical;
-            padding: 12px 14px;
-            border: var(--card-border);
-            border-radius: 8px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            font-size: 0.95rem;
-            line-height: 1.5;
+        .input-group textarea { min-height: 74px; resize: vertical; line-height: 1.5; }
+        .input-group input:focus, .input-group textarea:focus,
+        .filter-bar select:focus, .recite-input:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
         }
-        .input-help { font-size: 0.75rem; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+        .input-help { font-size: 11.5px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
 
+        /* ---------- 按钮 ---------- */
         .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.2s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            font-family: var(--font-sans); font-size: 13.5px; font-weight: 500;
+            color: var(--ink); background: var(--surface-soft);
+            border: 1px solid var(--hairline); border-radius: var(--r-md);
+            padding: 10px 15px; cursor: pointer; white-space: nowrap; transition: .15s;
+        }
+        .btn:hover { background: var(--surface-cream-strong); }
+        .btn:active { transform: translateY(1px); }
+        .btn:disabled { opacity: .45; cursor: not-allowed; }
+        .btn-block { width: 100%; }
+        .btn-add, .btn-save, .btn-primary {
+            color: #fff; background: var(--primary); border-color: var(--primary);
+        }
+        .btn-add:hover, .btn-save:hover, .btn-primary:hover {
+            background: var(--primary-active); border-color: var(--primary-active);
         }
 
-        .btn-add { background: var(--primary-color); color: #fff; }
-        .btn-add:active { background: #1e4a8a; }
-
-        .word-list { max-height: 280px; overflow-y: auto; margin-top: 16px; }
-
-        .word-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: var(--surface-soft);
-            border-radius: 8px;
-            margin-bottom: 8px;
+        /* ---------- 词条列表 ---------- */
+        .word-list, .view-list {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 10px; max-height: 360px; overflow-y: auto; margin-top: 14px;
         }
-
-        .word-item .word { font-size: 0.95rem; font-weight: 500; }
-        .word-item .translation { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+        .word-item, .view-item {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            gap: 10px; padding: 12px 14px; background: var(--surface-soft);
+            border: 1px solid var(--hairline); border-radius: var(--r-md);
+        }
+        .word-item .word, .view-item .word { font-size: 14px; font-weight: 600; color: var(--ink); }
+        .word-item .translation, .view-item .translation { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+        .word-actions { display: flex; gap: 6px; flex-shrink: 0; }
         .word-item .delete-btn, .word-item .edit-example-btn {
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 0.78rem;
-            cursor: pointer;
-            white-space: nowrap;
+            border: none; border-radius: 6px; padding: 6px 9px;
+            font-size: 11.5px; cursor: pointer; color: #fff; font-family: var(--font-sans);
         }
-        .word-item .delete-btn { background: #c9302c; }
-        .word-item .edit-example-btn { background: var(--primary-color); margin-right: 6px; }
-        .word-actions { display: flex; align-items: center; margin-left: 8px; }
-        .example-badge { display: inline-block; margin-top: 5px; color: var(--secondary-color); font-size: 0.72rem; }
+        .word-item .delete-btn { background: var(--danger); }
+        .word-item .edit-example-btn { background: var(--primary); }
+        .example-badge { display: inline-block; margin-top: 5px; color: var(--success-color); font-size: 11px; }
+        .empty-state { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 32px 16px; font-size: 13px; }
 
-        .empty-state { text-align: center; color: var(--text-muted); padding: 30px; font-size: 0.9rem; }
-
-        .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; }
-        .filter-bar select {
-            flex: 1;
-            padding: 10px 12px;
-            border: var(--card-border);
-            border-radius: 8px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            font-size: 0.85rem;
+        .filter-bar { display: flex; gap: 10px; }
+        .filter-bar select { flex: 1; }
+        .view-item .word-info { flex: 1; min-width: 0; }
+        .view-item .meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+        .view-item .status {
+            padding: 3px 9px; border-radius: var(--r-pill); font-size: 11px;
+            color: #fff; flex-shrink: 0; align-self: flex-start;
         }
-
-        .view-list { max-height: 380px; overflow-y: auto; }
-
-        .view-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: var(--surface-soft);
-            border-radius: 8px;
-            margin-bottom: 8px;
+        .status.new { background: var(--primary); }
+        .status.learning { background: var(--warn); }
+        .status.mastered { background: var(--success-color); }
+        .mastery-bar { height: 4px; background: var(--hairline); border-radius: 2px; margin-top: 7px; overflow: hidden; }
+        .mastery-fill {
+            height: 100%; background: linear-gradient(90deg, var(--accent-teal), var(--primary));
+            border-radius: 2px; transition: width .3s;
         }
 
-        .view-item .word-info { flex: 1; }
-        .view-item .word { font-size: 0.95rem; font-weight: 500; }
-        .view-item .translation { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
-        .view-item .meta { font-size: 0.75rem; color: #666; margin-top: 2px; }
-        .view-item .status { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; color: #fff; }
-        .status.new { background: var(--primary-color); }
-        .status.learning { background: #ff9500; }
-        .status.mastered { background: #34c759; }
-
-        .mastery-bar { height: 4px; background: var(--card-border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
-        .mastery-fill { height: 100%; background: linear-gradient(90deg, var(--secondary-color), var(--accent-color)); border-radius: 2px; transition: width 0.3s; }
-
-        .recite-card {
-            background: var(--surface-soft);
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
-            margin-bottom: 16px;
+        /* ---------- 学习卡区 ---------- */
+        .study-tabs {
+            display: flex; gap: 4px; padding: 4px; margin-bottom: 18px;
+            background: var(--surface-soft); border: 1px solid var(--hairline);
+            border-radius: var(--r-md);
         }
-
-        .recite-hint { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
-        .recite-chinese { font-size: 1.4rem; font-weight: 500; color: var(--secondary-color); margin-bottom: 20px; }
-
-        .recite-input {
-            width: 100%;
-            padding: 12px;
-            border: var(--card-border);
-            border-radius: 8px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            font-size: 1.1rem;
-            text-align: center;
+        .study-tab {
+            flex: 1; padding: 8px; border: none; border-radius: 6px;
+            background: transparent; color: var(--muted); font-family: var(--font-sans);
+            font-size: 13.5px; font-weight: 500; cursor: pointer; transition: .15s;
         }
-
-        .recite-input:focus { outline: none; border-color: var(--secondary-color); }
-        .recite-input.correct { border-color: #34c759; background: rgba(52, 199, 89, 0.1); }
-        .recite-input.incorrect { border-color: #ff3b30; background: rgba(255, 59, 48, 0.1); }
-
-        .recite-result { margin-top: 12px; font-size: 0.95rem; font-weight: 500; }
-        .recite-result.correct { color: #34c759; }
-        .recite-result.incorrect { color: #ff3b30; }
-
-        .recite-answer { margin-top: 8px; font-size: 0.85rem; color: var(--text-muted); }
-        .recite-example { margin: 4px 0 18px; text-align: left; }
-        .example-label { font-size: 0.76rem; color: var(--muted); margin-bottom: 7px; }
-        .example-sentence { font-size: 1.05rem; line-height: 1.65; color: var(--ink); word-break: break-word; }
-        .example-translation { margin-top: 8px; font-size: 0.88rem; line-height: 1.5; color: var(--muted); }
-        .cloze-blank { display: inline-block; min-width: 4em; border-bottom: 2px solid var(--secondary-color); color: transparent; vertical-align: baseline; }
-        .example-hint { margin-top: 8px; font-size: 0.8rem; color: var(--secondary-color); min-height: 1.2em; }
-        .example-hint-btn { width: auto; margin-top: 8px; padding: 6px 10px; font-size: 0.78rem; background: var(--surface-card); border: var(--card-border); color: var(--secondary-color); border-radius: 6px; cursor: pointer; }
-        .example-hint-btn:disabled { opacity: 0.65; cursor: default; }
-        .example-editor-actions { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
-        .example-editor-actions .btn { width: auto; padding: 8px 10px; font-size: 0.8rem; }
-        .example-content { width: 420px; }
-        .example-content textarea { width: 100%; min-height: 96px; resize: vertical; padding: 10px; border: var(--card-border); border-radius: 8px; background: var(--bg-color); color: var(--text-color); font-size: 0.92rem; line-height: 1.5; }
-        .example-content input { width: 100%; padding: 10px; border: var(--card-border); border-radius: 8px; background: var(--bg-color); color: var(--text-color); font-size: 0.9rem; }
-        .example-content .input-help { margin-bottom: 10px; }
+        .study-tab:hover { color: var(--ink); }
+        .study-tab.active {
+            background: var(--surface-card); color: var(--primary);
+            box-shadow: 0 1px 3px rgba(20, 20, 19, .08);
+        }
 
         .recite-progress {
-            display: flex;
-            align-items: center;
-            margin-bottom: 16px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+            font-size: 12.5px; color: var(--muted);
         }
+        .recite-progress .count { min-width: 48px; font-variant-numeric: tabular-nums; }
+        .recite-progress .progress-bar { flex: 1; height: 6px; background: var(--hairline); border-radius: 3px; overflow: hidden; }
+        .recite-progress .progress-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width .3s; }
 
-        .recite-progress .count { min-width: 50px; }
-        .recite-progress .progress-bar {
-            flex: 1;
-            height: 6px;
-            background: var(--card-border);
-            border-radius: 3px;
-            margin: 0 12px;
-            overflow: hidden;
+        .review-info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+        .review-info .stat {
+            text-align: center; padding: 12px; background: var(--surface-soft);
+            border: 1px solid var(--hairline); border-radius: var(--r-md);
         }
+        .review-info .stat-label { font-size: 11.5px; color: var(--muted); }
+        .review-info .stat-value { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; color: var(--primary); }
 
-        .recite-progress .progress-fill {
-            height: 100%;
-            background: var(--secondary-color);
-            transition: width 0.3s;
+        .recite-card {
+            text-align: center; padding: 28px 24px; margin-bottom: 16px;
+            background: var(--surface-soft); border: 1px solid var(--hairline);
+            border-radius: var(--r-lg);
         }
-
-        .review-info {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 16px;
-            padding: 12px;
-            background: var(--surface-soft);
-            border-radius: 8px;
+        .recite-hint { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+        .recite-chinese {
+            font-family: var(--font-serif); font-size: 1.6rem; color: var(--ink);
+            margin-bottom: 22px; line-height: 1.35;
         }
+        .recite-input {
+            width: 100%; padding: 14px; text-align: center; font-size: 1.15rem;
+            color: var(--ink); background: var(--canvas);
+            border: 1px solid var(--hairline); border-radius: var(--r-md);
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .recite-input.correct { border-color: var(--success-color); background: color-mix(in srgb, var(--success-color) 10%, var(--canvas)); }
+        .recite-input.incorrect { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, var(--canvas)); }
+        .recite-result { margin-top: 12px; font-size: 14px; font-weight: 600; }
+        .recite-result.correct { color: var(--success-color); }
+        .recite-result.incorrect { color: var(--danger); }
+        .recite-answer { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+        .recite-example {
+            margin: 6px 0 18px; text-align: left; padding: 14px;
+            background: var(--surface-card); border-radius: var(--r-md);
+        }
+        .example-label { font-size: 11px; color: var(--muted); margin-bottom: 7px; letter-spacing: .5px; }
+        .example-sentence { font-size: 15px; line-height: 1.65; color: var(--ink); word-break: break-word; }
+        .example-translation { margin-top: 8px; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+        .cloze-blank { display: inline-block; min-width: 4em; border-bottom: 2px solid var(--primary); color: transparent; }
+        .example-hint { margin-top: 8px; font-size: 12px; color: var(--primary); min-height: 1.2em; }
+        .example-hint-btn {
+            margin-top: 8px; padding: 6px 12px; font-size: 12px; font-family: var(--font-sans);
+            background: var(--surface-card); border: 1px solid var(--hairline);
+            color: var(--primary); border-radius: 6px; cursor: pointer;
+        }
+        .example-hint-btn:disabled { opacity: .6; cursor: default; }
+        .example-editor-actions { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+        .example-editor-actions .btn { width: auto; padding: 8px 12px; font-size: 12px; }
 
-        .review-info .stat-label { font-size: 0.8rem; color: var(--text-muted); }
-        .review-info .stat-value { font-size: 1.3rem; font-weight: 600; color: var(--secondary-color); }
+        .rating-bar { display: flex; gap: 8px; margin-top: 14px; }
+        .rating-btn {
+            flex: 1; padding: 12px 8px; border: none; border-radius: var(--r-md);
+            font-size: 13px; font-weight: 600; color: #fff; font-family: var(--font-sans);
+            cursor: pointer; transition: .15s;
+        }
+        .rating-btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+        .rating-btn:active { transform: translateY(0); }
+        .rating-again { background: var(--danger); }
+        .rating-hard { background: var(--warn); }
+        .rating-good { background: var(--success-color); }
+        .rating-easy { background: var(--info); }
+        #reciteNextBtn, #reviewNextBtn { margin-top: 14px; }
 
+        /* ---------- 弹窗 ---------- */
         .settings-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-            display: none;
+            position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+            background: rgba(20, 20, 19, .55); backdrop-filter: blur(2px);
+            padding: 20px; z-index: 200;
         }
-
         .settings-modal.open { display: flex; }
-
         .settings-content {
-            background: var(--card-bg);
-            border: var(--card-border);
-            border-radius: 12px;
-            padding: 24px;
-            width: 280px;
+            width: 420px; max-width: 100%; max-height: 90vh; overflow-y: auto;
+            padding: 24px; background: var(--surface-card);
+            border: 1px solid var(--hairline); border-radius: var(--r-xl);
+            box-shadow: 0 20px 60px rgba(20, 20, 19, .3);
         }
-
-        .settings-content h3 { font-size: 1rem; margin-bottom: 16px; color: var(--secondary-color); }
-
-        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .setting-row label { font-size: 0.9rem; color: var(--text-muted); }
-        .setting-row input {
-            width: 60px;
-            padding: 8px;
-            border: var(--card-border);
-            border-radius: 6px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            text-align: center;
-            font-size: 0.9rem;
-        }
-
-        .btn-save { background: var(--primary-color); color: #fff; margin-top: 12px; }
-
-        /* 主页浮动设置按钮（独立于 .top-bar / .submode-bar） */
-        .floating-settings {
-            position: fixed;
-            top: calc(44px + 12px);
-            right: 16px;
-            z-index: 50;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--surface-card);
-            border: var(--card-border);
-            color: var(--muted);
-            font-size: 1.15rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: all 0.2s;
-            line-height: 1;
-            padding: 0;
-        }
-        .floating-settings:hover { color: var(--secondary-color); transform: scale(1.05); background: var(--surface-soft); }
-
-        /* submode-bar 内的右侧设置按钮 */
-        .submode-bar { gap: 4px; }
-        .submode-settings {
-            margin-left: auto;
-            color: var(--muted);
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 6px;
-            transition: all 0.15s;
-            line-height: 1;
-        }
-        .submode-settings:hover { color: var(--ink); background: var(--surface-soft); }
-
-        /* 设置面板增强 */
-        .settings-content {
-            width: 320px;
-            max-width: calc(100vw - 40px);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .settings-section {
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid var(--hairline);
-        }
+        .example-content { width: 480px; }
+        .settings-content h3 { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 400; color: var(--ink); margin-bottom: 16px; }
+        .settings-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--hairline); }
         .settings-section:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
         .settings-section-title {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--secondary-color);
-            margin-bottom: 4px;
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
+            display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+            font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 4px;
         }
-        .settings-section-title small {
-            font-weight: 400;
-            font-size: 0.72rem;
-            color: var(--muted);
+        .settings-section-title small { font-weight: 400; font-size: 11px; color: var(--muted); }
+        .settings-section-desc { font-size: 11.5px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .setting-row label { font-size: 13px; color: var(--body); }
+        .setting-row input[type="number"] {
+            width: 64px; padding: 8px; text-align: center; font-size: 13px;
+            color: var(--ink); background: var(--canvas);
+            border: 1px solid var(--hairline); border-radius: 6px;
         }
-        .settings-section-desc {
-            font-size: 0.75rem;
-            color: var(--muted);
-            margin-bottom: 10px;
-            line-height: 1.45;
-        }
-        .setting-row.interval-row { margin-bottom: 8px; }
         .setting-row input[type="time"] { width: 110px; }
-        /* FSRS 评级按钮 */
-        .rating-bar {
-            display: flex;
-            gap: 6px;
-            margin-top: 12px;
+        .setting-row select {
+            max-width: 65%; padding: 8px; font-size: 12.5px;
+            color: var(--ink); background: var(--canvas);
+            border: 1px solid var(--hairline); border-radius: 6px;
         }
-        .rating-btn {
-            flex: 1;
-            padding: 11px 8px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.88rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s;
-            color: #fff;
-            background: var(--surface-soft);
-            color: var(--text-color);
+        .example-content textarea {
+            width: 100%; min-height: 96px; resize: vertical; padding: 10px;
+            line-height: 1.5; font-size: 13px; color: var(--ink); background: var(--canvas);
+            border: 1px solid var(--hairline); border-radius: var(--r-md);
         }
-        .rating-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
-        .rating-btn:active { transform: translateY(0); }
-        .rating-again { background: #ff3b30; color: #fff; }
-        .rating-hard  { background: #ff9500; color: #fff; }
-        .rating-good  { background: #34c759; color: #fff; }
-        .rating-easy  { background: #007aff; color: #fff; }
-
-        /* FSRS 设置区过渡 */
-        #fsrsOnly {
-            transition: opacity 0.15s;
+        .example-content input {
+            width: 100%; padding: 10px; font-size: 13px; color: var(--ink); background: var(--canvas);
+            border: 1px solid var(--hairline); border-radius: var(--r-md);
         }
 
-        /* Login prompt */
-        .login-prompt {
-            text-align: center;
-            padding: 60px 20px;
+        /* ---------- 响应式 ---------- */
+        @media (max-width: 1080px) {
+            .wb-grid { grid-template-columns: minmax(0, 1fr); }
         }
-
-        .login-prompt h3 { margin-bottom: 15px; color: var(--text-color); }
-        .login-prompt p { color: var(--text-muted); margin-bottom: 20px; }
-        .login-prompt .btn-login {
-            background: var(--primary-color);
-            color: #fff;
-            padding: 12px 30px;
-            border-radius: 8px;
-            text-decoration: none;
-            display: inline-block;
+        @media (max-width: 640px) {
+            body { padding: calc(44px + 16px) 12px 40px; }
+            .page-hero__title { font-size: 1.6rem; }
+            .wb-stat { min-width: calc(50% - 10px); }
+            .panel, .container { padding: 16px; }
+            .word-list, .view-list { grid-template-columns: minmax(0, 1fr); }
+            .settings-content, .example-content { width: 100%; }
         }
     </style>
 <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
@@ -527,6 +353,7 @@
 </head>
 
 <body>
+    <!-- 旧导航节点保留（JS 仍引用），工作台下由 CSS 隐藏 -->
     <div id="submodeBar" class="submode-bar" style="display:none">
         <button class="submode-back" id="submodeBack" title="返回主菜单" type="button">←</button>
         <span class="submode-title" id="submodeTitle"></span>
@@ -538,150 +365,165 @@
         <button class="settings-btn" id="settingsBtn" onclick="openSettings()">⚙</button>
     </header>
 
-    <div class="page-hero">
-        <h1 class="page-hero__title">摘词本</h1>
-        <p class="page-hero__desc">英语词条背诵与复习 · 支持单词、短语和词块</p>
-    </div>
+    <div class="workbench">
+        <header class="page-hero">
+            <div class="page-hero__head">
+                <div>
+                    <div class="wb-eyebrow">Oscar Studio · 教学工具</div>
+                    <h1 class="page-hero__title">摘词本</h1>
+                    <p class="page-hero__desc">英语词条背诵与复习 · 基于 FSRS 自适应复习算法</p>
+                </div>
+                <button class="btn" type="button" onclick="openSettings()">⚙ 设置</button>
+            </div>
+            <div class="wb-stats">
+                <div class="wb-stat"><span class="wb-stat__num" id="statTotal">0</span><span class="wb-stat__label">总词条</span></div>
+                <div class="wb-stat"><span class="wb-stat__num" id="statNew">0</span><span class="wb-stat__label">未学习</span></div>
+                <div class="wb-stat"><span class="wb-stat__num" id="statLearning">0</span><span class="wb-stat__label">学习中</span></div>
+                <div class="wb-stat wb-stat--mastered"><span class="wb-stat__num" id="statMastered">0</span><span class="wb-stat__label">已掌握</span></div>
+                <div class="wb-stat wb-stat--due"><span class="wb-stat__num" id="statDue">0</span><span class="wb-stat__label">待复习</span></div>
+            </div>
+        </header>
 
-    <div class="main-menu" id="mainMenu">
-        <div class="mode-card" onclick="switchMode('input')">
-            <div class="icon">✏️</div><div class="name">录入</div>
-        </div>
-        <div class="mode-card" onclick="switchMode('view')">
-            <div class="icon">📖</div><div class="name">总览</div>
-        </div>
-        <div class="mode-card" onclick="switchMode('recite')">
-            <div class="icon">🎯</div><div class="name">背诵</div>
-        </div>
-        <div class="mode-card" onclick="switchMode('review')">
-            <div class="icon">🧠</div><div class="name">复习</div>
+        <div class="wb-grid">
+            <aside class="wb-col">
+                <section class="panel">
+                    <div class="panel-title">快捷操作</div>
+                    <div class="main-menu" id="mainMenu">
+                        <div class="mode-card" onclick="goTo('input')"><div class="icon">✏️</div><div class="name">录入</div></div>
+                        <div class="mode-card" onclick="goTo('view')"><div class="icon">📖</div><div class="name">总览</div></div>
+                        <div class="mode-card" onclick="goTo('recite')"><div class="icon">🎯</div><div class="name">背诵</div></div>
+                        <div class="mode-card" onclick="goTo('review')"><div class="icon">🧠</div><div class="name">复习</div></div>
+                    </div>
+                </section>
+
+                <div class="mode-panel active" id="inputPanel">
+                    <div class="container">
+                        <div class="panel-title">录入词条</div>
+                        <div class="input-group">
+                            <label>单词 / 短语 / 词块</label>
+                            <input type="text" id="wordInput" placeholder="English word or phrase">
+                        </div>
+                        <div class="input-group">
+                            <label>释义</label>
+                            <input type="text" id="transInput" placeholder="中文释义">
+                        </div>
+                        <div class="input-group">
+                            <label>例句（可选）</label>
+                            <textarea id="exampleSentenceInput" placeholder="填写包含该词条的完整英文例句"></textarea>
+                            <div class="input-help">例句可包含单词、短语或词块。背诵/复习时会把目标文本挖空。</div>
+                        </div>
+                        <div class="input-group">
+                            <label>挖空内容</label>
+                            <input type="text" id="exampleTargetInput" placeholder="默认使用词条；词形变化可修改">
+                            <div class="example-editor-actions">
+                                <button class="btn" type="button" onclick="useSelectedExampleTarget('new')">使用选中的文本</button>
+                            </div>
+                            <div class="input-help">也可以在上面的例句中选中实际目标（例如 looked forward to），再点击按钮。</div>
+                        </div>
+                        <div class="input-group">
+                            <label>例句整体翻译</label>
+                            <textarea id="exampleTranslationInput" placeholder="用于背诵/复习时理解整句话"></textarea>
+                        </div>
+                        <button class="btn btn-add btn-block" type="button" onclick="addWord()">添加词条</button>
+                        <div class="word-list" id="wordList"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="wb-col">
+                <div class="mode-panel active" id="viewPanel">
+                    <div class="container">
+                        <div class="panel-title">词条总览</div>
+                        <div class="filter-bar">
+                            <select id="filterStatus">
+                                <option value="all">全部状态</option>
+                                <option value="new">未学习</option>
+                                <option value="learning">学习中</option>
+                                <option value="mastered">已掌握</option>
+                            </select>
+                            <select id="filterSort">
+                                <option value="date-desc">新→旧</option>
+                                <option value="date-asc">旧→新</option>
+                                <option value="alpha">字母</option>
+                            </select>
+                        </div>
+                        <div class="view-list" id="viewList"></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="study-tabs">
+                        <button class="study-tab active" data-mode="recite" type="button" onclick="setStudyTab('recite')">🎯 背诵</button>
+                        <button class="study-tab" data-mode="review" type="button" onclick="setStudyTab('review')">🧠 复习</button>
+                    </div>
+
+                    <div class="mode-panel" id="recitePanel">
+                        <div class="recite-progress">
+                            <span class="count" id="reciteCount">0/0</span>
+                            <div class="progress-bar"><div class="progress-fill" id="reciteProgress"></div></div>
+                            <span id="reciteRemaining">剩余 0</span>
+                        </div>
+                        <div class="recite-card">
+                            <div class="recite-hint" id="reciteHint">请写出单词或短语</div>
+                            <div class="recite-chinese" id="reciteChinese"></div>
+                            <input type="text" class="recite-input" id="reciteInput" placeholder="输入英文或短语" autocomplete="off">
+                            <div class="recite-example" id="reciteExample" style="display:none">
+                                <div class="example-label">例句提示</div>
+                                <div class="example-sentence" id="reciteExampleSentence"></div>
+                                <div class="example-translation" id="reciteExampleTranslation"></div>
+                                <button class="example-hint-btn" id="reciteExampleHintBtn" type="button" onclick="showExampleHint('recite')">提示</button>
+                                <div class="example-hint" id="reciteExampleHint"></div>
+                            </div>
+                            <div class="recite-result" id="reciteResult"></div>
+                            <div class="recite-answer" id="reciteAnswer"></div>
+                        </div>
+                        <div class="rating-bar" id="reciteRatingBar" style="display:none">
+                            <button class="rating-btn rating-again" data-rating="1" type="button">Again</button>
+                            <button class="rating-btn rating-hard"  data-rating="2" type="button">Hard</button>
+                            <button class="rating-btn rating-good"  data-rating="3" type="button">Good</button>
+                            <button class="rating-btn rating-easy"  data-rating="4" type="button">Easy</button>
+                        </div>
+                        <button class="btn btn-add btn-block" id="reciteNextBtn" onclick="nextRecite()" style="display:none">下一个</button>
+                    </div>
+
+                    <div class="mode-panel" id="reviewPanel">
+                        <div class="review-info">
+                            <div class="stat"><div class="stat-value" id="reviewDue">0</div><div class="stat-label">待复习</div></div>
+                            <div class="stat"><div class="stat-value" id="reviewTotal">0</div><div class="stat-label">总词条</div></div>
+                        </div>
+                        <div class="recite-progress">
+                            <span class="count" id="reviewCount">0/0</span>
+                            <div class="progress-bar"><div class="progress-fill" id="reviewProgress"></div></div>
+                            <span id="reviewRemaining">剩余 0</span>
+                        </div>
+                        <div class="recite-card">
+                            <div class="recite-hint" id="reviewHint">请写出单词或短语</div>
+                            <div class="recite-chinese" id="reviewChinese"></div>
+                            <input type="text" class="recite-input" id="reviewInput" placeholder="输入英文或短语" autocomplete="off">
+                            <div class="recite-example" id="reviewExample" style="display:none">
+                                <div class="example-label">例句提示</div>
+                                <div class="example-sentence" id="reviewExampleSentence"></div>
+                                <div class="example-translation" id="reviewExampleTranslation"></div>
+                                <button class="example-hint-btn" id="reviewExampleHintBtn" type="button" onclick="showExampleHint('review')">提示</button>
+                                <div class="example-hint" id="reviewExampleHint"></div>
+                            </div>
+                            <div class="recite-result" id="reviewResult"></div>
+                            <div class="recite-answer" id="reviewAnswer"></div>
+                        </div>
+                        <div class="rating-bar" id="reviewRatingBar" style="display:none">
+                            <button class="rating-btn rating-again" data-rating="1" type="button">Again</button>
+                            <button class="rating-btn rating-hard"  data-rating="2" type="button">Hard</button>
+                            <button class="rating-btn rating-good"  data-rating="3" type="button">Good</button>
+                            <button class="rating-btn rating-easy"  data-rating="4" type="button">Easy</button>
+                        </div>
+                        <button class="btn btn-add btn-block" id="reviewNextBtn" onclick="nextReview()" style="display:none">下一个</button>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 
     <button class="floating-settings" id="floatingSettings" onclick="openSettings()" title="设置" type="button">⚙</button>
-
-    <div class="mode-panel" id="inputPanel">
-        <div class="container">
-            <div class="input-group">
-                <label>单词 / 短语 / 词块</label>
-                <input type="text" id="wordInput" placeholder="English word or phrase">
-            </div>
-            <div class="input-group">
-                <label>释义</label>
-                <input type="text" id="transInput" placeholder="中文释义">
-            </div>
-            <div class="input-group">
-                <label>例句（可选）</label>
-                <textarea id="exampleSentenceInput" placeholder="填写包含该词条的完整英文例句"></textarea>
-                <div class="input-help">例句可包含单词、短语或词块。背诵/复习时会把目标文本挖空。</div>
-            </div>
-            <div class="input-group">
-                <label>挖空内容</label>
-                <input type="text" id="exampleTargetInput" placeholder="默认使用词条；词形变化可修改">
-                <div class="example-editor-actions">
-                    <button class="btn btn-add" type="button" onclick="useSelectedExampleTarget('new')">使用选中的文本</button>
-                </div>
-                <div class="input-help">也可以在上面的例句中选中实际目标（例如 looked forward to），再点击按钮。</div>
-            </div>
-            <div class="input-group">
-                <label>例句整体翻译</label>
-                <textarea id="exampleTranslationInput" placeholder="用于背诵/复习时理解整句话"></textarea>
-            </div>
-            <button class="btn btn-add" onclick="addWord()">添加</button>
-            <div class="word-list" id="wordList"></div>
-        </div>
-    </div>
-
-    <div class="mode-panel" id="viewPanel">
-        <div class="container">
-            <div class="filter-bar">
-                <select id="filterStatus">
-                    <option value="all">全部</option>
-                    <option value="new">未学习</option>
-                    <option value="learning">学习中</option>
-                    <option value="mastered">已掌握</option>
-                </select>
-                <select id="filterSort">
-                    <option value="date-desc">新→旧</option>
-                    <option value="date-asc">旧→新</option>
-                    <option value="alpha">字母</option>
-                </select>
-            </div>
-            <div class="view-list" id="viewList"></div>
-        </div>
-    </div>
-
-    <div class="mode-panel" id="recitePanel">
-        <div class="container">
-            <div class="recite-progress">
-                <span class="count" id="reciteCount">0/0</span>
-                <div class="progress-bar"><div class="progress-fill" id="reciteProgress"></div></div>
-                <span id="reciteRemaining">剩余 0</span>
-            </div>
-            <div class="recite-card">
-                <div class="recite-hint" id="reciteHint">请写出单词或短语</div>
-                <div class="recite-chinese" id="reciteChinese"></div>
-                <input type="text" class="recite-input" id="reciteInput" placeholder="输入英文或短语" autocomplete="off">
-                <div class="recite-example" id="reciteExample" style="display:none">
-                    <div class="example-label">例句提示</div>
-                    <div class="example-sentence" id="reciteExampleSentence"></div>
-                    <div class="example-translation" id="reciteExampleTranslation"></div>
-                    <button class="example-hint-btn" id="reciteExampleHintBtn" type="button" onclick="showExampleHint('recite')">提示</button>
-                    <div class="example-hint" id="reciteExampleHint"></div>
-                </div>
-                <div class="recite-result" id="reciteResult"></div>
-                <div class="recite-answer" id="reciteAnswer"></div>
-            </div>
-            <div class="rating-bar" id="reciteRatingBar" style="display:none">
-                <button class="rating-btn rating-again" data-rating="1" type="button">Again</button>
-                <button class="rating-btn rating-hard"  data-rating="2" type="button">Hard</button>
-                <button class="rating-btn rating-good"  data-rating="3" type="button">Good</button>
-                <button class="rating-btn rating-easy"  data-rating="4" type="button">Easy</button>
-            </div>
-            <button class="btn btn-add" id="reciteNextBtn" onclick="nextRecite()" style="display:none">下一个</button>
-        </div>
-    </div>
-
-    <div class="mode-panel" id="reviewPanel">
-        <div class="container">
-            <div class="review-info">
-                <div class="stat">
-                    <div class="stat-value" id="reviewDue">0</div>
-                    <div class="stat-label">待复习</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value" id="reviewTotal">0</div>
-                    <div class="stat-label">总词条</div>
-                </div>
-            </div>
-            <div class="recite-progress">
-                <span class="count" id="reviewCount">0/0</span>
-                <div class="progress-bar"><div class="progress-fill" id="reviewProgress"></div></div>
-                <span id="reviewRemaining">剩余 0</span>
-            </div>
-            <div class="recite-card">
-                <div class="recite-hint" id="reviewHint">请写出单词或短语</div>
-                <div class="recite-chinese" id="reviewChinese"></div>
-                <input type="text" class="recite-input" id="reviewInput" placeholder="输入英文或短语" autocomplete="off">
-                <div class="recite-example" id="reviewExample" style="display:none">
-                    <div class="example-label">例句提示</div>
-                    <div class="example-sentence" id="reviewExampleSentence"></div>
-                    <div class="example-translation" id="reviewExampleTranslation"></div>
-                    <button class="example-hint-btn" id="reviewExampleHintBtn" type="button" onclick="showExampleHint('review')">提示</button>
-                    <div class="example-hint" id="reviewExampleHint"></div>
-                </div>
-                <div class="recite-result" id="reviewResult"></div>
-                <div class="recite-answer" id="reviewAnswer"></div>
-            </div>
-            <div class="rating-bar" id="reviewRatingBar" style="display:none">
-                <button class="rating-btn rating-again" data-rating="1" type="button">Again</button>
-                <button class="rating-btn rating-hard"  data-rating="2" type="button">Hard</button>
-                <button class="rating-btn rating-good"  data-rating="3" type="button">Good</button>
-                <button class="rating-btn rating-easy"  data-rating="4" type="button">Easy</button>
-            </div>
-            <button class="btn btn-add" id="reviewNextBtn" onclick="nextReview()" style="display:none">下一个</button>
-        </div>
-    </div>
 
     <div class="settings-modal" id="exampleModal" onclick="if(event.target===this)closeExampleEditor()">
         <div class="settings-content example-content" onclick="event.stopPropagation()">
@@ -695,7 +537,7 @@
                 <label>挖空内容</label>
                 <input type="text" id="editExampleTarget" placeholder="默认使用词条；词形变化可修改">
                 <div class="example-editor-actions">
-                    <button class="btn btn-add" type="button" onclick="useSelectedExampleTarget('edit')">使用选中的文本</button>
+                    <button class="btn" type="button" onclick="useSelectedExampleTarget('edit')">使用选中的文本</button>
                 </div>
                 <div class="input-help">选中例句中的单词、短语或词块后点击上面的按钮。</div>
             </div>
@@ -704,7 +546,7 @@
                 <textarea id="editExampleTranslation" placeholder="背诵/复习时显示的整句中文翻译"></textarea>
             </div>
             <button class="btn btn-save" type="button" onclick="saveExampleEdit()">保存</button>
-            <button class="btn" type="button" onclick="clearExampleEdit()" style="margin-top:8px;background:var(--surface-soft);color:var(--muted)">清除例句</button>
+            <button class="btn btn-block" type="button" onclick="clearExampleEdit()" style="margin-top:8px">清除例句</button>
         </div>
     </div>
 
@@ -722,7 +564,7 @@
 
             <div class="settings-section">
                 <div class="settings-section-title">复习算法</div>
-                <div class="settings-section-desc" style="margin-bottom:10px">基于 FSRS 自适应算法：稳定性（stability）≥ 365 天时自动标记为"已掌握"，简单词可能 5 次掌握，困难词可能 10+ 次。</div>
+                <div class="settings-section-desc">基于 FSRS 自适应算法：稳定性（stability）≥ 365 天时自动标记为"已掌握"，简单词可能 5 次掌握，困难词可能 10+ 次。</div>
 
                 <div id="fsrsOnly">
                     <div class="setting-row">
@@ -733,9 +575,9 @@
                     <div class="settings-section-desc" style="margin-top:6px">复习时希望还能记起的概率。值越高，复习越频繁。0.90 是常用平衡点。</div>
 
                     <div class="settings-section-desc" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--hairline)">
-                        <strong style="color:var(--secondary-color)">"已掌握"判定：</strong>
+                        <strong style="color:var(--primary)">"已掌握"判定：</strong>
                         FSRS 自动判定——稳定性（stability）≥ 365 天（约 1 年长期记忆）时，词条进入"已掌握"不再复习。
-                        不依赖复习次数，简单词可能 5 次掌握，困难词可能要 10+ 次。
+                        不依赖复习次数，简单词可能 5 次掌握，困难词要 10+ 次。
                     </div>
 
                     <div class="setting-row" style="margin-top:14px">
@@ -750,10 +592,9 @@
                 </div>
             </div>
 
-            <button class="btn btn-save" onclick="closeSettings()" style="margin-top:18px">保存</button>
+            <button class="btn btn-save btn-block" onclick="closeSettings()" style="margin-top:18px">保存</button>
         </div>
     </div>
-
     <script>
         const API_BASE = 'https://api.oscarstudio.cn';
 
@@ -785,6 +626,7 @@
         const exampleSelection = { new: null, edit: null };
         // 例句提示会降低回忆难度：答对后只允许 Hard / Good，不开放 Easy。
         const studyHintUsed = { recite: false, review: false };
+        let booting = true;
 
         // input 由 openSettings() 在打开面板时统一赋值
         document.getElementById('backBtn').addEventListener('click', () => switchMode('menu'));
@@ -1130,6 +972,8 @@
                 resetNewExampleFields();
                 document.getElementById('wordInput').focus();
                 renderWordList();
+                renderViewList();
+                renderStats();
             } else {
                 alert(result.message || '添加失败');
             }
@@ -1141,6 +985,8 @@
             if (result.success) {
                 words = words.filter(w => w.id !== id);
                 renderWordList();
+                renderViewList();
+                renderStats();
             } else {
                 alert(result.message || '删除失败');
             }
@@ -1325,7 +1171,7 @@
                 return;
             }
             renderStudyCard('recite', reciteQueue[reciteIndex]);
-            setTimeout(() => document.getElementById('reciteInput').focus(), 50);
+            if (!booting) setTimeout(() => document.getElementById('reciteInput').focus(), 50);
         }
 
         function getAlgo() {
@@ -1399,6 +1245,8 @@
             document.getElementById(mode + 'RatingBar').style.display = 'none';
             (mode === 'recite' ? updateReciteProgress : updateReviewProgress)();
             document.getElementById(mode + 'NextBtn').style.display = 'block';
+            renderViewList();
+            renderStats();
         }
 
         function nextRecite() {
@@ -1446,7 +1294,7 @@
                 return;
             }
             renderStudyCard('review', reviewQueue[reviewIndex]);
-            setTimeout(() => document.getElementById('reviewInput').focus(), 50);
+            if (!booting) setTimeout(() => document.getElementById('reviewInput').focus(), 50);
         }
 
         async function checkReview(e) {
@@ -1503,6 +1351,52 @@
                 target.dataset.autoValue = target.value;
             }
         });
+
+        // ---- 单页工作台：启动与联动（原 FSRS/API 逻辑不动） ----
+        function renderStats() {
+            const count = status => words.filter(w => w.status === status).length;
+            const due = words.filter(w => w.status === 'learning' &&
+                (!w.next_review || new Date(w.next_review).getTime() <= Date.now())).length;
+            const set = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+            set('statTotal', words.length);
+            set('statNew', count('new'));
+            set('statLearning', count('learning'));
+            set('statMastered', count('mastered'));
+            set('statDue', due);
+        }
+
+        function renderAll() {
+            renderWordList();
+            renderViewList();
+            renderStats();
+        }
+
+        function setStudyTab(mode) {
+            document.querySelectorAll('.study-tab').forEach(t =>
+                t.classList.toggle('active', t.dataset.mode === mode));
+            document.getElementById('recitePanel').classList.toggle('active', mode === 'recite');
+            document.getElementById('reviewPanel').classList.toggle('active', mode === 'review');
+            if (mode === 'recite') initRecite();
+            else initReview();
+        }
+
+        function goTo(target) {
+            if (target === 'recite' || target === 'review') setStudyTab(target);
+            const panel = document.getElementById(target + 'Panel');
+            if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (target === 'input') setTimeout(() => document.getElementById('wordInput').focus(), 350);
+        }
+
+        async function boot() {
+            await fetchWords();
+            renderAll();
+            setStudyTab('recite');
+            booting = false;
+        }
+        boot();
     </script>
 </body>
 </html>
