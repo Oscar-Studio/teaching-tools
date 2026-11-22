@@ -84,7 +84,7 @@ h1, h2 { color: inherit; font-family: inherit; }
 
 .main { min-width: 0; padding: 36px clamp(28px, 4.4vw, 68px) 48px; }
 .page { display: grid; gap: 27px; max-width: 1020px; margin: 0 auto; }
-.page-heading { display: flex; justify-content: space-between; align-items: end; }
+.page-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 10px 16px; }
 .page-heading h1 { font-size: clamp(31px, 3.3vw, 46px); font-weight: 850; letter-spacing: -.055em; line-height: 1.22; }
 .page-heading h1:focus { outline: none; }
 .page-heading p:not(.eyebrow) { margin-top: 7px; color: var(--muted-wb); }
