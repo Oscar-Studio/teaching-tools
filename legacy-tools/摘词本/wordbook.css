@@ -214,6 +214,30 @@ input::placeholder, textarea::placeholder { color: var(--muted-wb); }
 .empty h2 { margin: 12px 0 4px; font-size: 23px; }
 .empty p, .load-state p { color: var(--muted-wb); }
 .empty .button, .load-state .button { margin-top: 16px; }
+.empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; }
+.empty-actions .button { margin-top: 16px; }
+
+.import-template { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; color: var(--muted-wb); font-size: 13px; }
+.import-drop {
+    display: grid; justify-items: center; gap: 5px; padding: 24px 16px; text-align: center;
+    border: 1.5px dashed var(--line); border-radius: 12px; background: var(--paper); cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.import-drop:hover, .import-drop:focus-within { border-color: var(--accent); background: var(--wash); }
+.import-drop > [data-icon] { width: 40px; height: 40px; border-radius: 11px; background: var(--wash); color: var(--accent); }
+.import-drop strong { font-size: 15px; }
+.import-drop small { color: var(--muted-wb); font-size: 12px; }
+.import-preview { display: grid; gap: 7px; }
+.import-summary { color: var(--muted-wb); font-size: 13px; }
+.import-summary strong { color: var(--accent); }
+.import-list {
+    display: grid; gap: 0; margin: 0; padding: 0; max-height: 190px; overflow: auto;
+    list-style: none; border: 1px solid var(--line); border-radius: 9px;
+}
+.import-list li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 11px; font-size: 13px; }
+.import-list li + li { border-top: 1px solid var(--line); }
+.import-list .import-word { font-weight: 700; }
+.import-list .import-trans { color: var(--muted-wb); text-align: right; overflow-wrap: anywhere; }
 
 .study-page { max-width: 780px; gap: 18px; }
 .back-link { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; color: var(--accent); font-size: 13px; }

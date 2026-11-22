@@ -17,6 +17,7 @@ const icons = {
     edit: '<path d="m14 6 4 4M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11z"/>',
     trash: '<path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/>',
     check: '<path d="m5 12 5 5L20 7"/>',
+    upload: '<path d="M12 16V4m-5 5 5-5 5 5M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/>',
 };
 
 function setIcon(element, name) {
@@ -40,6 +41,7 @@ let session = null;
 let entryWord = null;
 let deleteTarget = null;
 let selection = null;
+let importEntries = [];
 let loading = false;
 let toastTimer;
 
@@ -80,7 +82,7 @@ async function request(method = "GET", id, body) {
     }
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.success) throw new Error(result?.message || "服务器暂时不可用，请重试。");
-    if ((method === "PUT" || method === "POST") && !result.word?.id) throw new Error("服务器未返回已保存的词条，请重试。");
+    if ((method === "PUT" || (method === "POST" && id !== "bulk")) && !result.word?.id) throw new Error("服务器未返回已保存的词条，请重试。");
     return result;
 }
 
@@ -423,6 +425,220 @@ async function deleteWord() {
     }
 }
 
+const importFields = {
+    word: ["word", "单词", "词条", "term"],
+    translation: ["translation", "释义", "中文释义", "meaning"],
+    example_sentence: ["example_sentence", "example", "例句", "英文例句", "sentence"],
+    example_translation: ["example_translation", "例句翻译", "整句翻译"],
+    example_target: ["example_target", "挖空", "挖空内容", "target"],
+};
+
+function pickField(source, keys) {
+    for (const key of keys) {
+        const value = source?.[key];
+        if (value != null && String(value).trim()) return String(value).trim();
+    }
+    return "";
+}
+
+function normalizeEntry(source) {
+    const word = pickField(source, importFields.word);
+    const translation = pickField(source, importFields.translation);
+    if (!word || !translation) return null;
+    return {
+        word, translation,
+        example_sentence: pickField(source, importFields.example_sentence),
+        example_translation: pickField(source, importFields.example_translation),
+        example_target: pickField(source, importFields.example_target),
+    };
+}
+
+function parseCsv(text) {
+    const rows = [];
+    let row = [], field = "", quoted = false;
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (quoted) {
+            if (ch === '"') {
+                if (text[i + 1] === '"') { field += '"'; i++; }
+                else quoted = false;
+            } else field += ch;
+        } else if (ch === '"') {
+            quoted = true;
+        } else if (ch === ",") {
+            row.push(field); field = "";
+        } else if (ch === "\n" || ch === "\r") {
+            if (ch === "\r" && text[i + 1] === "\n") i++;
+            row.push(field);
+            if (row.some(cell => cell.trim())) rows.push(row);
+            row = []; field = "";
+        } else field += ch;
+    }
+    if (field.length || row.length) {
+        row.push(field);
+        if (row.some(cell => cell.trim())) rows.push(row);
+    }
+    return rows;
+}
+
+function parseImportText(text, filename) {
+    const content = text.replace(/^\uFEFF/, "").trim();
+    if (!content) throw new Error("文件是空的。");
+    if (filename.toLowerCase().endsWith(".json") || /^[[{]/.test(content)) {
+        let data;
+        try { data = JSON.parse(content); } catch { throw new Error("JSON 解析失败，请检查文件格式。"); }
+        const list = Array.isArray(data) ? data : Array.isArray(data?.words) ? data.words : null;
+        if (!list) throw new Error("JSON 需要是数组，或包含 words 数组的对象。");
+        const entries = [];
+        let invalid = 0;
+        for (const item of list) {
+            const entry = normalizeEntry(item);
+            if (entry) entries.push(entry); else invalid++;
+        }
+        return { entries, invalid };
+    }
+    const rows = parseCsv(content);
+    if (rows.length < 2) throw new Error("CSV 至少需要一行表头和一行数据。");
+    const headers = rows[0].map(header => header.trim().toLowerCase());
+    const entries = [];
+    let invalid = 0;
+    for (const row of rows.slice(1)) {
+        const record = {};
+        headers.forEach((header, index) => { record[header] = row[index] ?? ""; });
+        const entry = normalizeEntry(record);
+        if (entry) entries.push(entry); else invalid++;
+    }
+    return { entries, invalid };
+}
+
+function openImport() {
+    importEntries = [];
+    $("importForm").reset();
+    $("importPreview").hidden = true;
+    $("importSummary").textContent = "";
+    $("importList").replaceChildren();
+    $("importFileName").textContent = "点击选择文件，自动解析并预览";
+    $("confirmImport").disabled = true;
+    showError("importError");
+    $("importDialog").showModal();
+}
+
+async function handleImportFile(file) {
+    if (!file) return;
+    importEntries = [];
+    $("importPreview").hidden = true;
+    $("confirmImport").disabled = true;
+    showError("importError");
+    $("importFileName").textContent = file.name;
+    try {
+        const { entries, invalid } = parseImportText(await file.text(), file.name);
+        if (!entries.length) throw new Error("没有找到有效的词条，请确认包含单词和释义两列。");
+        const existing = new Set(words.map(word => normalize(word.word)));
+        const seen = new Set();
+        const fresh = [];
+        let duplicates = 0;
+        for (const entry of entries) {
+            const key = normalize(entry.word);
+            if (existing.has(key) || seen.has(key)) { duplicates++; continue; }
+            seen.add(key);
+            fresh.push(entry);
+        }
+        importEntries = fresh;
+        const summary = $("importSummary");
+        summary.replaceChildren("可导入 ", node("strong", fresh.length), " 个词条");
+        const notes = [];
+        if (duplicates) notes.push("跳过重复 " + duplicates + " 个");
+        if (invalid) notes.push("忽略不完整 " + invalid + " 个");
+        if (notes.length) summary.append("，" + notes.join("，"));
+        summary.append("。");
+        $("importList").replaceChildren(...fresh.slice(0, 30).map(entry => {
+            const item = node("li");
+            item.append(node("span", entry.word, "import-word"), node("span", entry.translation, "import-trans"));
+            return item;
+        }));
+        $("importPreview").hidden = false;
+        $("confirmImport").disabled = fresh.length === 0;
+        if (!fresh.length) showError("importError", "文件里的词条都已存在，没有需要导入的内容。");
+    } catch (error) {
+        importEntries = [];
+        $("importFileName").textContent = "点击选择文件，自动解析并预览";
+        showError("importError", error.message);
+    }
+}
+
+function csvCell(value) {
+    const text = String(value ?? "");
+    return /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
+function downloadTemplate(filename, content, type) {
+    const url = URL.createObjectURL(new Blob([content], { type: type + ";charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadCsvTemplate() {
+    const rows = [
+        ["word", "translation", "example_sentence", "example_translation", "example_target"],
+        ["look forward to", "期待，盼望", "I look forward to seeing you.", "我期待见到你。", "look forward to"],
+        ["abandon", "放弃；抛弃", "They had to abandon the car.", "他们不得不弃车。", "abandon"],
+    ];
+    const content = "\uFEFF" + rows.map(row => row.map(csvCell).join(",")).join("\r\n");
+    downloadTemplate("摘词本-导入模板.csv", content, "text/csv");
+}
+
+function downloadJsonTemplate() {
+    const content = JSON.stringify([
+        {
+            word: "look forward to", translation: "期待，盼望",
+            example_sentence: "I look forward to seeing you.", example_translation: "我期待见到你。",
+            example_target: "look forward to",
+        },
+        {
+            word: "abandon", translation: "放弃；抛弃",
+            example_sentence: "They had to abandon the car.", example_translation: "他们不得不弃车。",
+            example_target: "abandon",
+        },
+    ], null, 2);
+    downloadTemplate("摘词本-导入模板.json", content, "application/json");
+}
+
+async function importWords() {
+    const dialog = $("importDialog");
+    if (dialog.dataset.busy === "true") return;
+    if (!importEntries.length) {
+        showError("importError", "没有可导入的词条，请先选择文件。");
+        return;
+    }
+    showError("importError");
+    setDialogBusy(dialog, true);
+    const batches = [];
+    for (let i = 0; i < importEntries.length; i += 500) batches.push(importEntries.slice(i, i + 500));
+    try {
+        let imported = 0, skipped = 0;
+        for (let i = 0; i < batches.length; i++) {
+            $("confirmImport").textContent = batches.length > 1 ? "导入中… " + (i + 1) + "/" + batches.length : "导入中…";
+            const result = await request("POST", "bulk", { words: batches[i] });
+            imported += result.imported || 0;
+            skipped += result.skipped || 0;
+        }
+        dialog.close();
+        const skipNote = skipped ? "，跳过 " + skipped + " 个" : "";
+        notify(imported ? "成功导入 " + imported + " 个词条" + skipNote : "没有导入新词条" + skipNote);
+        await load();
+    } catch (error) {
+        showError("importError", error.message);
+    } finally {
+        setDialogBusy(dialog, false);
+        $("confirmImport").textContent = "开始导入";
+    }
+}
+
 function openSettings() {
     $("dailyCount").value = settings.dailyCount;
     $("desiredRetention").value = settings.desiredRetention;
@@ -597,6 +813,12 @@ $("studyHint").onclick = () => {
 
 document.querySelectorAll("[data-add]").forEach(button => { button.onclick = () => openEntry(); });
 document.querySelectorAll("[data-close]").forEach(button => { button.onclick = () => button.closest("dialog").close(); });
+$("importButton").onclick = openImport;
+$("emptyImport").onclick = openImport;
+$("downloadCsv").onclick = downloadCsvTemplate;
+$("downloadJson").onclick = downloadJsonTemplate;
+$("importFile").onchange = event => handleImportFile(event.target.files?.[0]);
+$("importForm").onsubmit = event => { event.preventDefault(); importWords(); };
 document.querySelectorAll("dialog").forEach(dialog => {
     dialog.addEventListener("cancel", event => {
         if (dialog.dataset.busy === "true") event.preventDefault();
