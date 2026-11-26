@@ -15,7 +15,6 @@ const icons = {
     search: '<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 5 5"/>',
     close: '<path d="m6 6 12 12M6 18 18 6"/>',
     edit: '<path d="m14 6 4 4M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11z"/>',
-    wand: '<path d="m4 20 2 2L19 9l-2-2L4 20Zm9-9 2 2M6 3v4M4 5h4m12 8v4m-2-2h4M13 2v4m-2-2h4"/>',
     trash: '<path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/>',
     check: '<path d="m5 12 5 5L20 7"/>',
     upload: '<path d="M12 16V4m-5 5 5-5 5 5M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/>',

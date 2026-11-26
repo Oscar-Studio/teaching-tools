@@ -17,7 +17,6 @@
     --hero-ink: #1b382f;
     --hero-muted: #435d52;
     --hero-detail: #36735c3b;
-    --ai-border: #8cae9e;
     --danger-wb: #a53351;
     --danger-wash: #fcebf0;
     --font: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
@@ -41,7 +40,6 @@
     --hero-ink: #edf4ef;
     --hero-muted: #c2d5ca;
     --hero-detail: #b4d9b842;
-    --ai-border: #598773;
     --danger-wb: #ffa8bf;
     --danger-wash: #48253a;
 }
@@ -305,10 +303,9 @@ dialog::backdrop { background: #14261d80; }
 .dialog-form summary span { margin-left: 4px; font-weight: 500; }
 .example-fields { margin-top: 11px; }
 .example-field { display: grid; gap: 5px; }
-.example-field-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; }
-.ai-button { width: 44px; height: 44px; border: 1px solid var(--ai-border); border-radius: 10px; background: var(--wash); }
-.ai-button svg { width: 20px; height: 20px; }
-.ai-button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-solid); color: #fff; }
+.example-field-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 4px; }
+.ai-button { width: 28px; height: 28px; margin-top: 6px; padding: 0; }
+.ai-button svg { display: block; width: 16px; height: 16px; }
 .ai-button:disabled { opacity: .55; }
 .example-ai-status { color: var(--muted-wb); font-size: 12px; }
 .example-ai-status:empty { margin-top: -12px; }
