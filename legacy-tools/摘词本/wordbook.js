@@ -328,7 +328,7 @@ function openEntry(word = null) {
     $("clearExample").hidden = !word?.example_sentence;
     $("saveEntry").textContent = editing ? "保存例句" : "保存词条";
     showError("entryError");
-    $("exampleAiStatus").textContent = "";
+    $("entryAiStatus").textContent = "";
     $("entryDialog").showModal();
     $(editing ? "exampleSentence" : "wordInput").focus();
 }
@@ -352,12 +352,12 @@ function setDialogBusy(dialog, busy) {
     for (const button of dialog.querySelectorAll("button")) button.disabled = busy;
 }
 
-async function generateExample() {
+async function generateEntryContent(kind) {
     const dialog = $("entryDialog");
     if (dialog.dataset.busy === "true") return;
+    const translating = kind === "meaning";
     const term = entryWord?.word ?? $("wordInput").value.trim();
-    const meaning = entryWord?.translation ?? $("transInput").value.trim();
-    const status = $("exampleAiStatus");
+    const status = $("entryAiStatus");
     const token = getToken();
 
     status.textContent = "";
@@ -365,22 +365,27 @@ async function generateExample() {
     if (!term) return showError("entryError", "请先填写单词、短语或词块。");
     if (!token) return showError("entryError", "请先登录再使用 AI。");
 
-    const instruction = "你是英语学习助手。根据词条和释义，写一句自然简短的英文例句并译成简体中文。"
-        + "只返回一个 JSON 对象，包含三个字符串字段：sentence（完整英文例句）、target（词条在例句中的实际写法，可变换词形，必须逐字摘自 sentence）、translation（整句中文翻译）。";
-    const input = { 词条: term, 释义: meaning };
+    const messages = translating
+        ? [{ role: "user", content: "将以下英文词条翻译为简体中文，只输出简短释义，不要额外解释。\n" + term }]
+        : [
+            { role: "system", content: "你是英语学习助手。根据词条和释义，写一句自然简短的英文例句并译成简体中文。"
+                + "只返回一个 JSON 对象，包含三个字符串字段：sentence（完整英文例句）、target（词条在例句中的实际写法，可变换词形，必须逐字摘自 sentence）、translation（整句中文翻译）。" },
+            { role: "user", content: JSON.stringify({ 词条: term, 释义: entryWord?.translation ?? $("transInput").value.trim() }) },
+        ];
     // 正在输入的内容优先于稍后返回的生成结果。
-    const fields = ["wordInput", "transInput", "exampleSentence", "exampleTarget", "exampleTranslation"];
+    const fields = translating ? ["wordInput", "transInput"]
+        : ["wordInput", "transInput", "exampleSentence", "exampleTarget", "exampleTranslation"];
     const values = fields.map(id => $(id).value);
     setDialogBusy(dialog, true);
-    status.textContent = "正在生成例句、挖空和翻译…";
+    status.textContent = translating ? "正在翻译词条…" : "正在生成例句、挖空和翻译…";
     try {
         const response = await fetch(API_BASE + "/chat", {
             method: "POST",
             headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
             signal: AbortSignal.timeout(25000),
             body: JSON.stringify({
-                model: "tencent/hy4-flash", thinking: false, max_tokens: 256,
-                messages: [{ role: "system", content: instruction }, { role: "user", content: JSON.stringify(input) }],
+                model: translating ? "tencent/hy-mt2-1.8b" : "tencent/hy4-flash",
+                thinking: false, max_tokens: 256, messages,
             }),
         });
         const result = await response.json().catch(() => null);
@@ -395,6 +400,12 @@ async function generateExample() {
         if (!generated || choice.finish_reason === "length") throw new Error("AI 未返回完整内容，请重试。");
         if (fields.some((id, index) => $(id).value !== values[index])) {
             status.textContent = "输入已修改，请重新生成。";
+            return;
+        }
+        if (translating) {
+            if (!/\p{Script=Han}/u.test(generated)) throw new Error("AI 未返回中文释义，请重试。");
+            $("transInput").value = generated.replace(/\s+/g, " ");
+            status.textContent = "中文释义已生成。";
             return;
         }
         const example = JSON.parse(generated.replace(/^```(?:json)?\s*|\s*```$/gi, ""));
@@ -917,7 +928,8 @@ $("clearExample").onclick = () => {
     if (window.confirm("确定清除这个词条的例句？")) saveEntry(true);
 };
 $("useSelection").onclick = useSelectedText;
-$("generateExample").onclick = generateExample;
+$("generateMeaning").onclick = () => generateEntryContent("meaning");
+$("generateExample").onclick = () => generateEntryContent("example");
 $("exampleSentence").oninput = () => { selection = null; };
 $("exampleTarget").oninput = () => { selection = null; };
 $("searchWords").oninput = renderLibrary;
