@@ -175,10 +175,23 @@
             <details id="exampleDetails">
                 <summary>添加例句 <span>可选</span></summary>
                 <div class="fields example-fields">
-                    <label>英文例句<textarea id="exampleSentence" rows="2" lang="en" placeholder="I looked forward to seeing you."></textarea></label>
+                    <div class="example-field">
+                        <label for="exampleSentence">英文例句</label>
+                        <div class="example-field-input">
+                            <textarea id="exampleSentence" rows="2" lang="en" placeholder="I looked forward to seeing you."></textarea>
+                            <button class="icon-button ai-button" id="generateSentence" type="button" title="AI 生成例句" aria-label="AI 生成例句"><span data-icon="wand"></span></button>
+                        </div>
+                    </div>
                     <label>挖空内容<input id="exampleTarget" lang="en" placeholder="留空时使用词条"></label>
                     <div class="selection-help"><small>词形变化时，可在例句里选中实际文本。</small><button class="text-button" id="useSelection" type="button">使用选中文本</button></div>
-                    <label>整句翻译<textarea id="exampleTranslation" rows="2" placeholder="我当时很期待见到你。"></textarea></label>
+                    <div class="example-field">
+                        <label for="exampleTranslation">整句翻译</label>
+                        <div class="example-field-input">
+                            <textarea id="exampleTranslation" rows="2" placeholder="我当时很期待见到你。"></textarea>
+                            <button class="icon-button ai-button" id="generateTranslation" type="button" title="AI 翻译例句" aria-label="AI 翻译例句"><span data-icon="wand"></span></button>
+                        </div>
+                    </div>
+                    <p id="exampleAiStatus" class="example-ai-status" role="status"></p>
                 </div>
             </details>
             <p class="form-error" id="entryError" role="alert" hidden></p>

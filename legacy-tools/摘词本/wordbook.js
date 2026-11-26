@@ -15,6 +15,7 @@ const icons = {
     search: '<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 5 5"/>',
     close: '<path d="m6 6 12 12M6 18 18 6"/>',
     edit: '<path d="m14 6 4 4M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11z"/>',
+    wand: '<path d="m4 20 2 2L19 9l-2-2L4 20Zm9-9 2 2M6 3v4M4 5h4m12 8v4m-2-2h4M13 2v4m-2-2h4"/>',
     trash: '<path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/>',
     check: '<path d="m5 12 5 5L20 7"/>',
     upload: '<path d="M12 16V4m-5 5 5-5 5 5M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/>',
@@ -25,7 +26,7 @@ function setIcon(element, name) {
 }
 document.querySelectorAll("[data-icon]").forEach(element => setIcon(element, element.dataset.icon));
 
-const API = "https://api.oscarstudio.cn/api/wordbook";
+const API_BASE = "https://api.oscarstudio.cn/api";
 const studyNames = { recite: "背诵新词", review: "到期复习" };
 const statusNames = { new: "未学习", learning: "学习中", mastered: "已掌握" };
 const emptyExample = {
@@ -67,7 +68,8 @@ async function request(method = "GET", id, body) {
     if (!token) throw new Error("请先登录再使用摘词本。");
     let response;
     try {
-        response = await fetch(id == null ? API : API + "/" + encodeURIComponent(id), {
+        const path = id == null ? "/wordbook" : "/wordbook/" + encodeURIComponent(id);
+        response = await fetch(API_BASE + path, {
             method, headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
             body: body === undefined ? undefined : JSON.stringify(body),
         });
@@ -327,6 +329,7 @@ function openEntry(word = null) {
     $("clearExample").hidden = !word?.example_sentence;
     $("saveEntry").textContent = editing ? "保存例句" : "保存词条";
     showError("entryError");
+    $("exampleAiStatus").textContent = "";
     $("entryDialog").showModal();
     $(editing ? "exampleSentence" : "wordInput").focus();
 }
@@ -348,6 +351,79 @@ function useSelectedText() {
 function setDialogBusy(dialog, busy) {
     dialog.dataset.busy = busy ? "true" : "false";
     for (const button of dialog.querySelectorAll("button")) button.disabled = busy;
+}
+
+async function generateExample(field) {
+    const dialog = $("entryDialog");
+    if (dialog.dataset.busy === "true") return;
+    const isSentence = field === "exampleSentence";
+    const term = entryWord?.word ?? $("wordInput").value.trim();
+    const meaning = entryWord?.translation ?? $("transInput").value.trim();
+    const sentence = $("exampleSentence").value.trim();
+    const status = $("exampleAiStatus");
+    const token = getToken();
+
+    status.textContent = "";
+    showError("entryError");
+    if (isSentence && !term) return showError("entryError", "请先填写单词、短语或词块。");
+    if (!isSentence && !sentence) return showError("entryError", "请先填写或生成英文例句。");
+    if (!token) return showError("entryError", "请先登录再使用 AI。");
+
+    const instruction = isSentence
+        ? "你是英语学习助手。根据词条和释义写一个自然、简短的英文例句。完整保留词条原形，不改变拼写或词形。只输出一句英文，不加引号、翻译或解释。"
+        : "你是英语学习助手。把输入中的英文例句译成自然的简体中文。只输出一句中文翻译，不加引号、原文或解释。";
+    const input = isSentence ? { 词条: term, 释义: meaning } : { 英文例句: sentence };
+    // 正在输入的内容优先于稍后返回的生成结果。
+    const fields = isSentence ? ["wordInput", "transInput", "exampleSentence", "exampleTarget"]
+        : ["exampleSentence", "exampleTranslation"];
+    const values = fields.map(id => $(id).value);
+    setDialogBusy(dialog, true);
+    status.textContent = isSentence ? "正在生成英文例句…" : "正在翻译例句…";
+    try {
+        const response = await fetch(API_BASE + "/chat", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(25000),
+            body: JSON.stringify({
+                model: "tencent/hy4-flash", thinking: false, max_tokens: 256,
+                messages: [{ role: "system", content: instruction }, { role: "user", content: JSON.stringify(input) }],
+            }),
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) {
+            if (response.status === 403) throw new Error(result?.message || "AI 积分不足，请稍后重试。");
+            if (response.status === 429) throw new Error("AI 服务繁忙，请稍后重试。");
+            throw new Error("AI 生成失败，请稍后重试。");
+        }
+        const choice = result?.choices?.[0];
+        const content = choice?.message?.content;
+        const generated = typeof content === "string" ? content.trim() : "";
+        if (!generated || choice.finish_reason === "length") throw new Error("AI 未返回完整内容，请重试。");
+        if (fields.some((id, index) => $(id).value !== values[index])) {
+            status.textContent = "输入已修改，请重新生成。";
+            return;
+        }
+        if (isSentence && !findExampleRange(generated, term)) {
+            throw new Error("生成的例句未包含完整词条，请重试。");
+        }
+
+        $(field).value = generated;
+        if (isSentence) {
+            selection = null;
+            const target = $("exampleTarget");
+            if (!findExampleRange(generated, target.value.trim())) target.value = "";
+        }
+        status.textContent = isSentence
+            ? (generated !== sentence && $("exampleTranslation").value.trim() ? "例句已生成，请核对或重新生成整句翻译。" : "例句已生成。")
+            : "整句翻译已生成。";
+    } catch (error) {
+        status.textContent = "";
+        const message = error.name === "TimeoutError" ? "AI 响应超时，请重试。"
+            : error instanceof TypeError ? "无法连接 AI 服务，请检查网络后重试。" : error.message;
+        showError("entryError", message);
+    } finally {
+        setDialogBusy(dialog, false);
+    }
 }
 
 async function saveEntry(clear = false) {
@@ -846,6 +922,8 @@ $("clearExample").onclick = () => {
     if (window.confirm("确定清除这个词条的例句？")) saveEntry(true);
 };
 $("useSelection").onclick = useSelectedText;
+$("generateSentence").onclick = () => generateExample("exampleSentence");
+$("generateTranslation").onclick = () => generateExample("exampleTranslation");
 $("exampleSentence").oninput = () => { selection = null; };
 $("exampleTarget").oninput = () => { selection = null; };
 $("searchWords").oninput = renderLibrary;

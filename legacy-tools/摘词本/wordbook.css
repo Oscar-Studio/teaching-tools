@@ -289,6 +289,13 @@ dialog::backdrop { background: #21183180; }
 .dialog-form summary { color: var(--accent); font-weight: 740; }
 .dialog-form summary span { margin-left: 4px; font-weight: 500; }
 .example-fields { margin-top: 11px; }
+.example-field { display: grid; gap: 5px; }
+.example-field-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; }
+.ai-button { width: 44px; height: 44px; border: 1px solid var(--line); background: var(--wash); }
+.ai-button:hover:not(:disabled) { border-color: var(--accent); }
+.ai-button:disabled { opacity: .55; }
+.example-ai-status { color: var(--muted-wb); font-size: 12px; }
+.example-ai-status:empty { margin-top: -12px; }
 .selection-help { flex-wrap: wrap; margin-top: -8px; }
 .form-error { margin-top: 8px; padding: 8px 10px; border-radius: 7px; background: var(--danger-wash); color: var(--danger-wb); font-size: 13px; }
 .toast {
