@@ -392,6 +392,9 @@ async function generateEntryContent(kind) {
         if (!response.ok) {
             if (response.status === 403) throw new Error(result?.message || "AI 积分不足，请稍后重试。");
             if (response.status === 429) throw new Error("AI 服务繁忙，请稍后重试。");
+            if (response.status === 502 || response.status === 503 || response.status === 504) {
+                throw new Error("暂时无法连接 AI 服务，请稍后重试。");
+            }
             throw new Error("AI 生成失败，请稍后重试。");
         }
         const choice = result?.choices?.[0];
