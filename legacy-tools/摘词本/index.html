@@ -21,8 +21,8 @@
     <script src="algorithm-fsrs.js"></script>
     <script defer src="https://analytics.oscarstudio.cn/script.js"
         data-website-id="6a75f3bd-26d3-4d27-acbf-282f408254da"></script>
-    <link rel="stylesheet" href="wordbook.css?v=20261126-2">
-    <script defer src="wordbook.js?v=20261126-2"></script>
+    <link rel="stylesheet" href="wordbook.css?v=20261126-3">
+    <script defer src="wordbook.js?v=20261126-3"></script>
     <script defer charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
 </head>
 <body>
@@ -179,7 +179,7 @@
                         <label for="exampleSentence">英文例句</label>
                         <div class="example-field-input">
                             <textarea id="exampleSentence" rows="2" lang="en" placeholder="I looked forward to seeing you."></textarea>
-                            <button class="icon-button ai-button" id="generateSentence" type="button" title="AI 生成例句" aria-label="AI 生成例句">
+                            <button class="icon-button ai-button" id="generateExample" type="button" title="AI 生成例句、挖空和翻译" aria-label="AI 生成例句、挖空和翻译">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="m4 19 2 2L19 8l-2-2L4 19Zm10-10 2 2M6 3v6M3 6h6m11 8v6m-3-3h6"/>
                                 </svg>
@@ -188,17 +188,7 @@
                     </div>
                     <label>挖空内容<input id="exampleTarget" lang="en" placeholder="留空时使用词条"></label>
                     <div class="selection-help"><small>词形变化时，可在例句里选中实际文本。</small><button class="text-button" id="useSelection" type="button">使用选中文本</button></div>
-                    <div class="example-field">
-                        <label for="exampleTranslation">整句翻译</label>
-                        <div class="example-field-input">
-                            <textarea id="exampleTranslation" rows="2" placeholder="我当时很期待见到你。"></textarea>
-                            <button class="icon-button ai-button" id="generateTranslation" type="button" title="AI 翻译例句" aria-label="AI 翻译例句">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="m4 19 2 2L19 8l-2-2L4 19Zm10-10 2 2M6 3v6M3 6h6m11 8v6m-3-3h6"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+                    <label>整句翻译<textarea id="exampleTranslation" rows="2" placeholder="我当时很期待见到你。"></textarea></label>
                     <p id="exampleAiStatus" class="example-ai-status" role="status"></p>
                 </div>
             </details>
