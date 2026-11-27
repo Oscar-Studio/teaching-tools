@@ -99,14 +99,19 @@ function notify(message) {
     toastTimer = setTimeout(() => { $("toast").hidden = true; }, 3300);
 }
 
-function isDue(word, now) {
-    return word.status === "learning" && (!word.next_review || new Date(word.next_review).getTime() <= now);
+function reviewDayEnd() {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getTime();
+}
+
+function isDue(word, dayEnd) {
+    return word.status === "learning" && (!word.next_review || Date.parse(word.next_review) < dayEnd);
 }
 
 function queueFor(mode) {
     if (mode === "recite") return words.filter(word => word.status === "new").slice(0, settings.dailyCount);
-    const now = Date.now();
-    return words.filter(word => isDue(word, now))
+    const dayEnd = reviewDayEnd();
+    return words.filter(word => isDue(word, dayEnd))
         .sort((a, b) => Date.parse(a.next_review ?? "1970-01-01") - Date.parse(b.next_review ?? "1970-01-01"));
 }
 
@@ -182,7 +187,7 @@ function renderLibrary() {
     $("emptyAdd").hidden = !!words.length;
 
     const fragment = document.createDocumentFragment();
-    const now = Date.now();
+    const dayEnd = reviewDayEnd();
     for (const word of list) {
         const row = node("li", null, "word-row");
         const term = node("div", word.word, "word-term");
@@ -199,7 +204,7 @@ function renderLibrary() {
         }
         const meta = node("div", null, "word-meta");
         meta.append(node("span", statusNames[word.status] ?? statusNames.new, "word-status " + word.status));
-        if (isDue(word, now)) meta.append(node("span", "待复习"));
+        if (isDue(word, dayEnd)) meta.append(node("span", "待复习"));
         else if (word.status === "learning" && word.next_review) {
             const next = new Date(word.next_review);
             if (Number.isFinite(next.getTime())) meta.append(node("span", "下次复习 " + dateFormat.format(next)));
